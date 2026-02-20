@@ -22,7 +22,7 @@ a { text-decoration: none; color: inherit; }
 body::before {
   content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none; z-index: 9999; opacity: 0.4;
+  pointer-events: none; z-index: 1; opacity: 0.4;
 }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--navy); }
@@ -686,17 +686,18 @@ section { padding: 6rem 3rem; position: relative; }
             <div id="speedCostCompare" style="display:none;margin-top:1rem;padding:0.8rem 1rem;border-radius:4px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.04);">
               <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;color:var(--gray);text-transform:uppercase;margin-bottom:0.5rem;">Cost Comparison — Transparency</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
-                <div style="padding:0.6rem;border-radius:3px;border:1px solid rgba(46,204,113,0.15);background:rgba(46,204,113,0.03);">
-                  <div style="font-size:0.68rem;color:var(--green);font-weight:600;margin-bottom:0.3rem;">3 MONTHS (B2B)</div>
-                  <div style="font-size:1.1rem;font-weight:700;color:var(--white);" id="cost3mGross">—</div>
-                  <div style="font-size:0.65rem;color:var(--gray);margin-top:0.15rem;">total redemption cost</div>
-                  <div style="font-size:0.65rem;color:var(--green);margin-top:0.3rem;" id="cost3mFees">—</div>
+                <div style="padding:0.8rem;border-radius:3px;border:1px solid rgba(46,196,182,0.35);background:rgba(46,196,182,0.06);position:relative;">
+                  <div style="position:absolute;top:-8px;right:8px;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);background:var(--teal);padding:0.15rem 0.5rem;border-radius:2px;font-weight:700;">Recommended</div>
+                  <div style="font-size:0.68rem;color:var(--teal);font-weight:600;margin-bottom:0.3rem;">3 MONTHS (B2B)</div>
+                  <div style="font-size:1.2rem;font-weight:700;color:var(--teal);" id="cost3mGross">—</div>
+                  <div style="font-size:0.65rem;color:var(--teal);margin-top:0.15rem;opacity:0.7;">total redemption cost</div>
+                  <div style="font-size:0.65rem;color:var(--teal);margin-top:0.3rem;" id="cost3mFees">—</div>
                 </div>
-                <div style="padding:0.6rem;border-radius:3px;border:1px solid rgba(212,168,83,0.15);background:rgba(212,168,83,0.03);">
-                  <div style="font-size:0.68rem;color:var(--gold);font-weight:600;margin-bottom:0.3rem;">6 MONTHS (STANDALONE)</div>
-                  <div style="font-size:1.1rem;font-weight:700;color:var(--white);" id="cost6mGross">—</div>
-                  <div style="font-size:0.65rem;color:var(--gray);margin-top:0.15rem;">total redemption cost</div>
-                  <div style="font-size:0.65rem;color:var(--gold);margin-top:0.3rem;" id="cost6mFees">—</div>
+                <div style="padding:0.8rem;border-radius:3px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.015);opacity:0.7;">
+                  <div style="font-size:0.68rem;color:var(--gray);font-weight:600;margin-bottom:0.3rem;">6 MONTHS (STANDALONE)</div>
+                  <div style="font-size:1.1rem;font-weight:700;color:var(--gray);" id="cost6mGross">—</div>
+                  <div style="font-size:0.65rem;color:var(--gray);margin-top:0.15rem;opacity:0.6;">total redemption cost</div>
+                  <div style="font-size:0.65rem;color:var(--gray);margin-top:0.3rem;" id="cost6mFees">—</div>
                 </div>
               </div>
               <div style="font-size:0.72rem;color:var(--amber);margin-top:0.6rem;text-align:center;" id="costSavingNote">—</div>
@@ -727,8 +728,8 @@ section { padding: 6rem 3rem; position: relative; }
                 <span style="color:rgba(255,255,255,0.35);" id="speedBreakdownMini">—</span>
               </div>
               <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
-                <span style="color:var(--gray);">Solicitor Fees + Buffer</span>
-                <span style="font-weight:600;color:var(--amber);">−£10,000</span>
+                <span style="color:var(--gray);">Contingency (legals, arrears, overruns) <span style="font-family:var(--mono);font-size:0.55rem;color:var(--teal);opacity:0.7;">INDICATIVE — DISCUSSED ON CALL</span></span>
+                <span style="font-weight:600;color:var(--amber);" id="speedContingency">−£7,000</span>
               </div>
               <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:0.5rem;margin-top:0.5rem;display:flex;justify-content:space-between;">
                 <span style="font-weight:600;color:var(--white);">Net Liquidity After Exit</span>
@@ -807,7 +808,7 @@ section { padding: 6rem 3rem; position: relative; }
       </div>
       <div><div class="footer-heading">Products</div><ul class="footer-links"><li><a href="#products">Speed Loan</a></li><li><a href="#products">Main Loan</a></li><li><a href="#process">How It Works</a></li></ul></div>
       <div><div class="footer-heading">Company</div><ul class="footer-links"><li><a href="#testimonials">Reviews</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Cookie Policy</a></li><li><a href="#">Complaints</a></li></ul></div>
-      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="/cdn-cgi/l/email-protection#0e6b607f7b677c676b7d4e7e617d686760206d61207b65"><span class="__cf_email__" data-cfemail="ed88839c98849f84889ead9d829e8b8483c38e82c39886">[email&#160;protected]</span></a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
+      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="mailto:info@posfincapital.com">info@posfincapital.com</a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
     </div>
     <div class="footer-bottom">
       <p class="footer-legal">Posfin Capital Limited is authorised and regulated by the Financial Conduct Authority (FRN: 913022). Company No: 12148846. Registered Office: 19 Upper King Street, Norwich NR3 1RB. Trading Address: 96 Kensington High Street, London W8 4SG. ICO: ZA542657. Your property may be repossessed if you do not keep up repayments on a loan secured against it. Posfin Capital Limited acts as a credit broker, not a lender, for brokered products.</p>
@@ -819,7 +820,7 @@ section { padding: 6rem 3rem; position: relative; }
 <!-- ═══════════════════════════════════════ -->
 <!-- JAVASCRIPT                              -->
 <!-- ═══════════════════════════════════════ -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // Nav scroll
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
@@ -982,7 +983,7 @@ function validateSpeedLiquidity() {
   var check = document.getElementById('speedLiquidityCheck');
   var grossMaxBorrow = formData._maxBorrow || 0;
   var MAIN_LOAN_FACTOR = 1.25;
-  var BUFFER = 10000;
+  var BUFFER = 7000;
   var mainNetAdvance = Math.round(grossMaxBorrow / MAIN_LOAN_FACTOR);
   var kpc = kpcGrossRedemption(selectedSpeedAmount, selectedSpeedTerm);
   var netLiquidity = mainNetAdvance - kpc.gross - BUFFER;
@@ -1044,7 +1045,7 @@ function checkLoanRouting() {
       + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A853" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>'
       + '<div>'
       + '<span style="font-size:0.88rem;font-weight:600;color:var(--gold);">Main Loan territory \u2014 \u00a3' + amount.toLocaleString('en-GB') + '</span>'
-      + '<p style="font-size:0.78rem;color:var(--gray);margin-top:0.3rem;line-height:1.55;">This amount qualifies for our <strong style="color:var(--white);">Main Loan</strong> facility \u2014 brokered through our specialist lender panel with terms up to 24 months. Need the funds sooner? Tick the <strong style="color:var(--teal);">Back-to-Back</strong> option below to get a Speed Loan in days while we arrange the main facility.</p>'
+      + '<p style="font-size:0.78rem;color:var(--gray);margin-top:0.3rem;line-height:1.55;">This amount qualifies for our <strong style="color:var(--white);">Main Loan</strong> facility \u2014 brokered through our specialist lender panel with terms up to 24 months. Need the funds sooner? Tick the <strong style="color:var(--teal);">Back-to-Back</strong> option below to get a <strong style=\"color:var(--teal);\">Speed Loan</strong> in days while we arrange the main facility.</p>'
       + '</div></div></div>';
   } else {
     nudge.style.display = 'none';
@@ -1221,7 +1222,7 @@ function buildSummary() {
     var kpc = formData._kpcGross ? { gross: formData._kpcGross } : kpcGrossRedemption(formData.speedLoanAmount, formData.speedLoanTerm || 3);
     var maxB = formData._maxBorrow || 0;
     var mainNet = Math.round(maxB / 1.25);
-    var netLiq = mainNet - kpc.gross - 10000;
+    var netLiq = mainNet - kpc.gross - 7000;
     var netClass = netLiq >= 5000 ? 'green' : netLiq >= 0 ? 'amber' : 'red';
     rows.push(['Speed Loan — Net Amount', '\u00a3' + formData.speedLoanAmount.toLocaleString('en-GB'), 'teal']);
     rows.push(['Speed Loan — Term', (formData.speedLoanTerm || 3) + ' months', '']);
@@ -1284,4 +1285,14 @@ function submitForm() {
   //   .catch(() => showSuccess());
 
   // For now, show success after brief delay
-  setTimeout(
+  setTimeout(function() { showSuccess(); }, 1200);
+}
+
+function showSuccess() {
+  document.querySelectorAll('.form-step').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelector('.form-progress').style.display = 'none';
+  document.getElementById('formSuccess').classList.add('show');
+}
+</script>
+</body>
+</html>
