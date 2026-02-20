@@ -1,1 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POSFIN CAPITAL | Private Secured Lending</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --teal: #2EC4B6; --teal-dim: rgba(46,196,182,0.15); --teal-glow: rgba(46,196,182,0.4);
+  --navy: #0A0E1A; --navy-light: #111828; --navy-mid: #1A2035;
+  --white: #F8F9FA; --gray: #8892A4; --gold: #D4A853;
+  --red: #E74C3C; --green: #2ECC71; --amber: #F39C12;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+html { scroll-behavior: smooth; font-size: 16px; }
+body { font-family: var(--sans); background: var(--navy); color: var(--white); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+a { text-decoration: none; color: inherit; }
+body::before {
+  content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1; opacity: 0.4;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 3px; }
+
+/* ═══ NAV ═══ */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1.25rem 3rem; display: flex; align-items: center; justify-content: space-between; background: rgba(10,14,26,0.85); backdrop-filter: blur(20px) saturate(1.5); border-bottom: 1px solid rgba(46,196,182,0.08); transition: all 0.4s; }
+.nav.scrolled { padding: 0.8rem 3rem; background: rgba(10,14,26,0.95); }
+.nav-logo { display: flex; align-items: center; gap: 0.75rem; }
+.nav-logo svg { width: 38px; height: 38px; }
+.nav-logo-text { font-family: var(--sans); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.15em; color: var(--teal); }
+.nav-links { display: flex; gap: 2rem; align-items: center; }
+.nav-links a { font-size: 0.82rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); transition: color 0.3s; }
+.nav-links a:hover { color: var(--teal); }
+.nav-cta { padding: 0.6rem 1.8rem; background: transparent; border: 1px solid var(--teal); color: var(--teal); font-family: var(--sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: all 0.3s; border-radius: 2px; }
+.nav-cta:hover { background: var(--teal); color: var(--navy); }
+.nav-fca { font-family: var(--mono); font-size: 0.65rem; color: var(--gray); opacity: 0.6; }
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; z-index: 1001; }
+.hamburger span { width: 24px; height: 2px; background: var(--teal); transition: all 0.3s; }
+
+/* WhatsApp float */
+.wa-float { position: fixed; bottom: 2rem; right: 2rem; z-index: 998; width: 60px; height: 60px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(37,211,102,0.4); cursor: pointer; transition: all 0.3s; animation: waFloat 3s ease-in-out infinite; }
+.wa-float:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(37,211,102,0.5); animation: none; }
+.wa-float svg { width: 32px; height: 32px; fill: white; }
+@keyframes waFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+/* ═══ HERO ═══ */
+.hero { position: relative; min-height: 100vh; display: flex; align-items: center; padding: 8rem 3rem 4rem; overflow: hidden; }
+.hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 70% 40%, rgba(46,196,182,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 20% 80%, rgba(46,196,182,0.04) 0%, transparent 50%), linear-gradient(180deg, var(--navy) 0%, var(--navy-light) 100%); }
+.hero-grid { position: absolute; inset: 0; opacity: 0.03; background-image: linear-gradient(rgba(46,196,182,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(46,196,182,0.3) 1px, transparent 1px); background-size: 80px 80px; }
+.hero-content { position: relative; max-width: 1400px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 4rem; align-items: center; }
+.hero-tag { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--mono); font-size: 0.72rem; color: var(--teal); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.5rem; padding: 0.4rem 1rem; border: 1px solid rgba(46,196,182,0.2); border-radius: 2px; background: rgba(46,196,182,0.05); animation: fadeSlideUp 0.8s ease both; }
+.hero-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); animation: pulse 2s infinite; }
+.hero-h1 { font-family: var(--serif); font-size: clamp(2.8rem, 5vw, 4.2rem); font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 1.5rem; animation: fadeSlideUp 0.8s 0.15s ease both; }
+.hero-h1 em { font-style: italic; color: var(--teal); }
+.hero-sub { font-size: 1.05rem; color: var(--gray); line-height: 1.7; max-width: 520px; margin-bottom: 2.5rem; animation: fadeSlideUp 0.8s 0.3s ease both; }
+.hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; animation: fadeSlideUp 0.8s 0.45s ease both; }
+
+/* Buttons */
+.btn-primary { padding: 1rem 2.5rem; background: var(--teal); color: var(--navy); font-family: var(--sans); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; border: none; cursor: pointer; border-radius: 2px; transition: all 0.3s; position: relative; overflow: hidden; }
+.btn-primary::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%); transform: translateX(-100%); transition: transform 0.6s; }
+.btn-primary:hover::after { transform: translateX(100%); }
+.btn-primary:hover { box-shadow: 0 0 30px rgba(46,196,182,0.3); transform: translateY(-1px); }
+.btn-secondary { padding: 1rem 2.5rem; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--white); font-family: var(--sans); font-weight: 500; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.3s; }
+.btn-secondary:hover { border-color: var(--teal); color: var(--teal); }
+.btn-whatsapp { padding: 1rem 2.5rem; background: #25D366; color: white; font-family: var(--sans); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; border: none; cursor: pointer; border-radius: 2px; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.6rem; }
+.btn-whatsapp:hover { background: #1DA851; box-shadow: 0 0 25px rgba(37,211,102,0.3); transform: translateY(-1px); }
+.btn-whatsapp svg { width: 20px; height: 20px; fill: white; }
+
+/* Stat cards */
+.hero-right { display: flex; flex-direction: column; gap: 1.5rem; animation: fadeSlideUp 0.8s 0.5s ease both; }
+.stat-card { padding: 1.8rem 2rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; backdrop-filter: blur(10px); transition: all 0.4s; position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--teal); opacity: 0; transition: opacity 0.3s; }
+.stat-card:hover { border-color: rgba(46,196,182,0.2); background: rgba(46,196,182,0.03); transform: translateX(4px); }
+.stat-card:hover::before { opacity: 1; }
+.stat-label { font-family: var(--mono); font-size: 0.68rem; color: var(--teal); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.4rem; }
+.stat-value { font-family: var(--serif); font-size: 2.2rem; font-weight: 600; letter-spacing: -0.02em; }
+.stat-desc { font-size: 0.82rem; color: var(--gray); margin-top: 0.3rem; }
+
+/* ═══ SECTIONS ═══ */
+section { padding: 6rem 3rem; position: relative; }
+.section-inner { max-width: 1400px; margin: 0 auto; }
+.section-tag { font-family: var(--mono); font-size: 0.7rem; color: var(--teal); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.75rem; }
+.section-title { font-family: var(--serif); font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 500; line-height: 1.15; margin-bottom: 1rem; }
+.section-sub { font-size: 1rem; color: var(--gray); max-width: 600px; line-height: 1.7; }
+.divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(46,196,182,0.15) 20%, rgba(46,196,182,0.15) 80%, transparent); }
+
+/* Products */
+.products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3.5rem; }
+.product-card { padding: 3rem; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; background: linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005)); position: relative; overflow: hidden; transition: all 0.5s; }
+.product-card:hover { border-color: rgba(46,196,182,0.25); transform: translateY(-4px); }
+.product-card::after { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(46,196,182,0.04) 0%, transparent 60%); opacity: 0; transition: opacity 0.5s; }
+.product-card:hover::after { opacity: 1; }
+.product-icon { width: 56px; height: 56px; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; position: relative; z-index: 1; }
+.product-icon.speed { background: linear-gradient(135deg, rgba(46,196,182,0.15), rgba(46,196,182,0.05)); }
+.product-icon.main { background: linear-gradient(135deg, rgba(212,168,83,0.15), rgba(212,168,83,0.05)); }
+.product-badge { display: inline-block; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.3rem 0.8rem; border-radius: 2px; margin-bottom: 1rem; position: relative; z-index: 1; }
+.product-badge.speed { background: rgba(46,196,182,0.1); color: var(--teal); border: 1px solid rgba(46,196,182,0.2); }
+.product-badge.main { background: rgba(212,168,83,0.1); color: var(--gold); border: 1px solid rgba(212,168,83,0.2); }
+.product-name { font-family: var(--serif); font-size: 1.8rem; margin-bottom: 0.75rem; position: relative; z-index: 1; }
+.product-desc { color: var(--gray); font-size: 0.92rem; line-height: 1.7; margin-bottom: 2rem; position: relative; z-index: 1; }
+.product-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; position: relative; z-index: 1; }
+.spec-label { font-family: var(--mono); font-size: 0.62rem; color: var(--gray); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.2rem; }
+.spec-value { font-size: 1.15rem; font-weight: 600; }
+.spec-value.teal { color: var(--teal); }
+.spec-value.gold { color: var(--gold); }
+
+/* Steps */
+.steps-track { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; margin-top: 3.5rem; }
+.steps-track::before { content: ''; position: absolute; top: 28px; left: 8%; right: 8%; height: 1px; background: linear-gradient(90deg, var(--teal), rgba(46,196,182,0.3)); }
+.step { text-align: center; padding: 0 1.5rem; position: relative; }
+.step-num { width: 56px; height: 56px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--navy-light); border: 2px solid var(--teal); font-family: var(--mono); font-size: 0.85rem; font-weight: 700; color: var(--teal); margin-bottom: 1.2rem; position: relative; z-index: 1; }
+.step-title { font-family: var(--serif); font-size: 1.1rem; margin-bottom: 0.5rem; }
+.step-desc { font-size: 0.82rem; color: var(--gray); line-height: 1.6; }
+
+/* Testimonials */
+.testimonials-bg { background: linear-gradient(180deg, var(--navy) 0%, var(--navy-light) 50%, var(--navy) 100%); }
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem; }
+.testimonial { padding: 2rem; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; background: rgba(255,255,255,0.015); transition: all 0.3s; }
+.testimonial:hover { border-color: rgba(46,196,182,0.15); }
+.testimonial-stars { color: var(--gold); font-size: 0.85rem; margin-bottom: 1rem; letter-spacing: 2px; }
+.testimonial-text { font-size: 0.88rem; color: var(--gray); line-height: 1.7; margin-bottom: 1.2rem; font-style: italic; }
+.testimonial-author { font-weight: 600; font-size: 0.85rem; }
+.testimonial-role { font-size: 0.75rem; color: var(--gray); margin-top: 0.15rem; }
+
+/* Credentials */
+.credentials-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-top: 3rem; }
+.credential { padding: 2rem; text-align: center; border: 1px solid rgba(255,255,255,0.04); border-radius: 4px; background: rgba(255,255,255,0.01); }
+.credential-value { font-family: var(--serif); font-size: 2rem; font-weight: 600; color: var(--teal); margin-bottom: 0.3rem; }
+.credential-label { font-size: 0.78rem; color: var(--gray); letter-spacing: 0.05em; }
+
+/* ═══════════════════════════════════════ */
+/* ENQUIRY FORM                           */
+/* ═══════════════════════════════════════ */
+.form-section { padding: 6rem 3rem; background: radial-gradient(ellipse 60% 40% at 50% 30%, rgba(46,196,182,0.05) 0%, transparent 60%), var(--navy); }
+.form-container { max-width: 680px; margin: 0 auto; margin-top: 3rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; overflow: hidden; }
+.form-progress { display: flex; padding: 0; background: rgba(0,0,0,0.2); }
+.form-progress-step { flex: 1; padding: 0.9rem 0.5rem; text-align: center; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray); opacity: 0.4; transition: all 0.4s; border-bottom: 2px solid transparent; cursor: default; }
+.form-progress-step.active { opacity: 1; color: var(--teal); border-bottom-color: var(--teal); }
+.form-progress-step.completed { opacity: 0.7; color: var(--green); border-bottom-color: var(--green); }
+.form-body { padding: 2.5rem; }
+.form-step { display: none; animation: fadeIn 0.4s ease; }
+.form-step.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.form-step-title { font-family: var(--serif); font-size: 1.4rem; margin-bottom: 0.4rem; }
+.form-step-sub { font-size: 0.85rem; color: var(--gray); margin-bottom: 2rem; line-height: 1.5; }
+.form-group { margin-bottom: 1.5rem; }
+.form-label { display: block; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); margin-bottom: 0.5rem; }
+.form-input, .form-select { width: 100%; padding: 0.85rem 1rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--white); font-family: var(--sans); font-size: 0.95rem; transition: all 0.3s; outline: none; }
+.form-input::placeholder { color: rgba(255,255,255,0.25); }
+.form-input:focus, .form-select:focus { border-color: var(--teal); background: rgba(46,196,182,0.03); box-shadow: 0 0 0 3px rgba(46,196,182,0.08); }
+.form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%238892A4' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem; }
+.form-select option { background: var(--navy-light); color: var(--white); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+/* Arrears toggle */
+.arrears-toggle { display: flex; gap: 0.8rem; margin-top: 0.3rem; }
+.arrears-btn { padding: 0.5rem 1.2rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--gray); font-family: var(--sans); font-size: 0.85rem; cursor: pointer; transition: all 0.3s; }
+.arrears-btn.selected { background: rgba(46,196,182,0.1); border-color: var(--teal); color: var(--teal); }
+.arrears-btn:hover { border-color: rgba(46,196,182,0.3); }
+.arrears-amount { display: none; margin-top: 1rem; }
+.arrears-amount.show { display: block; animation: fadeIn 0.3s ease; }
+
+/* LTV Indicator */
+.ltv-indicator { margin-top: 1.5rem; padding: 1.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); background: rgba(0,0,0,0.25); display: none; }
+.ltv-indicator.show { display: block; animation: fadeIn 0.4s ease; }
+.ltv-bar-wrap { height: 10px; background: rgba(255,255,255,0.06); border-radius: 5px; margin: 0.8rem 0; overflow: hidden; position: relative; }
+.ltv-bar { height: 100%; border-radius: 5px; transition: all 0.6s ease; width: 0; }
+.ltv-bar.green { background: linear-gradient(90deg, var(--green), #27ae60); }
+.ltv-bar.amber { background: linear-gradient(90deg, var(--amber), #e67e22); }
+.ltv-bar.red { background: linear-gradient(90deg, var(--red), #c0392b); }
+.ltv-marker { position: absolute; top: -4px; width: 2px; height: 18px; background: rgba(255,255,255,0.5); }
+.ltv-marker-label { position: absolute; top: 18px; font-family: var(--mono); font-size: 0.55rem; color: var(--gray); transform: translateX(-50%); }
+.ltv-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; }
+.ltv-label { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em; color: var(--gray); }
+.ltv-value { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; }
+.ltv-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); }
+.ltv-stat-label { font-family: var(--mono); font-size: 0.58rem; color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.2rem; }
+.ltv-stat-value { font-size: 1.1rem; font-weight: 600; }
+.ltv-note { font-size: 0.78rem; color: var(--gray); margin-top: 0.8rem; line-height: 1.5; padding: 0.8rem; background: rgba(255,255,255,0.02); border-radius: 4px; border-left: 3px solid var(--teal); }
+.ltv-note.warn { border-left-color: var(--amber); }
+.ltv-note.danger { border-left-color: var(--red); }
+.ltv-second-note { font-size: 0.75rem; color: var(--gray); margin-top: 0.6rem; opacity: 0.7; font-style: italic; }
+
+/* Form nav */
+.form-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); }
+.form-back { background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--gray); padding: 0.7rem 1.5rem; font-family: var(--sans); font-size: 0.82rem; cursor: pointer; border-radius: 2px; transition: all 0.3s; }
+.form-back:hover { border-color: var(--teal); color: var(--teal); }
+.form-next { background: var(--teal); color: var(--navy); border: none; padding: 0.85rem 2.5rem; font-family: var(--sans); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.3s; }
+.form-next:hover { box-shadow: 0 0 25px rgba(46,196,182,0.3); }
+.form-next:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Summary */
+.summary-grid { display: grid; gap: 0; }
+.summary-row { display: flex; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.88rem; }
+.summary-label { color: var(--gray); }
+.summary-value { font-weight: 600; text-align: right; }
+.summary-value.green { color: var(--green); }
+.summary-value.amber { color: var(--amber); }
+.summary-value.red { color: var(--red); }
+.summary-value.gold { color: var(--gold); }
+.summary-value.teal { color: var(--teal); }
+
+/* Capture badge */
+.capture-badge { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--mono); font-size: 0.6rem; color: var(--green); letter-spacing: 0.1em; text-transform: uppercase; padding: 0.25rem 0.6rem; border: 1px solid rgba(46,204,113,0.2); border-radius: 2px; background: rgba(46,204,113,0.05); margin-bottom: 1.5rem; }
+
+/* Success */
+.form-success { display: none; text-align: center; padding: 3rem 2rem; }
+.form-success.show { display: block; animation: fadeIn 0.5s ease; }
+.success-check { width: 64px; height: 64px; border-radius: 50%; background: rgba(46,204,113,0.1); border: 2px solid var(--green); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; font-size: 1.5rem; color: var(--green); }
+.success-title { font-family: var(--serif); font-size: 1.6rem; margin-bottom: 0.5rem; }
+.success-text { color: var(--gray); font-size: 0.92rem; line-height: 1.7; max-width: 420px; margin: 0 auto; }
+
+/* CTA */
+.cta-section { text-align: center; padding: 8rem 3rem; background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(46,196,182,0.08) 0%, transparent 60%), var(--navy); }
+.cta-title { font-family: var(--serif); font-size: clamp(2.2rem, 4vw, 3.2rem); font-weight: 500; margin-bottom: 1rem; }
+.cta-title em { font-style: italic; color: var(--teal); }
+.cta-sub { color: var(--gray); font-size: 1.05rem; max-width: 550px; margin: 0 auto 2.5rem; line-height: 1.7; }
+.cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.cta-note { font-family: var(--mono); font-size: 0.68rem; color: var(--gray); margin-top: 2rem; opacity: 0.6; }
+
+/* Footer */
+.footer { padding: 4rem 3rem 2rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.3); }
+.footer-inner { max-width: 1400px; margin: 0 auto; }
+.footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 3rem; }
+.footer-brand-text { font-size: 0.85rem; color: var(--gray); line-height: 1.7; margin-top: 1rem; max-width: 320px; }
+.footer-heading { font-family: var(--mono); font-size: 0.68rem; color: var(--teal); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+.footer-links { list-style: none; }
+.footer-links li { margin-bottom: 0.6rem; }
+.footer-links a { font-size: 0.85rem; color: var(--gray); transition: color 0.3s; }
+.footer-links a:hover { color: var(--teal); }
+.footer-bottom { padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.footer-legal { font-size: 0.72rem; color: var(--gray); opacity: 0.5; max-width: 700px; line-height: 1.6; }
+.footer-copy { font-size: 0.75rem; color: var(--gray); opacity: 0.4; }
+
+/* Speed Loan Amount Buttons */
+.speed-amt-btn { padding: 0.6rem 1.4rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; color: var(--gray); font-family: var(--mono); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; transition: all 0.3s; }
+.speed-amt-btn:hover { border-color: rgba(46,196,182,0.4); color: var(--teal); background: rgba(46,196,182,0.05); }
+.speed-amt-btn.selected { background: rgba(46,196,182,0.12); border-color: var(--teal); color: var(--teal); box-shadow: 0 0 12px rgba(46,196,182,0.15); }
+.speed-amt-btn.disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; border-color: rgba(255,255,255,0.06); }
+.speed-amt-btn .btn-sub { display: block; font-size: 0.58rem; font-weight: 400; letter-spacing: 0.02em; margin-top: 2px; opacity: 0.7; }
+.speed-scenario-btn:hover { border-color: rgba(46,196,182,0.3) !important; background: rgba(46,196,182,0.03) !important; }
+.speed-scenario-btn.selected { border-color: var(--teal) !important; background: rgba(46,196,182,0.06) !important; box-shadow: 0 0 15px rgba(46,196,182,0.1); }
+
+/* Animations */
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.reveal { opacity: 0; transform: translateY(30px); transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* Mobile nav */
+.mobile-nav { position: fixed; inset: 0; background: rgba(10,14,26,0.98); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(20px); }
+.mobile-nav.open { opacity: 1; pointer-events: all; }
+.mobile-nav a { font-family: var(--serif); font-size: 1.8rem; color: var(--white); transition: color 0.3s; }
+.mobile-nav a:hover { color: var(--teal); }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .hero-content { grid-template-columns: 1fr; gap: 3rem; }
+  .hero-right { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .products-grid { grid-template-columns: 1fr; }
+  .steps-track { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .steps-track::before { display: none; }
+  .testimonials-grid { grid-template-columns: 1fr; }
+  .credentials-grid { grid-template-columns: 1fr 1fr; }
+  .footer-top { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  .nav-fca { display: none; }
+  .hamburger { display: flex; }
+  section, .form-section { padding: 4rem 1.5rem; }
+  .hero { padding: 7rem 1.5rem 3rem; }
+  .hero-right { grid-template-columns: 1fr; }
+  .stat-value { font-size: 1.8rem; }
+  .steps-track { grid-template-columns: 1fr; gap: 2rem; }
+  .step { text-align: left; display: flex; gap: 1rem; align-items: flex-start; padding: 0; }
+  .step-num { flex-shrink: 0; width: 44px; height: 44px; font-size: 0.75rem; }
+  .credentials-grid { grid-template-columns: 1fr 1fr; }
+  .footer-top { grid-template-columns: 1fr; gap: 2rem; }
+  .product-specs { grid-template-columns: 1fr; }
+  .cta-section { padding: 5rem 1.5rem; }
+  .form-body { padding: 1.5rem; }
+  .form-row { grid-template-columns: 1fr; }
+  .ltv-stats { grid-template-columns: 1fr; gap: 0.5rem; }
+  .wa-float { bottom: 1.2rem; right: 1.2rem; width: 52px; height: 52px; }
+  .wa-float svg { width: 28px; height: 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- WhatsApp Float -->
+<a class="wa-float" href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27m%20interested%20in%20a%20secured%20loan.%20Can%20you%20help%3F" target="_blank" title="Chat on WhatsApp">
+  <svg viewBox="0 0 32 32"><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.58 2.14 8.01L0 32l8.19-2.15A15.89 15.89 0 0016 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.27 19.32c-.4-.2-2.36-1.16-2.72-1.3-.37-.13-.63-.2-.9.2s-1.03 1.3-1.27 1.56c-.23.27-.47.3-.87.1-.4-.2-1.68-.62-3.2-1.98-1.18-1.05-1.98-2.35-2.21-2.75-.23-.4-.02-.61.18-.81.18-.18.4-.47.6-.7.2-.23.27-.4.4-.67.13-.27.07-.5-.03-.7-.1-.2-.9-2.17-1.23-2.97-.33-.78-.66-.67-.9-.69-.23-.01-.5-.01-.77-.01-.27 0-.7.1-1.07.5-.37.4-1.4 1.37-1.4 3.33s1.43 3.87 1.63 4.13c.2.27 2.82 4.3 6.83 6.03.96.41 1.7.66 2.28.84.96.3 1.83.26 2.52.16.77-.12 2.36-.96 2.69-1.89.33-.93.33-1.73.23-1.89-.1-.17-.37-.27-.77-.47z"/></svg>
+</a>
+
+<!-- Nav -->
+<nav class="nav" id="nav">
+  <div class="nav-logo">
+      <img src="logo(4).png" alt="Company Logo" style="width:150px; height:auto; display:block;">
+  </div>
+  <div class="nav-links">
+    <a href="#products">Loans</a>
+    <a href="#process">Process</a>
+    <a href="#testimonials">Reviews</a>
+    <a href="#enquiry">Enquire</a>
+    <span class="nav-fca">FCA: 913022</span>
+    <button class="nav-cta" onclick="document.getElementById('enquiry').scrollIntoView({behavior:'smooth'})">Apply Now</button>
+  </div>
+  <div class="hamburger" onclick="document.getElementById('mobileNav').classList.toggle('open')"><span></span><span></span><span></span></div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+  <a href="#products" onclick="this.parentElement.classList.remove('open')">Loans</a>
+  <a href="#process" onclick="this.parentElement.classList.remove('open')">Process</a>
+  <a href="#testimonials" onclick="this.parentElement.classList.remove('open')">Reviews</a>
+  <a href="#enquiry" onclick="this.parentElement.classList.remove('open')">Enquire</a>
+  <button class="btn-primary" onclick="document.getElementById('mobileNav').classList.remove('open');document.getElementById('enquiry').scrollIntoView({behavior:'smooth'})">Apply Now</button>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-left">
+      <div class="hero-tag"><span class="dot"></span> FCA Authorised &amp; Regulated</div>
+      <h1 class="hero-h1">Private Secured<br>Lending, <em>Delivered<br>at Speed</em></h1>
+      <p class="hero-sub">Speed Loans from £26k funded in days. Main Loans from £100k to £5m. Secured against UK residential property with zero monthly repayments.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="document.getElementById('enquiry').scrollIntoView({behavior:'smooth'})">Start Your Enquiry</button>
+        <a class="btn-whatsapp" href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27m%20interested%20in%20a%20secured%20loan.%20Can%20you%20help%3F" target="_blank">
+          <svg viewBox="0 0 32 32" style="width:20px;height:20px;fill:white"><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.58 2.14 8.01L0 32l8.19-2.15A15.89 15.89 0 0016 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.27 19.32c-.4-.2-2.36-1.16-2.72-1.3-.37-.13-.63-.2-.9.2s-1.03 1.3-1.27 1.56c-.23.27-.47.3-.87.1-.4-.2-1.68-.62-3.2-1.98-1.18-1.05-1.98-2.35-2.21-2.75-.23-.4-.02-.61.18-.81.18-.18.4-.47.6-.7.2-.23.27-.4.4-.67.13-.27.07-.5-.03-.7-.1-.2-.9-2.17-1.23-2.97-.33-.78-.66-.67-.9-.69-.23-.01-.5-.01-.77-.01-.27 0-.7.1-1.07.5-.37.4-1.4 1.37-1.4 3.33s1.43 3.87 1.63 4.13c.2.27 2.82 4.3 6.83 6.03.96.41 1.7.66 2.28.84.96.3 1.83.26 2.52.16.77-.12 2.36-.96 2.69-1.89.33-.93.33-1.73.23-1.89-.1-.17-.37-.27-.77-.47z"/></svg>
+          WhatsApp Us
+        </a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="stat-card"><div class="stat-label">Speed Loan</div><div class="stat-value">3–5 Days</div><div class="stat-desc">Funds in your account</div></div>
+      <div class="stat-card"><div class="stat-label">Main Loan LTV</div><div class="stat-value">Up to 75%</div><div class="stat-desc">1st &amp; 2nd charge</div></div>
+      <div class="stat-card"><div class="stat-label">Loan Range</div><div class="stat-value">£26k – £5m</div><div class="stat-desc">Residential property secured</div></div>
+      <div class="stat-card"><div class="stat-label">Repayments</div><div class="stat-value">Zero Monthly</div><div class="stat-desc">Interest rolled up to term end</div></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ PRODUCTS ═══ -->
+<section id="products">
+  <div class="section-inner">
+    <div class="section-tag reveal">Loan Options</div>
+    <h2 class="section-title reveal">Two products. One objective:<br><em style="font-style:italic;color:var(--teal)">get you funded.</em></h2>
+    <p class="section-sub reveal">Choose the product that fits your timeline. Both secured against UK residential property with interest rolled up — no monthly payments.</p>
+    <div class="products-grid">
+      <div class="product-card reveal">
+        <div class="product-icon speed"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <div class="product-badge speed">Direct Lender</div>
+        <h3 class="product-name">Speed Loan</h3>
+        <p class="product-desc">The fastest route to capital under £100k. Funded from our private lending book in 3–5 business days with zero upfront costs. Ideal for auction purchases, chain breaks, urgent capital needs, and borrowers who need speed without the overhead of a full bridging facility.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem;position:relative;z-index:1;">
+          <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--green);background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);padding:0.3rem 0.7rem;border-radius:2px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2ECC71" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Zero Upfront Costs
+          </span>
+          <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--teal);background:rgba(46,196,182,0.08);border:1px solid rgba(46,196,182,0.2);padding:0.3rem 0.7rem;border-radius:2px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Rollover Available
+          </span>
+        </div>
+        <div class="product-specs">
+          <div><div class="spec-label">Loan Size</div><div class="spec-value teal">£26k – £100k</div></div>
+          <div><div class="spec-label">Funded In</div><div class="spec-value teal">3–5 Days</div></div>
+          <div><div class="spec-label">LTV</div><div class="spec-value teal">Up to 50%</div></div>
+          <div><div class="spec-label">Term</div><div class="spec-value teal">3–6 Months</div></div>
+          <div><div class="spec-label">Rollover</div><div class="spec-value teal">Yes, subject to LTV</div></div>
+          <div><div class="spec-label">Charges</div><div class="spec-value teal">1st or 2nd</div></div>
+          <div><div class="spec-label">Repayments</div><div class="spec-value teal">None (Rolled Up)</div></div>
+          <div><div class="spec-label">Upfront Costs</div><div class="spec-value teal" style="color:var(--green)">£0 — Zero</div></div>
+        </div>
+      </div>
+      <div class="product-card reveal">
+        <div class="product-icon main"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D4A853" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div>
+        <div class="product-badge main">Brokered</div>
+        <h3 class="product-name">Main Loan</h3>
+        <p class="product-desc">Facilities from £100k brokered through our panel of specialist lenders. Completion typically in 10–21 days. Competitive rates for property investment, refurbishment, development, or business capital. Bullet repayment at term end. Need less than £100k? Our Speed Loan is the faster, zero-upfront-cost route.</p>
+        <div class="product-specs">
+          <div><div class="spec-label">Loan Size</div><div class="spec-value gold">£100k – £5m</div></div>
+          <div><div class="spec-label">Completion</div><div class="spec-value gold">From 10 Days</div></div>
+          <div><div class="spec-label">LTV</div><div class="spec-value gold">Up to 75%</div></div>
+          <div><div class="spec-label">Term</div><div class="spec-value gold">12–24 Months</div></div>
+          <div><div class="spec-label">Charges</div><div class="spec-value gold">1st or 2nd</div></div>
+          <div><div class="spec-label">Repayments</div><div class="spec-value gold">None (Rolled Up)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ PROCESS ═══ -->
+<section id="process">
+  <div class="section-inner">
+    <div class="section-tag reveal">The Process</div>
+    <h2 class="section-title reveal">From enquiry to funded.<br><em style="font-style:italic;color:var(--teal)">No wasted time.</em></h2>
+    <p class="section-sub reveal">We've stripped the complexity out of bridging finance. Four steps between you and your capital.</p>
+    <div class="steps-track reveal">
+      <div class="step"><div class="step-num">01</div><div><div class="step-title">Quick Enquiry</div><div class="step-desc">Complete our online qualification form. We assess your property, equity position, and timeline immediately.</div></div></div>
+      <div class="step"><div class="step-num">02</div><div><div class="step-title">Terms Offered</div><div class="step-desc">We present clear terms — loan amount, rate, fees, and timeline. All costs disclosed upfront. No surprises.</div></div></div>
+      <div class="step"><div class="step-num">03</div><div><div class="step-title">Legals &amp; Valuation</div><div class="step-desc">Our solicitors handle the legal work. We manage the entire process — title, searches, and valuation — on your behalf.</div></div></div>
+      <div class="step"><div class="step-num">04</div><div><div class="step-title">Funds Released</div><div class="step-desc">Loan completes and funds transfer. Speed Loans in 3–5 days. Main Loans from 10 days.</div></div></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ CREDENTIALS ═══ -->
+<section>
+  <div class="section-inner">
+    <div class="credentials-grid reveal">
+      <div class="credential"><div class="credential-value">100+</div><div class="credential-label">5-Star Reviews</div></div>
+      <div class="credential"><div class="credential-value">FCA</div><div class="credential-label">Authorised &amp; Regulated</div></div>
+      <div class="credential"><div class="credential-value">15 Days</div><div class="credential-label">Fastest Main Loan Completion</div></div>
+      <div class="credential"><div class="credential-value">£5m</div><div class="credential-label">Maximum Facility</div></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section id="testimonials" class="testimonials-bg">
+  <div class="section-inner">
+    <div class="section-tag reveal">Client Reviews</div>
+    <h2 class="section-title reveal">Trusted by borrowers <em style="font-style:italic;color:var(--teal)">across the UK.</em></h2>
+    <div class="testimonials-grid reveal">
+      <div class="testimonial"><div class="testimonial-stars">★ ★ ★ ★ ★</div><div class="testimonial-text">"Outstanding service and expertise. From the first consultation, they demonstrated deep industry knowledge and a genuine commitment to finding the best financial solution for my needs."</div><div class="testimonial-author">Bamboo House</div><div class="testimonial-role">Property Investor</div></div>
+      <div class="testimonial"><div class="testimonial-stars">★ ★ ★ ★ ★</div><div class="testimonial-text">"Fast to reply to calls and messages. Very clear about the process, keeping it transparent on the status of the application and lender requirements. Highly recommended."</div><div class="testimonial-author">Sasha Faraday</div><div class="testimonial-role">Business Owner</div></div>
+      <div class="testimonial"><div class="testimonial-stars">★ ★ ★ ★ ★</div><div class="testimonial-text">"Byron is hardworking, thorough and extremely supportive. He will never fail on making sure your funds get through to you as quickly as possible. Excellent service."</div><div class="testimonial-author">Donna Johnson</div><div class="testimonial-role">Borrower</div></div>
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- ═══ ENQUIRY FORM ═══ -->
+<!-- ═══════════════════════════════════════ -->
+<section class="form-section" id="enquiry">
+  <div class="section-inner" style="text-align:center">
+    <div class="section-tag reveal">Get Started</div>
+    <h2 class="section-title reveal" style="margin:0 auto">See if you qualify in <em style="font-style:italic;color:var(--teal)">under 2 minutes.</em></h2>
+    <p class="section-sub reveal" style="margin:0 auto;text-align:center">Complete the quick assessment below. We'll review your details and come back to you with options — usually within hours.</p>
+  </div>
+
+  <div class="form-container reveal" id="formContainer">
+    <div class="form-progress">
+      <div class="form-progress-step active" data-step="1">1. Your Details</div>
+      <div class="form-progress-step" data-step="2">2. Property</div>
+      <div class="form-progress-step" data-step="3">3. Loan Needs</div>
+      <div class="form-progress-step" data-step="4">4. Review</div>
+    </div>
+
+    <div class="form-body">
+
+      <!-- ═══ STEP 1: CONTACT (CAPTURE GATE) ═══ -->
+      <div class="form-step active" data-step="1">
+        <div class="form-step-title">Let's start with your details</div>
+        <div class="form-step-sub">We'll use these to get back to you with options. Your information is kept strictly confidential.</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">First Name *</label><input class="form-input" type="text" id="firstName" placeholder="First name" required></div>
+          <div class="form-group"><label class="form-label">Last Name *</label><input class="form-input" type="text" id="lastName" placeholder="Last name" required></div>
+        </div>
+        <div class="form-group"><label class="form-label">Mobile Number *</label><input class="form-input" type="tel" id="mobile" placeholder="07xxx xxxxxx" required></div>
+        <div class="form-group"><label class="form-label">Email Address *</label><input class="form-input" type="email" id="email" placeholder="you@email.com" required></div>
+        <div class="form-group">
+          <label class="form-label">Preferred Contact Method</label>
+          <select class="form-select" id="contactPref"><option value="whatsapp">WhatsApp</option><option value="phone">Phone Call</option><option value="email">Email</option><option value="sms">SMS</option></select>
+        </div>
+
+        <!-- ★★★ NEW: CREDIT PROFILE SELF-DECLARATION ★★★ -->
+        <div class="form-group" id="credit-profile-group">
+          <label class="form-label">Credit Profile (Self-Declaration) *</label>
+          <p style="font-size:0.78rem;color:var(--gray);margin-bottom:0.6rem;line-height:1.5;">Select the option that best describes your situation. This helps us match you to the right product — all profiles are welcome.</p>
+          <select class="form-select" id="creditProfile" required>
+            <option value="" disabled selected>— Please select —</option>
+            <option value="excellent">Excellent — Clean credit, no defaults or CCJs</option>
+            <option value="good">Good — Generally clean, minor historic issues now resolved</option>
+            <option value="fair">Fair — Some defaults, CCJs or missed payments in last 24 months</option>
+            <option value="adverse">Adverse / Complex — Active CCJs, IVA, bankruptcy or multiple defaults</option>
+            <option value="unsure">Not sure — I haven't checked recently</option>
+          </select>
+        </div>
+        <!-- ★★★ END CREDIT PROFILE ★★★ -->
+
+        <div class="form-nav"><div></div><button class="form-next" onclick="nextStep(1)">Next: Property Details →</button></div>
+      </div>
+
+      <!-- ═══ STEP 2: PROPERTY & DEBT ═══ -->
+      <div class="form-step" data-step="2">
+        <div class="capture-badge">✓ Contact details captured</div>
+        <div class="form-step-title">Tell us about the property</div>
+        <div class="form-step-sub">This helps us assess your equity position and what you could borrow.</div>
+
+        <div class="form-group"><label class="form-label">Property Address (or Postcode) *</label><input class="form-input" type="text" id="propertyAddress" placeholder="e.g. 12 High Street, London SW1A 1AA"></div>
+
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Estimated Property Value (£) *</label><input class="form-input" type="text" id="propValue" placeholder="e.g. 350,000" oninput="formatCurrency(this);calcLTV()"></div>
+          <div class="form-group"><label class="form-label">Property Type</label>
+            <select class="form-select" id="propType"><option value="">Select...</option><option value="house">House</option><option value="flat">Flat / Apartment</option><option value="bungalow">Bungalow</option><option value="hmo">HMO</option><option value="semi-commercial">Semi-Commercial</option><option value="other">Other</option></select>
+          </div>
+        </div>
+
+        <div class="form-group"><label class="form-label">Current 1st Mortgage Balance (£) *</label><input class="form-input" type="text" id="mortgage1" placeholder="e.g. 150,000 (enter 0 if no mortgage)" oninput="formatCurrency(this);calcLTV()"></div>
+
+        <!-- ARREARS -->
+        <div class="form-group">
+          <label class="form-label">Are you in arrears on the 1st mortgage?</label>
+          <div class="arrears-toggle">
+            <button type="button" class="arrears-btn" onclick="setArrears(false)">No</button>
+            <button type="button" class="arrears-btn" onclick="setArrears(true)">Yes</button>
+          </div>
+          <div class="arrears-amount" id="arrearsAmount">
+            <label class="form-label" style="margin-top:0.5rem">Arrears Amount (£)</label>
+            <input class="form-input" type="text" id="arrearsValue" placeholder="e.g. 5,000" oninput="formatCurrency(this);calcLTV()">
+            <p style="font-size:0.75rem;color:var(--gray);margin-top:0.4rem;opacity:0.7">We calculate your LTV using the clean mortgage balance (excluding arrears). Arrears will be disclosed separately to the lender.</p>
+          </div>
+        </div>
+
+        <!-- Existing Secured Charges -->
+        <div class="form-group">
+          <label class="form-label">Any Existing 2nd, 3rd or Other Secured Charges? (£ total)</label>
+          <input class="form-input" type="text" id="mortgage2" placeholder="e.g. 0 (enter 0 if none — include ALL secured debts)" oninput="formatCurrency(this);calcLTV()">
+          <p style="font-size:0.73rem;color:var(--gray);margin-top:0.4rem;line-height:1.5;opacity:0.7;">Include all existing secured charges — 2nd, 3rd, 4th charges, charging orders, restriction notices, and any other registered interests against the property title.</p>
+        </div>
+
+        <!-- ═══ MANDATORY REDEMPTION NOTICE ═══ -->
+        <div id="redemptionNotice" style="display:none;margin-bottom:1.5rem;padding:1rem;border-radius:4px;border-left:3px solid var(--amber);background:rgba(243,156,18,0.04);animation:fadeIn 0.4s ease;">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F39C12" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+              <span style="font-size:0.85rem;font-weight:600;color:var(--amber);">Existing charges must be redeemed</span>
+              <p style="font-size:0.78rem;color:var(--gray);margin-top:0.3rem;line-height:1.6;">All UK lenders require a <strong style="color:var(--white);">clean 2nd charge position</strong>. This means any existing subordinate charges (2nd, 3rd, 4th etc.), arrears, charging orders, and undertakings must be <strong style="color:var(--white);">redeemed in full from the new loan proceeds</strong> at completion. Our solicitors will handle the redemption process — the costs come from the loan, not from you — but you should factor these into the amount you need to borrow.</p>
+              <div id="redemptionCalc" style="margin-top:0.8rem;padding:0.7rem;background:rgba(0,0,0,0.15);border-radius:3px;font-size:0.78rem;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;">
+                  <span style="color:var(--gray);">Existing charges to redeem</span>
+                  <span style="font-weight:600;color:var(--amber);" id="redemptionCharges">£0</span>
+                </div>
+                <div style="display:none;justify-content:space-between;margin-bottom:0.3rem;" id="redemptionArrearsRow">
+                  <span style="color:var(--gray);">Arrears to clear</span>
+                  <span style="font-weight:600;color:var(--amber);" id="redemptionArrears">£0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.06);padding-top:0.3rem;">
+                  <span style="font-weight:600;color:var(--white);">Total redemption from loan proceeds</span>
+                  <span style="font-weight:700;color:var(--amber);" id="redemptionTotal">£0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LTV INDICATOR -->
+        <div class="ltv-indicator" id="ltvIndicator">
+          <div class="ltv-row">
+            <div><div class="ltv-label">CURRENT LTV (CLEAN BALANCE)</div><div class="ltv-value" id="ltvValue">0%</div></div>
+            <div style="text-align:right"><div class="ltv-label">MAX BORROWABLE (70% LTV)</div><div class="ltv-value" id="borrowCapacity" style="color:var(--teal)">£0</div></div>
+          </div>
+          <div class="ltv-bar-wrap">
+            <div class="ltv-bar" id="ltvBar"></div>
+            <div class="ltv-marker" style="left:71.4%" title="70% LTV limit"></div>
+            <div class="ltv-marker-label" style="left:71.4%">70%</div>
+          </div>
+          <div class="ltv-stats">
+            <div><div class="ltv-stat-label">Clean 1st Mortgage</div><div class="ltv-stat-value" id="cleanBalance" style="color:var(--white)">£0</div></div>
+            <div><div class="ltv-stat-label">Total Secured Debt</div><div class="ltv-stat-value" id="totalDebt" style="color:var(--white)">£0</div></div>
+            <div><div class="ltv-stat-label">Total Equity</div><div class="ltv-stat-value" id="totalEquity" style="color:var(--green)">£0</div></div>
+          </div>
+          <div class="ltv-note" id="ltvNote"></div>
+          <div class="ltv-second-note" id="secondChargeNote" style="display:none;font-size:0.75rem;color:var(--amber);font-style:italic;">⚠ Existing secured charges and arrears will be redeemed from the new loan proceeds at completion. This is a mandatory requirement from all UK lenders.</div>
+        </div>
+
+        <div class="form-nav"><button class="form-back" onclick="prevStep(2)">← Back</button><button class="form-next" onclick="nextStep(2)">Next: Loan Needs →</button></div>
+      </div>
+
+      <!-- ═══ STEP 3: LOAN REQUIREMENT ═══ -->
+      <div class="form-step" data-step="3">
+        <div class="capture-badge">✓ Contact &amp; property captured</div>
+        <div class="form-step-title">What do you need?</div>
+        <div class="form-step-sub">Tell us about the loan you're looking for so we can match you with the right product.</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Amount to Borrow (£) *</label><input class="form-input" type="text" id="loanAmount" placeholder="e.g. 50,000" oninput="formatCurrency(this);checkLoanRouting()"></div>
+          <div class="form-group"><label class="form-label">How Quickly Do You Need It?</label>
+            <select class="form-select" id="timeframe"><option value="">Select...</option><option value="urgent">ASAP / Under 1 Week</option><option value="2weeks">Within 2 Weeks</option><option value="1month">Within 1 Month</option><option value="flexible">Flexible / No Rush</option></select>
+          </div>
+        </div>
+
+        <!-- ═══ SMART ROUTING NUDGE ═══ -->
+        <div id="loanRoutingNudge" style="display:none;margin-bottom:1.5rem;animation:fadeIn 0.4s ease;"></div>
+
+        <!-- ★★★ ENHANCED: BACK-TO-BACK WITH SPEED LOAN SELECTOR + LIQUIDITY VALIDATION ★★★ -->
+        <div class="form-group" style="margin-bottom:1.8rem">
+          <label class="form-label">Loan Product Interest</label>
+          <div id="btbCard" style="padding:1.2rem 1.4rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.1);border-radius:4px;cursor:pointer;transition:all 0.3s;" onclick="toggleBtB()">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <input type="checkbox" id="backToBack" name="back_to_back" value="yes" onclick="event.stopPropagation();toggleBtB()" style="width:18px;height:18px;accent-color:var(--teal);margin-top:2px;cursor:pointer;flex-shrink:0;">
+              <div>
+                <span style="font-size:0.92rem;font-weight:600;color:var(--white);">I'm interested in a Back-to-Back option</span>
+                <span style="display:inline-block;font-family:var(--mono);font-size:0.55rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal);background:rgba(46,196,182,0.1);border:1px solid rgba(46,196,182,0.2);padding:0.2rem 0.6rem;border-radius:2px;margin-left:8px;vertical-align:middle;">Speed + Main</span>
+              </div>
+            </div>
+            <div style="margin-top:10px;padding-left:30px;font-size:0.8rem;color:var(--gray);line-height:1.65;">
+              We can secure your <strong style="color:var(--white);">Main Loan</strong> terms first for peace of mind, then fund a <strong style="color:var(--white);">Speed Loan</strong> to bridge you while the main facility completes. The Main Loan <strong style="color:var(--white);">automatically repays</strong> the Speed Loan — no double debt. Additional costs apply.
+            </div>
+          </div>
+
+          <!-- ═══ SPEED LOAN AMOUNT SELECTOR (hidden until B2B ticked) ═══ -->
+          <div id="speedLoanSelector" style="display:none;margin-top:1rem;padding:1.4rem;border:1px solid rgba(46,196,182,0.15);border-radius:6px;background:rgba(46,196,182,0.03);animation:fadeIn 0.4s ease;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.8rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal);">Configure Speed Loan</span>
+            </div>
+            <p style="font-size:0.78rem;color:var(--gray);margin-bottom:1rem;line-height:1.5;">Select how much you need upfront and your situation below. We'll show you the most cost-effective option.</p>
+
+            <!-- ═══ SPEED LOAN USP BADGES ═══ -->
+            <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.2rem;padding:0.9rem 1rem;background:rgba(46,204,113,0.04);border:1px solid rgba(46,204,113,0.12);border-radius:4px;">
+              <div style="display:flex;align-items:flex-start;gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2ECC71" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><polyline points="20 6 9 17 4 12"/></svg>
+                <div>
+                  <span style="font-size:0.85rem;font-weight:600;color:var(--green);">Zero upfront costs on Speed Loans</span>
+                  <p style="font-size:0.73rem;color:var(--gray);margin-top:0.2rem;line-height:1.5;">All fees, interest, and charges are deducted from the loan at drawdown — nothing to pay out of pocket. Unlike a Main Loan which typically requires a £500 broker advance, solicitor costs, and valuation fees before completion.</p>
+                </div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <div>
+                  <span style="font-size:0.85rem;font-weight:600;color:var(--teal);">Rollover available at term end</span>
+                  <p style="font-size:0.73rem;color:var(--gray);margin-top:0.2rem;line-height:1.5;">Need more time? Speed Loans can be rolled over for an additional 3 or 6 months at the end of your term, subject to equity remaining within 50% LTV. No re-application — just an extension.</p>
+                </div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A853" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><path d="M13 17l5-5-5-5"/><path d="M6 17l5-5-5-5"/></svg>
+                <div>
+                  <span style="font-size:0.85rem;font-weight:600;color:var(--gold);">Graduate to a Main Loan</span>
+                  <p style="font-size:0.73rem;color:var(--gray);margin-top:0.2rem;line-height:1.5;">Borrowing under £100k? Start with a Speed Loan, then transition to a brokered Main Loan facility when you're ready for a longer-term solution. We handle the entire refinance — you're already on our book.</p>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+              <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-bottom:0.5rem;">Speed Loan Amount</div>
+              <div id="speedRedemptionContext" style="display:none;margin-bottom:0.6rem;padding:0.6rem 0.8rem;border-radius:3px;background:rgba(243,156,18,0.05);border:1px solid rgba(243,156,18,0.15);font-size:0.75rem;color:var(--amber);line-height:1.5;"></div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.6rem;" id="speedAmountGrid"></div>
+              <div id="speedMinNote" style="display:none;margin-top:0.5rem;font-size:0.72rem;color:var(--gray);line-height:1.5;"></div>
+            </div>
+
+            <div style="margin-bottom:0.2rem;">
+              <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-bottom:0.5rem;">What's your situation?</div>
+              <div style="display:flex;flex-direction:column;gap:0.6rem;" id="speedTermGrid">
+                <div class="speed-scenario-btn" data-term="3" onclick="selectSpeedTerm(this)" style="padding:0.8rem 1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:4px;cursor:pointer;transition:all 0.3s;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                      <span style="font-size:0.88rem;font-weight:600;color:var(--white);">Refinancing to a Main Loan</span>
+                      <span style="display:inline-block;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.1em;color:var(--green);background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.2);padding:0.15rem 0.5rem;border-radius:2px;margin-left:8px;vertical-align:middle;">RECOMMENDED</span>
+                    </div>
+                    <span style="font-family:var(--mono);font-size:0.75rem;font-weight:600;color:var(--teal);">3 months</span>
+                  </div>
+                  <p style="font-size:0.75rem;color:var(--gray);margin-top:0.4rem;line-height:1.5;">Best value. We process your Main Loan refinance within 3 months, which automatically repays the Speed Loan. Total combined term: <strong style="color:var(--white);">3 + 12 = 15 months</strong> of facility cover. Also the ideal route for loans under £100k that need longer-term finance — start with Speed, graduate to Main.</p>
+                </div>
+                <div class="speed-scenario-btn" data-term="6" onclick="selectSpeedTerm(this)" style="padding:0.8rem 1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:4px;cursor:pointer;transition:all 0.3s;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                      <span style="font-size:0.88rem;font-weight:600;color:var(--white);">Selling / Short-term exit</span>
+                    </div>
+                    <span style="font-family:var(--mono);font-size:0.75rem;font-weight:600;color:var(--gold);">6 months</span>
+                  </div>
+                  <p style="font-size:0.75rem;color:var(--gray);margin-top:0.4rem;line-height:1.5;">If you're selling the property or have another defined exit, 6 months gives you time without needing a second loan. Higher cost but simpler structure — <strong style="color:var(--white);">one loan, one exit</strong>. Can be rolled over for a further 3–6 months if needed (subject to LTV).</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- ═══ COST COMPARISON (appears once amount selected) ═══ -->
+            <div id="speedCostCompare" style="display:none;margin-top:1rem;padding:0.8rem 1rem;border-radius:4px;background:rgba(0,0,0,0.15);border:1px solid rgba(255,255,255,0.04);">
+              <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;color:var(--gray);text-transform:uppercase;margin-bottom:0.5rem;">Cost Comparison — Transparency</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+                <div style="padding:0.8rem;border-radius:3px;border:1px solid rgba(46,196,182,0.35);background:rgba(46,196,182,0.06);position:relative;">
+                  <div style="position:absolute;top:-8px;right:8px;font-family:var(--mono);font-size:0.5rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);background:var(--teal);padding:0.15rem 0.5rem;border-radius:2px;font-weight:700;">Recommended</div>
+                  <div style="font-size:0.68rem;color:var(--teal);font-weight:600;margin-bottom:0.3rem;">3 MONTHS (B2B)</div>
+                  <div style="font-size:1.2rem;font-weight:700;color:var(--teal);" id="cost3mGross">—</div>
+                  <div style="font-size:0.65rem;color:var(--teal);margin-top:0.15rem;opacity:0.7;">total redemption cost</div>
+                  <div style="font-size:0.65rem;color:var(--teal);margin-top:0.3rem;" id="cost3mFees">—</div>
+                </div>
+                <div style="padding:0.8rem;border-radius:3px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.015);opacity:0.7;">
+                  <div style="font-size:0.68rem;color:var(--gray);font-weight:600;margin-bottom:0.3rem;">6 MONTHS (STANDALONE)</div>
+                  <div style="font-size:1.1rem;font-weight:700;color:var(--gray);" id="cost6mGross">—</div>
+                  <div style="font-size:0.65rem;color:var(--gray);margin-top:0.15rem;opacity:0.6;">total redemption cost</div>
+                  <div style="font-size:0.65rem;color:var(--gray);margin-top:0.3rem;" id="cost6mFees">—</div>
+                </div>
+              </div>
+              <div style="font-size:0.72rem;color:var(--amber);margin-top:0.6rem;text-align:center;" id="costSavingNote">—</div>
+            </div>
+
+            <!-- ═══ KPC GROSS REDEMPTION + NET LIQUIDITY VALIDATION ═══ -->
+            <div id="speedLiquidityCheck" style="display:none;margin-top:1rem;padding:1rem;border-radius:4px;border-left:3px solid var(--teal);background:rgba(0,0,0,0.2);font-size:0.78rem;line-height:1.6;">
+              <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;color:var(--gray);text-transform:uppercase;margin-bottom:0.6rem;">Exit Viability Check</div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
+                <span style="color:var(--gray);">Main Loan — Gross Borrowable (70% LTV)</span>
+                <span style="font-weight:600;" id="speedMaxBorrow">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
+                <span style="color:var(--gray);">Main Loan — Est. Net Advance (÷ 1.25)</span>
+                <span style="font-weight:600;color:var(--gold);" id="speedNetAdvance">—</span>
+              </div>
+              <div style="border-top:1px solid rgba(255,255,255,0.06);margin:0.5rem 0;padding-top:0.5rem;"></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
+                <span style="color:var(--gray);">Speed Loan — Net to You</span>
+                <span style="font-weight:600;color:var(--teal);" id="speedSelectedNet">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
+                <span style="color:var(--gray);">Speed Loan — Gross Redemption (KPC calc)</span>
+                <span style="font-weight:700;color:var(--white);" id="speedGrossRedemption">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.2rem;font-size:0.68rem;padding-left:1rem;">
+                <span style="color:rgba(255,255,255,0.35);">Includes: interest, facility fee, broker fee &amp; legals</span>
+                <span style="color:rgba(255,255,255,0.35);" id="speedBreakdownMini">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
+                <span style="color:var(--gray);">Contingency (legals, arrears, overruns) <span style="font-family:var(--mono);font-size:0.55rem;color:var(--teal);opacity:0.7;">INDICATIVE — DISCUSSED ON CALL</span></span>
+                <span style="font-weight:600;color:var(--amber);" id="speedContingency">−£7,000</span>
+              </div>
+              <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:0.5rem;margin-top:0.5rem;display:flex;justify-content:space-between;">
+                <span style="font-weight:600;color:var(--white);">Net Liquidity After Exit</span>
+                <span style="font-weight:700;font-size:0.95rem;" id="speedNetLiquidity">—</span>
+              </div>
+              <div id="speedLiquidityNote" style="margin-top:0.6rem;font-size:0.75rem;line-height:1.5;"></div>
+            </div>
+          </div>
+        </div>
+        <!-- ★★★ END BACK-TO-BACK ★★★ -->
+        <div class="form-group"><label class="form-label">Purpose of Loan</label>
+          <select class="form-select" id="purpose"><option value="">Select...</option><option value="property_purchase">Property Purchase</option><option value="auction">Auction Purchase</option><option value="refurbishment">Refurbishment / Renovation</option><option value="business_capital">Business Capital</option><option value="debt_consolidation">Debt Consolidation</option><option value="chain_break">Chain Break</option><option value="tax_bill">Tax Bill / HMRC</option><option value="development">Development Finance</option><option value="other">Other</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">How Did You Hear About Us?</label>
+          <select class="form-select" id="source"><option value="">Select...</option><option value="facebook">Facebook / Instagram</option><option value="google">Google Search</option><option value="referral">Referral / Word of Mouth</option><option value="broker">Broker / Introducer</option><option value="other">Other</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Anything Else? (Optional)</label><input class="form-input" type="text" id="notes" placeholder="e.g. Existing charge being redeemed, special circumstances..."></div>
+        <div class="form-nav"><button class="form-back" onclick="prevStep(3)">← Back</button><button class="form-next" onclick="nextStep(3)">Review &amp; Submit →</button></div>
+      </div>
+
+      <!-- ═══ STEP 4: REVIEW ═══ -->
+      <div class="form-step" data-step="4">
+        <div class="form-step-title">Review your enquiry</div>
+        <div class="form-step-sub">Check the details below and hit submit. We'll be in touch shortly.</div>
+        <div class="summary-grid" id="summaryGrid"></div>
+        <div style="margin-top:1.5rem;padding:1rem;border:1px solid rgba(255,255,255,0.06);border-radius:4px;background:rgba(0,0,0,0.2)">
+          <p style="font-size:0.78rem;color:var(--gray);line-height:1.6">By submitting this enquiry you consent to Posfin Capital Limited contacting you by phone, SMS, WhatsApp, and email regarding secured loan products. Your data is processed in accordance with our <a href="#" style="color:var(--teal)">Privacy Policy</a>. Your property may be repossessed if you do not keep up repayments on a loan secured against it.</p>
+        </div>
+        <div class="form-nav"><button class="form-back" onclick="prevStep(4)">← Back</button><button class="form-next" onclick="submitForm()" id="submitBtn">Submit Enquiry</button></div>
+      </div>
+
+      <!-- ═══ SUCCESS ═══ -->
+      <div class="form-success" id="formSuccess">
+        <div class="success-check">✓</div>
+        <div class="success-title">Enquiry Received</div>
+        <p class="success-text">Thank you. A member of our team will review your details and contact you — usually within a few hours during business days.</p>
+        <div style="margin-top:1.5rem">
+          <p style="font-size:0.85rem;color:var(--gray);margin-bottom:0.8rem">Want an even faster response?</p>
+          <a class="btn-whatsapp" href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27ve%20just%20submitted%20an%20enquiry%20on%20your%20website.%20Can%20we%20chat%3F" target="_blank" style="display:inline-flex">
+            <svg viewBox="0 0 32 32" style="width:20px;height:20px;fill:white"><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.58 2.14 8.01L0 32l8.19-2.15A15.89 15.89 0 0016 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.27 19.32c-.4-.2-2.36-1.16-2.72-1.3-.37-.13-.63-.2-.9.2s-1.03 1.3-1.27 1.56c-.23.27-.47.3-.87.1-.4-.2-1.68-.62-3.2-1.98-1.18-1.05-1.98-2.35-2.21-2.75-.23-.4-.02-.61.18-.81.18-.18.4-.47.6-.7.2-.23.27-.4.4-.67.13-.27.07-.5-.03-.7-.1-.2-.9-2.17-1.23-2.97-.33-.78-.66-.67-.9-.69-.23-.01-.5-.01-.77-.01-.27 0-.7.1-1.07.5-.37.4-1.4 1.37-1.4 3.33s1.43 3.87 1.63 4.13c.2.27 2.82 4.3 6.83 6.03.96.41 1.7.66 2.28.84.96.3 1.83.26 2.52.16.77-.12 2.36-.96 2.69-1.89.33-.93.33-1.73.23-1.89-.1-.17-.37-.27-.77-.47z"/></svg>
+            Message Us on WhatsApp
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ═══ BOTTOM CTA ═══ -->
+<section class="cta-section">
+  <div class="section-tag reveal">Prefer to Talk?</div>
+  <h2 class="cta-title reveal">Call us or message<br><em>on WhatsApp</em></h2>
+  <p class="cta-sub reveal">Our team is available to discuss your requirements directly. No obligation, no pressure — just honest answers.</p>
+  <div class="cta-actions reveal">
+    <button class="btn-primary" onclick="window.location='tel:+447773339444'">Call: 0777 333 9444</button>
+    <a class="btn-whatsapp" href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27d%20like%20to%20discuss%20a%20secured%20loan.%20Can%20you%20help%3F" target="_blank">
+      <svg viewBox="0 0 32 32" style="width:20px;height:20px;fill:white"><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.58 2.14 8.01L0 32l8.19-2.15A15.89 15.89 0 0016 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.27 19.32c-.4-.2-2.36-1.16-2.72-1.3-.37-.13-.63-.2-.9.2s-1.03 1.3-1.27 1.56c-.23.27-.47.3-.87.1-.4-.2-1.68-.62-3.2-1.98-1.18-1.05-1.98-2.35-2.21-2.75-.23-.4-.02-.61.18-.81.18-.18.4-.47.6-.7.2-.23.27-.4.4-.67.13-.27.07-.5-.03-.7-.1-.2-.9-2.17-1.23-2.97-.33-.78-.66-.67-.9-.69-.23-.01-.5-.01-.77-.01-.27 0-.7.1-1.07.5-.37.4-1.4 1.37-1.4 3.33s1.43 3.87 1.63 4.13c.2.27 2.82 4.3 6.83 6.03.96.41 1.7.66 2.28.84.96.3 1.83.26 2.52.16.77-.12 2.36-.96 2.69-1.89.33-.93.33-1.73.23-1.89-.1-.17-.37-.27-.77-.47z"/></svg>
+      WhatsApp Us
+    </a>
+  </div>
+  <p class="cta-note reveal">Your property may be repossessed if you do not keep up repayments on a loan secured against it.</p>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="nav-logo" style="margin-bottom:0.5rem">
+          <svg width="32" height="32" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="38" stroke="#2EC4B6" stroke-width="5" fill="none"/><path d="M28 58c4-2 8-8 12-18 3-8 7-14 12-16s10 0 14 6c3 5 5 12 2 18-3 7-9 12-16 14s-14 0-20-4h-4z" fill="#2EC4B6" opacity="0.8"/></svg>
+          <span class="nav-logo-text" style="font-size:0.95rem">POSFIN CAPITAL</span>
+        </div>
+        <p class="footer-brand-text">Private secured lending solutions. FCA authorised credit broker specialising in bridging finance against UK residential property.</p>
+      </div>
+      <div><div class="footer-heading">Products</div><ul class="footer-links"><li><a href="#products">Speed Loan</a></li><li><a href="#products">Main Loan</a></li><li><a href="#process">How It Works</a></li></ul></div>
+      <div><div class="footer-heading">Company</div><ul class="footer-links"><li><a href="#testimonials">Reviews</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Cookie Policy</a></li><li><a href="#">Complaints</a></li></ul></div>
+      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="mailto:info@posfincapital.com">info@posfincapital.com</a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-legal">Posfin Capital Limited is authorised and regulated by the Financial Conduct Authority (FRN: 913022). Company No: 12148846. Registered Office: 19 Upper King Street, Norwich NR3 1RB. Trading Address: 96 Kensington High Street, London W8 4SG. ICO: ZA542657. Your property may be repossessed if you do not keep up repayments on a loan secured against it. Posfin Capital Limited acts as a credit broker, not a lender, for brokered products.</p>
+      <p class="footer-copy">© 2026 Posfin Capital Limited. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- JAVASCRIPT                              -->
+<!-- ═══════════════════════════════════════ -->
+<script>
+// Nav scroll
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
+
+// Reveal on scroll
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) { setTimeout(() => entry.target.classList.add('visible'), i * 80); observer.unobserve(entry.target); }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// ═══ FORM ENGINE ═══
+let currentStep = 1;
+const formData = {};
+let hasArrears = false;
+
+// ★★★ KPC CALCULATOR ENGINE — Back-to-Back with Gross Redemption ★★★
+let selectedSpeedAmount = 0;
+let selectedSpeedTerm = 0;
+
+function toggleBtB() {
+  const cb = document.getElementById('backToBack');
+  const card = document.getElementById('btbCard');
+  const selector = document.getElementById('speedLoanSelector');
+  if (document.activeElement !== cb) cb.checked = !cb.checked;
+  if (cb.checked) {
+    card.style.borderColor = 'rgba(46,196,182,0.4)';
+    card.style.background = 'rgba(46,196,182,0.05)';
+    selector.style.display = 'block';
+    buildSpeedAmountButtons();
+  } else {
+    card.style.borderColor = 'rgba(255,255,255,0.1)';
+    card.style.background = 'rgba(255,255,255,0.02)';
+    selector.style.display = 'none';
+    selectedSpeedAmount = 0;
+    selectedSpeedTerm = 0;
+    document.querySelectorAll('.speed-amt-btn').forEach(function(b) { b.classList.remove('selected'); });
+    document.querySelectorAll('.speed-scenario-btn').forEach(function(b) { b.classList.remove('selected'); });
+    document.getElementById('speedLiquidityCheck').style.display = 'none';
+    document.getElementById('speedCostCompare').style.display = 'none';
+  }
+}
+
+var SPEED_TIERS = [26000, 50000, 80000];
+
+function buildSpeedAmountButtons() {
+  var grid = document.getElementById('speedAmountGrid');
+  var context = document.getElementById('speedRedemptionContext');
+  var minNote = document.getElementById('speedMinNote');
+  var redemption = formData._redemptionTotal || 0;
+  var MIN_CASH_ON_TOP = 5000; // Minimum useful cash to borrower after redemption
+  var minRequired = redemption + MIN_CASH_ON_TOP;
+
+  // Show redemption context if charges exist
+  if (redemption > 0) {
+    context.style.display = 'block';
+    context.innerHTML = '\u26a0 You have <strong>\u00a3' + redemption.toLocaleString('en-GB') + '</strong> in existing charges/arrears to clear. The Speed Loan must cover this first — the remaining balance is your cash on top.';
+  } else {
+    context.style.display = 'none';
+  }
+
+  // Build buttons with annotations
+  var html = '';
+  var anyEnabled = false;
+  SPEED_TIERS.forEach(function(amount) {
+    var cashOnTop = amount - redemption;
+    var isDisabled = cashOnTop < MIN_CASH_ON_TOP;
+    var label = '\u00a3' + (amount / 1000) + 'k';
+
+    if (redemption > 0 && !isDisabled) {
+      html += '<button type="button" class="speed-amt-btn" data-amount="' + amount + '" onclick="selectSpeedAmount(this)" style="padding:0.6rem 1.2rem;text-align:center;">'
+        + '<span>' + label + '</span>'
+        + '<span class="btn-sub" style="color:var(--green);">\u00a3' + (cashOnTop / 1000) + 'k cash to you</span>'
+        + '</button>';
+      anyEnabled = true;
+    } else if (isDisabled) {
+      html += '<button type="button" class="speed-amt-btn disabled" style="padding:0.6rem 1.2rem;text-align:center;">'
+        + '<span>' + label + '</span>'
+        + '<span class="btn-sub" style="color:var(--red);">insufficient</span>'
+        + '</button>';
+    } else {
+      html += '<button type="button" class="speed-amt-btn" data-amount="' + amount + '" onclick="selectSpeedAmount(this)">' + label + '</button>';
+      anyEnabled = true;
+    }
+  });
+
+  grid.innerHTML = html;
+
+  // If no standard tiers work, show guidance
+  if (redemption > 0 && !anyEnabled) {
+    minNote.style.display = 'block';
+    minNote.innerHTML = '<span style="color:var(--red);">\u26a0 None of the standard Speed Loan amounts cover your \u00a3' + redemption.toLocaleString('en-GB') + ' redemption requirement plus minimum \u00a35,000 cash on top. Please submit the form and we\u2019ll structure a bespoke solution for you.</span>';
+  } else if (redemption > 0) {
+    minNote.style.display = 'block';
+    minNote.innerHTML = 'Cash shown is after clearing \u00a3' + redemption.toLocaleString('en-GB') + ' in existing charges/arrears. Greyed options don\u2019t leave enough after redemption.';
+  } else {
+    minNote.style.display = 'none';
+  }
+
+  // Reset selection if current selection is now disabled
+  if (selectedSpeedAmount > 0) {
+    var cashForSelected = selectedSpeedAmount - redemption;
+    if (cashForSelected < MIN_CASH_ON_TOP) {
+      selectedSpeedAmount = 0;
+      document.getElementById('speedLiquidityCheck').style.display = 'none';
+      document.getElementById('speedCostCompare').style.display = 'none';
+    }
+  }
+}
+
+function selectSpeedAmount(btn) {
+  var wasSelected = btn.classList.contains('selected');
+  document.querySelectorAll('#speedAmountGrid .speed-amt-btn').forEach(function(b) { b.classList.remove('selected'); });
+  if (wasSelected) { selectedSpeedAmount = 0; } else { btn.classList.add('selected'); selectedSpeedAmount = parseInt(btn.dataset.amount); }
+  updateCostComparison();
+  if (selectedSpeedAmount && selectedSpeedTerm) validateSpeedLiquidity();
+  else document.getElementById('speedLiquidityCheck').style.display = 'none';
+}
+
+function selectSpeedTerm(btn) {
+  var wasSelected = btn.classList.contains('selected');
+  document.querySelectorAll('#speedTermGrid .speed-scenario-btn').forEach(function(b) { b.classList.remove('selected'); });
+  if (wasSelected) { selectedSpeedTerm = 0; } else { btn.classList.add('selected'); selectedSpeedTerm = parseInt(btn.dataset.term); }
+  if (selectedSpeedAmount && selectedSpeedTerm) validateSpeedLiquidity();
+  else document.getElementById('speedLiquidityCheck').style.display = 'none';
+}
+
+function updateCostComparison() {
+  if (!selectedSpeedAmount) { document.getElementById('speedCostCompare').style.display = 'none'; return; }
+  var compare = document.getElementById('speedCostCompare');
+  var kpc3 = kpcGrossRedemption(selectedSpeedAmount, 3);
+  var kpc6 = kpcGrossRedemption(selectedSpeedAmount, 6);
+  var saving = kpc6.gross - kpc3.gross;
+
+  compare.style.display = 'block';
+  document.getElementById('cost3mGross').textContent = '\u00a3' + kpc3.gross.toLocaleString('en-GB');
+  document.getElementById('cost3mFees').textContent = '\u00a3' + (kpc3.gross - selectedSpeedAmount).toLocaleString('en-GB') + ' in fees & interest';
+  document.getElementById('cost6mGross').textContent = '\u00a3' + kpc6.gross.toLocaleString('en-GB');
+  document.getElementById('cost6mFees').textContent = '\u00a3' + (kpc6.gross - selectedSpeedAmount).toLocaleString('en-GB') + ' in fees & interest';
+  document.getElementById('costSavingNote').textContent = '3-month B2B saves you \u00a3' + saving.toLocaleString('en-GB') + ' vs 6-month standalone';
+}
+
+// ═══ KPC LOAN CALCULATOR ENGINE ═══
+// Mirrors KPC_Loan_Calculator.xlsx exactly
+// Inputs: 2.5% monthly rate, 12% broker fee, £1,200 fixed legals
+function kpcGrossRedemption(netLoan, termMonths) {
+  var RATE = 0.025, BROKER_RATE = 0.12, LEGAL_FEES = 1200;
+  var broker = netLoan * BROKER_RATE;
+  var subTotal = netLoan + broker + LEGAL_FEES;
+  var monthlyInterest = subTotal * RATE;
+  var interestForTerm = monthlyInterest * termMonths;
+  var facilityFee = interestForTerm - LEGAL_FEES;
+  var gross = netLoan + interestForTerm + facilityFee + broker + LEGAL_FEES;
+  return { gross: Math.round(gross), interest: Math.round(interestForTerm), facilityFee: Math.round(facilityFee), broker: Math.round(broker), legals: LEGAL_FEES };
+}
+
+function validateSpeedLiquidity() {
+  var check = document.getElementById('speedLiquidityCheck');
+  var grossMaxBorrow = formData._maxBorrow || 0;
+  var MAIN_LOAN_FACTOR = 1.25;
+  var BUFFER = 7000;
+  var mainNetAdvance = Math.round(grossMaxBorrow / MAIN_LOAN_FACTOR);
+  var kpc = kpcGrossRedemption(selectedSpeedAmount, selectedSpeedTerm);
+  var netLiquidity = mainNetAdvance - kpc.gross - BUFFER;
+
+  check.style.display = 'block';
+  document.getElementById('speedMaxBorrow').textContent = '\u00a3' + grossMaxBorrow.toLocaleString('en-GB');
+  document.getElementById('speedNetAdvance').textContent = '\u00a3' + mainNetAdvance.toLocaleString('en-GB');
+  document.getElementById('speedSelectedNet').textContent = '\u00a3' + selectedSpeedAmount.toLocaleString('en-GB');
+  document.getElementById('speedGrossRedemption').textContent = '\u00a3' + kpc.gross.toLocaleString('en-GB');
+  document.getElementById('speedBreakdownMini').textContent = 'Int \u00a3' + kpc.interest.toLocaleString('en-GB') + ' + Fee \u00a3' + kpc.facilityFee.toLocaleString('en-GB') + ' + Broker \u00a3' + kpc.broker.toLocaleString('en-GB') + ' + Legals \u00a3' + kpc.legals.toLocaleString('en-GB');
+
+  var netEl = document.getElementById('speedNetLiquidity');
+  var noteEl = document.getElementById('speedLiquidityNote');
+
+  if (netLiquidity >= 0) {
+    netEl.textContent = '\u00a3' + netLiquidity.toLocaleString('en-GB');
+    if (netLiquidity < 5000) {
+      netEl.style.color = 'var(--amber)';
+      noteEl.innerHTML = '<span style="color:var(--amber);">\u26a1 Tight but viable.</span> The Main Loan net advance covers the Speed Loan gross redemption of \u00a3' + kpc.gross.toLocaleString('en-GB') + ', but leaves minimal headroom. We\u2019ll confirm exact costs at offer stage.';
+    } else {
+      netEl.style.color = 'var(--green)';
+      noteEl.innerHTML = '<span style="color:var(--green);">\u2713 Strong position.</span> The Main Loan net advance comfortably covers the \u00a3' + kpc.gross.toLocaleString('en-GB') + ' Speed Loan redemption plus solicitor fees and costs.';
+    }
+  } else {
+    netEl.textContent = '\u2212\u00a3' + Math.abs(netLiquidity).toLocaleString('en-GB');
+    netEl.style.color = 'var(--red)';
+    noteEl.innerHTML = '<span style="color:var(--red);">\u26a0 Shortfall on exit.</span> The Speed Loan gross redemption is \u00a3' + kpc.gross.toLocaleString('en-GB') + ' (net \u00a3' + selectedSpeedAmount.toLocaleString('en-GB') + ' + \u00a3' + (kpc.gross - selectedSpeedAmount).toLocaleString('en-GB') + ' in fees/interest). This exceeds the estimated Main Loan net advance plus buffer. Consider a lower amount or shorter term.';
+  }
+
+  formData._kpcGross = kpc.gross;
+  formData._kpcInterest = kpc.interest;
+  formData._kpcBroker = kpc.broker;
+  formData._speedTerm = selectedSpeedTerm;
+  formData._speedNetLiquidity = netLiquidity;
+}
+
+function formatCurrency(el) {
+  let v = el.value.replace(/[^0-9]/g, '');
+  if (v) el.value = parseInt(v).toLocaleString('en-GB');
+}
+function parseCurrency(v) { return parseInt((v || '0').replace(/[^0-9]/g, '')) || 0; }
+
+function checkLoanRouting() {
+  var amount = parseCurrency(document.getElementById('loanAmount').value);
+  var nudge = document.getElementById('loanRoutingNudge');
+  if (amount >= 26000 && amount < 100000) {
+    nudge.style.display = 'block';
+    nudge.innerHTML = '<div style="padding:1rem;border-radius:4px;border:1px solid rgba(46,196,182,0.2);background:rgba(46,196,182,0.04);">'
+      + '<div style="display:flex;align-items:flex-start;gap:10px;">'
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2EC4B6" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>'
+      + '<div>'
+      + '<span style="font-size:0.88rem;font-weight:600;color:var(--teal);">Speed Loan recommended for \u00a3' + amount.toLocaleString('en-GB') + '</span>'
+      + '<p style="font-size:0.78rem;color:var(--gray);margin-top:0.3rem;line-height:1.55;">For amounts under \u00a3100k, our <strong style="color:var(--white);">Speed Loan</strong> is the fastest and most cost-effective route \u2014 funded in 3\u20135 days with <strong style="color:var(--green);">zero upfront costs</strong>. All fees are deducted from the loan, not your pocket. You can roll over at term end or graduate to a Main Loan facility if you need longer-term finance later.</p>'
+      + '</div></div></div>';
+  } else if (amount >= 100000) {
+    nudge.style.display = 'block';
+    nudge.innerHTML = '<div style="padding:1rem;border-radius:4px;border:1px solid rgba(212,168,83,0.2);background:rgba(212,168,83,0.04);">'
+      + '<div style="display:flex;align-items:flex-start;gap:10px;">'
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A853" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>'
+      + '<div>'
+      + '<span style="font-size:0.88rem;font-weight:600;color:var(--gold);">Main Loan territory \u2014 \u00a3' + amount.toLocaleString('en-GB') + '</span>'
+      + '<p style="font-size:0.78rem;color:var(--gray);margin-top:0.3rem;line-height:1.55;">This amount qualifies for our <strong style="color:var(--white);">Main Loan</strong> facility \u2014 brokered through our specialist lender panel with terms up to 24 months. Need the funds sooner? Tick the <strong style="color:var(--teal);">Back-to-Back</strong> option below to get a <strong style=\"color:var(--teal);\">Speed Loan</strong> in days while we arrange the main facility.</p>'
+      + '</div></div></div>';
+  } else {
+    nudge.style.display = 'none';
+  }
+}
+
+function setArrears(val) {
+  hasArrears = val;
+  document.querySelectorAll('.arrears-btn').forEach((b, i) => {
+    b.classList.toggle('selected', (i === 0 && !val) || (i === 1 && val));
+  });
+  const box = document.getElementById('arrearsAmount');
+  if (val) { box.classList.add('show'); } else { box.classList.remove('show'); document.getElementById('arrearsValue').value = ''; }
+  calcLTV();
+}
+
+function calcLTV() {
+  const val = parseCurrency(document.getElementById('propValue').value);
+  const m1 = parseCurrency(document.getElementById('mortgage1').value);
+  const m2 = parseCurrency(document.getElementById('mortgage2').value);
+  const arrears = parseCurrency(document.getElementById('arrearsValue').value);
+  const ind = document.getElementById('ltvIndicator');
+
+  if (val <= 0) { ind.classList.remove('show'); return; }
+  ind.classList.add('show');
+
+  // Clean balance = mortgage balance MINUS arrears (arrears are separate, not part of LTV calc)
+  const cleanBal = Math.max(0, m1 - arrears);
+  const totalDebt = cleanBal + m2;
+  const ltv = Math.round((totalDebt / val) * 100);
+  const equity = val - totalDebt;
+  const maxBorrow70 = Math.max(0, Math.round(val * 0.70) - totalDebt);
+
+  // Display
+  document.getElementById('ltvValue').textContent = ltv + '%';
+  document.getElementById('ltvValue').style.color = ltv <= 40 ? 'var(--green)' : ltv <= 60 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('borrowCapacity').textContent = '£' + maxBorrow70.toLocaleString('en-GB');
+  document.getElementById('borrowCapacity').style.color = maxBorrow70 > 0 ? 'var(--teal)' : 'var(--red)';
+  document.getElementById('cleanBalance').textContent = '£' + cleanBal.toLocaleString('en-GB');
+  document.getElementById('totalDebt').textContent = '£' + totalDebt.toLocaleString('en-GB');
+  document.getElementById('totalEquity').textContent = '£' + Math.max(0, equity).toLocaleString('en-GB');
+
+  // Bar
+  const bar = document.getElementById('ltvBar');
+  bar.style.width = Math.min(ltv, 100) + '%';
+  bar.className = 'ltv-bar ' + (ltv <= 40 ? 'green' : ltv <= 60 ? 'amber' : 'red');
+
+  // Note
+  const note = document.getElementById('ltvNote');
+  if (ltv <= 50) {
+    note.textContent = '✓ Strong equity position. You likely qualify for our Speed Loan (direct lender, 3–5 days) or Main Loan (brokered, up to 75% LTV).';
+    note.className = 'ltv-note'; note.style.color = 'var(--green)';
+  } else if (ltv <= 60) {
+    note.textContent = '⚡ Moderate equity. You may qualify for a Main Loan via our specialist lender panel (up to 75% LTV). Maximum borrowable shown at 70%.';
+    note.className = 'ltv-note warn'; note.style.color = 'var(--amber)';
+  } else if (ltv <= 75) {
+    note.textContent = '⚠ Higher LTV. Lending may still be possible via our panel at up to 75%. Complete the form and we\'ll assess your options.';
+    note.className = 'ltv-note warn'; note.style.color = 'var(--amber)';
+  } else {
+    note.textContent = '✗ Current debt exceeds 75% of property value. This will be challenging but submit your enquiry — we\'ll review and advise honestly.';
+    note.className = 'ltv-note danger'; note.style.color = 'var(--red)';
+  }
+
+  // 2nd charge note
+  const secNote = document.getElementById('secondChargeNote');
+  secNote.style.display = (m2 > 0 || (hasArrears && arrears > 0)) ? 'block' : 'none';
+
+  // Redemption notice — shows when ANY subordinate charges or arrears exist
+  const redemptionNotice = document.getElementById('redemptionNotice');
+  const totalRedemption = m2 + (hasArrears ? arrears : 0);
+  if (totalRedemption > 0) {
+    redemptionNotice.style.display = 'block';
+    document.getElementById('redemptionCharges').textContent = '\u00a3' + m2.toLocaleString('en-GB');
+    var arrearsRow = document.getElementById('redemptionArrearsRow');
+    if (hasArrears && arrears > 0) {
+      arrearsRow.style.display = 'flex';
+      document.getElementById('redemptionArrears').textContent = '\u00a3' + arrears.toLocaleString('en-GB');
+    } else {
+      arrearsRow.style.display = 'none';
+    }
+    document.getElementById('redemptionTotal').textContent = '\u00a3' + totalRedemption.toLocaleString('en-GB');
+  } else {
+    redemptionNotice.style.display = 'none';
+  }
+
+  // Store calc data
+  formData._ltv = ltv;
+  formData._maxBorrow = maxBorrow70;
+  formData._cleanBalance = cleanBal;
+  formData._arrears = arrears;
+  formData._redemptionTotal = totalRedemption;
+}
+
+function updateProgress(step) {
+  document.querySelectorAll('.form-progress-step').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active', 'completed');
+    if (s === step) el.classList.add('active');
+    else if (s < step) el.classList.add('completed');
+  });
+}
+
+function showStep(step) {
+  document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+  document.querySelector('.form-step[data-step="' + step + '"]').classList.add('active');
+  updateProgress(step);
+  currentStep = step;
+}
+
+function nextStep(from) {
+  if (from === 1) {
+    const fn = document.getElementById('firstName').value.trim();
+    const ln = document.getElementById('lastName').value.trim();
+    const mob = document.getElementById('mobile').value.trim();
+    const em = document.getElementById('email').value.trim();
+    const cp = document.getElementById('creditProfile').value;
+    if (!fn || !ln || !mob || !em || !cp) { alert('Please complete all required fields.'); return; }
+    formData.firstName = fn; formData.lastName = ln; formData.mobile = mob;
+    formData.email = em; formData.contactPref = document.getElementById('contactPref').value;
+    formData.creditProfile = document.getElementById('creditProfile').value;
+    // ══ LEAD CAPTURED ══
+    console.log('[LEAD CAPTURED - Step 1]', { name: fn + ' ' + ln, mobile: mob, email: em, creditProfile: formData.creditProfile });
+  }
+  if (from === 2) {
+    formData.propertyAddress = document.getElementById('propertyAddress').value;
+    formData.propValue = document.getElementById('propValue').value;
+    formData.mortgage1 = document.getElementById('mortgage1').value;
+    formData.mortgage2 = document.getElementById('mortgage2').value;
+    formData.arrears = document.getElementById('arrearsValue').value;
+    formData.hasArrears = hasArrears;
+    formData.propType = document.getElementById('propType').value;
+  }
+  if (from === 3) {
+    formData.loanAmount = document.getElementById('loanAmount').value;
+    formData.timeframe = document.getElementById('timeframe').value;
+    formData.backToBack = document.getElementById('backToBack').checked;
+    formData.speedLoanAmount = formData.backToBack ? selectedSpeedAmount : 0;
+    formData.speedLoanTerm = formData.backToBack ? selectedSpeedTerm : 0;
+    formData.purpose = document.getElementById('purpose').value;
+    formData.source = document.getElementById('source').value;
+    formData.notes = document.getElementById('notes').value;
+    buildSummary();
+  }
+  showStep(from + 1);
+  document.getElementById('formContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function prevStep(from) { showStep(from - 1); }
+
+function buildSummary() {
+  const grid = document.getElementById('summaryGrid');
+  const ltv = formData._ltv || 0;
+  const ltvClass = ltv <= 50 ? 'green' : ltv <= 70 ? 'amber' : 'red';
+  const rows = [
+    ['Name', formData.firstName + ' ' + formData.lastName, ''],
+    ['Mobile', formData.mobile, ''],
+    ['Email', formData.email, ''],
+    ['Contact Preference', formData.contactPref, ''],
+    ['Credit Profile', formData.creditProfile || '—', ''],
+    ['Property Address', formData.propertyAddress || '—', ''],
+    ['Estimated Value', formData.propValue ? '£' + formData.propValue : '—', ''],
+    ['1st Mortgage (clean)', formData._cleanBalance ? '£' + formData._cleanBalance.toLocaleString('en-GB') : '£0', ''],
+    ['Arrears', formData.hasArrears ? '£' + formData.arrears : 'None', formData.hasArrears ? 'amber' : ''],
+    ['Existing Charges', formData.mortgage2 && parseCurrency(formData.mortgage2) > 0 ? '\u00a3' + formData.mortgage2 : 'None', parseCurrency(formData.mortgage2) > 0 ? 'amber' : ''],
+    ['Charges + Arrears to Redeem', formData._redemptionTotal > 0 ? '\u00a3' + formData._redemptionTotal.toLocaleString('en-GB') : 'None', formData._redemptionTotal > 0 ? 'amber' : ''],
+    ['Current LTV', ltv + '%', ltvClass],
+    ['Max Borrowable (70% LTV)', formData._maxBorrow ? '£' + formData._maxBorrow.toLocaleString('en-GB') : '—', ''],
+    ['Amount Requested', formData.loanAmount ? '£' + formData.loanAmount : '—', ''],
+    ['Timeframe', formData.timeframe || '—', ''],
+    ['Purpose', formData.purpose ? formData.purpose.replace(/_/g, ' ') : '—', ''],
+    ['Back-to-Back', formData.backToBack ? 'Yes — Speed + Main' : 'No', formData.backToBack ? 'teal' : ''],
+  ];
+  if (formData.backToBack && formData.speedLoanAmount > 0) {
+    var kpc = formData._kpcGross ? { gross: formData._kpcGross } : kpcGrossRedemption(formData.speedLoanAmount, formData.speedLoanTerm || 3);
+    var maxB = formData._maxBorrow || 0;
+    var mainNet = Math.round(maxB / 1.25);
+    var netLiq = mainNet - kpc.gross - 7000;
+    var netClass = netLiq >= 5000 ? 'green' : netLiq >= 0 ? 'amber' : 'red';
+    rows.push(['Speed Loan — Net Amount', '\u00a3' + formData.speedLoanAmount.toLocaleString('en-GB'), 'teal']);
+    rows.push(['Speed Loan — Term', (formData.speedLoanTerm || 3) + ' months', '']);
+    rows.push(['Speed Loan — Gross Redemption', '\u00a3' + kpc.gross.toLocaleString('en-GB'), 'gold']);
+    rows.push(['Main Loan — Est. Net Advance (\u00f71.25)', '\u00a3' + mainNet.toLocaleString('en-GB'), '']);
+    rows.push(['Net Liquidity After Exit', (netLiq < 0 ? '\u2212' : '') + '\u00a3' + Math.abs(netLiq).toLocaleString('en-GB'), netClass]);
+  }
+  grid.innerHTML = rows.map(([l, v, c]) =>
+    '<div class="summary-row"><span class="summary-label">' + l + '</span><span class="summary-value' + (c ? ' ' + c : '') + '">' + v + '</span></div>'
+  ).join('');
+}
+
+function submitForm() {
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Submitting...'; btn.disabled = true;
+
+  // ═══════════════════════════════════════════════════════
+  // ZAPIER WEBHOOK — replace URL with your actual webhook
+  // ═══════════════════════════════════════════════════════
+  const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/YOUR_HOOK_ID/YOUR_HOOK_PATH/';
+
+  const payload = {
+    firstName: formData.firstName,
+    lastName: formData.lastName,
+    mobile: formData.mobile,
+    email: formData.email,
+    contactPref: formData.contactPref,
+    creditProfile: formData.creditProfile || '',
+    propertyAddress: formData.propertyAddress || '',
+    estimatedValue: formData.propValue || '',
+    mortgage1Clean: formData._cleanBalance || 0,
+    mortgage1Gross: formData.mortgage1 || '0',
+    arrearsAmount: formData.arrears || '0',
+    hasArrears: formData.hasArrears || false,
+    secondCharges: formData.mortgage2 || '0',
+    totalRedemptionRequired: formData._redemptionTotal || 0,
+    propertyType: formData.propType || '',
+    currentLTV: formData._ltv || 0,
+    maxBorrowable70: formData._maxBorrow || 0,
+    loanAmountRequested: formData.loanAmount || '',
+    timeframe: formData.timeframe || '',
+    purpose: formData.purpose || '',
+    backToBack: formData.backToBack || false,
+    speedLoanAmount: formData.speedLoanAmount || 0,
+    speedLoanTerm: formData.speedLoanTerm || 0,
+    speedLoanGrossRedemption: formData._kpcGross || 0,
+    speedLoanInterest: formData._kpcInterest || 0,
+    speedLoanBrokerFee: formData._kpcBroker || 0,
+    speedLoanNetLiquidity: formData._speedNetLiquidity || null,
+    source: formData.source || '',
+    notes: formData.notes || '',
+    submittedAt: new Date().toISOString()
+  };
+
+  console.log('[FULL SUBMISSION]', JSON.stringify(payload, null, 2));
+
+  // Send to Zapier (uncomment and replace URL when ready)
+  // fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(payload) })
+  //   .then(() => showSuccess())
+  //   .catch(() => showSuccess());
+
+  // For now, show success after brief delay
+  setTimeout(function() { showSuccess(); }, 1200);
+}
+
+function showSuccess() {
+  document.querySelectorAll('.form-step').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelector('.form-progress').style.display = 'none';
+  document.getElementById('formSuccess').classList.add('show');
+}
+</script>
+</body>
+</html>
 
