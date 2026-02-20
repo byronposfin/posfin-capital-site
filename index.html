@@ -304,7 +304,8 @@ section { padding: 6rem 3rem; position: relative; }
 <!-- Nav -->
 <nav class="nav" id="nav">
   <div class="nav-logo">
-      <img src="logo.png" alt="Company Logo" style="width:150px; height:auto; display:block;">
+          <img src="logo.png" alt="Company Logo" style="width:150px; height:auto; display:block;">
+
   </div>
   <div class="nav-links">
     <a href="#products">Loans</a>
@@ -800,7 +801,7 @@ section { padding: 6rem 3rem; position: relative; }
     <div class="footer-top">
       <div>
         <div class="nav-logo" style="margin-bottom:0.5rem">
-          <img src="logo.png" alt="Company Logo" style="width:150px; height:auto; display:block;">
+              <img src="logo.png" alt="Company Logo" style="width:150px; height:auto; display:block;">
         </div>
         <p class="footer-brand-text">Private secured lending solutions. FCA authorised credit broker specialising in bridging finance against UK residential property.</p>
       </div>
@@ -1240,7 +1241,7 @@ function submitForm() {
   // ═══════════════════════════════════════════════════════
   // ZAPIER WEBHOOK — replace URL with your actual webhook
   // ═══════════════════════════════════════════════════════
-  const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/YOUR_HOOK_ID/YOUR_HOOK_PATH/';
+  const WEBHOOK_URL = 'https://hooks.zapier.com/hooks/catch/7678566/ueq1ecb/';
 
   const payload = {
     firstName: formData.firstName,
@@ -1277,13 +1278,17 @@ function submitForm() {
 
   console.log('[FULL SUBMISSION]', JSON.stringify(payload, null, 2));
 
-  // Send to Zapier (uncomment and replace URL when ready)
-  // fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify(payload) })
-  //   .then(() => showSuccess())
-  //   .catch(() => showSuccess());
+  // Send to Zapier
+  fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function() { showSuccess(); })
+    .catch(function() { showSuccess(); });
 
-  // For now, show success after brief delay
-  setTimeout(function() { showSuccess(); }, 1200);
+  // Note: showSuccess fires on both success and error so the user isn't left hanging
+  // Check Zapier task history to confirm data is landing
 }
 
 function showSuccess() {
@@ -1294,4 +1299,3 @@ function showSuccess() {
 </script>
 </body>
 </html>
-
