@@ -1205,9 +1205,10 @@ function buildSummary() {
     ['Amount Requested', formData.loanAmount ? '£' + formData.loanAmount : '—', ''],
     ['Timeframe', formData.timeframe || '—', ''],
     ['Purpose', formData.purpose ? formData.purpose.replace(/_/g, ' ') : '—', ''],
-    ['Back-to-Back', formData.backToBack ? 'Yes — Speed + Main' : 'No', formData.backToBack ? 'teal' : ''],
+    ['Source', formData.source || '—', ''],
+    ['Notes', formData.notes || '—', '']
   ];
-  if (formData.backToBack && formData.speedLoanAmount > 0) {
+  if (formData.backToBack) {
     var kpc = formData._kpcGross ? { gross: formData._kpcGross } : kpcGrossRedemption(formData.speedLoanAmount, formData.speedLoanTerm || 3);
     var maxB = formData._maxBorrow || 0;
     var mainNet = Math.round(maxB / 1.25);
@@ -1269,7 +1270,6 @@ function submitForm() {
   console.log('[FULL SUBMISSION]', JSON.stringify(payload, null, 2));
 
   // Send to Zapier (form-encoded so Zapier Catch Hook reads fields natively)
-  // Flatten any booleans/numbers to strings for URLSearchParams
   const flat = {};
   for (const k in payload) {
     const v = payload[k];
@@ -1289,4 +1289,10 @@ function submitForm() {
 }
 
 function showSuccess() {
-  documen
+  document.querySelectorAll('.form-step').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelector('.form-progress').style.display = 'none';
+  document.getElementById('formSuccess').classList.add('show');
+}
+</script>
+</body>
+</html>
