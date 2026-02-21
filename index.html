@@ -292,6 +292,15 @@ section { padding: 6rem 3rem; position: relative; }
   .wa-float { bottom: 1.2rem; right: 1.2rem; width: 52px; height: 52px; }
   .wa-float svg { width: 28px; height: 28px; }
 }
+/* Address lookup styles */
+.addr-lookup { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
+.addr-lookup input { flex: 1; }
+.addr-btn { padding: 0.85rem 1.2rem; background: var(--teal); color: var(--navy); border: none; border-radius: 4px; font-family: var(--sans); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+.addr-btn:hover { opacity: 0.9; }
+.addr-dropdown { display: none; margin-bottom: 0.4rem; }
+.addr-dropdown select { background: var(--navy-light); border: 1px solid rgba(46,196,182,0.3); border-radius: 4px; padding: 0.85rem 1rem; color: var(--white); font-family: var(--sans); font-size: 0.85rem; width: 100%; cursor: pointer; }
+.addr-dropdown select option { background: var(--navy-light); color: var(--white); }
+.addr-status { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; margin-top: 0.2rem; }
 </style>
 </head>
 <body>
@@ -496,6 +505,21 @@ section { padding: 6rem 3rem; position: relative; }
         </div>
         <!-- ★★★ END CREDIT PROFILE ★★★ -->
 
+        <div class="form-group"><label class="form-label">Date of Birth *</label><input class="form-input" type="date" id="dob" required></div>
+
+        <div class="form-group">
+          <label class="form-label">Residential Address *</label>
+          <div class="addr-lookup">
+            <input class="form-input" type="text" id="resPostcode" placeholder="Postcode" style="max-width:180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAddress('res');}">
+            <button type="button" class="addr-btn" onclick="lookupAddress('res')">Find</button>
+          </div>
+          <div class="addr-dropdown" id="resDropdown">
+            <select id="resSelect" onchange="pickAddress('res')"><option value="">— Select address —</option></select>
+          </div>
+          <input class="form-input" type="text" id="residentialAddress" placeholder="Your home address (use Find or type manually)">
+          <div class="addr-status" id="resStatus" style="color:var(--gray);">Enter postcode and click Find, or type your full address.</div>
+        </div>
+
         <div class="form-nav"><div></div><button class="form-next" onclick="nextStep(1)">Next: Property Details →</button></div>
       </div>
 
@@ -505,25 +529,18 @@ section { padding: 6rem 3rem; position: relative; }
         <div class="form-step-title">Tell us about the property</div>
         <div class="form-step-sub">This helps us assess your equity position and what you could borrow.</div>
 
-        <!-- ═══ POSTCODE LOOKUP ═══ -->
-        <div class="form-group" id="addressLookupGroup">
-          <label class="form-label">Find Property Address *</label>
-          <div style="display:flex;gap:0.5rem;">
-            <input class="form-input" type="text" id="postcodeInput" placeholder="Enter postcode, e.g. SW1A 1AA" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();findAddress();}">
-            <button type="button" onclick="findAddress()" style="padding:0.85rem 1.5rem;background:var(--teal);color:var(--navy);border:none;border-radius:4px;font-family:var(--sans);font-weight:700;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:all 0.3s;">Find Address</button>
+        <!-- ═══ PROPERTY ADDRESS ═══ -->
+        <div class="form-group">
+          <label class="form-label">Property Address *</label>
+          <div class="addr-lookup">
+            <input class="form-input" type="text" id="propPostcode" placeholder="Postcode" style="max-width:180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAddress('prop');}">
+            <button type="button" class="addr-btn" onclick="lookupAddress('prop')">Find</button>
           </div>
-          <div id="addressResults" style="display:none;margin-top:0.5rem;">
-            <select class="form-select" id="addressSelect" onchange="selectAddress()">
-              <option value="">— Select your address —</option>
-            </select>
+          <div class="addr-dropdown" id="propDropdown">
+            <select id="propSelect" onchange="pickAddress('prop')"><option value="">— Select address —</option></select>
           </div>
-          <div id="addressConfirmed" style="display:none;margin-top:0.5rem;">
-            <input class="form-input" type="text" id="propertyAddress" placeholder="Full address" style="background:rgba(46,196,182,0.06);border-color:rgba(46,196,182,0.3);">
-          </div>
-          <div style="margin-top:0.4rem;">
-            <a href="#" onclick="event.preventDefault();toggleManualAddress();" id="manualToggle" style="font-family:var(--mono);font-size:0.65rem;color:var(--gray);letter-spacing:0.08em;text-decoration:underline;transition:color 0.3s;">Can't find your address? Enter manually</a>
-          </div>
-          <div id="addressStatus" style="margin-top:0.3rem;font-family:var(--mono);font-size:0.62rem;letter-spacing:0.08em;"></div>
+          <input class="form-input" type="text" id="propertyAddress" placeholder="Property address (use Find or type manually)">
+          <div class="addr-status" id="propStatus" style="color:var(--gray);">Enter postcode and click Find, or type the full property address.</div>
         </div>
 
         <div class="form-row">
@@ -842,81 +859,74 @@ section { padding: 6rem 3rem; position: relative; }
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
 
-// ═══ POSTCODE LOOKUP (getAddress.io) ═══
-var GETADDRESS_API_KEY = 'OFj-SFSMDkCMZuQ_sxmUnQ50561'; // Replace with your getAddress.io API key
-var manualMode = false;
+// ═══ ADDRESS LOOKUP (getAddress.io direct API) ═══
+var GETADDRESS_API_KEY = 'dtoken_hEDzcyiWMr39Be_2_iNmjDkxAFmP4OaaZQqdxXWZQhUk8MM_6y7HW41eyhADhPZyeYE1Ka4ApV5yhn8uHYHRp22cXYzk1nT2vs-zi3RY8--MV-liipORWhWPlvr6VY8vKRyKRglm7mVoLZw4Srsc685FPN3IN7VxbYLRQuA0jVHWkCteIgOeqcSqlP8PU_2w55A4k_6-r-Y';
 
-function findAddress() {
-  var postcode = document.getElementById('postcodeInput').value.trim();
-  if (!postcode) { setAddressStatus('Please enter a postcode.', 'var(--red)'); return; }
-  var statusEl = document.getElementById('addressStatus');
-  setAddressStatus('Searching...', 'var(--teal)');
-  document.getElementById('addressResults').style.display = 'none';
-  document.getElementById('addressConfirmed').style.display = 'none';
+var addrConfig = {
+  res:  { postcode: 'resPostcode',  dropdown: 'resDropdown',  select: 'resSelect',  field: 'residentialAddress', status: 'resStatus' },
+  prop: { postcode: 'propPostcode', dropdown: 'propDropdown', select: 'propSelect', field: 'propertyAddress',    status: 'propStatus' }
+};
 
-  fetch('https://api.getAddress.io/find/' + encodeURIComponent(postcode) + '?api-key=' + GETADDRESS_API_KEY + '&expand=true')
-    .then(function(r) {
-      if (!r.ok) throw new Error(r.status);
-      return r.json();
-    })
-    .then(function(data) {
-      var sel = document.getElementById('addressSelect');
-      sel.innerHTML = '<option value="">— Select your address (' + data.addresses.length + ' found) —</option>';
-      data.addresses.forEach(function(addr, i) {
-        var parts = [addr.line_1, addr.line_2, addr.line_3, addr.town_or_city, addr.county, postcode.toUpperCase()].filter(function(p) { return p && p.trim(); });
-        var full = parts.join(', ');
-        var opt = document.createElement('option');
-        opt.value = full;
-        opt.textContent = full;
-        sel.appendChild(opt);
-      });
-      document.getElementById('addressResults').style.display = 'block';
-      setAddressStatus(data.addresses.length + ' addresses found', 'var(--green)');
-    })
-    .catch(function(err) {
-      if (String(err).indexOf('404') > -1) {
-        setAddressStatus('No addresses found for that postcode. Try again or enter manually.', 'var(--gold)');
-      } else if (String(err).indexOf('401') > -1) {
-        setAddressStatus('Address lookup unavailable. Please enter manually.', 'var(--gold)');
-        toggleManualAddress();
-      } else {
-        setAddressStatus('Lookup error. Please enter address manually.', 'var(--gold)');
+function lookupAddress(ctx) {
+  var c = addrConfig[ctx];
+  var pc = document.getElementById(c.postcode).value.trim().replace(/\s+/g, '+');
+  if (!pc) { setStatus(c.status, 'Please enter a postcode.', 'var(--red)'); return; }
+  setStatus(c.status, 'Searching...', 'var(--teal)');
+  document.getElementById(c.dropdown).style.display = 'none';
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'https://api.getAddress.io/find/' + pc + '?api-key=' + GETADDRESS_API_KEY + '&expand=true');
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data.addresses && data.addresses.length > 0) {
+          var sel = document.getElementById(c.select);
+          sel.innerHTML = '<option value="">— ' + data.addresses.length + ' addresses found —</option>';
+          data.addresses.forEach(function(addr) {
+            var parts = [addr.line_1, addr.line_2, addr.line_3, addr.town_or_city, addr.county].filter(function(p) { return p && p.trim(); });
+            parts.push(pc.replace(/\+/g, ' ').toUpperCase());
+            var full = parts.join(', ');
+            var opt = document.createElement('option');
+            opt.value = full;
+            opt.textContent = full;
+            sel.appendChild(opt);
+          });
+          document.getElementById(c.dropdown).style.display = 'block';
+          setStatus(c.status, data.addresses.length + ' found — select yours above, or type manually.', 'var(--green)');
+        } else {
+          setStatus(c.status, 'No addresses found. Type the full address manually.', 'var(--gold)');
+        }
+      } catch(e) {
+        setStatus(c.status, 'Error reading results. Type address manually.', 'var(--gold)');
       }
-    });
+    } else if (xhr.status === 404) {
+      setStatus(c.status, 'Postcode not recognised. Check and retry, or type address manually.', 'var(--gold)');
+    } else if (xhr.status === 401 || xhr.status === 403) {
+      setStatus(c.status, 'Lookup temporarily unavailable. Please type address manually.', 'var(--gold)');
+    } else if (xhr.status === 429) {
+      setStatus(c.status, 'Too many searches. Please type address manually.', 'var(--gold)');
+    } else {
+      setStatus(c.status, 'Lookup error (' + xhr.status + '). Type address manually.', 'var(--gold)');
+    }
+  };
+  xhr.onerror = function() {
+    setStatus(c.status, 'Could not reach address service. Type address manually.', 'var(--gold)');
+  };
+  xhr.send();
 }
 
-function selectAddress() {
-  var sel = document.getElementById('addressSelect');
+function pickAddress(ctx) {
+  var c = addrConfig[ctx];
+  var sel = document.getElementById(c.select);
   if (sel.value) {
-    document.getElementById('propertyAddress').value = sel.value;
-    document.getElementById('addressConfirmed').style.display = 'block';
-    setAddressStatus('✓ Address selected', 'var(--green)');
+    document.getElementById(c.field).value = sel.value;
+    setStatus(c.status, '✓ Address selected — edit if needed.', 'var(--green)');
   }
 }
 
-function toggleManualAddress() {
-  manualMode = !manualMode;
-  var toggle = document.getElementById('manualToggle');
-  if (manualMode) {
-    document.getElementById('addressResults').style.display = 'none';
-    document.getElementById('addressConfirmed').style.display = 'block';
-    document.getElementById('propertyAddress').value = '';
-    document.getElementById('propertyAddress').placeholder = 'Type full address including postcode';
-    document.getElementById('propertyAddress').style.background = '';
-    document.getElementById('propertyAddress').style.borderColor = '';
-    document.getElementById('propertyAddress').focus();
-    toggle.textContent = 'Use postcode lookup instead';
-    setAddressStatus('Manual entry mode — type the full property address', 'var(--gray)');
-  } else {
-    document.getElementById('addressConfirmed').style.display = 'none';
-    document.getElementById('propertyAddress').value = '';
-    toggle.textContent = "Can\u0027t find your address? Enter manually";
-    setAddressStatus('', '');
-  }
-}
-
-function setAddressStatus(msg, color) {
-  var el = document.getElementById('addressStatus');
+function setStatus(id, msg, color) {
+  var el = document.getElementById(id);
   el.textContent = msg;
   el.style.color = color || 'var(--gray)';
 }
@@ -1249,17 +1259,28 @@ function nextStep(from) {
     const mob = document.getElementById('mobile').value.trim();
     const em = document.getElementById('email').value.trim();
     const cp = document.getElementById('creditProfile').value;
+    const dob = document.getElementById('dob').value;
+    const resAddr = document.getElementById('residentialAddress').value.trim();
     if (!fn || !ln || !mob || !em || !cp) { alert('Please complete all required fields.'); return; }
+    if (!dob) { alert('Please enter your date of birth.'); document.getElementById('dob').focus(); return; }
+    if (!resAddr) { alert('Please enter your residential address. Use the postcode search or type it manually.'); document.getElementById('residentialAddress').focus(); return; }
     formData.firstName = fn; formData.lastName = ln; formData.mobile = mob;
     formData.email = em; formData.contactPref = document.getElementById('contactPref').value;
     formData.creditProfile = document.getElementById('creditProfile').value;
+    formData.dob = dob; formData.residentialAddress = resAddr;
     // ══ LEAD CAPTURED ══
-    console.log('[LEAD CAPTURED - Step 1]', { name: fn + ' ' + ln, mobile: mob, email: em, creditProfile: formData.creditProfile });
+    console.log('[LEAD CAPTURED - Step 1]', { name: fn + ' ' + ln, mobile: mob, email: em, dob: dob, residentialAddress: resAddr, creditProfile: formData.creditProfile });
   }
   if (from === 2) {
-    formData.propertyAddress = document.getElementById('propertyAddress').value;
-    formData.propValue = document.getElementById('propValue').value;
-    formData.mortgage1 = document.getElementById('mortgage1').value;
+    var addr = document.getElementById('propertyAddress').value.trim();
+    var pv = document.getElementById('propValue').value.trim();
+    var m1 = document.getElementById('mortgage1').value.trim();
+    if (!addr) { alert('Please enter the property address. Use the postcode search or type it manually.'); document.getElementById('propertyAddress').focus(); return; }
+    if (!pv) { alert('Please enter the estimated property value.'); document.getElementById('propValue').focus(); return; }
+    if (!m1) { alert('Please enter the current 1st mortgage balance (enter 0 if no mortgage).'); document.getElementById('mortgage1').focus(); return; }
+    formData.propertyAddress = addr;
+    formData.propValue = pv;
+    formData.mortgage1 = m1;
     formData.mortgage2 = document.getElementById('mortgage2').value;
     formData.arrears = document.getElementById('arrearsValue').value;
     formData.hasArrears = hasArrears;
@@ -1288,9 +1309,11 @@ function buildSummary() {
   const ltvClass = ltv <= 50 ? 'green' : ltv <= 70 ? 'amber' : 'red';
   const rows = [
     ['Name', formData.firstName + ' ' + formData.lastName, ''],
+    ['Date of Birth', formData.dob || '—', ''],
     ['Mobile', formData.mobile, ''],
     ['Email', formData.email, ''],
     ['Contact Preference', formData.contactPref, ''],
+    ['Residential Address', formData.residentialAddress || '—', ''],
     ['Credit Profile', formData.creditProfile || '—', ''],
     ['Property Address', formData.propertyAddress || '—', ''],
     ['Estimated Value', formData.propValue ? '£' + formData.propValue : '—', ''],
@@ -1335,9 +1358,11 @@ function submitForm() {
   const payload = {
     firstName: formData.firstName,
     lastName: formData.lastName,
+    dob: formData.dob || '',
     mobile: formData.mobile,
     email: formData.email,
     contactPref: formData.contactPref,
+    residentialAddress: formData.residentialAddress || '',
     creditProfile: formData.creditProfile || '',
     propertyAddress: formData.propertyAddress || '',
     estimatedValue: formData.propValue || '',
