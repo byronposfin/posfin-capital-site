@@ -505,7 +505,26 @@ section { padding: 6rem 3rem; position: relative; }
         <div class="form-step-title">Tell us about the property</div>
         <div class="form-step-sub">This helps us assess your equity position and what you could borrow.</div>
 
-        <div class="form-group"><label class="form-label">Property Address (or Postcode) *</label><input class="form-input" type="text" id="propertyAddress" placeholder="e.g. 12 High Street, London SW1A 1AA"></div>
+        <!-- ═══ POSTCODE LOOKUP ═══ -->
+        <div class="form-group" id="addressLookupGroup">
+          <label class="form-label">Find Property Address *</label>
+          <div style="display:flex;gap:0.5rem;">
+            <input class="form-input" type="text" id="postcodeInput" placeholder="Enter postcode, e.g. SW1A 1AA" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();findAddress();}">
+            <button type="button" onclick="findAddress()" style="padding:0.85rem 1.5rem;background:var(--teal);color:var(--navy);border:none;border-radius:4px;font-family:var(--sans);font-weight:700;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:all 0.3s;">Find Address</button>
+          </div>
+          <div id="addressResults" style="display:none;margin-top:0.5rem;">
+            <select class="form-select" id="addressSelect" onchange="selectAddress()">
+              <option value="">— Select your address —</option>
+            </select>
+          </div>
+          <div id="addressConfirmed" style="display:none;margin-top:0.5rem;">
+            <input class="form-input" type="text" id="propertyAddress" placeholder="Full address" style="background:rgba(46,196,182,0.06);border-color:rgba(46,196,182,0.3);">
+          </div>
+          <div style="margin-top:0.4rem;">
+            <a href="#" onclick="event.preventDefault();toggleManualAddress();" id="manualToggle" style="font-family:var(--mono);font-size:0.65rem;color:var(--gray);letter-spacing:0.08em;text-decoration:underline;transition:color 0.3s;">Can't find your address? Enter manually</a>
+          </div>
+          <div id="addressStatus" style="margin-top:0.3rem;font-family:var(--mono);font-size:0.62rem;letter-spacing:0.08em;"></div>
+        </div>
 
         <div class="form-row">
           <div class="form-group"><label class="form-label">Estimated Property Value (£) *</label><input class="form-input" type="text" id="propValue" placeholder="e.g. 350,000" oninput="formatCurrency(this);calcLTV()"></div>
@@ -822,6 +841,85 @@ section { padding: 6rem 3rem; position: relative; }
 // Nav scroll
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
+
+// ═══ POSTCODE LOOKUP (getAddress.io) ═══
+var GETADDRESS_API_KEY = 'OFj-SFSMDkCMZuQ_sxmUnQ50561'; // Replace with your getAddress.io API key
+var manualMode = false;
+
+function findAddress() {
+  var postcode = document.getElementById('postcodeInput').value.trim();
+  if (!postcode) { setAddressStatus('Please enter a postcode.', 'var(--red)'); return; }
+  var statusEl = document.getElementById('addressStatus');
+  setAddressStatus('Searching...', 'var(--teal)');
+  document.getElementById('addressResults').style.display = 'none';
+  document.getElementById('addressConfirmed').style.display = 'none';
+
+  fetch('https://api.getAddress.io/find/' + encodeURIComponent(postcode) + '?api-key=' + GETADDRESS_API_KEY + '&expand=true')
+    .then(function(r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      var sel = document.getElementById('addressSelect');
+      sel.innerHTML = '<option value="">— Select your address (' + data.addresses.length + ' found) —</option>';
+      data.addresses.forEach(function(addr, i) {
+        var parts = [addr.line_1, addr.line_2, addr.line_3, addr.town_or_city, addr.county, postcode.toUpperCase()].filter(function(p) { return p && p.trim(); });
+        var full = parts.join(', ');
+        var opt = document.createElement('option');
+        opt.value = full;
+        opt.textContent = full;
+        sel.appendChild(opt);
+      });
+      document.getElementById('addressResults').style.display = 'block';
+      setAddressStatus(data.addresses.length + ' addresses found', 'var(--green)');
+    })
+    .catch(function(err) {
+      if (String(err).indexOf('404') > -1) {
+        setAddressStatus('No addresses found for that postcode. Try again or enter manually.', 'var(--gold)');
+      } else if (String(err).indexOf('401') > -1) {
+        setAddressStatus('Address lookup unavailable. Please enter manually.', 'var(--gold)');
+        toggleManualAddress();
+      } else {
+        setAddressStatus('Lookup error. Please enter address manually.', 'var(--gold)');
+      }
+    });
+}
+
+function selectAddress() {
+  var sel = document.getElementById('addressSelect');
+  if (sel.value) {
+    document.getElementById('propertyAddress').value = sel.value;
+    document.getElementById('addressConfirmed').style.display = 'block';
+    setAddressStatus('✓ Address selected', 'var(--green)');
+  }
+}
+
+function toggleManualAddress() {
+  manualMode = !manualMode;
+  var toggle = document.getElementById('manualToggle');
+  if (manualMode) {
+    document.getElementById('addressResults').style.display = 'none';
+    document.getElementById('addressConfirmed').style.display = 'block';
+    document.getElementById('propertyAddress').value = '';
+    document.getElementById('propertyAddress').placeholder = 'Type full address including postcode';
+    document.getElementById('propertyAddress').style.background = '';
+    document.getElementById('propertyAddress').style.borderColor = '';
+    document.getElementById('propertyAddress').focus();
+    toggle.textContent = 'Use postcode lookup instead';
+    setAddressStatus('Manual entry mode — type the full property address', 'var(--gray)');
+  } else {
+    document.getElementById('addressConfirmed').style.display = 'none';
+    document.getElementById('propertyAddress').value = '';
+    toggle.textContent = "Can\u0027t find your address? Enter manually";
+    setAddressStatus('', '');
+  }
+}
+
+function setAddressStatus(msg, color) {
+  var el = document.getElementById('addressStatus');
+  el.textContent = msg;
+  el.style.color = color || 'var(--gray)';
+}
 
 // ═══ FORM ENGINE ═══
 let currentStep = 1;
