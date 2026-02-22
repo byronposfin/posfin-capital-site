@@ -293,15 +293,19 @@ section { padding: 6rem 3rem; position: relative; }
   .wa-float svg { width: 28px; height: 28px; }
 }
 /* Address lookup styles */
-.addr-lookup { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
-.addr-lookup input { flex: 1; }
-.addr-btn { padding: 0.85rem 1.2rem; background: var(--teal); color: var(--navy); border: none; border-radius: 4px; font-family: var(--sans); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
-.addr-btn:hover { opacity: 0.9; }
-.addr-dropdown { display: none; margin-bottom: 0.4rem; }
-.addr-dropdown select { background: var(--navy-light); border: 1px solid rgba(46,196,182,0.3); border-radius: 4px; padding: 0.85rem 1rem; color: var(--white); font-family: var(--sans); font-size: 0.85rem; width: 100%; cursor: pointer; }
-.addr-dropdown select option { background: var(--navy-light); color: var(--white); }
+.addr-widget { margin-bottom: 0.4rem; }
+.addr-widget input[type="text"] { background: var(--navy-light) !important; border: 1px solid rgba(46,196,182,0.2) !important; border-radius: 4px !important; padding: 0.85rem 1rem !important; color: var(--white) !important; font-family: var(--sans) !important; font-size: 0.85rem !important; width: 100% !important; }
+.addr-widget input[type="text"]:focus { border-color: var(--teal) !important; outline: none !important; box-shadow: 0 0 0 2px rgba(46,196,182,0.15) !important; }
+.addr-widget input[type="text"]::placeholder { color: var(--gray) !important; }
+.addr-widget button { padding: 0.85rem 1.2rem !important; background: var(--teal) !important; color: var(--navy) !important; border: none !important; border-radius: 4px !important; font-family: var(--sans) !important; font-weight: 700 !important; font-size: 0.78rem !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; cursor: pointer !important; margin-top: 0.4rem !important; }
+.addr-widget button:hover { opacity: 0.9 !important; }
+.addr-widget select, .addr-widget .getaddress-find-dropdown { background: var(--navy-light) !important; border: 1px solid rgba(46,196,182,0.3) !important; border-radius: 4px !important; padding: 0.85rem 1rem !important; color: var(--white) !important; font-family: var(--sans) !important; font-size: 0.85rem !important; width: 100% !important; cursor: pointer !important; margin-top: 0.4rem !important; }
+.addr-widget select option, .addr-widget .getaddress-find-dropdown option { background: var(--navy-light) !important; color: var(--white) !important; }
+.addr-widget label { font-family: var(--mono) !important; font-size: 0.65rem !important; color: var(--gray) !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; margin-bottom: 0.3rem !important; display: block !important; }
+.addr-widget .getaddress-find-error { color: var(--gold) !important; font-family: var(--mono) !important; font-size: 0.65rem !important; margin-top: 0.3rem !important; }
 .addr-status { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; margin-top: 0.2rem; }
 </style>
+<script src="https://cdn.getaddress.io/scripts/getaddress-find-2.1.0.min.js"></script>
 </head>
 <body>
 
@@ -509,15 +513,9 @@ section { padding: 6rem 3rem; position: relative; }
 
         <div class="form-group">
           <label class="form-label">Residential Address *</label>
-          <div class="addr-lookup">
-            <input class="form-input" type="text" id="resPostcode" placeholder="Postcode" style="max-width:180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAddress('res');}">
-            <button type="button" class="addr-btn" onclick="lookupAddress('res')">Find</button>
-          </div>
-          <div class="addr-dropdown" id="resDropdown">
-            <select id="resSelect" onchange="pickAddress('res')"><option value="">— Select address —</option></select>
-          </div>
-          <input class="form-input" type="text" id="residentialAddress" placeholder="Your home address (use Find or type manually)">
-          <div class="addr-status" id="resStatus" style="color:var(--gray);">Enter postcode and click Find, or type your full address.</div>
+          <div id="resPostcodeLookup" class="addr-widget"></div>
+          <input class="form-input" type="text" id="residentialAddress" placeholder="Your home address (select from lookup or type manually)" style="margin-top:8px;">
+          <div class="addr-status" id="resStatus" style="color:var(--gray);">Enter postcode above to search, or type your full address.</div>
         </div>
 
         <div class="form-nav"><div></div><button class="form-next" onclick="nextStep(1)">Next: Property Details →</button></div>
@@ -532,15 +530,9 @@ section { padding: 6rem 3rem; position: relative; }
         <!-- ═══ PROPERTY ADDRESS ═══ -->
         <div class="form-group">
           <label class="form-label">Property Address *</label>
-          <div class="addr-lookup">
-            <input class="form-input" type="text" id="propPostcode" placeholder="Postcode" style="max-width:180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAddress('prop');}">
-            <button type="button" class="addr-btn" onclick="lookupAddress('prop')">Find</button>
-          </div>
-          <div class="addr-dropdown" id="propDropdown">
-            <select id="propSelect" onchange="pickAddress('prop')"><option value="">— Select address —</option></select>
-          </div>
-          <input class="form-input" type="text" id="propertyAddress" placeholder="Property address (use Find or type manually)">
-          <div class="addr-status" id="propStatus" style="color:var(--gray);">Enter postcode and click Find, or type the full property address.</div>
+          <div id="propPostcodeLookup" class="addr-widget"></div>
+          <input class="form-input" type="text" id="propertyAddress" placeholder="Property address (select from lookup or type manually)" style="margin-top:8px;">
+          <div class="addr-status" id="propStatus" style="color:var(--gray);">Enter postcode above to search, or type the full property address.</div>
         </div>
 
         <div class="form-row">
@@ -842,7 +834,7 @@ section { padding: 6rem 3rem; position: relative; }
       </div>
       <div><div class="footer-heading">Products</div><ul class="footer-links"><li><a href="#products">Speed Loan</a></li><li><a href="#products">Main Loan</a></li><li><a href="#process">How It Works</a></li></ul></div>
       <div><div class="footer-heading">Company</div><ul class="footer-links"><li><a href="#testimonials">Reviews</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Cookie Policy</a></li><li><a href="#">Complaints</a></li></ul></div>
-      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="mailto:info@posfincapital.com">info@posfincapital.com</a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
+      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="/cdn-cgi/l/email-protection#6801060e072818071b0e01060b0918011c0904460b0705"><span class="__cf_email__" data-cfemail="5f363139301f2f302c3936313c3e2f362b3e33713c3032">[email&#160;protected]</span></a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
     </div>
     <div class="footer-bottom">
       <p class="footer-legal">Posfin Capital Limited is authorised and regulated by the Financial Conduct Authority (FRN: 913022). Company No: 12148846. Registered Office: 19 Upper King Street, Norwich NR3 1RB. Trading Address: 96 Kensington High Street, London W8 4SG. ICO: ZA542657. Your property may be repossessed if you do not keep up repayments on a loan secured against it. Posfin Capital Limited acts as a credit broker, not a lender, for brokered products.</p>
@@ -854,81 +846,69 @@ section { padding: 6rem 3rem; position: relative; }
 <!-- ═══════════════════════════════════════ -->
 <!-- JAVASCRIPT                              -->
 <!-- ═══════════════════════════════════════ -->
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // Nav scroll
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
 
-// ═══ ADDRESS LOOKUP (getAddress.io direct API) ═══
-var GETADDRESS_API_KEY = 'dtoken_hEDzcyiWMr39Be_2_iNmjDkxAFmP4OaaZQqdxXWZQhUk8MM_6y7HW41eyhADhPZyeYE1Ka4ApV5yhn8uHYHRp22cXYzk1nT2vs-zi3RY8--MV-liipORWhWPlvr6VY8vKRyKRglm7mVoLZw4Srsc685FPN3IN7VxbYLRQuA0jVHWkCteIgOeqcSqlP8PU_2w55A4k_6-r-Y';
+// ═══ ADDRESS LOOKUP (getAddress.io Official Find Widget) ═══
+var GA_TOKEN = 'dtoken_hEDzcyiWMr39Be_2_iNmjDkxAFmP4OaaZQqdxXWZQhUk8MM_6y7HW41eyhADhPZyeYE1Ka4ApV5yhn8uHYHRp22cXYzk1nT2vs-zi3RY8--MV-liipORWhWPlvr6VY8vKRyKRglm7mVoLZw4Srsc685FPN3IN7VxbYLRQuA0jVHWkCteIgOeqcSqlP8PU_2w55A4k_6-r-Y';
 
-var addrConfig = {
-  res:  { postcode: 'resPostcode',  dropdown: 'resDropdown',  select: 'resSelect',  field: 'residentialAddress', status: 'resStatus' },
-  prop: { postcode: 'propPostcode', dropdown: 'propDropdown', select: 'propSelect', field: 'propertyAddress',    status: 'propStatus' }
-};
+// Initialize residential address lookup
+getAddress.find('resPostcodeLookup', GA_TOKEN, {
+  output_fields: {},
+  input: { id: 'res_ga_input', label: 'Enter your postcode' },
+  button: { id: 'res_ga_button', label: 'Find' },
+  dropdown: { id: 'res_ga_dropdown', select_message: 'Select your address' },
+  error_message: { id: 'res_ga_error', not_found: 'No addresses found — type manually below' }
+});
 
-function lookupAddress(ctx) {
-  var c = addrConfig[ctx];
-  var pc = document.getElementById(c.postcode).value.trim().replace(/\s+/g, '+');
-  if (!pc) { setStatus(c.status, 'Please enter a postcode.', 'var(--red)'); return; }
-  setStatus(c.status, 'Searching...', 'var(--teal)');
-  document.getElementById(c.dropdown).style.display = 'none';
+// Initialize property address lookup
+getAddress.find('propPostcodeLookup', GA_TOKEN, {
+  output_fields: {},
+  input: { id: 'prop_ga_input', label: 'Enter property postcode' },
+  button: { id: 'prop_ga_button', label: 'Find' },
+  dropdown: { id: 'prop_ga_dropdown', select_message: 'Select the property address' },
+  error_message: { id: 'prop_ga_error', not_found: 'No addresses found — type manually below' }
+});
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'https://api.getAddress.io/find/' + pc + '?api-key=' + GETADDRESS_API_KEY + '&expand=true');
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      try {
-        var data = JSON.parse(xhr.responseText);
-        if (data.addresses && data.addresses.length > 0) {
-          var sel = document.getElementById(c.select);
-          sel.innerHTML = '<option value="">— ' + data.addresses.length + ' addresses found —</option>';
-          data.addresses.forEach(function(addr) {
-            var parts = [addr.line_1, addr.line_2, addr.line_3, addr.town_or_city, addr.county].filter(function(p) { return p && p.trim(); });
-            parts.push(pc.replace(/\+/g, ' ').toUpperCase());
-            var full = parts.join(', ');
-            var opt = document.createElement('option');
-            opt.value = full;
-            opt.textContent = full;
-            sel.appendChild(opt);
-          });
-          document.getElementById(c.dropdown).style.display = 'block';
-          setStatus(c.status, data.addresses.length + ' found — select yours above, or type manually.', 'var(--green)');
-        } else {
-          setStatus(c.status, 'No addresses found. Type the full address manually.', 'var(--gold)');
-        }
-      } catch(e) {
-        setStatus(c.status, 'Error reading results. Type address manually.', 'var(--gold)');
-      }
-    } else if (xhr.status === 404) {
-      setStatus(c.status, 'Postcode not recognised. Check and retry, or type address manually.', 'var(--gold)');
-    } else if (xhr.status === 401 || xhr.status === 403) {
-      setStatus(c.status, 'Lookup temporarily unavailable. Please type address manually.', 'var(--gold)');
-    } else if (xhr.status === 429) {
-      setStatus(c.status, 'Too many searches. Please type address manually.', 'var(--gold)');
-    } else {
-      setStatus(c.status, 'Lookup error (' + xhr.status + '). Type address manually.', 'var(--gold)');
-    }
-  };
-  xhr.onerror = function() {
-    setStatus(c.status, 'Could not reach address service. Type address manually.', 'var(--gold)');
-  };
-  xhr.send();
-}
+// Track which address widget the user last interacted with
+var lastActiveWidget = null;
 
-function pickAddress(ctx) {
-  var c = addrConfig[ctx];
-  var sel = document.getElementById(c.select);
-  if (sel.value) {
-    document.getElementById(c.field).value = sel.value;
-    setStatus(c.status, '✓ Address selected — edit if needed.', 'var(--green)');
+// Attach click listeners to widget buttons after they render
+setTimeout(function() {
+  var resBtn = document.getElementById('res_ga_button');
+  var propBtn = document.getElementById('prop_ga_button');
+  if (resBtn) resBtn.addEventListener('click', function() { lastActiveWidget = 'res'; });
+  if (propBtn) propBtn.addEventListener('click', function() { lastActiveWidget = 'prop'; });
+  // Also track on input focus
+  var resInput = document.getElementById('res_ga_input');
+  var propInput = document.getElementById('prop_ga_input');
+  if (resInput) resInput.addEventListener('focus', function() { lastActiveWidget = 'res'; });
+  if (propInput) propInput.addEventListener('focus', function() { lastActiveWidget = 'prop'; });
+}, 500);
+
+// Listen for address selection events and populate the correct single address field
+document.addEventListener('getaddress-find-address-selected', function(e) {
+  var addr = e.address;
+  var parts = [addr.formatted_address[0], addr.formatted_address[1], addr.formatted_address[2], addr.formatted_address[3], addr.formatted_address[4]].filter(function(p) { return p && p.trim(); });
+  var full = parts.join(', ');
+
+  if (lastActiveWidget === 'prop') {
+    document.getElementById('propertyAddress').value = full;
+    document.getElementById('propStatus').textContent = '✓ Address selected — edit if needed.';
+    document.getElementById('propStatus').style.color = 'var(--green)';
+  } else {
+    // Default to residential
+    document.getElementById('residentialAddress').value = full;
+    document.getElementById('resStatus').textContent = '✓ Address selected — edit if needed.';
+    document.getElementById('resStatus').style.color = 'var(--green)';
   }
-}
+});
 
 function setStatus(id, msg, color) {
   var el = document.getElementById(id);
-  el.textContent = msg;
-  el.style.color = color || 'var(--gray)';
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--gray)'; }
 }
 
 // ═══ FORM ENGINE ═══
@@ -1412,10 +1392,4 @@ function submitForm() {
 }
 
 function showSuccess() {
-  document.querySelectorAll('.form-step').forEach(function(el) { el.classList.remove('active'); });
-  document.querySelector('.form-progress').style.display = 'none';
-  document.getElementById('formSuccess').classList.add('show');
-}
-</script>
-</body>
-</html>
+  documen
