@@ -516,8 +516,13 @@ section { padding: 6rem 3rem; position: relative; }
           <div class="addr-dropdown" id="resDropdown">
             <select id="resSelect" onchange="pickAddress('res')"><option value="">— Select address —</option></select>
           </div>
-          <input class="form-input" type="text" id="residentialAddress" placeholder="Your home address (use Find or type manually)">
-          <div class="addr-status" id="resStatus" style="color:var(--gray);">Enter postcode and click Find, or type your full address.</div>
+          <div class="addr-status" id="resStatus" style="color:var(--gray);">Enter postcode and click Find, or type your full address below.</div>
+          <div class="addr-fields" id="resFields">
+            <input class="form-input" type="text" id="resHouse" placeholder="House number or name *" style="margin-top:0.5rem;">
+            <input class="form-input" type="text" id="resStreet" placeholder="Street name *" style="margin-top:0.4rem;">
+            <input class="form-input" type="text" id="resTownArea" placeholder="Town / area" style="margin-top:0.4rem;" readonly>
+          </div>
+          <input type="hidden" id="residentialAddress">
         </div>
 
         <div class="form-nav"><div></div><button class="form-next" onclick="nextStep(1)">Next: Property Details →</button></div>
@@ -539,8 +544,13 @@ section { padding: 6rem 3rem; position: relative; }
           <div class="addr-dropdown" id="propDropdown">
             <select id="propSelect" onchange="pickAddress('prop')"><option value="">— Select address —</option></select>
           </div>
-          <input class="form-input" type="text" id="propertyAddress" placeholder="Property address (use Find or type manually)">
-          <div class="addr-status" id="propStatus" style="color:var(--gray);">Enter postcode and click Find, or type the full property address.</div>
+          <div class="addr-status" id="propStatus" style="color:var(--gray);">Enter postcode and click Find, or type the full property address below.</div>
+          <div class="addr-fields" id="propFields">
+            <input class="form-input" type="text" id="propHouse" placeholder="House number or name *" style="margin-top:0.5rem;">
+            <input class="form-input" type="text" id="propStreet" placeholder="Street name *" style="margin-top:0.4rem;">
+            <input class="form-input" type="text" id="propTownArea" placeholder="Town / area" style="margin-top:0.4rem;" readonly>
+          </div>
+          <input type="hidden" id="propertyAddress">
         </div>
 
         <div class="form-row">
@@ -861,9 +871,12 @@ window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.
 
 // ═══ ADDRESS LOOKUP (postcodes.io — free, CORS-enabled, no API key) ═══
 var addrConfig = {
-  res:  { postcode: 'resPostcode',  dropdown: 'resDropdown',  select: 'resSelect',  field: 'residentialAddress', status: 'resStatus' },
-  prop: { postcode: 'propPostcode', dropdown: 'propDropdown', select: 'propSelect', field: 'propertyAddress',    status: 'propStatus' }
+  res:  { postcode: 'resPostcode', dropdown: 'resDropdown', select: 'resSelect', field: 'residentialAddress', status: 'resStatus', house: 'resHouse', street: 'resStreet', townArea: 'resTownArea' },
+  prop: { postcode: 'propPostcode', dropdown: 'propDropdown', select: 'propSelect', field: 'propertyAddress', status: 'propStatus', house: 'propHouse', street: 'propStreet', townArea: 'propTownArea' }
 };
+
+// Store lookup data per context
+var addrLookupData = {};
 
 function lookupAddress(ctx) {
   var c = addrConfig[ctx];
@@ -879,23 +892,27 @@ function lookupAddress(ctx) {
     .then(function(data) {
       if (data.status === 200 && data.result) {
         var res = data.result;
-        // Build useful area strings
         var ward = res.admin_ward || '';
         var district = res.admin_district || '';
         var parish = (res.parish && res.parish !== 'unparished area') ? res.parish : '';
         var region = res.region || '';
         var postcode = res.postcode || pc.toUpperCase();
 
+        // Store for building full address later
+        addrLookupData[ctx] = { postcode: postcode, district: district, region: region, ward: ward };
+
+        // Auto-fill town/area field
+        var townText = district || ward || region || '';
+        document.getElementById(c.townArea).value = townText;
+
         var sel = document.getElementById(c.select);
         sel.innerHTML = '<option value="">— Postcode verified: ' + postcode + ' —</option>';
 
-        // Create useful address templates the user can select and edit
         var templates = [];
-        if (ward && district) templates.push(ward + ', ' + district + ', ' + postcode);
-        if (parish && district && parish !== ward) templates.push(parish + ', ' + district + ', ' + postcode);
-        if (district && region) templates.push(district + ', ' + region + ', ' + postcode);
+        if (ward && district) templates.push(ward + ', ' + district);
+        if (district && region && district !== region) templates.push(district + ', ' + region);
+        if (ward && ward !== district) templates.push(ward);
 
-        // Deduplicate
         var seen = {};
         templates.forEach(function(t) {
           if (!seen[t]) {
@@ -908,13 +925,18 @@ function lookupAddress(ctx) {
         });
 
         document.getElementById(c.dropdown).style.display = 'block';
-        setStatus(c.status, '✓ Postcode verified — select area above then edit to add your house number/street, or type full address below.', 'var(--green)');
+        // Focus on house number field
+        document.getElementById(c.house).focus();
+        setStatus(c.status, '✓ Postcode verified — now enter your house number and street name below.', 'var(--green)');
       } else {
-        setStatus(c.status, 'Postcode not recognised. Check and retry, or type your full address.', 'var(--gold)');
+        setStatus(c.status, 'Postcode not recognised. Check and retry, or complete the fields below manually.', 'var(--gold)');
+        // Remove readonly so user can type town manually
+        document.getElementById(c.townArea).removeAttribute('readonly');
       }
     })
     .catch(function() {
-      setStatus(c.status, 'Address lookup unavailable. Please type your full address manually.', 'var(--gold)');
+      setStatus(c.status, 'Lookup unavailable. Please complete all address fields below manually.', 'var(--gold)');
+      document.getElementById(c.townArea).removeAttribute('readonly');
     });
 }
 
@@ -922,10 +944,35 @@ function pickAddress(ctx) {
   var c = addrConfig[ctx];
   var sel = document.getElementById(c.select);
   if (sel.value) {
-    document.getElementById(c.field).value = sel.value;
-    setStatus(c.status, '✓ Address selected — edit if needed.', 'var(--green)');
+    document.getElementById(c.townArea).value = sel.value;
+    document.getElementById(c.house).focus();
+    setStatus(c.status, '✓ Area selected — now enter your house number and street name.', 'var(--green)');
   }
 }
+
+function buildFullAddress(ctx) {
+  var c = addrConfig[ctx];
+  var house = (document.getElementById(c.house).value || '').trim();
+  var street = (document.getElementById(c.street).value || '').trim();
+  var townArea = (document.getElementById(c.townArea).value || '').trim();
+  var postcode = (document.getElementById(c.postcode).value || '').trim().toUpperCase();
+
+  var parts = [house, street, townArea, postcode].filter(function(p) { return p; });
+  return parts.join(', ');
+}
+
+// Auto-build full address whenever address sub-fields change
+['res', 'prop'].forEach(function(ctx) {
+  var c = addrConfig[ctx];
+  ['house', 'street', 'townArea', 'postcode'].forEach(function(fld) {
+    var el = document.getElementById(c[fld]);
+    if (el) {
+      el.addEventListener('input', function() {
+        document.getElementById(c.field).value = buildFullAddress(ctx);
+      });
+    }
+  });
+});
 
 function setStatus(id, msg, color) {
   var el = document.getElementById(id);
@@ -1265,7 +1312,7 @@ function nextStep(from) {
     const resAddr = document.getElementById('residentialAddress').value.trim();
     if (!fn || !ln || !mob || !em || !cp) { alert('Please complete all required fields.'); return; }
     if (!dob) { alert('Please enter your date of birth.'); document.getElementById('dob').focus(); return; }
-    if (!resAddr) { alert('Please enter your residential address. Use the postcode search or type it manually.'); document.getElementById('residentialAddress').focus(); return; }
+    if (!resAddr) { alert('Please enter your residential address. Use the postcode search or type it manually.'); document.getElementById('resHouse').focus(); return; }
     formData.firstName = fn; formData.lastName = ln; formData.mobile = mob;
     formData.email = em; formData.contactPref = document.getElementById('contactPref').value;
     formData.creditProfile = document.getElementById('creditProfile').value;
@@ -1277,7 +1324,7 @@ function nextStep(from) {
     var addr = document.getElementById('propertyAddress').value.trim();
     var pv = document.getElementById('propValue').value.trim();
     var m1 = document.getElementById('mortgage1').value.trim();
-    if (!addr) { alert('Please enter the property address. Use the postcode search or type it manually.'); document.getElementById('propertyAddress').focus(); return; }
+    if (!addr) { alert('Please enter the property address. Use the postcode search or type it manually.'); document.getElementById('propHouse').focus(); return; }
     if (!pv) { alert('Please enter the estimated property value.'); document.getElementById('propValue').focus(); return; }
     if (!m1) { alert('Please enter the current 1st mortgage balance (enter 0 if no mortgage).'); document.getElementById('mortgage1').focus(); return; }
     formData.propertyAddress = addr;
