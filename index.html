@@ -1439,4 +1439,11 @@ function submitForm() {
 }
 
 function showSuccess() {
-  documen
+  document.getElementById('applyForm').style.display = 'none';
+  var successEl = document.getElementById('formSuccess');
+  successEl.classList.add('show');
+  successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+</script>
+</body>
+</html>
