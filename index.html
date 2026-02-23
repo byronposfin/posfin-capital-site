@@ -854,38 +854,49 @@ window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.
 // ═══ ADDRESS LOOKUP (getAddress.io Official Find Widget) ═══
 var GA_TOKEN = 'dtoken_hEDzcyiWMr39Be_2_iNmjDkxAFmP4OaaZQqdxXWZQhUk8MM_6y7HW41eyhADhPZyeYE1Ka4ApV5yhn8uHYHRp22cXYzk1nT2vs-zi3RY8--MV-liipORWhWPlvr6VY8vKRyKRglm7mVoLZw4Srsc685FPN3IN7VxbYLRQuA0jVHWkCteIgOeqcSqlP8PU_2w55A4k_6-r-Y';
 
-// Initialize residential address lookup
-getAddress.find('resPostcodeLookup', GA_TOKEN, {
-  output_fields: {},
-  input: { id: 'res_ga_input', label: 'Enter your postcode' },
-  button: { id: 'res_ga_button', label: 'Find' },
-  dropdown: { id: 'res_ga_dropdown', select_message: 'Select your address' },
-  error_message: { id: 'res_ga_error', not_found: 'No addresses found — type manually below' }
-});
-
-// Initialize property address lookup
-getAddress.find('propPostcodeLookup', GA_TOKEN, {
-  output_fields: {},
-  input: { id: 'prop_ga_input', label: 'Enter property postcode' },
-  button: { id: 'prop_ga_button', label: 'Find' },
-  dropdown: { id: 'prop_ga_dropdown', select_message: 'Select the property address' },
-  error_message: { id: 'prop_ga_error', not_found: 'No addresses found — type manually below' }
-});
-
 // Track which address widget the user last interacted with
-var lastActiveWidget = null;
+var lastActiveWidget = 'res';
+var propWidgetInitialized = false;
 
-// Attach click listeners to widget buttons after they render
+// Initialize residential address lookup (Step 1 is visible on load)
+try {
+  getAddress.find('resPostcodeLookup', GA_TOKEN, {
+    output_fields: {},
+    input: { id: 'res_ga_input', label: 'Enter your postcode' },
+    button: { id: 'res_ga_button', label: 'Find' },
+    dropdown: { id: 'res_ga_dropdown', select_message: 'Select your address' },
+    error_message: { id: 'res_ga_error', not_found: 'No addresses found — type manually below' }
+  });
+} catch(e) { console.log('Res widget init error:', e); }
+
+// Property widget will be initialized when Step 2 becomes visible
+function initPropWidget() {
+  if (propWidgetInitialized) return;
+  try {
+    getAddress.find('propPostcodeLookup', GA_TOKEN, {
+      output_fields: {},
+      input: { id: 'prop_ga_input', label: 'Enter property postcode' },
+      button: { id: 'prop_ga_button', label: 'Find' },
+      dropdown: { id: 'prop_ga_dropdown', select_message: 'Select the property address' },
+      error_message: { id: 'prop_ga_error', not_found: 'No addresses found — type manually below' }
+    });
+    propWidgetInitialized = true;
+    // Attach tracking to property widget
+    setTimeout(function() {
+      var propBtn = document.getElementById('prop_ga_button');
+      var propInput = document.getElementById('prop_ga_input');
+      if (propBtn) propBtn.addEventListener('click', function() { lastActiveWidget = 'prop'; });
+      if (propInput) propInput.addEventListener('focus', function() { lastActiveWidget = 'prop'; });
+    }, 300);
+  } catch(e) { console.log('Prop widget init error:', e); }
+}
+
+// Attach tracking to residential widget after it renders
 setTimeout(function() {
   var resBtn = document.getElementById('res_ga_button');
-  var propBtn = document.getElementById('prop_ga_button');
-  if (resBtn) resBtn.addEventListener('click', function() { lastActiveWidget = 'res'; });
-  if (propBtn) propBtn.addEventListener('click', function() { lastActiveWidget = 'prop'; });
-  // Also track on input focus
   var resInput = document.getElementById('res_ga_input');
-  var propInput = document.getElementById('prop_ga_input');
+  if (resBtn) resBtn.addEventListener('click', function() { lastActiveWidget = 'res'; });
   if (resInput) resInput.addEventListener('focus', function() { lastActiveWidget = 'res'; });
-  if (propInput) propInput.addEventListener('focus', function() { lastActiveWidget = 'prop'; });
 }, 500);
 
 // Listen for address selection events and populate the correct single address field
@@ -899,7 +910,6 @@ document.addEventListener('getaddress-find-address-selected', function(e) {
     document.getElementById('propStatus').textContent = '✓ Address selected — edit if needed.';
     document.getElementById('propStatus').style.color = 'var(--green)';
   } else {
-    // Default to residential
     document.getElementById('residentialAddress').value = full;
     document.getElementById('resStatus').textContent = '✓ Address selected — edit if needed.';
     document.getElementById('resStatus').style.color = 'var(--green)';
@@ -1230,6 +1240,8 @@ function showStep(step) {
   document.querySelector('.form-step[data-step="' + step + '"]').classList.add('active');
   updateProgress(step);
   currentStep = step;
+  // Initialize property address widget when Step 2 first becomes visible
+  if (step === 2) { setTimeout(initPropWidget, 100); }
 }
 
 function nextStep(from) {
