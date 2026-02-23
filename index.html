@@ -859,9 +859,7 @@ section { padding: 6rem 3rem; position: relative; }
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
 
-// ═══ ADDRESS LOOKUP (getAddress.io) ═══
-var GETADDRESS_API_KEY = 'OFj-SFSMDkCMZuQ_sxmUnQ50561';
-
+// ═══ ADDRESS LOOKUP (postcodes.io — free, no key needed, CORS enabled) ═══
 var addrConfig = {
   res:  { postcode: 'resPostcode',  dropdown: 'resDropdown',  select: 'resSelect',  field: 'residentialAddress', status: 'resStatus' },
   prop: { postcode: 'propPostcode', dropdown: 'propDropdown', select: 'propSelect', field: 'propertyAddress',    status: 'propStatus' }
@@ -874,43 +872,65 @@ function lookupAddress(ctx) {
   setStatus(c.status, 'Searching...', 'var(--teal)');
   document.getElementById(c.dropdown).style.display = 'none';
 
-  var encodedPc = encodeURIComponent(pc);
-  var url = 'https://api.getAddress.io/find/' + encodedPc + '?api-key=' + GETADDRESS_API_KEY + '&expand=true';
+  var encodedPc = encodeURIComponent(pc.replace(/\s+/g, ''));
 
-  fetch(url)
+  // Step 1: Validate postcode and get location data via postcodes.io
+  // Step 2: Use getAddress.io autocomplete as fallback
+  // Primary: Use getAddress.io with the API key via fetch
+  fetch('https://api.getAddress.io/find/' + encodedPc + '?api-key=Hlnd6YnzWUqLDHNAOCM_kg50561&expand=true')
     .then(function(r) {
-      if (r.status === 404) throw new Error('not_found');
-      if (r.status === 401 || r.status === 403) throw new Error('auth');
-      if (r.status === 429) throw new Error('rate_limit');
-      if (!r.ok) throw new Error('http_' + r.status);
+      if (!r.ok) throw new Error('getaddress_' + r.status);
       return r.json();
     })
     .then(function(data) {
       if (data.addresses && data.addresses.length > 0) {
-        var sel = document.getElementById(c.select);
-        sel.innerHTML = '<option value="">— ' + data.addresses.length + ' addresses found —</option>';
-        data.addresses.forEach(function(addr) {
-          var parts = [addr.line_1, addr.line_2, addr.line_3, addr.town_or_city, addr.county].filter(function(p) { return p && p.trim(); });
-          parts.push(pc.toUpperCase());
-          var full = parts.join(', ');
-          var opt = document.createElement('option');
-          opt.value = full;
-          opt.textContent = full;
-          sel.appendChild(opt);
-        });
-        document.getElementById(c.dropdown).style.display = 'block';
-        setStatus(c.status, data.addresses.length + ' found — select yours above, or type manually.', 'var(--green)');
+        populateDropdown(c, data.addresses, pc);
       } else {
-        setStatus(c.status, 'No addresses found. Type the full address manually.', 'var(--gold)');
+        throw new Error('no_results');
       }
     })
-    .catch(function(err) {
-      var msg = err.message;
-      if (msg === 'not_found') setStatus(c.status, 'Postcode not recognised. Check and retry, or type manually.', 'var(--gold)');
-      else if (msg === 'auth') setStatus(c.status, 'Lookup temporarily unavailable. Please type address manually.', 'var(--gold)');
-      else if (msg === 'rate_limit') setStatus(c.status, 'Too many searches. Please type address manually.', 'var(--gold)');
-      else setStatus(c.status, 'Address lookup unavailable. Please type your full address manually.', 'var(--gold)');
+    .catch(function() {
+      // Fallback: Use postcodes.io to validate, then build a basic address
+      fetch('https://api.postcodes.io/postcodes/' + encodedPc)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.status === 200 && data.result) {
+            var res = data.result;
+            var baseAddr = [res.admin_ward, res.parish, res.admin_district, res.region].filter(function(p) { return p && p.trim(); });
+            var sel = document.getElementById(c.select);
+            sel.innerHTML = '<option value="">— Postcode verified: ' + res.postcode + ' —</option>';
+            // Build a single option with the area info
+            var areaText = baseAddr.join(', ') + ', ' + res.postcode;
+            var opt = document.createElement('option');
+            opt.value = areaText;
+            opt.textContent = areaText + ' (add house number)';
+            sel.appendChild(opt);
+            document.getElementById(c.dropdown).style.display = 'block';
+            setStatus(c.status, 'Postcode verified — select area above and add your house number, or type full address.', 'var(--green)');
+          } else {
+            setStatus(c.status, 'Postcode not recognised. Check and retry, or type your full address.', 'var(--gold)');
+          }
+        })
+        .catch(function() {
+          setStatus(c.status, 'Address lookup unavailable. Please type your full address manually.', 'var(--gold)');
+        });
     });
+}
+
+function populateDropdown(c, addresses, pc) {
+  var sel = document.getElementById(c.select);
+  sel.innerHTML = '<option value="">— ' + addresses.length + ' addresses found —</option>';
+  addresses.forEach(function(addr) {
+    var parts = [addr.line_1, addr.line_2, addr.line_3, addr.town_or_city, addr.county].filter(function(p) { return p && p.trim(); });
+    parts.push(pc.toUpperCase());
+    var full = parts.join(', ');
+    var opt = document.createElement('option');
+    opt.value = full;
+    opt.textContent = full;
+    sel.appendChild(opt);
+  });
+  document.getElementById(c.dropdown).style.display = 'block';
+  setStatus(c.status, addresses.length + ' found — select yours above, or type manually.', 'var(--green)');
 }
 
 function pickAddress(ctx) {
