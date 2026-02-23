@@ -860,7 +860,7 @@ const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
 
 // ═══ ADDRESS LOOKUP (getAddress.io) ═══
-var GETADDRESS_API_KEY = 'dtoken_hEDzcyiWMr39Be_2_iNmjDkxAFmP4OaaZQqdxXWZQhUk8MM_6y7HW41eyhADhPZyeYE1Ka4ApV5yhn8uHYHRp22cXYzk1nT2vs-zi3RY8--MV-liipORWhWPlvr6VY8vKRyKRglm7mVoLZw4Srsc685FPN3IN7VxbYLRQuA0jVHWkCteIgOeqcSqlP8PU_2w55A4k_6-r-Y';
+var GETADDRESS_API_KEY = 'OFj-SFSMDkCMZuQ_sxmUnQ50561';
 
 var addrConfig = {
   res:  { postcode: 'resPostcode',  dropdown: 'resDropdown',  select: 'resSelect',  field: 'residentialAddress', status: 'resStatus' },
@@ -877,48 +877,15 @@ function lookupAddress(ctx) {
   var encodedPc = encodeURIComponent(pc);
   var url = 'https://api.getAddress.io/find/' + encodedPc + '?api-key=' + GETADDRESS_API_KEY + '&expand=true';
 
-  // Use dynamic script injection to bypass CORS
-  var cbName = '_gaCb_' + ctx + '_' + Date.now();
-  var scriptUrl = 'https://api.getAddress.io/find/' + encodedPc + '?api-key=' + GETADDRESS_API_KEY + '&expand=true&callback=' + cbName;
-
-  // Set up the callback
-  window[cbName] = function(data) {
-    // Cleanup
-    delete window[cbName];
-    var s = document.getElementById(cbName);
-    if (s) s.parentNode.removeChild(s);
-
-    if (data && data.addresses && data.addresses.length > 0) {
-      var sel = document.getElementById(c.select);
-      sel.innerHTML = '<option value="">— ' + data.addresses.length + ' addresses found —</option>';
-      data.addresses.forEach(function(addr) {
-        var parts = [addr.line_1, addr.line_2, addr.line_3, addr.town_or_city, addr.county].filter(function(p) { return p && p.trim(); });
-        parts.push(pc.toUpperCase());
-        var full = parts.join(', ');
-        var opt = document.createElement('option');
-        opt.value = full;
-        opt.textContent = full;
-        sel.appendChild(opt);
-      });
-      document.getElementById(c.dropdown).style.display = 'block';
-      setStatus(c.status, data.addresses.length + ' found — select yours above, or type manually.', 'var(--green)');
-    } else {
-      setStatus(c.status, 'No addresses found. Type the full address manually.', 'var(--gold)');
-    }
-  };
-
-  // Create and inject the script tag
-  var script = document.createElement('script');
-  script.id = cbName;
-  script.src = scriptUrl;
-  script.onerror = function() {
-    // JSONP failed — try regular fetch as fallback
-    delete window[cbName];
-    script.parentNode.removeChild(script);
-    fetch(url).then(function(r) {
-      if (!r.ok) throw new Error(r.status);
+  fetch(url)
+    .then(function(r) {
+      if (r.status === 404) throw new Error('not_found');
+      if (r.status === 401 || r.status === 403) throw new Error('auth');
+      if (r.status === 429) throw new Error('rate_limit');
+      if (!r.ok) throw new Error('http_' + r.status);
       return r.json();
-    }).then(function(data) {
+    })
+    .then(function(data) {
       if (data.addresses && data.addresses.length > 0) {
         var sel = document.getElementById(c.select);
         sel.innerHTML = '<option value="">— ' + data.addresses.length + ' addresses found —</option>';
@@ -936,11 +903,14 @@ function lookupAddress(ctx) {
       } else {
         setStatus(c.status, 'No addresses found. Type the full address manually.', 'var(--gold)');
       }
-    }).catch(function(err) {
-      setStatus(c.status, 'Address lookup unavailable. Please type your full address manually.', 'var(--gold)');
+    })
+    .catch(function(err) {
+      var msg = err.message;
+      if (msg === 'not_found') setStatus(c.status, 'Postcode not recognised. Check and retry, or type manually.', 'var(--gold)');
+      else if (msg === 'auth') setStatus(c.status, 'Lookup temporarily unavailable. Please type address manually.', 'var(--gold)');
+      else if (msg === 'rate_limit') setStatus(c.status, 'Too many searches. Please type address manually.', 'var(--gold)');
+      else setStatus(c.status, 'Address lookup unavailable. Please type your full address manually.', 'var(--gold)');
     });
-  };
-  document.head.appendChild(script);
 }
 
 function pickAddress(ctx) {
