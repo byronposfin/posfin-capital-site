@@ -1566,4 +1566,10 @@ function submitForm() {
 }
 
 function showSuccess() {
-  d
+  document.querySelectorAll('.form-step').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('formSuccess').classList.add('show');
+  document.querySelector('.form-progress').style.display = 'none';
+}
+</script>
+</body>
+</html>
