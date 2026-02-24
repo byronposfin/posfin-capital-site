@@ -576,11 +576,27 @@ section { padding: 6rem 3rem; position: relative; }
           </div>
         </div>
 
-        <!-- Existing Secured Charges -->
+        <!-- Existing Secured Charges — Dynamic Repeater -->
         <div class="form-group">
-          <label class="form-label">Any Existing 2nd, 3rd or Other Secured Charges? (£ total)</label>
-          <input class="form-input" type="text" id="mortgage2" placeholder="e.g. 0 (enter 0 if none — include ALL secured debts)" oninput="formatCurrency(this);calcLTV()">
-          <p style="font-size:0.73rem;color:var(--gray);margin-top:0.4rem;line-height:1.5;opacity:0.7;">Include all existing secured charges — 2nd, 3rd, 4th charges, charging orders, restriction notices, and any other registered interests against the property title.</p>
+          <label class="form-label">Any Existing 2nd, 3rd or Other Secured Charges?</label>
+          <div class="arrears-toggle" style="margin-bottom:0.8rem;">
+            <button type="button" class="arrears-btn" id="chargesNo" onclick="setHasCharges(false)">No</button>
+            <button type="button" class="arrears-btn" id="chargesYes" onclick="setHasCharges(true)">Yes</button>
+          </div>
+          <div id="chargesContainer" style="display:none;animation:fadeIn 0.4s ease;">
+            <p style="font-size:0.73rem;color:var(--gray);margin-bottom:0.8rem;line-height:1.5;opacity:0.7;">Add each charge holder separately — 2nd, 3rd, 4th charges, charging orders, restriction notices, and any other registered interests against the property title.</p>
+            <div id="chargesList"></div>
+            <button type="button" onclick="addChargeRow()" style="display:inline-flex;align-items:center;gap:6px;margin-top:0.6rem;padding:0.5rem 1.2rem;background:rgba(46,196,182,0.06);border:1px dashed rgba(46,196,182,0.3);border-radius:4px;color:var(--teal);font-family:var(--sans);font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.3s;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Another Charge
+            </button>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:1rem;padding:0.8rem;background:rgba(0,0,0,0.15);border-radius:4px;">
+              <span style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);">Total Existing Charges</span>
+              <span style="font-family:var(--serif);font-size:1.3rem;font-weight:600;color:var(--amber);" id="chargesTotalDisplay">£0</span>
+            </div>
+          </div>
+          <!-- Hidden field for backward compatibility -->
+          <input type="hidden" id="mortgage2" value="0">
         </div>
 
         <!-- ═══ MANDATORY REDEMPTION NOTICE ═══ -->
@@ -852,7 +868,7 @@ section { padding: 6rem 3rem; position: relative; }
       </div>
       <div><div class="footer-heading">Products</div><ul class="footer-links"><li><a href="#products">Speed Loan</a></li><li><a href="#products">Main Loan</a></li><li><a href="#process">How It Works</a></li></ul></div>
       <div><div class="footer-heading">Company</div><ul class="footer-links"><li><a href="#testimonials">Reviews</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Cookie Policy</a></li><li><a href="#">Complaints</a></li></ul></div>
-      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="mailto:info@posfincapital.com">info@posfincapital.com</a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
+      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="/cdn-cgi/l/email-protection#1970777f765969766a7f70777a7869706d7875377a7674"><span class="__cf_email__" data-cfemail="5a33343c351a2a35293c3334393b2a332e3b3674393537">[email&#160;protected]</span></a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
     </div>
     <div class="footer-bottom">
       <p class="footer-legal">Posfin Capital Limited is authorised and regulated by the Financial Conduct Authority (FRN: 913022). Company No: 12148846. Registered Office: 19 Upper King Street, Norwich NR3 1RB. Trading Address: 96 Kensington High Street, London W8 4SG. ICO: ZA542657. Your property may be repossessed if you do not keep up repayments on a loan secured against it. Posfin Capital Limited acts as a credit broker, not a lender, for brokered products.</p>
@@ -864,7 +880,7 @@ section { padding: 6rem 3rem; position: relative; }
 <!-- ═══════════════════════════════════════ -->
 <!-- JAVASCRIPT                              -->
 <!-- ═══════════════════════════════════════ -->
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // Nav scroll
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 60));
@@ -1208,6 +1224,82 @@ function setArrears(val) {
   calcLTV();
 }
 
+// ═══ DYNAMIC CHARGE HOLDER REPEATER ═══
+var chargeCounter = 0;
+var hasCharges = false;
+
+function setHasCharges(val) {
+  hasCharges = val;
+  document.getElementById('chargesNo').classList.toggle('selected', !val);
+  document.getElementById('chargesYes').classList.toggle('selected', val);
+  var container = document.getElementById('chargesContainer');
+  if (val) {
+    container.style.display = 'block';
+    if (document.getElementById('chargesList').children.length === 0) addChargeRow();
+  } else {
+    container.style.display = 'none';
+    document.getElementById('chargesList').innerHTML = '';
+    chargeCounter = 0;
+    document.getElementById('mortgage2').value = '0';
+    document.getElementById('chargesTotalDisplay').textContent = '£0';
+    calcLTV();
+  }
+}
+
+function addChargeRow() {
+  chargeCounter++;
+  var id = chargeCounter;
+  var row = document.createElement('div');
+  row.id = 'chargeRow_' + id;
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 140px 36px;gap:0.6rem;align-items:start;margin-bottom:0.6rem;animation:fadeIn 0.3s ease;';
+  row.innerHTML = '<div>'
+    + '<input class="form-input" type="text" id="chargeName_' + id + '" placeholder="Lender / charge holder name" style="font-size:0.88rem;">'
+    + '</div>'
+    + '<div>'
+    + '<input class="form-input" type="text" id="chargeAmount_' + id + '" placeholder="£ amount" style="font-size:0.88rem;" oninput="formatCurrency(this);sumCharges()">'
+    + '</div>'
+    + '<button type="button" onclick="removeChargeRow(' + id + ')" style="width:36px;height:42px;display:flex;align-items:center;justify-content:center;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);border-radius:4px;color:var(--red);cursor:pointer;transition:all 0.3s;font-size:1.1rem;" title="Remove">'
+    + '×'
+    + '</button>';
+  document.getElementById('chargesList').appendChild(row);
+}
+
+function removeChargeRow(id) {
+  var row = document.getElementById('chargeRow_' + id);
+  if (row) {
+    row.remove();
+    sumCharges();
+    if (document.getElementById('chargesList').children.length === 0) addChargeRow();
+  }
+}
+
+function sumCharges() {
+  var total = 0;
+  var rows = document.getElementById('chargesList').children;
+  for (var i = 0; i < rows.length; i++) {
+    var amountInput = rows[i].querySelector('input[id^="chargeAmount_"]');
+    if (amountInput) total += parseCurrency(amountInput.value);
+  }
+  document.getElementById('mortgage2').value = total.toLocaleString('en-GB');
+  document.getElementById('chargesTotalDisplay').textContent = '£' + total.toLocaleString('en-GB');
+  calcLTV();
+}
+
+function getChargeHolders() {
+  var holders = [];
+  var rows = document.getElementById('chargesList').children;
+  for (var i = 0; i < rows.length; i++) {
+    var nameInput = rows[i].querySelector('input[id^="chargeName_"]');
+    var amountInput = rows[i].querySelector('input[id^="chargeAmount_"]');
+    if (nameInput && amountInput) {
+      var name = nameInput.value.trim();
+      var amount = parseCurrency(amountInput.value);
+      if (name || amount > 0) holders.push({ name: name || 'Unnamed', amount: amount });
+    }
+  }
+  return holders;
+}
+
 function calcLTV() {
   const val = parseCurrency(document.getElementById('propValue').value);
   const m1 = parseCurrency(document.getElementById('mortgage1').value);
@@ -1331,6 +1423,7 @@ function nextStep(from) {
     formData.propValue = pv;
     formData.mortgage1 = m1;
     formData.mortgage2 = document.getElementById('mortgage2').value;
+    formData.chargeHolders = hasCharges ? getChargeHolders() : [];
     formData.arrears = document.getElementById('arrearsValue').value;
     formData.hasArrears = hasArrears;
     formData.propType = document.getElementById('propType').value;
@@ -1356,7 +1449,7 @@ function buildSummary() {
   const grid = document.getElementById('summaryGrid');
   const ltv = formData._ltv || 0;
   const ltvClass = ltv <= 50 ? 'green' : ltv <= 70 ? 'amber' : 'red';
-  const rows = [
+  let rows = [
     ['Name', formData.firstName + ' ' + formData.lastName, ''],
     ['Date of Birth', formData.dob || '—', ''],
     ['Mobile', formData.mobile, ''],
@@ -1369,6 +1462,14 @@ function buildSummary() {
     ['1st Mortgage (clean)', formData._cleanBalance ? '£' + formData._cleanBalance.toLocaleString('en-GB') : '£0', ''],
     ['Arrears', formData.hasArrears ? '£' + formData.arrears : 'None', formData.hasArrears ? 'amber' : ''],
     ['Existing Charges', formData.mortgage2 && parseCurrency(formData.mortgage2) > 0 ? '\u00a3' + formData.mortgage2 : 'None', parseCurrency(formData.mortgage2) > 0 ? 'amber' : ''],
+  ];
+  // Insert individual charge holder rows
+  if (formData.chargeHolders && formData.chargeHolders.length > 0) {
+    formData.chargeHolders.forEach(function(ch, idx) {
+      rows.push(['  └ ' + ch.name, '\u00a3' + ch.amount.toLocaleString('en-GB'), 'amber']);
+    });
+  }
+  rows = rows.concat([
     ['Charges + Arrears to Redeem', formData._redemptionTotal > 0 ? '\u00a3' + formData._redemptionTotal.toLocaleString('en-GB') : 'None', formData._redemptionTotal > 0 ? 'amber' : ''],
     ['Current LTV', ltv + '%', ltvClass],
     ['Max Borrowable (70% LTV)', formData._maxBorrow ? '£' + formData._maxBorrow.toLocaleString('en-GB') : '—', ''],
@@ -1377,7 +1478,7 @@ function buildSummary() {
     ['Purpose', formData.purpose ? formData.purpose.replace(/_/g, ' ') : '—', ''],
     ['Source', formData.source || '—', ''],
     ['Notes', formData.notes || '—', '']
-  ];
+  ]);
   if (formData.backToBack) {
     var kpc = formData._kpcGross ? { gross: formData._kpcGross } : kpcGrossRedemption(formData.speedLoanAmount, formData.speedLoanTerm || 3);
     var maxB = formData._maxBorrow || 0;
@@ -1420,6 +1521,7 @@ function submitForm() {
     arrearsAmount: formData.arrears || '0',
     hasArrears: formData.hasArrears || false,
     secondCharges: formData.mortgage2 || '0',
+    chargeHolders: JSON.stringify(formData.chargeHolders || []),
     totalRedemptionRequired: formData._redemptionTotal || 0,
     propertyType: formData.propType || '',
     currentLTV: formData._ltv || 0,
@@ -1461,11 +1563,4 @@ function submitForm() {
 }
 
 function showSuccess() {
-  document.getElementById('applyForm').style.display = 'none';
-  var successEl = document.getElementById('formSuccess');
-  successEl.classList.add('show');
-  successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-</script>
-</body>
-</html>
+  d
