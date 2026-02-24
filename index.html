@@ -221,6 +221,50 @@ section { padding: 6rem 3rem; position: relative; }
 
 /* CTA */
 .cta-section { text-align: center; padding: 8rem 3rem; background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(46,196,182,0.08) 0%, transparent 60%), var(--navy); }
+
+/* ═══ NET FUNDS CRYSTALLISER MODAL ═══ */
+.nfc-overlay { display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:1.5rem; }
+.nfc-overlay.open { display:flex; animation:fadeIn 0.3s ease; }
+.nfc-modal { width:100%; max-width:600px; max-height:90vh; overflow-y:auto; background:linear-gradient(145deg, #141B2E, #0F1522); border:1px solid rgba(46,196,182,0.25); border-radius:10px; box-shadow:0 0 60px rgba(46,196,182,0.1), 0 25px 50px rgba(0,0,0,0.5); }
+.nfc-header { padding:1.8rem 2rem 0; text-align:center; }
+.nfc-tag { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--teal); padding:0.3rem 0.8rem; border:1px solid rgba(46,196,182,0.25); border-radius:2px; background:rgba(46,196,182,0.06); margin-bottom:1rem; }
+.nfc-tag .dot { width:6px; height:6px; border-radius:50%; background:var(--teal); animation:pulse 2s infinite; }
+.nfc-title { font-family:var(--serif); font-size:1.45rem; font-weight:500; margin-bottom:0.4rem; }
+.nfc-sub { font-size:0.82rem; color:var(--gray); line-height:1.6; }
+.nfc-body { padding:1.5rem 2rem 2rem; }
+.nfc-row { display:flex; justify-content:space-between; align-items:baseline; padding:0.7rem 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.88rem; }
+.nfc-row.highlight { background:rgba(46,196,182,0.04); margin:0 -2rem; padding:0.7rem 2rem; border-bottom:1px solid rgba(46,196,182,0.1); }
+.nfc-row.total { border-top:2px solid rgba(46,196,182,0.3); border-bottom:none; margin-top:0.5rem; padding-top:1rem; }
+.nfc-label { color:var(--gray); font-size:0.85rem; }
+.nfc-label small { display:block; font-size:0.7rem; opacity:0.6; margin-top:2px; }
+.nfc-value { font-weight:600; text-align:right; font-size:0.95rem; }
+.nfc-value.teal { color:var(--teal); }
+.nfc-value.amber { color:var(--amber); }
+.nfc-value.green { color:var(--green); }
+.nfc-value.red { color:var(--red); }
+.nfc-value.big { font-family:var(--serif); font-size:1.4rem; }
+.nfc-section { margin-top:1.2rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.06); }
+.nfc-section-title { font-family:var(--mono); font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--teal); margin-bottom:0.8rem; }
+.nfc-toggle-group { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.4rem; }
+.nfc-toggle { padding:0.5rem 1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--gray); font-family:var(--sans); font-size:0.82rem; cursor:pointer; transition:all 0.3s; }
+.nfc-toggle.selected { background:rgba(46,196,182,0.1); border-color:var(--teal); color:var(--teal); font-weight:600; }
+.nfc-toggle.recommended { position:relative; }
+.nfc-toggle.recommended::after { content:'✓ Recommended'; position:absolute; top:-8px; right:-4px; font-family:var(--mono); font-size:0.5rem; color:var(--green); background:var(--navy); padding:0 4px; letter-spacing:0.05em; }
+.nfc-toggle:hover { border-color:rgba(46,196,182,0.3); }
+.nfc-custom-input { width:120px; padding:0.45rem 0.7rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--white); font-family:var(--sans); font-size:0.85rem; outline:none; transition:all 0.3s; }
+.nfc-custom-input:focus { border-color:var(--teal); background:rgba(46,196,182,0.03); }
+.nfc-intent { display:flex; flex-direction:column; gap:0.5rem; margin:1rem 0; }
+.nfc-intent-btn { display:flex; align-items:center; gap:10px; padding:0.9rem 1.2rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:6px; cursor:pointer; transition:all 0.3s; text-align:left; }
+.nfc-intent-btn:hover { border-color:rgba(46,196,182,0.25); }
+.nfc-intent-btn.selected { border-color:var(--teal); background:rgba(46,196,182,0.06); }
+.nfc-intent-btn .radio { width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.3s; }
+.nfc-intent-btn.selected .radio { border-color:var(--teal); background:var(--teal); }
+.nfc-intent-btn.selected .radio::after { content:''; width:6px; height:6px; border-radius:50%; background:var(--navy); }
+.nfc-intent-label { font-size:0.88rem; font-weight:500; color:var(--white); }
+.nfc-intent-desc { font-size:0.75rem; color:var(--gray); margin-top:2px; }
+.nfc-footer { padding:0 2rem 2rem; display:flex; justify-content:center; }
+.nfc-confirm-btn { width:100%; padding:1rem; background:var(--teal); color:var(--navy); font-family:var(--sans); font-weight:700; font-size:0.88rem; letter-spacing:0.08em; text-transform:uppercase; border:none; border-radius:4px; cursor:pointer; transition:all 0.3s; }
+.nfc-confirm-btn:hover { box-shadow:0 0 30px rgba(46,196,182,0.3); }
 .cta-title { font-family: var(--serif); font-size: clamp(2.2rem, 4vw, 3.2rem); font-weight: 500; margin-bottom: 1rem; }
 .cta-title em { font-style: italic; color: var(--teal); }
 .cta-sub { color: var(--gray); font-size: 1.05rem; max-width: 550px; margin: 0 auto 2.5rem; line-height: 1.7; }
@@ -883,6 +927,118 @@ section { padding: 6rem 3rem; position: relative; }
 <!-- ═══════════════════════════════════════ -->
 <!-- JAVASCRIPT                              -->
 <!-- ═══════════════════════════════════════ -->
+<!-- ═══ NET FUNDS CRYSTALLISER MODAL ═══ -->
+<div class="nfc-overlay" id="nfcOverlay">
+  <div class="nfc-modal">
+    <div class="nfc-header">
+      <div class="nfc-tag"><span class="dot"></span> Net Funds Crystalliser</div>
+      <div class="nfc-title">Let's confirm your <em style="font-style:italic;color:var(--teal);">net funds</em></div>
+      <div class="nfc-sub">Based on your property and charges, here's what your borrowing actually looks like. Confirm below so we structure the right facility.</div>
+    </div>
+    <div class="nfc-body">
+
+      <!-- STATED AMOUNT -->
+      <div class="nfc-row highlight">
+        <span class="nfc-label">You requested</span>
+        <span class="nfc-value teal big" id="nfcStated">£0</span>
+      </div>
+
+      <!-- MANDATORY REDEMPTIONS -->
+      <div id="nfcRedemptionBlock" style="display:none;">
+        <div class="nfc-row">
+          <span class="nfc-label">Existing charges to redeem<small>Mandatory — all lenders require clean 2nd charge</small></span>
+          <span class="nfc-value amber" id="nfcCharges">−£0</span>
+        </div>
+        <div class="nfc-row" id="nfcArrearsRow" style="display:none;">
+          <span class="nfc-label">Arrears to clear</span>
+          <span class="nfc-value amber" id="nfcArrears">−£0</span>
+        </div>
+
+        <!-- INTENT QUESTION -->
+        <div class="nfc-section">
+          <div class="nfc-section-title">Clarify your intent</div>
+          <p style="font-size:0.8rem;color:var(--gray);margin-bottom:0.8rem;line-height:1.5;">After clearing <strong style="color:var(--amber);" id="nfcRedemptionInline">£0</strong> in mandatory redemptions:</p>
+          <div class="nfc-intent">
+            <div class="nfc-intent-btn selected" onclick="setNfcIntent('net_on_top')" id="nfcIntentTop">
+              <div class="radio"></div>
+              <div>
+                <div class="nfc-intent-label" id="nfcIntentTopLabel">I need £X net on top of redemptions</div>
+                <div class="nfc-intent-desc" id="nfcIntentTopDesc">Total borrowing increases to cover both</div>
+              </div>
+            </div>
+            <div class="nfc-intent-btn" onclick="setNfcIntent('total_inc')" id="nfcIntentTotal">
+              <div class="radio"></div>
+              <div>
+                <div class="nfc-intent-label" id="nfcIntentTotalLabel">£X total is fine — I'll take what's left after clearing charges</div>
+                <div class="nfc-intent-desc" id="nfcIntentTotalDesc">Net to you: £Y after redemptions</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEGALS -->
+      <div class="nfc-section">
+        <div class="nfc-section-title">Legal costs estimate</div>
+        <p style="font-size:0.78rem;color:var(--gray);margin-bottom:0.6rem;line-height:1.5;">Solicitor, valuation, and associated legal fees. Select the estimate that fits your facility.</p>
+        <div class="nfc-toggle-group" id="nfcLegalsGroup">
+          <button type="button" class="nfc-toggle selected" onclick="setNfcLegals(3000,this)" id="nfcLegals3k">£3,000</button>
+          <button type="button" class="nfc-toggle" onclick="setNfcLegals(5000,this)" id="nfcLegals5k">£5,000</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:0.6rem;">
+          <input type="checkbox" id="nfcAddLegals" checked onclick="recalcNfc()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer;">
+          <label for="nfcAddLegals" style="font-size:0.8rem;color:var(--gray);cursor:pointer;">Add legals to the loan <span style="color:var(--teal);font-size:0.7rem;">(most borrowers do)</span></label>
+        </div>
+      </div>
+
+      <!-- CONTINGENCY -->
+      <div class="nfc-section">
+        <div class="nfc-section-title">Contingency buffer</div>
+        <p style="font-size:0.78rem;color:var(--gray);margin-bottom:0.6rem;line-height:1.5;">Covers potential overruns on redemption figures, additional searches, or unexpected costs at completion.</p>
+        <div class="nfc-toggle-group" id="nfcContingencyGroup">
+          <button type="button" class="nfc-toggle" onclick="setNfcContingency(0,this)">None</button>
+          <button type="button" class="nfc-toggle" onclick="setNfcContingency(5000,this)">£5,000</button>
+          <button type="button" class="nfc-toggle selected recommended" onclick="setNfcContingency(10000,this)">£10,000</button>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" class="nfc-toggle" onclick="setNfcContingencyCustom(this)" id="nfcCustomBtn">Custom</button>
+            <input type="text" class="nfc-custom-input" id="nfcCustomAmount" placeholder="£ amount" style="display:none;" oninput="formatCurrency(this);recalcNfc()">
+          </div>
+        </div>
+      </div>
+
+      <!-- SPEED LOAN EROSION -->
+      <div class="nfc-section" id="nfcSpeedBlock" style="display:none;">
+        <div class="nfc-section-title">Speed Loan impact</div>
+        <div class="nfc-row">
+          <span class="nfc-label">Speed Loan gross redemption<small>Fees & interest deducted from main loan</small></span>
+          <span class="nfc-value amber" id="nfcSpeedGross">−£0</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:0.5rem;">
+          <input type="checkbox" id="nfcCoverSpeed" checked onclick="recalcNfc()" style="width:16px;height:16px;accent-color:var(--teal);cursor:pointer;">
+          <label for="nfcCoverSpeed" style="font-size:0.8rem;color:var(--gray);cursor:pointer;">Increase main loan to cover Speed Loan costs <span style="color:var(--teal);font-size:0.7rem;">(recommended)</span></label>
+        </div>
+      </div>
+
+      <!-- ═══ TOTAL ═══ -->
+      <div class="nfc-row total">
+        <span class="nfc-label" style="color:var(--white);font-weight:600;font-size:0.95rem;">Net Loan Amount <small style="display:block;font-size:0.68rem;opacity:0.5;margin-top:2px;">This is the amount we request from the lender</small></span>
+        <span class="nfc-value teal big" id="nfcNetLoan">£0</span>
+      </div>
+      <div class="nfc-row" style="border-bottom:none;">
+        <span class="nfc-label" style="font-weight:500;color:var(--green);">Of which, net cash to you after redemptions &amp; costs</span>
+        <span class="nfc-value green big" id="nfcNetToYou">£0</span>
+      </div>
+
+      <!-- MAX BORROWABLE CHECK -->
+      <div id="nfcLtvCheck" style="display:none;margin-top:0.8rem;padding:0.8rem;border-radius:4px;font-size:0.78rem;line-height:1.5;"></div>
+
+    </div>
+    <div class="nfc-footer">
+      <button class="nfc-confirm-btn" onclick="confirmNfc()">Confirm — Continue with Application →</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // Nav scroll
 const nav = document.getElementById('nav');
@@ -1217,6 +1373,186 @@ function checkLoanRouting() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// NET FUNDS CRYSTALLISER (NFC) — Modal Logic
+// ═══════════════════════════════════════════════════════════
+var nfcIntent = 'net_on_top'; // or 'total_inc'
+var nfcContingency = 10000;
+var nfcLegalsCost = 3000; // simple £3k or £5k toggle
+var nfcConfirmed = false;
+var nfcCustomMode = false;
+
+function setNfcLegals(amount, btn) {
+  nfcLegalsCost = amount;
+  document.querySelectorAll('#nfcLegalsGroup .nfc-toggle').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  recalcNfc();
+}
+
+function openNfc() {
+  var stated = parseCurrency(document.getElementById('loanAmount').value);
+  if (stated <= 0) return;
+  var redemption = formData._redemptionTotal || 0;
+  var charges = parseCurrency(document.getElementById('mortgage2').value);
+  var arrears = (hasArrears ? parseCurrency(document.getElementById('arrearsValue').value) : 0);
+  var hasSpeed = document.getElementById('backToBack').checked && selectedSpeedAmount > 0 && selectedSpeedTerm > 0;
+  var speedGross = 0;
+  if (hasSpeed) {
+    var kpc = kpcGrossRedemption(selectedSpeedAmount, selectedSpeedTerm);
+    speedGross = kpc.gross - selectedSpeedAmount; // just the cost portion
+  }
+
+  // Populate stated
+  document.getElementById('nfcStated').textContent = '\u00a3' + stated.toLocaleString('en-GB');
+
+  // Redemption block
+  if (redemption > 0) {
+    document.getElementById('nfcRedemptionBlock').style.display = 'block';
+    document.getElementById('nfcCharges').textContent = '\u2212\u00a3' + charges.toLocaleString('en-GB');
+    document.getElementById('nfcRedemptionInline').textContent = '\u00a3' + redemption.toLocaleString('en-GB');
+    if (arrears > 0) {
+      document.getElementById('nfcArrearsRow').style.display = 'flex';
+      document.getElementById('nfcArrears').textContent = '\u2212\u00a3' + arrears.toLocaleString('en-GB');
+    } else {
+      document.getElementById('nfcArrearsRow').style.display = 'none';
+    }
+    // Intent labels — net on top means stated amount PLUS redemptions become the Net Loan
+    var netOnTopLoan = stated + redemption;
+    document.getElementById('nfcIntentTopLabel').textContent = 'I want \u00a3' + stated.toLocaleString('en-GB') + ' in my pocket after clearing all charges';
+    document.getElementById('nfcIntentTopDesc').textContent = 'Net Loan to lender increases to \u00a3' + netOnTopLoan.toLocaleString('en-GB') + ' (redemptions + your net cash)';
+    document.getElementById('nfcIntentTotalLabel').textContent = '\u00a3' + stated.toLocaleString('en-GB') + ' is my total loan \u2014 clear charges from that';
+    var netAfterRedemption = stated - redemption;
+    document.getElementById('nfcIntentTotalDesc').textContent = 'Net cash to you: ~\u00a3' + Math.max(0, netAfterRedemption).toLocaleString('en-GB') + ' after redemptions, arrears & costs';
+  } else {
+    document.getElementById('nfcRedemptionBlock').style.display = 'none';
+  }
+
+  // Speed block
+  if (hasSpeed && speedGross > 0) {
+    document.getElementById('nfcSpeedBlock').style.display = 'block';
+    document.getElementById('nfcSpeedGross').textContent = '\u2212\u00a3' + speedGross.toLocaleString('en-GB');
+  } else {
+    document.getElementById('nfcSpeedBlock').style.display = 'none';
+  }
+
+  // Reset legals to £3k
+  nfcLegalsCost = 3000;
+  document.querySelectorAll('#nfcLegalsGroup .nfc-toggle').forEach(function(b) { b.classList.remove('selected'); });
+  document.getElementById('nfcLegals3k').classList.add('selected');
+
+  // Reset contingency to £10k
+  nfcContingency = 10000;
+  nfcCustomMode = false;
+  document.getElementById('nfcCustomAmount').style.display = 'none';
+  document.querySelectorAll('#nfcContingencyGroup .nfc-toggle').forEach(function(b) { b.classList.remove('selected'); });
+  document.querySelector('#nfcContingencyGroup .recommended').classList.add('selected');
+
+  recalcNfc();
+  document.getElementById('nfcOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function setNfcIntent(intent) {
+  nfcIntent = intent;
+  document.getElementById('nfcIntentTop').classList.toggle('selected', intent === 'net_on_top');
+  document.getElementById('nfcIntentTotal').classList.toggle('selected', intent === 'total_inc');
+  recalcNfc();
+}
+
+function setNfcContingency(amount, btn) {
+  nfcContingency = amount;
+  nfcCustomMode = false;
+  document.getElementById('nfcCustomAmount').style.display = 'none';
+  document.getElementById('nfcCustomBtn').classList.remove('selected');
+  document.querySelectorAll('#nfcContingencyGroup .nfc-toggle').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  recalcNfc();
+}
+
+function setNfcContingencyCustom(btn) {
+  nfcCustomMode = true;
+  document.querySelectorAll('#nfcContingencyGroup .nfc-toggle').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  document.getElementById('nfcCustomAmount').style.display = 'inline-block';
+  document.getElementById('nfcCustomAmount').focus();
+  nfcContingency = parseCurrency(document.getElementById('nfcCustomAmount').value);
+  recalcNfc();
+}
+
+function recalcNfc() {
+  var stated = parseCurrency(document.getElementById('loanAmount').value);
+  var redemption = formData._redemptionTotal || 0;
+  var addLegals = document.getElementById('nfcAddLegals').checked;
+  var hasSpeed = document.getElementById('backToBack').checked && selectedSpeedAmount > 0 && selectedSpeedTerm > 0;
+  var speedCost = 0;
+  var coverSpeed = false;
+  if (hasSpeed) {
+    var kpc = kpcGrossRedemption(selectedSpeedAmount, selectedSpeedTerm);
+    speedCost = kpc.gross - selectedSpeedAmount;
+    coverSpeed = document.getElementById('nfcCoverSpeed').checked;
+  }
+  if (nfcCustomMode) nfcContingency = parseCurrency(document.getElementById('nfcCustomAmount').value);
+
+  // BASE = depends on intent
+  // "net_on_top": borrower wants stated amount in pocket, so base = stated + redemptions
+  // "total_inc": borrower accepts stated as total, so base = stated (redemptions eat into their cash)
+  var base = stated;
+  var netCashToBorrower = stated;
+
+  if (redemption > 0 && nfcIntent === 'net_on_top') {
+    base = stated + redemption;
+    netCashToBorrower = stated;
+  } else {
+    base = stated;
+    netCashToBorrower = stated - redemption;
+  }
+
+  // NET LOAN AMOUNT = the single figure we request from the lender
+  // Includes: base + legals + contingency + speed costs (everything rolled in)
+  var netLoan = base + (addLegals ? nfcLegalsCost : 0) + nfcContingency + (coverSpeed ? speedCost : 0);
+
+  // Display
+  document.getElementById('nfcNetLoan').textContent = '\u00a3' + netLoan.toLocaleString('en-GB');
+  document.getElementById('nfcNetToYou').textContent = '\u00a3' + Math.max(0, netCashToBorrower).toLocaleString('en-GB');
+
+  // LTV check against net loan amount
+  var maxBorrow = formData._maxBorrow || 0;
+  var ltvCheck = document.getElementById('nfcLtvCheck');
+  if (netLoan > maxBorrow && maxBorrow > 0) {
+    ltvCheck.style.display = 'block';
+    ltvCheck.style.background = 'rgba(231,76,60,0.06)';
+    ltvCheck.style.borderLeft = '3px solid var(--red)';
+    ltvCheck.style.color = 'var(--red)';
+    ltvCheck.innerHTML = '\u26a0 Net Loan of \u00a3' + netLoan.toLocaleString('en-GB') + ' exceeds max borrowable of \u00a3' + maxBorrow.toLocaleString('en-GB') + ' at 70% LTV. Submit your enquiry \u2014 we\u2019ll discuss options on the call.';
+  } else if (netLoan > maxBorrow * 0.85 && maxBorrow > 0) {
+    ltvCheck.style.display = 'block';
+    ltvCheck.style.background = 'rgba(243,156,18,0.06)';
+    ltvCheck.style.borderLeft = '3px solid var(--amber)';
+    ltvCheck.style.color = 'var(--amber)';
+    ltvCheck.innerHTML = '\u26a1 Close to the 70% LTV ceiling. This should work but leaves limited headroom.';
+  } else {
+    ltvCheck.style.display = 'none';
+  }
+
+  // Store for submission — single Net Loan figure for CRM
+  formData._nfcNetLoan = netLoan;
+  formData._nfcNetCashToBorrower = Math.max(0, netCashToBorrower);
+  formData._nfcIntent = nfcIntent;
+  formData._nfcContingency = nfcContingency;
+  formData._nfcAddLegals = addLegals;
+  formData._nfcLegalsCost = addLegals ? nfcLegalsCost : 0;
+  formData._nfcCoverSpeed = coverSpeed;
+  formData._nfcSpeedCost = speedCost;
+}
+
+function confirmNfc() {
+  nfcConfirmed = true;
+  document.getElementById('nfcOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  // Re-trigger nextStep(3) which will now proceed since nfcConfirmed is true
+  nextStep(3);
+}
+
 function setArrears(val) {
   hasArrears = val;
   document.querySelectorAll('.arrears-btn').forEach((b, i) => {
@@ -1440,6 +1776,12 @@ function nextStep(from) {
     formData.purpose = document.getElementById('purpose').value;
     formData.source = document.getElementById('source').value;
     formData.notes = document.getElementById('notes').value;
+    // ═══ NET FUNDS CRYSTALLISER — trigger before proceeding ═══
+    if (!nfcConfirmed) {
+      openNfc();
+      return; // Don't proceed until NFC is confirmed
+    }
+    nfcConfirmed = false; // Reset for if they go back and re-enter
     buildSummary();
   }
   showStep(from + 1);
@@ -1482,6 +1824,27 @@ function buildSummary() {
     ['Source', formData.source || '—', ''],
     ['Notes', formData.notes || '—', '']
   ]);
+  // ═══ NFC CRYSTALLISER SUMMARY ═══
+  if (formData._nfcNetLoan) {
+    rows.push(['', '', '']); // spacer
+    rows.push(['── NET FUNDS BREAKDOWN ──', '', 'teal']);
+    if (formData._nfcIntent === 'net_on_top' && formData._redemptionTotal > 0) {
+      rows.push(['  Intent', 'Net on top of redemptions', 'teal']);
+    } else if (formData._redemptionTotal > 0) {
+      rows.push(['  Intent', 'Total inclusive of redemptions', '']);
+    }
+    if (formData._nfcAddLegals) {
+      rows.push(['  Legals added to loan', '\u00a3' + formData._nfcLegalsCost.toLocaleString('en-GB'), '']);
+    }
+    if (formData._nfcContingency > 0) {
+      rows.push(['  Contingency buffer', '\u00a3' + formData._nfcContingency.toLocaleString('en-GB'), '']);
+    }
+    if (formData._nfcCoverSpeed && formData._nfcSpeedCost > 0) {
+      rows.push(['  Speed Loan costs covered', '\u00a3' + formData._nfcSpeedCost.toLocaleString('en-GB'), 'amber']);
+    }
+    rows.push(['  Net Loan Amount (to lender)', '\u00a3' + formData._nfcNetLoan.toLocaleString('en-GB'), 'teal']);
+    rows.push(['  Net Cash to Borrower', '\u00a3' + formData._nfcNetCashToBorrower.toLocaleString('en-GB'), 'green']);
+  }
   if (formData.backToBack) {
     var kpc = formData._kpcGross ? { gross: formData._kpcGross } : kpcGrossRedemption(formData.speedLoanAmount, formData.speedLoanTerm || 3);
     var maxB = formData._maxBorrow || 0;
@@ -1541,6 +1904,15 @@ function submitForm() {
     speedLoanNetLiquidity: formData._speedNetLiquidity || null,
     source: formData.source || '',
     notes: formData.notes || '',
+    // ═══ NET FUNDS CRYSTALLISER ═══
+    nfcIntent: formData._nfcIntent || 'net_on_top',
+    nfcNetLoanAmount: formData._nfcNetLoan || 0,
+    nfcNetCashToBorrower: formData._nfcNetCashToBorrower || 0,
+    nfcContingency: formData._nfcContingency || 0,
+    nfcLegalsCost: formData._nfcLegalsCost || 0,
+    nfcAddLegals: formData._nfcAddLegals || false,
+    nfcCoverSpeedCosts: formData._nfcCoverSpeed || false,
+    nfcSpeedCost: formData._nfcSpeedCost || 0,
     submittedAt: new Date().toISOString()
   };
 
