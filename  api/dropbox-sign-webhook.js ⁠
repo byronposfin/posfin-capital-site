@@ -1,4 +1,3 @@
-⁠ javascript
 // api/dropbox-sign-webhook.js
 export default function handler(req, res) {
   if (req.method === 'POST') {
@@ -13,4 +12,3 @@ export default function handler(req, res) {
     res.status(405).send('Method Not Allowed');
   }
 }
- ⁠
