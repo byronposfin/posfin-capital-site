@@ -664,7 +664,7 @@ fbq('track', 'PageView');
         <div class="ltv-indicator" id="ltvIndicator">
           <div class="ltv-row">
             <div><div class="ltv-label">CURRENT LTV (CLEAN BALANCE)</div><div class="ltv-value" id="ltvValue">0%</div></div>
-            <div style="text-align:right"><div class="ltv-label" style="font-size:0.72rem;font-weight:600;">MAX GROSS AVAILABLE (70% LTV)</div><div class="ltv-value" id="borrowCapacity" style="color:var(--teal)">£0</div></div>
+            <div style="text-align:right"><div class="ltv-label">MAX BORROWABLE (70% LTV)</div><div class="ltv-value" id="borrowCapacity" style="color:var(--teal)">£0</div></div>
           </div>
           <div class="ltv-bar-wrap">
             <div class="ltv-bar" id="ltvBar"></div>
@@ -678,22 +678,6 @@ fbq('track', 'PageView');
           </div>
           <div class="ltv-note" id="ltvNote"></div>
           <div class="ltv-second-note" id="secondChargeNote" style="display:none;font-size:0.75rem;color:var(--amber);font-style:italic;">⚠ Existing secured charges and arrears will be redeemed from the new loan proceeds at completion. This is a mandatory requirement from all UK lenders.</div>
-          <div id="productCards" style="display:none;margin-top:1rem;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
-              <div style="padding:1rem;border-radius:6px;border:1px solid rgba(46,196,182,0.2);background:rgba(46,196,182,0.04);text-align:center;">
-                <div style="font-size:1.3rem;margin-bottom:0.3rem;">⚡</div>
-                <div style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.12em;color:var(--teal);text-transform:uppercase;font-weight:700;">Speed Loan</div>
-                <div style="font-size:1rem;font-weight:700;color:var(--white);margin-top:0.3rem;">£26K – £100K</div>
-                <div style="font-size:0.75rem;color:var(--teal);margin-top:0.2rem;">Paid in 3–5 days</div>
-              </div>
-              <div style="padding:1rem;border-radius:6px;border:1px solid rgba(212,168,83,0.2);background:rgba(212,168,83,0.04);text-align:center;">
-                <div style="font-size:1.3rem;margin-bottom:0.3rem;">🏦</div>
-                <div style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;font-weight:700;">Main Loan</div>
-                <div style="font-size:1rem;font-weight:700;color:var(--white);margin-top:0.3rem;">£100K – £5M</div>
-                <div style="font-size:0.75rem;color:var(--gold);margin-top:0.2rem;">Up to 70% LTV</div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div class="form-nav"><button class="form-back" onclick="prevStep(2)">← Back</button><button class="form-next" onclick="nextStep(2)">Next: Loan Needs →</button></div>
@@ -721,11 +705,12 @@ fbq('track', 'PageView');
             <div style="display:flex;align-items:flex-start;gap:12px;">
               <input type="checkbox" id="backToBack" name="back_to_back" value="yes" onclick="event.stopPropagation();toggleBtB()" style="width:18px;height:18px;accent-color:var(--teal);margin-top:2px;cursor:pointer;flex-shrink:0;">
               <div>
-                <span style="font-size:1.05rem;font-weight:700;color:var(--teal);">⚡ Yes — I want a Speed Loan paid out in 3-5 days</span>
+                <span style="font-size:0.92rem;font-weight:600;color:var(--white);">I'm interested in a Back-to-Back option</span>
+                <span style="display:inline-block;font-family:var(--mono);font-size:0.55rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--teal);background:rgba(46,196,182,0.1);border:1px solid rgba(46,196,182,0.2);padding:0.2rem 0.6rem;border-radius:2px;margin-left:8px;vertical-align:middle;">Speed + Main</span>
               </div>
             </div>
             <div style="margin-top:10px;padding-left:30px;font-size:0.8rem;color:var(--gray);line-height:1.65;">
-              We can secure your <strong style="color:var(--white);">Main Loan</strong> terms first, then fund a <strong style="color:var(--white);">Speed Loan</strong> to bridge you while the main facility completes. Your Main Loan <strong style="color:var(--white);">automatically repays</strong> the Speed Loan — <strong style="color:var(--green);">no double debt. Nothing to pay upfront.</strong>
+              We can secure your <strong style="color:var(--white);">Main Loan</strong> terms first for peace of mind, then fund a <strong style="color:var(--white);">Speed Loan</strong> to bridge you while the main facility completes. The Main Loan <strong style="color:var(--white);">automatically repays</strong> the Speed Loan — no double debt. Additional costs apply.
             </div>
           </div>
 
@@ -867,18 +852,6 @@ fbq('track', 'PageView');
         <div class="form-step-title">Review your enquiry</div>
         <div class="form-step-sub">Check the details below and hit submit. We'll be in touch shortly.</div>
         <div class="summary-grid" id="summaryGrid"></div>
-
-        <!-- Scorecard Action Buttons -->
-        <div style="display:flex;gap:0.8rem;margin-top:1.5rem;flex-wrap:wrap;">
-          <button type="button" onclick="sendScorecardWhatsApp()" style="flex:1;min-width:180px;padding:0.85rem 1.2rem;background:#25D366;color:white;border:none;border-radius:4px;font-family:var(--sans);font-weight:700;font-size:0.82rem;letter-spacing:0.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s;">
-            <svg viewBox="0 0 32 32" style="width:18px;height:18px;fill:white;flex-shrink:0;"><path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.58 2.14 8.01L0 32l8.19-2.15A15.89 15.89 0 0016 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.27 19.32c-.4-.2-2.36-1.16-2.72-1.3-.37-.13-.63-.2-.9.2s-1.03 1.3-1.27 1.56c-.23.27-.47.3-.87.1-.4-.2-1.68-.62-3.2-1.98-1.18-1.05-1.98-2.35-2.21-2.75-.23-.4-.02-.61.18-.81.18-.18.4-.47.6-.7.2-.23.27-.4.4-.67.13-.27.07-.5-.03-.7-.1-.2-.9-2.17-1.23-2.97-.33-.78-.66-.67-.9-.69-.23-.01-.5-.01-.77-.01-.27 0-.7.1-1.07.5-.37.4-1.4 1.37-1.4 3.33s1.43 3.87 1.63 4.13c.2.27 2.82 4.3 6.83 6.03.96.41 1.7.66 2.28.84.96.3 1.83.26 2.52.16.77-.12 2.36-.96 2.69-1.89.33-.93.33-1.73.23-1.89-.1-.17-.37-.27-.77-.47z"/></svg>
-            📲 Send to my WhatsApp
-          </button>
-          <button type="button" onclick="downloadScorecardPDF()" style="flex:1;min-width:180px;padding:0.85rem 1.2rem;background:rgba(255,255,255,0.04);color:var(--teal);border:1px solid rgba(46,196,182,0.3);border-radius:4px;font-family:var(--sans);font-weight:700;font-size:0.82rem;letter-spacing:0.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s;">
-            ⬇ Download PDF
-          </button>
-        </div>
-
         <div style="margin-top:1.5rem;padding:1rem;border:1px solid rgba(255,255,255,0.06);border-radius:4px;background:rgba(0,0,0,0.2)">
           <p style="font-size:0.78rem;color:var(--gray);line-height:1.6">By submitting this enquiry you consent to Posfin Capital Limited contacting you by phone, SMS, WhatsApp, and email regarding secured loan products. Your data is processed in accordance with our <a href="#" style="color:var(--teal)">Privacy Policy</a>. Your property may be repossessed if you do not keep up repayments on a loan secured against it.</p>
         </div>
@@ -931,10 +904,10 @@ fbq('track', 'PageView');
       </div>
       <div><div class="footer-heading">Products</div><ul class="footer-links"><li><a href="#products">Speed Loan</a></li><li><a href="#products">Main Loan</a></li><li><a href="#process">How It Works</a></li></ul></div>
       <div><div class="footer-heading">Company</div><ul class="footer-links"><li><a href="#testimonials">Reviews</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Cookie Policy</a></li><li><a href="#">Complaints</a></li></ul></div>
-      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="/cdn-cgi/l/email-protection#6801060e072818071b0e01060b0918011c0904460b0705"><span class="__cf_email__" data-cfemail="30595e565f70405f4356595e5351405944515c1e535f5d">[email&#160;protected]</span></a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
+      <div><div class="footer-heading">Contact</div><ul class="footer-links"><li><a href="tel:+447773339444">0777 333 9444</a></li><li><a href="/cdn-cgi/l/email-protection#6801060e072818071b0e01060b0918011c0904460b0705">byron.hill@posfincapital.com</a></li><li><a>96 Kensington High Street</a></li><li><a>London W8 4SG</a></li></ul></div>
     </div>
     <div class="footer-bottom">
-      <p class="footer-legal">Posfin Capital Limited is authorised and regulated by the Financial Conduct Authority (FRN: 913022). Company No: 12148846. Registered Office: 71-75 Shelton Street, Covent Garden, London WC2H 9JQ. Trading Address: 96 Kensington High Street, London W8 4SG. ICO: ZA542657. Your property may be repossessed if you do not keep up repayments on a loan secured against it. Posfin Capital Limited acts as a credit broker, not a lender, for brokered products.</p>
+      <p class="footer-legal">Posfin Capital Limited is authorised and regulated by the Financial Conduct Authority (FRN: 913022). Company No: 12148846. Registered Office: 19 Upper King Street, Norwich NR3 1RB. Trading Address: 96 Kensington High Street, London W8 4SG. ICO: ZA542657. Your property may be repossessed if you do not keep up repayments on a loan secured against it. Posfin Capital Limited acts as a credit broker, not a lender, for brokered products.</p>
       <p class="footer-copy">© 2026 Posfin Capital Limited. All rights reserved.</p>
     </div>
   </div>
@@ -1058,7 +1031,7 @@ fbq('track', 'PageView');
 
 <!-- Footer -->
 <div class="apply-footer">
-  Posfin Capital Ltd | Co No: 12148846 | Registered: 71-75 Shelton Street, Covent Garden, London WC2H 9JQ<br>
+  Posfin Capital Ltd | Co No: 12148846 | Registered: 19 Upper King Street, Norwich NR3 1RB<br>
   Trading: 96 Kensington High Street, London W8 4SG | FCA FRN: <a href="https://register.fca.org.uk/s/firm?id=0014G00002YPXS8QAP" target="_blank">913022</a> | ICO: ZA542657<br><br>
   Posfin Capital Ltd is authorised and regulated by the Financial Conduct Authority for credit broking activities.<br>
   Your property may be at risk if you do not keep up repayments on a loan secured against it.<br>
@@ -1177,7 +1150,6 @@ fbq('track', 'PageView');
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ═══ UTM CAPTURE ═══
 var utmParams = {};
 (function() {
@@ -1337,7 +1309,7 @@ function toggleBtB() {
   }
 }
 
-var SPEED_TIERS = [26000, 50000, 75000, 100000];
+var SPEED_TIERS = [26000, 50000, 80000];
 
 function buildSpeedAmountButtons() {
   var grid = document.getElementById('speedAmountGrid');
@@ -1823,26 +1795,22 @@ function calcLTV() {
   // Note
   const note = document.getElementById('ltvNote');
   if (ltv <= 50) {
-    note.textContent = '✓ Strong equity position. You likely qualify for our Speed Loan (direct lender, 3–5 days) or Main Loan (brokered, up to 70% LTV).';
+    note.textContent = '✓ Strong equity position. You likely qualify for our Speed Loan (direct lender, 3–5 days) or Main Loan (brokered, up to 75% LTV).';
     note.className = 'ltv-note'; note.style.color = 'var(--green)';
   } else if (ltv <= 60) {
-    note.textContent = '⚡ Moderate equity. You may qualify for a Main Loan via our specialist lender panel. Maximum gross available shown at 70% LTV.';
+    note.textContent = '⚡ Moderate equity. You may qualify for a Main Loan via our specialist lender panel (up to 75% LTV). Maximum borrowable shown at 70%.';
     note.className = 'ltv-note warn'; note.style.color = 'var(--amber)';
   } else if (ltv <= 75) {
-    note.textContent = '⚠ Higher LTV. Complete the form and we\'ll assess your options on the call.';
+    note.textContent = '⚠ Higher LTV. Lending may still be possible via our panel at up to 75%. Complete the form and we\'ll assess your options.';
     note.className = 'ltv-note warn'; note.style.color = 'var(--amber)';
   } else {
-    note.textContent = '✗ Current debt exceeds 70% of property value. This will be challenging but submit your enquiry — we\'ll review and advise honestly.';
+    note.textContent = '✗ Current debt exceeds 75% of property value. This will be challenging but submit your enquiry — we\'ll review and advise honestly.';
     note.className = 'ltv-note danger'; note.style.color = 'var(--red)';
   }
 
   // 2nd charge note
   const secNote = document.getElementById('secondChargeNote');
   secNote.style.display = (m2 > 0 || (hasArrears && arrears > 0)) ? 'block' : 'none';
-
-  // Product cards — show when LTV indicator is visible
-  var prodCards = document.getElementById('productCards');
-  if (prodCards) prodCards.style.display = 'grid';
 
   // Redemption notice — shows when ANY subordinate charges or arrears exist
   const redemptionNotice = document.getElementById('redemptionNotice');
@@ -1971,7 +1939,7 @@ function buildSummary() {
   rows = rows.concat([
     ['Charges + Arrears to Redeem', formData._redemptionTotal > 0 ? '\u00a3' + formData._redemptionTotal.toLocaleString('en-GB') : 'None', formData._redemptionTotal > 0 ? 'amber' : ''],
     ['Current LTV', ltv + '%', ltvClass],
-    ['Max Gross Available (70% LTV)', formData._maxBorrow ? '£' + formData._maxBorrow.toLocaleString('en-GB') : '—', ''],
+    ['Max Borrowable (70% LTV)', formData._maxBorrow ? '£' + formData._maxBorrow.toLocaleString('en-GB') : '—', ''],
     ['Amount Requested', formData.loanAmount ? '£' + formData.loanAmount : '—', ''],
     ['Timeframe', formData.timeframe || '—', ''],
     ['Purpose', formData.purpose ? formData.purpose.replace(/_/g, ' ') : '—', ''],
@@ -2152,69 +2120,6 @@ function showSuccess() {
 }
 
 
-// ═══ SCORECARD — WhatsApp + PDF ═══
-function sendScorecardWhatsApp() {
-  var name = (formData.firstName || '') + ' ' + (formData.lastName || '');
-  var propVal = formData.propValue || '—';
-  var loanAmt = formData.loanAmount || '—';
-  var ltv = formData._ltv || 0;
-  var netCash = formData._nfcNetCashToBorrower || 0;
-  var netLoan = formData._nfcNetLoan || 0;
-  var redemption = formData._redemptionTotal || 0;
-
-  var msg = '📋 *POSFIN SCORECARD*\n'
-    + '━━━━━━━━━━━━━━━━━\n'
-    + '*' + name.trim() + '*\n\n'
-    + '🏠 Property Value: £' + propVal + '\n'
-    + '📊 Current LTV: ' + ltv + '%\n'
-    + '💰 Amount Requested: £' + loanAmt + '\n';
-
-  if (redemption > 0) {
-    msg += '🔸 Charges/Arrears to Redeem: £' + redemption.toLocaleString('en-GB') + '\n';
-  }
-  if (netLoan > 0) {
-    msg += '📝 Net Loan to Lender: £' + netLoan.toLocaleString('en-GB') + '\n';
-  }
-  msg += '✅ *Net Cash to You: £' + netCash.toLocaleString('en-GB') + '*\n';
-
-  if (formData.backToBack && formData.speedLoanAmount) {
-    msg += '\n⚡ Speed Loan: £' + formData.speedLoanAmount.toLocaleString('en-GB') + ' (' + (formData.speedLoanTerm||3) + ' months)\n';
-  }
-
-  msg += '\n━━━━━━━━━━━━━━━━━\n'
-    + '_Posfin Capital Ltd · FCA FRN 913022_';
-
-  var encoded = encodeURIComponent(msg);
-  window.open('https://wa.me/447773339444?text=' + encoded, '_blank');
-}
-
-function downloadScorecardPDF() {
-  var name = (formData.firstName || '') + ' ' + (formData.lastName || '');
-  var rows = document.getElementById('summaryGrid').innerHTML;
-
-  var printWin = window.open('', '_blank', 'width=700,height=900');
-  printWin.document.write('<html><head><title>Posfin Scorecard — ' + name + '</title>'
-    + '<style>'
-    + 'body{font-family:-apple-system,sans-serif;background:#0A0E1A;color:#F8F9FA;padding:2rem;}'
-    + '.header{text-align:center;margin-bottom:2rem;border-bottom:2px solid #2EC4B6;padding-bottom:1rem;}'
-    + '.header h1{color:#2EC4B6;font-size:1.5rem;margin:0;}'
-    + '.header p{color:#8892A4;font-size:0.85rem;margin-top:0.3rem;}'
-    + '.summary-row{display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.85rem;}'
-    + '.summary-label{color:#8892A4;}'
-    + '.summary-value{font-weight:600;text-align:right;}'
-    + '.green{color:#2ECC71;}.amber{color:#F39C12;}.red{color:#E74C3C;}.teal{color:#2EC4B6;}.gold{color:#D4A853;}'
-    + '.footer{text-align:center;margin-top:2rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.06);font-size:0.7rem;color:#8892A4;}'
-    + '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'
-    + '</style></head><body>'
-    + '<div class="header"><h1>POSFIN CAPITAL</h1><p>Loan Enquiry Scorecard</p></div>'
-    + '<div>' + rows + '</div>'
-    + '<div class="footer">Posfin Capital Ltd · FCA FRN 913022 · 96 Kensington High Street, London W8 4SG<br>Your property may be repossessed if you do not keep up repayments on a loan secured against it.</div>'
-    + '</body></html>');
-  printWin.document.close();
-  setTimeout(function() { printWin.print(); }, 500);
-}
-
-
-
+</script>
 </body>
 </html>
