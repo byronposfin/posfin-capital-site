@@ -2108,20 +2108,27 @@ function submitForm() {
   });
 
   // ── POST 2: Tom endpoint (JSON, FULL payload — Pre-LOR needs mortgage, arrears, LTV, NFC)
-  const tomPost = fetch(TOM_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true'
-    },
-    body: JSON.stringify(payload)
-  }).then(function(r) {
-    console.log('[TOM] ' + r.status + ' ' + r.statusText);
-    return r;
-  }).catch(function(e) {
-    console.warn('[TOM] network failure (non-fatal):', e && e.message);
-    throw e;
-  });
+  // TOM_URL is set when Tom's public webhook is live. Until then, skip silently.
+  var tomPost;
+  if (typeof TOM_URL !== 'undefined' && TOM_URL) {
+    tomPost = fetch(TOM_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      },
+      body: JSON.stringify(payload)
+    }).then(function(r) {
+      console.log('[TOM] ' + r.status + ' ' + r.statusText);
+      return r;
+    }).catch(function(e) {
+      console.warn('[TOM] network failure (non-fatal):', e && e.message);
+      throw e;
+    });
+  } else {
+    tomPost = Promise.resolve({ status: 'skipped', reason: 'TOM_URL not configured' });
+    console.log('[TOM] Endpoint not configured — skipping. Set TOM_URL when webhook is live.');
+  }
 
   // ── Race both POSTs against a 5s cap so the user never waits on a slow/dead tunnel.
   // Once either settles (or 5s passes), show success. Zapier is the system of record;
