@@ -1,5 +1,4 @@
- ⁠ json
-    {
+ {
       "cleanUrls": true,
       "trailingSlash": false,
       "headers": [
