@@ -16,5 +16,10 @@
         { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/dropbox-sign-webhook.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
 }
