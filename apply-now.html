@@ -1430,6 +1430,7 @@ function updateCostComparison() {
 // Mirrors KPC_Loan_Calculator.xlsx exactly
 // Inputs: 2.5% monthly rate, 12% broker fee, £1,200 fixed legals
 function kpcGrossRedemption(netLoan, termMonths) {
+  if (!netLoan || netLoan <= 0) return { gross: 0, interest: 0, facilityFee: 0, broker: 0, legals: 0 };
   var RATE = 0.025, BROKER_RATE = 0.12, LEGAL_FEES = 1200;
   var broker = netLoan * BROKER_RATE;
   var subTotal = netLoan + broker + LEGAL_FEES;
@@ -1989,7 +1990,7 @@ function buildSummary() {
     rows.push(['  Net Loan Amount (to lender)', '\u00a3' + formData._nfcNetLoan.toLocaleString('en-GB'), 'teal']);
     rows.push(['  Net Cash to Borrower', '\u00a3' + formData._nfcNetCashToBorrower.toLocaleString('en-GB'), 'green']);
   }
-  if (formData.backToBack) {
+  if (formData.backToBack && formData.speedLoanAmount > 0) {
     var kpc = formData._kpcGross ? { gross: formData._kpcGross } : kpcGrossRedemption(formData.speedLoanAmount, formData.speedLoanTerm || 3);
     var maxB = formData._maxBorrow || 0;
     var mainNet = Math.round(maxB / 1.25);
