@@ -1,11 +1,16 @@
+⁠ javascript
 // api/dropbox-sign-webhook.js
 export default function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).send('Method Not Allowed');
+  if (req.method === 'POST') {
+    // Log the incoming webhook payload (for debugging, can be removed later)
+    console.log('Dropbox Sign Webhook received:', req.body);
+
+    // CRITICAL: Respond with a 200 OK status to acknowledge the webhook.
+    // Dropbox Sign often expects a specific body for validation.
+    res.status(200).send('Hello API Event Received');
+  } else {
+    // If it's not a POST request, return Method Not Allowed (405)
+    res.status(405).send('Method Not Allowed');
   }
-
-  console.log('Dropbox Sign Webhook received:', req.body);
-
-  // Dropbox Sign requires this exact response body to validate the webhook
-  res.status(200).send('Hello API Event Received');
 }
+ ⁠
