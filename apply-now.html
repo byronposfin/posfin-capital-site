@@ -2118,7 +2118,7 @@ function submitForm() {
   // ── POST 2: Tom endpoint (JSON, FULL payload — Pre-LOR needs mortgage, arrears, LTV, NFC)
   // TOM_URL is set when Tom's public webhook is live. Until then, skip silently.
   var tomPost;
-  if (typeof TOM_URL !== 'undefined' && TOM_URL) {
+  if (typeof TOM_URL !== 'https://skirt-reel-quantitative-bathroom.trycloudflare.com' && TOM_URL) {
     tomPost = fetch(TOM_URL, {
       method: 'POST',
       headers: {
