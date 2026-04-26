@@ -612,6 +612,13 @@ const VALID_TIMEFRAMES = ['asap', '1_week', '2_weeks', '1_month', 'flexible'];
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
+
+const CREDIT_TIER_LABELS = {
+  prime:    { label: 'Prime',          displayRate: 'from 0.85%/month', desc: 'Excellent credit · clean tax history · well-defined evidenced exit. LTV up to 70%.' },
+  standard: { label: 'Standard',       displayRate: 'from 0.93%/month', desc: 'Typical borrower — indicative rate based on your LTV and deal profile.' },
+  val_only: { label: 'Low/Bad Credit', displayRate: 'from 1.10%/month', desc: 'Asset-backed. No exit strategy evidence required. Self-declared exit accepted. No current bankruptcy required.' },
+};
+
 export default function handler(req, res) {
   try {
     return _handlerImpl(req, res);
