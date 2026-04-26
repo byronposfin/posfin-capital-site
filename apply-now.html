@@ -445,10 +445,22 @@ body { background: var(--navy); }
   .nfc-toggle-group { gap: 0.3rem; }
 }
 
-/* ═══ GLOBAL MOBILE OVERFLOW FIX ═══ */
+/* ═══ COMPREHENSIVE MOBILE FIX ═══ */
 @media (max-width: 768px) {
   html, body { overflow-x: hidden; max-width: 100vw; }
   * { box-sizing: border-box; }
+
+  /* ── FOOTER ── */
+  .footer { padding: 2.5rem 1.2rem 1.5rem; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 1.8rem; }
+  .footer-brand-text { max-width: 100%; font-size: 0.82rem; }
+  .footer-bottom { flex-direction: column; gap: 0.8rem; text-align: center; }
+  .footer-legal { font-size: 0.68rem; text-align: center; }
+  .footer-copy { text-align: center; }
+  .footer-heading { font-size: 0.65rem; }
+  .footer-links a { font-size: 0.82rem; }
+
+  /* ── FORM ── */
   #exitOptions { grid-template-columns: 1fr !important; }
   #speedAmountGrid { gap: 0.5rem !important; }
   .speed-amt-btn { min-width: calc(50% - 0.25rem); flex: 1 1 calc(50% - 0.25rem); }
@@ -459,6 +471,16 @@ body { background: var(--navy); }
   #productCards > div { grid-template-columns: 1fr !important; }
   #speedLoanSelector { overflow-x: hidden; }
   #exitExplorer { padding: 1rem !important; }
+  .btn-primary, .btn-secondary, .btn-whatsapp { padding: 0.85rem 1.5rem; font-size: 0.82rem; }
+
+  /* ── CTA ── */
+  .cta-actions { flex-direction: column; align-items: center; }
+  .cta-actions .btn-primary, .cta-actions .btn-whatsapp { width: 100%; max-width: 320px; justify-content: center; }
+}
+
+/* ═══ SMALL SCREENS (480px) ═══ */
+@media (max-width: 480px) {
+  .footer-top { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 </style>
 <style>
