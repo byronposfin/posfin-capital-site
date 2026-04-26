@@ -612,7 +612,7 @@ const VALID_TIMEFRAMES = ['asap', '1_week', '2_weeks', '1_month', 'flexible'];
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   // CORS — allow Posfin site and local dev
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
