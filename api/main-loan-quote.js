@@ -613,6 +613,14 @@ const VALID_TIMEFRAMES = ['asap', '1_week', '2_weeks', '1_month', 'flexible'];
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export default function handler(req, res) {
+  try {
+    return _handlerImpl(req, res);
+  } catch(e) {
+    return res.status(500).json({ error: e.message, type: e.constructor.name, stack: e.stack?.split("
+").slice(0,5) });
+  }
+}
+function _handlerImpl(req, res) {
   // CORS — allow Posfin site and local dev
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -742,4 +750,5 @@ export default function handler(req, res) {
     caveat:       'Indicative figures only. Subject to valuation, full credit underwrite, and lender confirmation. Not a commitment to lend.',
     generated_at: new Date().toISOString(),
   });
+}
 }
