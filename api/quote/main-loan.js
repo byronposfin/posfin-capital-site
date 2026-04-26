@@ -53,7 +53,7 @@ const SOMO_RATE_TIERS = [
   { maxLtv: 0.70, rate: 0.0095 },  // 60–70%    → 0.95%/month (high LTV)
 ];
 
-export const SOMO_CONFIG = {
+const SOMO_CONFIG = {
   arrangementPct:  0.025,   // 2.5% of gross (confirmed 26 Apr 2026)
   adminFee:        650,     // £650 standard (confirmed 26 Apr 2026)
   brokerPct:       0.03,    // 3% of gross, floor at minBroker
@@ -73,7 +73,7 @@ export const SOMO_CONFIG = {
 // Flat rates — NOT LTV-tiered (mt_finance_calculator.py)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const MT_CONFIG = {
+const MT_CONFIG = {
   regulatedRate:              0.0089,  // 0.89%/month regulated (primary residence)
   unregulatedRate:            0.0095,  // 0.95%/month unregulated (investment/SPV)
   conservativeBuffer:         0.10,    // 10% haircut on property value (MT Finance standard)
@@ -97,7 +97,7 @@ export const MT_CONFIG = {
 // Company No: 16988655 — sub-total compound formula (kpc_calculator.py)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const KPC_CONFIG = {
+const KPC_CONFIG = {
   rate:         0.025,   // 2.5%/month discount rate (5% headline via facility fee)
   brokerPct:    0.12,    // 12% — Byron sweat equity. NEVER disclosed to borrower.
   legals:       1_200,   // Fixed Ackroyds legals (NHF uses £895; KPC uses £1,200)
@@ -128,7 +128,7 @@ const pct = (n, dp = 2) => `${(n * 100).toFixed(dp)}%`;
  * @param {number} grossLtv - Gross LTV ratio (0–1)
  * @param {number|null} [rateOverride] - If provided, use this rate regardless of LTV (for val-only tier)
  */
-export function somoGetRate(grossLtv, rateOverride = null) {
+function somoGetRate(grossLtv, rateOverride = null) {
   if (rateOverride !== null) return rateOverride;
   for (const tier of SOMO_RATE_TIERS) {
     if (grossLtv <= tier.maxLtv) return tier.rate;
@@ -151,7 +151,7 @@ export function somoGetRate(grossLtv, rateOverride = null) {
  * @param {number|null} [p.rateOverride] - Force a specific rate (used for val-only credit tier)
  * @returns {object|null}
  */
-export function somoCalc({ grossLoan, termMonths, propertyValue, existingDebt = 0, regulated = false, rateOverride = null }) {
+function somoCalc({ grossLoan, termMonths, propertyValue, existingDebt = 0, regulated = false, rateOverride = null }) {
   if (regulated) return null;  // Somo: unregulated only
   if (grossLoan < SOMO_CONFIG.minLoan || grossLoan > SOMO_CONFIG.maxLoan) return null;
   if (termMonths < 1 || termMonths > SOMO_CONFIG.maxTerm) return null;
@@ -219,7 +219,7 @@ export function somoCalc({ grossLoan, termMonths, propertyValue, existingDebt = 
  * Reverse-calculate Somo: given a target net release, find the gross facility needed.
  * Iterates 6 times to resolve rate-tier feedback loop (LTV changes as gross changes).
  */
-export function somoFromNet({ netTarget, termMonths, propertyValue, existingDebt = 0, regulated = false, rateOverride = null }) {
+function somoFromNet({ netTarget, termMonths, propertyValue, existingDebt = 0, regulated = false, rateOverride = null }) {
   if (regulated) return null;
   if (termMonths < 1 || termMonths > SOMO_CONFIG.maxTerm) return null;
 
@@ -270,7 +270,7 @@ export function somoFromNet({ netTarget, termMonths, propertyValue, existingDebt
  * @param {number|null} [p.rateOverride] - Force a specific rate (used for val-only credit tier)
  * @returns {object|null}
  */
-export function mtCalc({ netLoan, termMonths, propertyValue, existingDebt = 0, regulated = false, rateOverride = null }) {
+function mtCalc({ netLoan, termMonths, propertyValue, existingDebt = 0, regulated = false, rateOverride = null }) {
   if (netLoan < MT_CONFIG.minLoan || netLoan > MT_CONFIG.maxLoan) return null;
   if (termMonths < MT_CONFIG.minTerm || termMonths > MT_CONFIG.maxTerm) return null;
 
@@ -380,7 +380,7 @@ export function mtCalc({ netLoan, termMonths, propertyValue, existingDebt = 0, r
  * @param {number} p.existingDebt  - All prior charges
  * @returns {object|null}
  */
-export function kpcCalc({ netLoan, propertyValue, existingDebt = 0 }) {
+function kpcCalc({ netLoan, propertyValue, existingDebt = 0 }) {
   const { rate, brokerPct, legals, netLtvCap, grossLtvCap, minLoan, maxLoan, term } = KPC_CONFIG;
 
   if (netLoan < minLoan || netLoan > maxLoan) return null;
@@ -443,7 +443,7 @@ export function kpcCalc({ netLoan, propertyValue, existingDebt = 0 }) {
  * @param {object} input - Request body from POST /api/quote/main-loan
  * @returns {Array<object>} - Array of product objects, each with recommended boolean
  */
-export function routeAndQuote(input) {
+function routeAndQuote(input) {
   const {
     property_value,
     first_mortgage_clean   = 0,
