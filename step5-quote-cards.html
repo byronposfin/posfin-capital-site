@@ -657,11 +657,11 @@
 
   <!-- ── Back-to-Back Buffer Warning (shown if backToBack or speed loan detected) ── -->
   <div class="q5-b2b-warning" id="q5B2BWarning">
-    ⚠️ <strong>Back-to-Back Buffer Rule:</strong> The Main Loan net release on Day 1 must exceed your Speed Loan gross repayment by a minimum of <strong>£10,000</strong>. This buffer is non-negotiable. If this cannot be achieved, you must reduce your Speed Loan size.
+    ⚠️ <strong>Structural Covenant (The Buffer Rule):</strong> The Main Loan net release on Day 1 must exceed your Speed Loan gross redemption by a minimum of <strong>£10,000</strong>. This liquidity buffer is non-negotiable. Reduce your Speed Loan allocation to clear the covenant.
   </div>
 
   <div class="capture-badge">✓ Details reviewed &amp; confirmed</div>
-  <div class="form-step-title">Your Live Quote</div>
+  <div class="form-step-title">Your Indicative Capital Stack</div>
   <div class="form-step-sub">Indicative Main Loan terms generated from your inputs. Select a credit profile and choose an option to lock in terms.</div>
 
   <!-- ── Credit profile toggle ── -->
@@ -671,22 +671,22 @@
       <button type="button" class="q5-tier-btn q5-active" data-tier="proven_exit"
               onclick="q5SetTier('proven_exit', this)">
         <span class="q5-tooltip">
-          Proven Exit<span class="q5-tooltip-text">You can provide property listing confirmation OR a mortgage Decision in Principle before completion</span>
+          Tier 1: Prime Institutional<span class="q5-tooltip-text">Strictly ≤40% LTV with flawless credit. Executable, documented exit strategy required for deployment.</span>
         </span>
         <span>0.80–0.85%/mo</span>
       </button>
       <button type="button" class="q5-tier-btn" data-tier="standard"
               onclick="q5SetTier('standard', this)">
-        Standard<span>0.93–0.95%/mo</span>
+        Tier 2: Standard Commercial<span>0.93–0.95%/mo</span>
       </button>
       <button type="button" class="q5-tier-btn" data-tier="val_only"
               onclick="q5SetTier('val_only', this)">
-        Val Only / No Evidence<span>0.95–1.10%/mo</span>
+        Tier 3: Asset-Backed / Non-Status<span>0.95–1.10%/mo</span>
       </button>
     </div>
     <!-- Proven Exit caveat (shown only on proven_exit tier) -->
     <div class="q5-tier-caveat q5-visible" id="q5TierCaveat">
-      Available at ≤40% LTV with excellent credit. Evidence of proven exit required.
+      Strictly ≤40% LTV with flawless credit. Executable, documented exit strategy required for deployment.
     </div>
   </div>
 
@@ -709,7 +709,7 @@
     </div>
     <a href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27d%20like%20to%20discuss%20my%20loan%20quote."
        target="_blank" class="q5-btn-speak-primary" style="display:inline-block;width:auto;padding:0.7rem 1.5rem;border-radius:4px;">
-      💬 Speak with Byron / Chris
+      💬 Consult Origination (Byron / Chris)
     </a>
   </div>
 
@@ -723,7 +723,7 @@
       </div>
       <!-- MT Finance note — Option A only -->
       <div class="q5-mt-note" id="q5MtNote">
-        Note: This route requires a lender legal undertaking (£1,560) payable before legals commence. Posfin may be able to cover this on qualifying deals.
+        Note: This facility requires a £1,560 institutional legal undertaking payable prior to legal deployment.
       </div>
     </div>
     <!-- Option B card -->
@@ -739,21 +739,15 @@
   <!-- ── Footer notes ── -->
   <div class="q5-footer" id="q5Footer">
     <div class="q5-caveat">
-      <strong>Indicative figures only.</strong> These figures are based on your inputs.
-      Exact terms are confirmed once your application is submitted to the lender —
-      typically within 24 hours. Subject to valuation, credit check, and lender underwriting.
-      FCA Authorised · FRN 913022.
+      These are indicative terms based on real-time market data. Final execution subject to full underwriting, valuation, and final credit committee approval. FCA Authorised · FRN 913022.
     </div>
     <div class="q5-exit-note">
       <strong>Exit Strategy —</strong>
-      <strong>Option A (Proven Exit — AVM Route):</strong> Property must be listed for sale OR a mortgage
-      Decision in Principle obtained. AVM may be available at ≤65% LTV, subject to lender confidence.
-      <strong>Option B:</strong> Self-declared exit accepted (sale, refinance, or alternative source).
+      <strong>Option A:</strong> Requires active open-market sales listing or executable Mortgage Decision in Principle. AVM routing available at ≤65% LTV, contingent on data-led confidence scores.
+      <strong>Option B:</strong> Agnostic exit accepted (sale, refinance, or alternative documented liquidity event).
     </div>
     <div class="q5-badcredit-note" id="q5BadCreditNote">
-      💡 <strong>No evidence of exit / complex credit?</strong> No problem — as long as there is no current
-      bankruptcy, we can get you funded. Our lender panel includes specialists for complex
-      credit profiles at all levels.
+      💡 <strong>THE PRIVATE INVESTOR PLAY:</strong> For high-conviction assets, Posfin syndicates your upfront valuation and legal friction costs. Ask Origination if your asset qualifies.
     </div>
   </div>
 
@@ -925,7 +919,7 @@
         cardA.classList.add('q5-card-faded');
         if (overlay)  { showEl(overlay); }
         if (overlayT) {
-          overlayT.textContent = '⚠️ Your LTV requirement (' + pct(grossLTV * 100, 1) + ') exceeds the 65% maximum for this option. Option B remains available.';
+          overlayT.textContent = '⚠️ LTV Breach: Your ' + pct(grossLTV * 100, 1) + ' requirement exceeds the 65% hard-stop for the Prime Line. Rerouting to Option B.';
         }
         if (avmBadge) hideEl(avmBadge);
       } else {
@@ -980,9 +974,9 @@
   /* ── Product display helpers ── */
   function productEyebrow(idx) { return 'MAIN LOAN'; }
   function productName(idx) {
-    if (idx === 0) return 'Main Loan \u2014 Option A';
-    if (idx === 1) return 'Main Loan \u2014 Option B';
-    return 'Main Loan \u2014 Option C';
+    if (idx === 0) return 'Option A \u2014 Prime Liquidity Line';
+    if (idx === 1) return 'Option B \u2014 Flexible Leverage Line';
+    return 'Option C \u2014 Alternative Credit Profile';
   }
 
   /* ── Client-side calculator ──
@@ -1089,7 +1083,7 @@
     /* AVM badge placeholder (shown/hidden by JS after LTV check) */
     if (idx === 0) {
       html += '<div class="q5-avm-badge" id="q5AvmBadge">'
-            + '✅ AVM route may be available — no full valuation required. Subject to lender confidence score.'
+            + '✅ AVM Eligible: Zero physical valuation required. Subject to algorithmic confidence score.'
             + '</div>';
     }
 
@@ -1128,14 +1122,14 @@
     /* CTA */
     html += '<div class="q5-cta">';
     if (regulated) {
-      html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-primary">&#128172; Speak with Byron / Chris</a>';
+      html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-primary">&#128172; Consult Origination instead</a>';
     } else {
       html += '<a href="' + stripeUrl + '" target="_blank" class="q5-btn-lock"'
             + ' onclick="q5Track(\'main_option_' + String.fromCharCode(65 + idx) + '\')">'
-            + 'Lock in terms \u2014 Pay £500'
+            + 'Execute Terms \u2014 £500 Commitment'
             + '</a>';
     }
-    html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-secondary">&#128172; Speak with Byron / Chris instead</a>';
+    html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-secondary">&#128172; Consult Origination instead</a>';
     html += '</div>'; /* end q5-cta */
 
     cardEl.innerHTML = html;
