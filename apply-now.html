@@ -4134,12 +4134,12 @@ function showAVMMessage(data, borrowerEstimate) {
     if (idx === 0) {
       /* Option A: AVM eligible at ≤65% */
       html += '<div class="q5-avm-badge" id="q5AvmBadge">'
-            + '✅ AVM Eligible: Zero physical valuation required (up to 65% LTV). Subject to algorithmic confidence score.'
+            + '✅ AVM Eligible: No physical RICS valuation survey required (up to 65% LTV). Solicitors still required. Subject to algorithmic confidence score.'
             + '</div>';
     } else if (idx === 1) {
-      /* Option B: no £1,560 undertaking — can roll into loan */
+      /* Option B: £1,560 Lender Legal Undertaking — can roll into loan */
       html += '<div style="font-size:0.75rem;background:rgba(44,181,172,0.08);border:1px solid rgba(44,181,172,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#2CB5AC;">'
-            + '<strong>No £1,560 legal undertaking required upfront.</strong> This facility’s legal costs can be rolled into the loan and deducted from proceeds at completion.'
+            + '£1,560 Lender Legal Undertaking applies. This can be rolled into the loan and deducted from proceeds at completion — no upfront cash required.'
             + '</div>';
     }
 
