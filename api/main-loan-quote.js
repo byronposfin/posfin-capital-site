@@ -727,7 +727,8 @@ function _handlerImpl(req, res) {
     (body.other_charges_amount   || 0);
 
   const indicativeLtv = (body.loan_amount_requested + existingDebt) / body.property_value;
-  const activeTier    = body.credit_tier || 'standard';
+  /* Map proven_exit (Step 5 UI tier name) → prime (internal API tier name) */
+  const activeTier    = (body.credit_tier === 'proven_exit') ? 'prime' : (body.credit_tier || 'standard');
 
   return res.status(200).json({
     status:   'ok',
