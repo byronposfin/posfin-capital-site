@@ -1258,7 +1258,17 @@
     .then(function (data) {
       hideEl(el('q5Loading'));
       var quotes = normaliseResponse(data, form);
-      if (!quotes || quotes.length < 2) throw new Error('Unexpected API response shape');
+      /* If API returns no Main Loan products (loan < £100K minimum), show helpful message */
+      if (!quotes || quotes.length === 0) {
+        hideEl(el('q5Loading'));
+        q5ShowError('Main Loan facilities start from £100,000. For smaller amounts (£26K–£100K), our Speed Loan is available in 3–5 days with no valuation required. Speak with Byron or Chris to discuss your options.');
+        return;
+      }
+      if (quotes.length === 1) {
+        /* Only one product — show it plus fallback for second slot */
+        var fallback = buildFallback(form);
+        if (fallback && fallback.length > 1) quotes = [quotes[0], fallback[1]];
+      }
       hideEl(el('q5FallbackNotice'));
       renderAll(quotes, form.gross_ltv);
     })
