@@ -3886,11 +3886,16 @@ function showAVMMessage(data, borrowerEstimate) {
       return parseFloat(raw.replace(/[£,\s]/g, '')) || 0;
     }
 
-    var propVal  = numVal('propValue');
-    var mort1    = numVal('mortgage1');
-    var arrears  = numVal('arrearsValue');
-    var mort2    = numVal('mortgage2');
-    var loanAmt  = numVal('loanAmount');
+    function fd(key) { /* read from formData if DOM returns 0 */
+      if (typeof formData === 'undefined') return 0;
+      var v = formData[key] || formData['_' + key] || 0;
+      return parseFloat(String(v).replace(/[£,\s]/g, '')) || 0;
+    }
+    var propVal  = numVal('propValue')  || fd('propValue');
+    var mort1    = numVal('mortgage1')  || fd('_cleanBalance') || fd('mortgage1');
+    var arrears  = numVal('arrearsValue') || fd('arrears');
+    var mort2    = numVal('mortgage2')  || fd('mortgage2');
+    var loanAmt  = numVal('loanAmount') || fd('loanAmount');
 
     /* Gross LTV = (existing debt + new loan) / property value */
     var totalDebt = mort1 + arrears + mort2 + loanAmt;
