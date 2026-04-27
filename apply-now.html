@@ -2002,7 +2002,7 @@ fbq('track', 'PageView');
       </button>
       <button type="button" class="q5-tier-btn" data-tier="standard"
               onclick="q5SetTier('standard', this)">
-        Tier 2: Standard Commercial<span>0.93–0.95%/mo</span>
+        Tier 2: Standard<span>0.93–0.95%/mo</span>
       </button>
       <button type="button" class="q5-tier-btn" data-tier="val_only"
               onclick="q5SetTier('val_only', this)">
@@ -2047,9 +2047,7 @@ fbq('track', 'PageView');
         <div class="q5-ltv-overlay-text" id="q5LtvOverlayText"></div>
       </div>
       <!-- MT Finance note — Option A only -->
-      <div class="q5-mt-note" id="q5MtNote">
-        Note: This facility requires a £1,560 institutional legal undertaking payable prior to legal deployment.
-      </div>
+      <!-- q5MtNote removed — now rendered per-card in JS -->
     </div>
     <!-- Option B card -->
     <div>
@@ -2232,7 +2230,7 @@ fbq('track', 'PageView');
   <div class="b2b-cta">
     <a href="#" id="b2bStripeBtn" class="b2b-btn-lock"
        onclick="b2bTrack(); return true;">
-      🔒 Lock in terms — Pay £500
+      🔒 Lock in terms — Pay £395
     </a>
     <a href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27d%20like%20to%20discuss%20a%20back-to-back%20facility." target="_blank" class="b2b-btn-speak">
       💬 Speak with Byron / Chris
@@ -4125,18 +4123,23 @@ function showAVMMessage(data, borrowerEstimate) {
           + '<div class="q5-product-eyebrow">MAIN LOAN</div>'
           + '<div class="q5-product-name">' + productName(idx) + '</div>';
 
-    /* Route label (lender / route info) */
-    if (q.route_label || q.lender) {
+    /* Route label — no lender names, route only */
+    if (q.route_label) {
       html += '<div style="font-size:0.72rem;color:var(--gray);margin-bottom:0.6rem;font-style:italic;">'
-            + (q.lender ? q.lender + (q.route_label ? ' · ' : '') : '')
-            + (q.route_label || '')
+            + q.route_label
             + '</div>';
     }
 
-    /* AVM badge placeholder (shown/hidden by JS after LTV check) */
+    /* AVM / legal undertaking badges */
     if (idx === 0) {
+      /* Option A: AVM eligible at ≤65% */
       html += '<div class="q5-avm-badge" id="q5AvmBadge">'
-            + '✅ AVM Eligible: Zero physical valuation required. Subject to algorithmic confidence score.'
+            + '✅ AVM Eligible: Zero physical valuation required (up to 65% LTV). Subject to algorithmic confidence score.'
+            + '</div>';
+    } else if (idx === 1) {
+      /* Option B: no £1,560 undertaking — can roll into loan */
+      html += '<div style="font-size:0.75rem;background:rgba(44,181,172,0.08);border:1px solid rgba(44,181,172,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#2CB5AC;">'
+            + '<strong>No £1,560 legal undertaking required upfront.</strong> This facility’s legal costs can be rolled into the loan and deducted from proceeds at completion.'
             + '</div>';
     }
 
@@ -4179,7 +4182,7 @@ function showAVMMessage(data, borrowerEstimate) {
     } else {
       html += '<a href="' + stripeUrl + '" target="_blank" class="q5-btn-lock"'
             + ' onclick="q5Track(\'main_option_' + String.fromCharCode(65 + idx) + '\')">'
-            + 'Execute Terms \u2014 £500 Commitment'
+            + 'Execute Terms \u2014 £395 Commitment'
             + '</a>';
     }
     html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-secondary">&#128172; Consult Origination instead</a>';
@@ -4220,26 +4223,29 @@ function showAVMMessage(data, borrowerEstimate) {
     if (data && Array.isArray(data.products) && data.products.length >= 1) {
       return data.products.map(function(p, i) {
         return {
-          idx:             i,
-          rate_pm:         p.ratePm,
-          rate_pm_pct:     p.ratePmPct,
-          gross_loan:      p.grossLoan,
-          net_release:     p.netRelease || p.netLoan,
-          gross_ltv_pct:   p.grossLtvPct,
-          net_ltv_pct:     p.netLtvPct,
-          term_months:     p.termMonths,
-          arrangement_fee: p.arrangementFee,
-          admin_fee:       p.adminFee,
-          broker_fee:      p.brokerFee,
-          interest_pm:     p.interestPm,
-          retained_interest: p.retainedInterest || p.totalInterest,
-          total_deductions: p.totalDeductions,
-          gross_repayable: p.grossRepayable,
-          factor_rate:     p.factorRate,
-          lender:          p.lender,
-          product:         p.product,
-          recommended:     p.recommended,
-          route_label:     p.avmFriendly ? 'AVM Eligible · Max 65% LTV' : 'Full Valuation · Max 70% LTV',
+          idx:                    i,
+          rate_pm:                p.ratePm,
+          monthly_rate_pct:       p.ratePm ? p.ratePm * 100 : null,
+          rate_pm_pct:            p.ratePmPct,
+          gross_loan:             p.grossLoan,
+          net_release_day1:       p.netRelease || p.netLoan || p.netLoanRequested,
+          gross_ltv_pct:          p.grossLtvPct,
+          net_ltv_pct:            p.netLtvPct,
+          max_ltv_pct:            p.avmFriendly ? 65 : 70,
+          term_months:            p.termMonths,
+          lender_arrangement_fee: p.arrangementFee,
+          lender_admin_fee:       p.adminFee,
+          broker_fee:             p.brokerFee,
+          interest_pm:            p.interestPm,
+          interest_total:         p.retainedInterest || p.totalInterest,
+          total_deductions:       p.totalDeductions,
+          gross_repayable:        p.grossRepayable,
+          factor_rate:            p.factorRate,
+          lender:                 p.lender,
+          product:                p.product,
+          recommended:            p.recommended,
+          avm_friendly:           !!p.avmFriendly,
+          route_label:            p.avmFriendly ? 'AVM Eligible · Max 65% LTV' : 'Full Valuation · Max 70% LTV',
           broker_fee_paid_by_lender: true
         };
       });
