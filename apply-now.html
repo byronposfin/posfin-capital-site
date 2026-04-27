@@ -4266,7 +4266,7 @@ function showAVMMessage(data, borrowerEstimate) {
   /* ── AVM Value Check (fires before quote cards render) ── */
   function q5AvmCheck(form, onContinue) {
     var stated   = form.property_value;
-    var avmMid   = numVal('avmMid') || parseFloat(document.getElementById('avmMid')?.value || 0);
+    var avmMid   = (function(id){ var e=document.getElementById(id); return e ? parseFloat((e.value||'0').replace(/[£,\s]/g,''))||0 : 0; })('avmMid') || 0;
     if (!avmMid || avmMid <= 0) { onContinue(stated); return; } // No AVM — proceed with stated
     var variance = (stated - avmMid) / avmMid;
     if (variance <= 0.05) { onContinue(avmMid); return; }        // Within 5% — use AVM silently
