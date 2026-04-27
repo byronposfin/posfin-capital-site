@@ -609,6 +609,7 @@ const NUMERIC_FIELDS = [
 const VALID_BASES      = ['net', 'gross'];
 const VALID_POSITIONS  = ['1st', '2nd'];
 const VALID_TIMEFRAMES = ['asap', '1_week', '2_weeks', '1_month', 'flexible'];
+const VALID_CREDIT_TIERS = ['prime', 'proven_exit', 'standard', 'val_only'];
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
