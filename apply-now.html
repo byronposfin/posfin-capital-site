@@ -3896,6 +3896,7 @@ function showAVMMessage(data, borrowerEstimate) {
     var arrears  = numVal('arrearsValue') || fd('arrears');
     var mort2    = numVal('mortgage2')  || fd('mortgage2');
     var loanAmt  = numVal('loanAmount') || fd('loanAmount');
+    console.log('[Q5 DEBUG] propVal='+propVal+' mort1='+mort1+' loanAmt='+loanAmt+' tier='+q5Tier);
 
     /* Gross LTV = (existing debt + new loan) / property value */
     var totalDebt = mort1 + arrears + mort2 + loanAmt;
