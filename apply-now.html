@@ -4313,13 +4313,12 @@ function showAVMMessage(data, borrowerEstimate) {
     /* Back-to-back check (independent of API) */
     q5CheckB2B(form);
 
-    /* AVM value check — may show popup if >5% variance */
+    /* AVM value check — may show popup if >5% variance. Fetch happens INSIDE callback. */
     q5AvmCheck(form, function(confirmedValue) {
       form.property_value = confirmedValue;
       /* Recalculate LTV with confirmed value */
       var totalDebt = (form.first_mortgage_clean||0) + (form.first_mortgage_arrears||0) + (form.other_charges_amount||0) + (form.loan_amount_requested||0);
       form.gross_ltv = confirmedValue > 0 ? totalDebt / confirmedValue : 0;
-    });
 
     fetch(Q5_API, {
       method:  'POST',
@@ -4348,6 +4347,8 @@ function showAVMMessage(data, borrowerEstimate) {
       showEl(el('q5FallbackNotice'));
       renderAll(fallback, form.gross_ltv);
     });
+
+    }); /* end q5AvmCheck callback */
   }
 
   /* Expose for tier toggle */
