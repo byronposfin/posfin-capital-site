@@ -4337,7 +4337,12 @@ function showAVMMessage(data, borrowerEstimate) {
     .then(function (data) {
       hideEl(el('q5Loading'));
       var quotes = normaliseResponse(data, form);
-      if (!quotes || quotes.length < 2) throw new Error('Unexpected API response shape');
+      if (!quotes || quotes.length === 0) throw new Error('No products returned');
+      /* Regulated deals may return only 1 product — pad with fallback if needed */
+      if (quotes.length === 1) {
+        var fb = buildFallback(form);
+        if (fb && fb.length > 1) quotes = [quotes[0], fb[1]];
+      }
       hideEl(el('q5FallbackNotice'));
       renderAll(quotes, form.gross_ltv);
     })
