@@ -3645,7 +3645,7 @@ function selectExit(el, exitType) {
   
   var messages = {
     refinance: "Refinancing is the most common exit. We work with mortgage broker partners across BTL, commercial, and residential products. At your LTV, options should be available.",
-    sale: "Property sale is a clean exit. We can introduce you to agents or help with a free listing. If timing is tight, auction is also an option — typically 6-8 weeks to completion.",
+    sale: "Property sale is a strong exit. Standard sale typically takes 3–6 months to completion. If timing is tight, auction is also an option — typically 6–8 weeks to exchange. We can introduce you to agents to get this moving.",
     business: "Business proceeds are viable — your lender will want a brief narrative about the expected income. We'll help you present this credibly.",
     other_asset: "Sale of another asset is a solid exit route. Your lender may ask for evidence of ownership and marketing status. We'll guide you through what they need.",
     pension: "This is a credible exit. If you're refinancing via equity release or a lifetime mortgage, lenders will want a Decision in Principle or Offer in Principle from your provider. For pension or inheritance, a statement or probate timeline is required. We'll help you pull this together.",
@@ -4206,18 +4206,46 @@ function showAVMMessage(data, borrowerEstimate) {
 
   /* ── Normalise API response → array of quote objects ── */
   function normaliseResponse(data, form) {
-    /* Preferred shape: { quotes: [...] } */
-    if (data && Array.isArray(data.quotes) && data.quotes.length >= 2) {
+    /* Shape 1: { quotes: [...] } */
+    if (data && Array.isArray(data.quotes) && data.quotes.length >= 1) {
       return data.quotes.slice(0, 3);
     }
-    /* Alternate: { main_loan_option_a: {…}, main_loan_option_b: {…} } */
+    /* Shape 2 (actual API): { products: [...] } — map to card format */
+    if (data && Array.isArray(data.products) && data.products.length >= 1) {
+      return data.products.map(function(p, i) {
+        return {
+          idx:             i,
+          rate_pm:         p.ratePm,
+          rate_pm_pct:     p.ratePmPct,
+          gross_loan:      p.grossLoan,
+          net_release:     p.netRelease || p.netLoan,
+          gross_ltv_pct:   p.grossLtvPct,
+          net_ltv_pct:     p.netLtvPct,
+          term_months:     p.termMonths,
+          arrangement_fee: p.arrangementFee,
+          admin_fee:       p.adminFee,
+          broker_fee:      p.brokerFee,
+          interest_pm:     p.interestPm,
+          retained_interest: p.retainedInterest || p.totalInterest,
+          total_deductions: p.totalDeductions,
+          gross_repayable: p.grossRepayable,
+          factor_rate:     p.factorRate,
+          lender:          p.lender,
+          product:         p.product,
+          recommended:     p.recommended,
+          route_label:     p.avmFriendly ? 'AVM Eligible · Max 65% LTV' : 'Full Valuation · Max 70% LTV',
+          broker_fee_paid_by_lender: true
+        };
+      });
+    }
+    /* Shape 3: { main_loan_option_a: {…}, main_loan_option_b: {…} } */
     var out = [];
     if (data.main_loan_option_a) out.push(Object.assign({ idx: 0 }, data.main_loan_option_a));
     if (data.main_loan_option_b) out.push(Object.assign({ idx: 1 }, data.main_loan_option_b));
     if (data.main_loan_option_c) out.push(Object.assign({ idx: 2 }, data.main_loan_option_c));
-    if (out.length >= 2) return out;
-    /* Fallback: treat as array */
-    if (Array.isArray(data) && data.length >= 2) return data.slice(0, 3);
+    if (out.length >= 1) return out;
+    /* Shape 4: raw array */
+    if (Array.isArray(data) && data.length >= 1) return data.slice(0, 3);
     return null;
   }
 

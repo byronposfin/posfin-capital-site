@@ -60,7 +60,7 @@ const SOMO_CONFIG = {
   minBroker:       3500,    // £3,500 minimum broker fee
   lockInFee:       350,     // Upfront; refundable on redemption
   procPct:         0.02,    // 2% proc fee — invoiced to Somo by Posfin
-  minLoan:         100_000,
+  minLoan:         50_000,   // Somo real minimum £27.5K — we floor at £50K gross for sub-£100K edge cases (max 60% LTV)
   maxLoan:       5_000_000,
   minTermPct:      0.50,    // Min interest period = 50% of loan term (e.g. 6-mo loan → 3-mo minimum)
   maxTerm:         12,
