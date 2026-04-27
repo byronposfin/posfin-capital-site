@@ -519,6 +519,384 @@ body { background: var(--navy); }
   .steps-track { grid-template-columns: 1fr; }
   .product-specs { grid-template-columns: 1fr; }
 }
+
+
+/* ═══ HOMEPAGE RATE TASTER STYLES ═══ */
+/* ══════════════════════════════════════════════════════════
+   HOMEPAGE RATE TASTER  ·  Posfin Capital
+   All rules prefixed .rt- to avoid collisions
+   Static section — no API calls
+   Built: 27 Apr 2026
+   ══════════════════════════════════════════════════════════ */
+
+.rate-taster {
+  padding: 6rem 3rem;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 20%, rgba(44,181,172,0.05) 0%, transparent 55%),
+    var(--navy-dark);
+}
+
+/* ── Section header ── */
+.rt-header {
+  max-width: 960px;
+  margin: 0 auto 3.5rem;
+  text-align: center;
+}
+.rt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--teal);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+  padding: 0.3rem 0.9rem;
+  border: 1px solid rgba(44,181,172,0.22);
+  border-radius: 2px;
+  background: rgba(44,181,172,0.04);
+}
+.rt-tag .rt-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: pulse 2s infinite;
+}
+.rt-title {
+  font-family: var(--serif);
+  font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.8rem;
+}
+.rt-title em { font-style: italic; color: var(--teal); }
+.rt-sub {
+  font-size: 1rem;
+  color: var(--gray);
+  line-height: 1.7;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ── Three-column grid ── */
+.rt-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Individual card ── */
+.rt-card {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: linear-gradient(160deg, #141B2E 0%, #0D1321 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+  animation: fadeSlideUp 0.7s ease both;
+}
+.rt-card:nth-child(1) { animation-delay: 0.05s; }
+.rt-card:nth-child(2) { animation-delay: 0.15s; }
+.rt-card:nth-child(3) { animation-delay: 0.25s; }
+.rt-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  transition: background 0.3s;
+}
+.rt-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+
+/* Card colour variants */
+.rt-card-speed::before  { background: linear-gradient(90deg, var(--teal), rgba(44,181,172,0.25)); }
+.rt-card-speed:hover    { border-color: rgba(44,181,172,0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 30px rgba(44,181,172,0.07); }
+.rt-card-main::before   { background: linear-gradient(90deg, var(--gold), rgba(212,168,83,0.25)); }
+.rt-card-main:hover     { border-color: rgba(212,168,83,0.25); box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 30px rgba(212,168,83,0.05); }
+.rt-card-b2b::before    { background: linear-gradient(90deg, #9B97E0, rgba(155,151,224,0.25)); }
+.rt-card-b2b:hover      { border-color: rgba(155,151,224,0.25); box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 30px rgba(155,151,224,0.07); }
+
+/* ── Card head ── */
+.rt-card-head {
+  padding: 1.8rem 1.8rem 1.3rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex: 0;
+}
+.rt-icon {
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
+  display: block;
+  line-height: 1;
+}
+.rt-product-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.65rem;
+  border-radius: 2px;
+  margin-bottom: 0.7rem;
+}
+.rt-product-tag.speed { background: rgba(44,181,172,0.1); color: var(--teal); border: 1px solid rgba(44,181,172,0.22); }
+.rt-product-tag.main  { background: rgba(212,168,83,0.1); color: var(--gold); border: 1px solid rgba(212,168,83,0.22); }
+.rt-product-tag.b2b   { background: rgba(155,151,224,0.1); color: #B8B5F0; border: 1px solid rgba(155,151,224,0.22); }
+
+.rt-product-name {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  line-height: 1.15;
+}
+.rt-range {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Rate hero ── */
+.rt-rate-block {
+  margin-top: 1rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+.rt-rate-num {
+  font-family: var(--serif);
+  font-size: 2.2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.rt-card-speed .rt-rate-num { color: var(--teal); }
+.rt-card-main  .rt-rate-num { color: var(--gold); }
+.rt-card-b2b   .rt-rate-num { color: #B8B5F0; }
+
+.rt-rate-unit {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--gray);
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+.rt-rate-qualifier {
+  font-size: 0.67rem;
+  color: var(--gray);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+/* ── Feature list ── */
+.rt-features {
+  padding: 1.3rem 1.8rem;
+  flex: 1;
+  list-style: none;
+}
+.rt-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.42rem 0;
+  font-size: 0.83rem;
+  color: var(--gray);
+  border-bottom: 1px solid rgba(255,255,255,0.032);
+  line-height: 1.45;
+}
+.rt-features li:last-child { border-bottom: none; }
+.rt-features li strong { color: var(--white); font-weight: 600; }
+.rt-check {
+  flex-shrink: 0;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+.rt-card-speed .rt-check { background: rgba(44,181,172,0.15); color: var(--teal); }
+.rt-card-main  .rt-check { background: rgba(212,168,83,0.12); color: var(--gold); }
+.rt-card-b2b   .rt-check { background: rgba(155,151,224,0.12); color: #B8B5F0; }
+
+/* ── B2B example block ── */
+.rt-b2b-example {
+  margin: 0 1.8rem 0;
+  padding: 0.8rem 1rem;
+  border-radius: 4px;
+  background: rgba(155,151,224,0.06);
+  border: 1px solid rgba(155,151,224,0.15);
+  font-size: 0.77rem;
+  color: var(--gray);
+  line-height: 1.6;
+}
+.rt-b2b-example strong { color: var(--white); }
+.rt-b2b-example .rt-b2b-amounts {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.45rem;
+  flex-wrap: wrap;
+}
+.rt-b2b-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.rt-b2b-chip.speed { background: rgba(44,181,172,0.15); color: var(--teal); }
+.rt-b2b-chip.main  { background: rgba(155,151,224,0.12); color: #B8B5F0; }
+.rt-b2b-chip.arrow { background: transparent; color: var(--gray); font-size: 0.7rem; padding: 0; }
+
+/* ── CTA button ── */
+.rt-cta {
+  padding: 1.2rem 1.8rem 1.6rem;
+  margin-top: auto;
+}
+.rt-btn {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  line-height: 1.3;
+}
+.rt-btn::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+  transform: translateX(-110%);
+  transition: transform 0.55s;
+}
+.rt-btn:hover::after { transform: translateX(110%); }
+.rt-btn.speed {
+  background: var(--teal);
+  color: var(--navy-dark);
+}
+.rt-btn.speed:hover { box-shadow: 0 0 26px rgba(44,181,172,0.35); transform: translateY(-1px); }
+.rt-btn.main {
+  background: var(--gold);
+  color: var(--navy-dark);
+}
+.rt-btn.main:hover { box-shadow: 0 0 26px rgba(212,168,83,0.3); transform: translateY(-1px); }
+.rt-btn.b2b {
+  background: rgba(155,151,224,0.18);
+  color: #D4D2FF;
+  border: 1px solid rgba(155,151,224,0.3);
+}
+.rt-btn.b2b:hover {
+  background: rgba(155,151,224,0.28);
+  box-shadow: 0 0 22px rgba(155,151,224,0.15);
+  transform: translateY(-1px);
+}
+
+/* ── Indicative rates disclaimer ── */
+.rt-disclaimer {
+  max-width: 960px;
+  margin: 0 auto 2rem;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  color: var(--teal);
+  font-style: italic;
+  opacity: 0.85;
+  line-height: 1.6;
+}
+
+/* ── Neon pink CTA bar ── */
+.rt-neon-bar {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  background: rgba(255,45,155,0.06);
+  border: 1px solid rgba(255,45,155,0.3);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--neon-pink);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(255,45,155,0.06);
+  transition: box-shadow 0.3s, background 0.3s;
+  text-decoration: none;
+}
+.rt-neon-bar:hover {
+  background: rgba(255,45,155,0.1);
+  box-shadow: 0 0 40px rgba(255,45,155,0.1);
+}
+.rt-neon-bar .rt-neon-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--neon-pink);
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════ */
+@media (max-width: 900px) {
+  .rt-grid {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    gap: 1.2rem;
+  }
+  .rt-card { animation-delay: 0 !important; }
+}
+@media (max-width: 600px) {
+  .rate-taster { padding: 4rem 1.5rem; }
+  .rt-header { margin-bottom: 2.5rem; }
+  .rt-grid { margin-bottom: 2rem; }
+  .rt-card-head { padding: 1.4rem 1.4rem 1rem; }
+  .rt-features { padding: 1rem 1.4rem; }
+  .rt-cta { padding: 1rem 1.4rem 1.3rem; }
+  .rt-b2b-example { margin: 0 1.4rem; }
+  .rt-neon-bar { padding: 0.9rem 1.2rem; font-size: 0.82rem; }
+  .rt-product-name { font-size: 1.3rem; }
+  .rt-rate-num { font-size: 1.9rem; }
+}
+@media (max-width: 380px) {
+  .rate-taster { padding: 3rem 1rem; }
+  .rt-b2b-amounts { flex-direction: column; align-items: flex-start; }
+}
 </style>
 <!-- Meta Pixel -->
 <script>
@@ -587,6 +965,180 @@ fbq('track', 'PageView');
 
 <!-- ═══ ENQUIRY FORM ═══ -->
 <!-- ═══════════════════════════════════════ -->
+
+<!-- ═══ HOMEPAGE RATE TASTER ═══ -->
+<section class="rate-taster" id="products">
+
+  <!-- Section header -->
+  <div class="rt-header">
+    <div class="rt-tag"><span class="rt-dot"></span> Lending Products</div>
+    <h2 class="rt-title">Finance built for <em>speed</em> and scale</h2>
+    <p class="rt-sub">From emergency cash in 3 days to multi-million-pound facilities in two weeks — one broker, every structure.</p>
+  </div>
+
+  <!-- Three-column grid -->
+  <div class="rt-grid">
+
+    <!-- ── COLUMN 1: Speed Loan ── -->
+    <div class="rt-card rt-card-speed">
+      <div class="rt-card-head">
+        <span class="rt-icon">⚡</span>
+        <div class="rt-product-tag speed">Speed Loan</div>
+        <div class="rt-product-name">Liquidity in 72 Hours.</div>
+        <div class="rt-range">£26,000 – £100,000</div>
+        <div class="rt-rate-block">
+          <span class="rt-rate-num">2.5</span>
+          <div>
+            <div class="rt-rate-unit">%/month</div>
+          </div>
+        </div>
+        <div class="rt-rate-qualifier">Zero valuation, zero upfronts. Immediate capital access while your institutional facility processes.</div>
+      </div>
+      <ul class="rt-features">
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>Liquidity in 72 hours</strong> — payout in 3–5 working days</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>No borrower solicitors required</strong> — zero legal representation delays, funded without your solicitor in the chain</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>Zero upfront costs</strong> — all fees deducted at drawdown</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>Built for:</strong> Probate release, Auction Rescue, or funding Main Loan friction costs</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>Net max 50% LTV</strong> — current debt + Speed Loan must not exceed 50% LTV. Hard stop.</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span>All credit profiles considered — no active bankruptcy</span>
+        </li>
+      </ul>
+      <div class="rt-cta">
+        <a href="/apply-now" class="rt-btn speed">Execute Speed Loan →</a>
+      </div>
+    </div>
+
+    <!-- ── COLUMN 2: Main Loan ── -->
+    <div class="rt-card rt-card-main">
+      <div class="rt-card-head">
+        <span class="rt-icon">🏗</span>
+        <div class="rt-product-tag main">Main Bridge</div>
+        <div class="rt-product-name">Institutional Velocity.</div>
+        <div class="rt-range">£100K – £5M</div>
+        <div class="rt-rate-block">
+          <span class="rt-rate-num">0.80</span>
+          <div>
+            <div class="rt-rate-unit">%/month*</div>
+          </div>
+        </div>
+        <div class="rt-rate-qualifier">From 0.80%/mo | Up to 70% LTV · *Proven exit, excellent credit</div>
+      </div>
+      <ul class="rt-features">
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>Funds in 10–15 working days</strong></span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span>Up to <strong>70% LTV</strong> — institutional bridge</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>Proprietary Lending Panel</strong> — Backed by Tier-1 Private Credit, Specialist Funds, and Institutional Family Offices</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span>12-month terms · interest rolled up</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>Broker fee paid by lender</strong> — not by you</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span>AVM route available at ≤65% LTV (proven exit)</span>
+        </li>
+      </ul>
+      <div class="rt-cta">
+        <a href="/apply-now" class="rt-btn main">Apply Now →</a>
+      </div>
+    </div>
+
+    <!-- ── COLUMN 3: Back-to-Back ── -->
+    <div class="rt-card rt-card-b2b">
+      <div class="rt-card-head">
+        <span class="rt-icon">🔄</span>
+        <div class="rt-product-tag b2b">Back-to-Back</div>
+        <div class="rt-product-name">The Hybrid Stack.</div>
+        <div class="rt-range">The Mechanism: Immediate capital + long-term leverage.</div>
+        <div class="rt-rate-block">
+          <span class="rt-rate-num" style="font-size:1.4rem;line-height:1.1;color:#B8B5F0;">Two facilities.<br>One structure.</span>
+        </div>
+      </div>
+
+      <!-- B2B example -->
+      <div class="rt-b2b-example">
+        <strong>Example deal:</strong> Need £50K today and £250K in 15 days?
+        <div class="rt-b2b-amounts">
+          <span class="rt-b2b-chip speed">⚡ £50K today</span>
+          <span class="rt-b2b-chip arrow">+</span>
+          <span class="rt-b2b-chip main">🏗 £250K in 15 days</span>
+        </div>
+        <div style="margin-top:0.5rem;font-size:0.72rem;color:rgba(138,146,164,0.75);">
+          Speed Loan is <strong style="color:var(--white);">automatically repaid</strong> from the Main Loan proceeds on completion — no double debt, nothing extra to organise.
+        </div>
+      </div>
+
+      <ul class="rt-features" style="margin-top:0.8rem;">
+        <li>
+          <span class="rt-check">✓</span>
+          <span>Speed Loan <strong>auto-repaid</strong> from Main Loan at completion</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span><strong>No double repayments</strong> — one clean exit</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span>£10,000 minimum buffer rule — we validate this for you</span>
+        </li>
+        <li>
+          <span class="rt-check">✓</span>
+          <span>Zero upfront costs on the Speed Loan element</span>
+        </li>
+      </ul>
+      <div class="rt-cta">
+        <a href="/apply-now" class="rt-btn b2b">See How It Works →</a>
+      </div>
+    </div>
+
+  </div><!-- /rt-grid -->
+
+  <!-- Indicative rates disclaimer -->
+  <p class="rt-disclaimer">
+    Indicative rates. All loans subject to valuation, credit check, and lender underwriting.
+    Your property may be repossessed if you do not keep up repayments on a loan secured against it.
+    FCA Authorised · FRN 913022.
+  </p>
+
+  <!-- Neon pink CTA bar -->
+  <a href="/apply-now?query=processing-costs" class="rt-neon-bar">
+    <span class="rt-neon-dot"></span>
+    PRIVATE INVESTOR PLAY: For high-confidence assets, we cover your Valuation &amp; Legal outlay. Ask if you qualify for the Fee-Deferral.
+    <span class="rt-neon-dot"></span>
+  </a>
+
+</section>
+
+<div class="divider"></div>
+
 <section class="form-section" id="enquiry">
   <div class="section-inner" style="text-align:center">
     <div class="section-tag">Get Started</div>
