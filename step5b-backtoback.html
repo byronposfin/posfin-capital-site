@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  STEP 5B — BACK-TO-BACK SUMMARY                              ║
+  ║  Posfin Capital · posfincapital.com/apply-now                ║
+  ║  Built by Tom Reginald / OpenClaw · 27 Apr 2026              ║
+  ╠══════════════════════════════════════════════════════════════╣
+  ║  DROP-IN INSTRUCTIONS FOR ALI:                               ║
+  ║                                                              ║
+  ║  This screen replaces Step 5 when the borrower has           ║
+  ║  BOTH a Speed Loan AND a Main Loan selected.                 ║
+  ║                                                              ║
+  ║  Trigger logic (in apply-now.html showStep / nextStep):      ║
+  ║    if (formData.backToBack && step === 5) {                  ║
+  ║      showStep('5b');  // show this screen instead            ║
+  ║    }                                                         ║
+  ║                                                              ║
+  ║  Main loan data is read from window.b2bData object:          ║
+  ║    window.b2bData = {                                        ║
+  ║      mainGross: 350000,   // gross loan facility             ║
+  ║      mainNet:   210000,   // net release day 1               ║
+  ║      mainRate:  0.85,     // monthly rate %                  ║
+  ║      mainTerm:  12,       // months                          ║
+  ║      mainLender: 'Somo'   // lender name                     ║
+  ║    };                                                        ║
+  ║                                                              ║
+  ║  Speed loan is calculated client-side using KPC formula:     ║
+  ║    gross = net + (net × 0.12) + (net × 0.025 × 3) + 1200    ║
+  ║                                                              ║
+  ║  Buffer rule: main_net − speed_gross ≥ £10,000               ║
+  ║  If buffer < £10,000: "Lock in terms" button is BLOCKED.     ║
+  ║                                                              ║
+  ║  Stripe URL: update B2B_STRIPE_URL before go-live.           ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Step 5B — Back-to-Back Summary · Posfin Capital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --teal: #2CB5AC; --teal-dim: rgba(44,181,172,0.15); --teal-glow: rgba(44,181,172,0.4);
+      --navy: #1C184F; --navy-light: #111828; --navy-mid: #1A2035; --navy-dark: #0A0E1A;
+      --white: #F8F9FA; --gray: #8892A4; --gold: #D4A853;
+      --red: #E74C3C; --green: #2ECC71; --amber: #F39C12;
+      --neon-pink: #FF2D9B;
+      --serif: 'Playfair Display', Georgia, serif;
+      --sans: 'DM Sans', -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    html { font-size: 16px; }
+    body {
+      font-family: var(--sans);
+      background: var(--navy-dark);
+      color: var(--white);
+      -webkit-font-smoothing: antialiased;
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+    }
+
+    /* ── Preview wrapper ── */
+    .preview-note {
+      max-width: 640px; margin: 0 auto 1.5rem;
+      padding: 0.6rem 1rem;
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--gray);
+      letter-spacing: 0.06em;
+      text-align: center;
+    }
+
+    /* Stub classes so step renders correctly standalone */
+    .form-step { display: block; max-width: 640px; margin: 0 auto; }
+    .capture-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: var(--mono); font-size: 0.6rem; color: var(--green);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.25rem 0.6rem; border: 1px solid rgba(46,204,113,0.2);
+      border-radius: 2px; background: rgba(46,204,113,0.05); margin-bottom: 1.5rem;
+    }
+    .form-step-title { font-family: var(--serif); font-size: 1.4rem; margin-bottom: 0.4rem; }
+    .form-step-sub { font-size: 0.85rem; color: var(--gray); margin-bottom: 2rem; line-height: 1.5; }
+    .form-nav {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 2rem; padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .form-back {
+      background: none; border: 1px solid rgba(255,255,255,0.1); color: var(--gray);
+      padding: 0.7rem 1.5rem; font-family: var(--sans); font-size: 0.82rem;
+      cursor: pointer; border-radius: 2px; transition: all 0.3s;
+    }
+    .form-back:hover { border-color: var(--teal); color: var(--teal); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+
+<div class="preview-note">STANDALONE PREVIEW — Drop this step into apply-now.html as data-step="5b"</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ▼▼▼  START OF DROP-IN CONTENT  ▼▼▼
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+/* ══════════════════════════════════════════════════════════
+   STEP 5B · BACK-TO-BACK SUMMARY  ·  Posfin Capital
+   All rules prefixed .b2b- to avoid collisions
+   Built: 27 Apr 2026
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Speed loan size toggle ── */
+.b2b-size-toggle {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.8rem 0 0;
+}
+.b2b-size-btn {
+  flex: 1;
+  min-width: 70px;
+  padding: 0.6rem 0.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: var(--gray);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+.b2b-size-btn:hover {
+  border-color: rgba(44,181,172,0.4);
+  color: var(--teal);
+}
+.b2b-size-btn.b2b-active {
+  background: rgba(44,181,172,0.12);
+  border-color: var(--teal);
+  color: var(--teal);
+  box-shadow: 0 0 12px rgba(44,181,172,0.15);
+}
+
+/* ── Panel shared ── */
+.b2b-panel {
+  position: relative;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #141B2E 0%, #0D1321 100%);
+  overflow: hidden;
+  margin-bottom: 1.2rem;
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+.b2b-panel-head {
+  padding: 1.3rem 1.4rem 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.b2b-panel-body {
+  padding: 1rem 1.4rem;
+}
+.b2b-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+.b2b-product-name {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.2;
+  margin-bottom: 0.6rem;
+}
+
+/* ── Speed Loan panel — teal border ── */
+.b2b-panel-speed {
+  border: 1px solid rgba(44,181,172,0.4);
+  box-shadow: 0 0 24px rgba(44,181,172,0.06), 0 4px 20px rgba(0,0,0,0.25);
+}
+.b2b-panel-speed::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--teal), rgba(44,181,172,0.3));
+}
+
+/* ── Main Loan panel — navy/indigo border ── */
+.b2b-panel-main {
+  border: 1px solid rgba(77,73,155,0.6);
+  box-shadow: 0 0 24px rgba(77,73,155,0.06), 0 4px 20px rgba(0,0,0,0.25);
+}
+.b2b-panel-main::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #4D499B, rgba(77,73,155,0.3));
+}
+
+/* ── Row inside panel ── */
+.b2b-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.42rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.035);
+  font-size: 0.81rem;
+  gap: 0.5rem;
+}
+.b2b-row:last-of-type { border-bottom: none; }
+.b2b-lbl { color: var(--gray); flex: 1; }
+.b2b-val { font-weight: 600; color: var(--white); white-space: nowrap; flex-shrink: 0; }
+.b2b-val.teal  { color: var(--teal); font-size: 0.93rem; }
+.b2b-val.minus { color: var(--amber); }
+.b2b-val.green { color: var(--green); }
+.b2b-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(44,181,172,0.3) 40%, rgba(44,181,172,0.3) 60%, transparent);
+  margin: 0.55rem 0;
+}
+
+/* ── Buffer status block ── */
+.b2b-buffer {
+  display: none;
+  padding: 0.9rem 1.1rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  margin-bottom: 1.2rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  animation: fadeIn 0.3s ease;
+}
+.b2b-buffer.b2b-visible { display: block; }
+.b2b-buffer.ok {
+  border: 1px solid rgba(46,204,113,0.3);
+  border-left: 4px solid var(--green);
+  background: rgba(46,204,113,0.05);
+  color: var(--green);
+}
+.b2b-buffer.ok strong { color: var(--green); }
+.b2b-buffer.warn {
+  border: 1px solid rgba(231,76,60,0.35);
+  border-left: 4px solid var(--red);
+  background: rgba(231,76,60,0.05);
+  color: #f5a5a0;
+}
+.b2b-buffer.warn strong { color: #f87171; }
+
+/* ── Total summary box — gold border ── */
+.b2b-total {
+  border: 1px solid rgba(212,168,83,0.4);
+  border-radius: 8px;
+  background: linear-gradient(160deg, rgba(212,168,83,0.05), rgba(212,168,83,0.02));
+  padding: 1.3rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 20px rgba(212,168,83,0.05);
+  animation: fadeIn 0.4s ease;
+}
+.b2b-total-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.b2b-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  font-size: 0.84rem;
+  gap: 0.5rem;
+}
+.b2b-total-lbl { color: var(--gray); flex: 1; }
+.b2b-total-val { font-weight: 600; color: var(--white); }
+.b2b-total-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(212,168,83,0.4) 40%, rgba(212,168,83,0.4) 60%, transparent);
+  margin: 0.6rem 0;
+}
+.b2b-total-big-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.3rem 0;
+  gap: 0.5rem;
+}
+.b2b-total-big-lbl {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+}
+.b2b-total-big-val {
+  font-family: var(--serif);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: -0.02em;
+}
+.b2b-timeline-note {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--gray);
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+.b2b-timeline-note span { color: var(--teal); }
+
+/* ── Disclaimer ── */
+.b2b-disclaimer {
+  font-size: 0.73rem;
+  color: var(--gray);
+  font-style: italic;
+  line-height: 1.6;
+  padding: 0.8rem 1rem;
+  border-left: 2px solid rgba(212,168,83,0.3);
+  background: rgba(212,168,83,0.02);
+  border-radius: 0 3px 3px 0;
+  margin-bottom: 1.8rem;
+}
+
+/* ── CTA buttons ── */
+.b2b-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.5rem;
+}
+.b2b-btn-lock {
+  display: block;
+  width: 100%;
+  padding: 0.92rem 1rem;
+  background: var(--teal);
+  color: var(--navy-dark);
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  line-height: 1.3;
+}
+.b2b-btn-lock::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+  transform: translateX(-110%);
+  transition: transform 0.55s;
+}
+.b2b-btn-lock:not([disabled]):hover::after { transform: translateX(110%); }
+.b2b-btn-lock:not([disabled]):hover {
+  box-shadow: 0 0 28px rgba(44,181,172,0.35);
+  transform: translateY(-1px);
+}
+.b2b-btn-lock[disabled] {
+  background: rgba(44,181,172,0.25);
+  color: rgba(255,255,255,0.3);
+  cursor: not-allowed;
+  transform: none;
+}
+.b2b-btn-lock[disabled]:hover { box-shadow: none; transform: none; }
+.b2b-btn-speak {
+  display: block;
+  width: 100%;
+  padding: 0.88rem 1rem;
+  background: rgba(28,24,79,0.65);
+  color: var(--white);
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s;
+  line-height: 1.3;
+}
+.b2b-btn-speak:hover { border-color: rgba(44,181,172,0.35); color: var(--teal); }
+
+/* ── Meta strip on panels ── */
+.b2b-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  padding: 0.6rem 0 0.3rem;
+}
+.b2b-meta-item { }
+.b2b-meta-label {
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray);
+  margin-bottom: 0.1rem;
+}
+.b2b-meta-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+/* ── Section label ── */
+.b2b-section-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .b2b-size-btn { min-width: 60px; font-size: 0.75rem; }
+  .b2b-total-big-val { font-size: 1.7rem; }
+  .b2b-panel-head { padding: 1.1rem 1.1rem 0.8rem; }
+  .b2b-panel-body { padding: 0.9rem 1.1rem; }
+  .b2b-total { padding: 1.1rem 1.2rem; }
+  .b2b-cta { gap: 0.55rem; }
+}
+</style>
+
+<!-- ═══ STEP 5B FORM STEP ═══ -->
+<div class="form-step" data-step="5b" id="b2bStep">
+
+  <div class="capture-badge">✓ Speed Loan + Main Loan confirmed</div>
+  <div class="form-step-title">Your Back-to-Back Summary</div>
+  <div class="form-step-sub">Your Speed Loan releases immediately. Your Main Loan repays it and releases additional funds.</div>
+
+  <!-- ════════════════════════════════════════
+       PANEL 1 — SPEED LOAN (teal border)
+       ════════════════════════════════════════ -->
+  <div class="b2b-panel b2b-panel-speed" id="b2bSpeedPanel">
+    <div class="b2b-panel-head">
+      <div class="b2b-eyebrow" style="color: var(--teal);">⚡ SPEED LOAN — IMMEDIATE</div>
+      <div class="b2b-product-name">KPC Direct Speed Loan</div>
+
+      <!-- Size toggle -->
+      <div>
+        <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);">Select Size</div>
+        <div class="b2b-size-toggle" id="b2bSizeToggle">
+          <button type="button" class="b2b-size-btn" data-net="26000" onclick="b2bSelectSize(this)">£26K</button>
+          <button type="button" class="b2b-size-btn" data-net="50000" onclick="b2bSelectSize(this)">£50K</button>
+          <button type="button" class="b2b-size-btn b2b-active" data-net="75000" onclick="b2bSelectSize(this)">£75K</button>
+          <button type="button" class="b2b-size-btn" data-net="100000" onclick="b2bSelectSize(this)">£100K</button>
+        </div>
+      </div>
+
+      <!-- Meta strip -->
+      <div class="b2b-meta" style="margin-top:0.9rem;">
+        <div class="b2b-meta-item"><div class="b2b-meta-label">Payout</div><div class="b2b-meta-value" style="color:var(--teal);">3–5 days</div></div>
+        <div class="b2b-meta-item"><div class="b2b-meta-label">Rate</div><div class="b2b-meta-value">2.5%/month</div></div>
+        <div class="b2b-meta-item"><div class="b2b-meta-label">Term</div><div class="b2b-meta-value">3 months</div></div>
+      </div>
+    </div>
+
+    <div class="b2b-panel-body">
+      <div class="b2b-row">
+        <span class="b2b-lbl">Net to you</span>
+        <span class="b2b-val teal" id="b2bSpeedNet">£75,000</span>
+      </div>
+      <div class="b2b-row">
+        <span class="b2b-lbl">Gross repayment (from Main Loan)</span>
+        <span class="b2b-val minus" id="b2bSpeedGross">£90,825</span>
+      </div>
+      <div class="b2b-row" style="border-bottom:none;">
+        <span class="b2b-lbl" style="font-size:0.72rem;color:rgba(138,146,164,0.7);font-style:italic;">Includes interest (7.5%), facility fee (12%), legals (£1,200)</span>
+        <span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PANEL 2 — MAIN LOAN (navy/indigo border)
+       ════════════════════════════════════════ -->
+  <div class="b2b-panel b2b-panel-main" id="b2bMainPanel">
+    <div class="b2b-panel-head">
+      <div class="b2b-eyebrow" style="color: #9B97E0;">🏗 MAIN LOAN — 10–15 DAYS</div>
+      <div class="b2b-product-name" id="b2bMainProductName">Main Loan — Institutional Bridge</div>
+
+      <!-- Meta strip -->
+      <div class="b2b-meta" style="margin-top:0.5rem;">
+        <div class="b2b-meta-item">
+          <div class="b2b-meta-label">Lender</div>
+          <div class="b2b-meta-value" id="b2bMainLender" style="color:#9B97E0;">Somo / MT Finance</div>
+        </div>
+        <div class="b2b-meta-item">
+          <div class="b2b-meta-label">Rate</div>
+          <div class="b2b-meta-value" id="b2bMainRate">0.85%/month</div>
+        </div>
+        <div class="b2b-meta-item">
+          <div class="b2b-meta-label">Term</div>
+          <div class="b2b-meta-value" id="b2bMainTerm">12 months</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="b2b-panel-body">
+      <div class="b2b-row">
+        <span class="b2b-lbl">Gross Loan Facility</span>
+        <span class="b2b-val" id="b2bMainGross">£280,000</span>
+      </div>
+      <div class="b2b-row">
+        <span class="b2b-lbl">Net Release Day 1</span>
+        <span class="b2b-val teal" id="b2bMainNet">£210,000</span>
+      </div>
+      <div class="b2b-divider"></div>
+      <div class="b2b-row">
+        <span class="b2b-lbl">Automatically repays Speed Loan</span>
+        <span class="b2b-val minus" id="b2bDeductsSpeed">−£90,825</span>
+      </div>
+      <div class="b2b-divider"></div>
+      <div class="b2b-row" style="padding-top:0.5rem;">
+        <span class="b2b-lbl" style="font-weight:600;color:var(--white);">Additional net to you</span>
+        <span class="b2b-val green" id="b2bAdditional">£119,175</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       BUFFER CHECK
+       ════════════════════════════════════════ -->
+  <div class="b2b-buffer" id="b2bBuffer">
+    <div id="b2bBufferText"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TOTAL SUMMARY BOX (gold border)
+       ════════════════════════════════════════ -->
+  <div class="b2b-total" id="b2bTotal">
+    <div class="b2b-total-eyebrow">
+      <span>◆</span>
+      <span>Combined Facility Summary</span>
+    </div>
+    <div class="b2b-total-row">
+      <span class="b2b-total-lbl">⚡ Speed Loan net (today)</span>
+      <span class="b2b-total-val teal-text" id="b2bSumSpeed" style="color:var(--teal);">£75,000</span>
+    </div>
+    <div class="b2b-total-row">
+      <span class="b2b-total-lbl">🏗 Additional from Main Loan</span>
+      <span class="b2b-total-val" id="b2bSumAdditional">£119,175</span>
+    </div>
+    <div class="b2b-total-divider"></div>
+    <div class="b2b-total-big-row">
+      <span class="b2b-total-big-lbl">Total Net Advanced</span>
+      <span class="b2b-total-big-val" id="b2bSumTotal">£194,175</span>
+    </div>
+    <div class="b2b-timeline-note">
+      <span>⚡ Speed Loan</span> in 3–5 working days&nbsp;&nbsp;·&nbsp;&nbsp;
+      <span>🏗 Main Loan</span> in 10–15 working days
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       DISCLAIMER
+       ════════════════════════════════════════ -->
+  <div class="b2b-disclaimer" id="b2bDisclaimer">
+    The Speed Loan gross repayment (<strong id="b2bDisclaimerAmt">£90,825</strong>) will be deducted from your Main Loan net release on Day 1. You must ensure sufficient equity exists to support both facilities simultaneously. Both loans are secured charges against the property. Subject to valuation, credit check, and lender underwriting. FCA Authorised · FRN 913022.
+  </div>
+
+  <!-- ════════════════════════════════════════
+       CTAs
+       ════════════════════════════════════════ -->
+  <div class="b2b-cta">
+    <a href="#" id="b2bStripeBtn" class="b2b-btn-lock"
+       onclick="b2bTrack(); return true;">
+      🔒 Lock in terms — Pay £500
+    </a>
+    <a href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27d%20like%20to%20discuss%20a%20back-to-back%20facility." target="_blank" class="b2b-btn-speak">
+      💬 Speak with Byron / Chris
+    </a>
+  </div>
+
+  <!-- ── Footnote ── -->
+  <div style="padding:0.8rem 1rem;border:1px solid rgba(255,255,255,0.05);border-radius:4px;background:rgba(255,255,255,0.01);font-size:0.73rem;color:var(--gray);line-height:1.65;margin-bottom:1.5rem;">
+    <strong style="color:var(--white);">Indicative figures only.</strong>
+    These calculations are based on your inputs. Exact terms are confirmed once your application is submitted to the lender — typically within 24 hours. The Speed Loan gross redemption amount is calculated using the KPC formula (net + 12% facility fee + 7.5% interest + £1,200 legals). Subject to valuation, underwriting, and final lender approval.
+    <div style="margin-top:0.5rem;color:var(--neon-pink);border-left:2px solid rgba(255,45,155,0.3);padding-left:0.6rem;">
+      💡 Posfin may be able to cover processing costs on select deals — ask us about eligibility.
+    </div>
+  </div>
+
+  <!-- ── Step nav ── -->
+  <div class="form-nav">
+    <button class="form-back" onclick="prevStep('5b')">← Back to Main Loan Options</button>
+    <span style="font-family:var(--mono);font-size:0.62rem;color:var(--gray);opacity:0.5;letter-spacing:0.05em;">FCA Authorised · FRN 913022</span>
+  </div>
+
+</div>
+<!-- ═══ END STEP 5B ═══ -->
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   STEP 5B — BACK-TO-BACK SUMMARY ENGINE
+   Tom Reginald / OpenClaw · 27 Apr 2026
+   ════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* ── Config ── */
+  var B2B_STRIPE   = 'https://posfincapital.com/pay/commitment?product=back_to_back';
+  var B2B_WA       = 'https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27d%20like%20to%20discuss%20a%20back-to-back%20facility.';
+  var BUFFER_MIN   = 10000;
+
+  /* ── KPC Gross Formula ──
+     gross = net + (net × 0.12) + (net × 0.025 × 3) + 1200
+     = net × (1 + 0.12 + 0.075) + 1200
+     = net × 1.195 + 1200
+  ── */
+  function kpcGross(net) {
+    return Math.round(net * 1.195 + 1200);
+  }
+
+  /* ── Formatting ── */
+  function fmt(n) {
+    if (!n && n !== 0) return '—';
+    return '£' + Math.round(n).toLocaleString('en-GB');
+  }
+  function el(id) { return document.getElementById(id); }
+
+  /* ── State ── */
+  var state = {
+    speedNet:  75000,    // currently selected speed loan size
+    mainGross: 280000,   // from Step 5 main loan selection
+    mainNet:   210000,   // from Step 5 main loan selection
+    mainRate:  '0.85%/month',
+    mainTerm:  '12 months',
+    mainLender:'Somo / MT Finance'
+  };
+
+  /* ── Load main loan data from window.b2bData (injected by Step 5 / apply-now) ── */
+  function loadMainData() {
+    var d = window.b2bData;
+    if (!d) return; // use defaults in standalone preview
+    if (d.mainGross)  state.mainGross  = +d.mainGross;
+    if (d.mainNet)    state.mainNet    = +d.mainNet;
+    if (d.mainRate)   state.mainRate   = d.mainRate + '%/month';
+    if (d.mainTerm)   state.mainTerm   = d.mainTerm + ' months';
+    if (d.mainLender) state.mainLender = d.mainLender;
+  }
+
+  /* ── Recalculate and render ── */
+  function recalc() {
+    var net   = state.speedNet;
+    var gross = kpcGross(net);
+    var mainNet   = state.mainNet;
+    var mainGross = state.mainGross;
+
+    var additional = mainNet - gross;
+    var total      = net + additional;
+    var buffer     = additional; // same as additional — surplus after speed repayment
+
+    /* ── Speed panel ── */
+    el('b2bSpeedNet').textContent  = fmt(net);
+    el('b2bSpeedGross').textContent = fmt(gross);
+
+    /* ── Main panel ── */
+    el('b2bMainGross').textContent      = fmt(mainGross);
+    el('b2bMainNet').textContent        = fmt(mainNet);
+    el('b2bDeductsSpeed').textContent   = '−' + fmt(gross);
+    el('b2bAdditional').textContent     = fmt(additional);
+    el('b2bMainLender').textContent     = state.mainLender;
+    el('b2bMainRate').textContent       = state.mainRate;
+    el('b2bMainTerm').textContent       = state.mainTerm;
+
+    /* ── Total box ── */
+    el('b2bSumSpeed').textContent       = fmt(net);
+    el('b2bSumAdditional').textContent  = fmt(additional);
+    el('b2bSumTotal').textContent       = fmt(total);
+
+    /* ── Disclaimer ── */
+    el('b2bDisclaimerAmt').textContent  = fmt(gross);
+
+    /* ── Buffer check ── */
+    var bufEl = el('b2bBuffer');
+    var bufTxt = el('b2bBufferText');
+    bufEl.classList.add('b2b-visible');
+
+    if (buffer < BUFFER_MIN) {
+      bufEl.className = 'b2b-buffer b2b-visible warn';
+      bufTxt.innerHTML = '⚠️ <strong>Buffer too small.</strong> Reduce Speed Loan size or increase Main Loan amount. The Main Loan net release must exceed the Speed Loan gross repayment by at least <strong>£10,000</strong> to cover legal costs and contingency. Current shortfall: <strong>' + fmt(BUFFER_MIN - buffer) + '</strong>.';
+      /* Block the lock button */
+      var lockBtn = el('b2bStripeBtn');
+      lockBtn.setAttribute('disabled', 'disabled');
+      lockBtn.href = '#';
+      lockBtn.onclick = function(e) { e.preventDefault(); return false; };
+    } else {
+      bufEl.className = 'b2b-buffer b2b-visible ok';
+      bufTxt.innerHTML = '✅ <strong>' + fmt(buffer) + ' buffer</strong> — covers legal costs and contingency. You\'re clear to proceed.';
+      /* Enable the lock button */
+      var lockBtn = el('b2bStripeBtn');
+      lockBtn.removeAttribute('disabled');
+      var stripeUrl = B2B_STRIPE
+        + '&speed_net=' + net
+        + '&speed_gross=' + gross
+        + '&main_net=' + mainNet;
+      lockBtn.href = stripeUrl;
+      lockBtn.onclick = null;
+    }
+  }
+
+  /* ── Size button handler ── */
+  window.b2bSelectSize = function (btn) {
+    document.querySelectorAll('.b2b-size-btn').forEach(function (b) {
+      b.classList.remove('b2b-active');
+    });
+    btn.classList.add('b2b-active');
+    state.speedNet = parseInt(btn.getAttribute('data-net'), 10);
+    recalc();
+  };
+
+  /* ── Conversion tracking ── */
+  window.b2bTrack = function () {
+    try {
+      if (typeof fbq === 'function') fbq('track', 'InitiateCheckout', { content_name: 'back_to_back', value: 500, currency: 'GBP' });
+      if (typeof gtag === 'function') gtag('event', 'begin_checkout', { items: [{ item_id: 'b2b', item_name: 'Back-to-Back', price: 500 }], currency: 'GBP', value: 500 });
+    } catch (e) { /* silent */ }
+  };
+
+  /* ── Init ── */
+  document.addEventListener('DOMContentLoaded', function () {
+    loadMainData();
+    /* Pre-select button matching default state.speedNet */
+    document.querySelectorAll('.b2b-size-btn').forEach(function (btn) {
+      if (parseInt(btn.getAttribute('data-net'), 10) === state.speedNet) {
+        btn.classList.add('b2b-active');
+      } else {
+        btn.classList.remove('b2b-active');
+      }
+    });
+    recalc();
+  });
+
+  /* ── Also expose for dynamic calls from apply-now.html ── */
+  window.b2bRecalc = function (mainData) {
+    if (mainData) {
+      if (mainData.mainGross)  state.mainGross  = +mainData.mainGross;
+      if (mainData.mainNet)    state.mainNet    = +mainData.mainNet;
+      if (mainData.mainRate)   state.mainRate   = mainData.mainRate;
+      if (mainData.mainTerm)   state.mainTerm   = mainData.mainTerm;
+      if (mainData.mainLender) state.mainLender = mainData.mainLender;
+    }
+    recalc();
+  };
+
+  /* ── Navigation stubs for standalone preview ── */
+  if (typeof prevStep === 'undefined') window.prevStep = function(s){ console.log('[preview] prevStep', s); };
+
+})();
+</script>
+<!-- ═══════════════════════════════════════════════════════════
+     ▲▲▲  END OF DROP-IN CONTENT  ▲▲▲
+     ═══════════════════════════════════════════════════════════ -->
+
+</body>
+</html>
