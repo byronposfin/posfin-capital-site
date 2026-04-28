@@ -1965,7 +1965,7 @@ fbq('track', 'PageView');
 
         <!-- Scorecard Action Buttons -->
         <div style="display:flex;gap:0.8rem;margin-top:1.5rem;flex-wrap:wrap;">
-          <button type="button" onclick="if(window.showStep) window.showStep(5);" style="flex:1;min-width:180px;padding:0.85rem 1.2rem;background:var(--teal);color:#fff;border:none;border-radius:4px;font-family:var(--sans);font-weight:700;font-size:0.88rem;letter-spacing:0.04em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s;">
+          <button type="button" onclick="if(!window._leadSubmitted){window._leadSubmitted=true;sendLeadToCRM().catch(function(){window._leadSubmitted=false;});}if(window.showStep)window.showStep(5);" style="flex:1;min-width:180px;padding:0.85rem 1.2rem;background:var(--teal);color:#fff;border:none;border-radius:4px;font-family:var(--sans);font-weight:700;font-size:0.88rem;letter-spacing:0.04em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s;">
             Continue to your indicative terms →
           </button>
         </div>
@@ -3420,6 +3420,63 @@ const ZAPIER_URL = 'https://hooks.zapier.com/hooks/catch/7678566/ueq1ecb/';
 const TOM_URL = 'https://shemika-charl-t.ngrok-free.dev';
   
 
+/* ── P0 FIX: sendLeadToCRM — fires webhooks without touching UI ── */
+function sendLeadToCRM() {
+  var fd  = (typeof formData  === 'object' && formData)  ? formData  : {};
+  var utm = (typeof utmParams === 'object' && utmParams) ? utmParams : {};
+  var payload = {
+    firstName: fd.firstName || '', lastName: fd.lastName || '',
+    dob: fd.dob || '', mobile: fd.mobile || '', email: fd.email || '',
+    contactPref: fd.contactPref || '', residentialAddress: fd.residentialAddress || '',
+    creditProfile: fd.creditProfile || '', propertyAddress: fd.propertyAddress || '',
+    estimatedValue: fd.propValue || '', mortgage1Clean: fd._cleanBalance || 0,
+    mortgage1Gross: fd.mortgage1 || '0', arrearsAmount: fd.arrears || '0',
+    hasArrears: fd.hasArrears || false, secondCharges: fd.mortgage2 || '0',
+    chargeHolders: JSON.stringify(fd.chargeHolders || []),
+    totalRedemptionRequired: fd._redemptionTotal || 0,
+    propertyType: fd.propType || '', currentLTV: fd._ltv || 0,
+    maxBorrowable70: fd._maxBorrow || 0, loanAmountRequested: fd.loanAmount || '',
+    timeframe: fd.timeframe || '', purpose: fd.purpose || '',
+    exitStrategy: fd.exitStrategy || '', backToBack: fd.backToBack || false,
+    speedLoanAmount: fd.speedLoanAmount || 0, speedLoanTerm: fd.speedLoanTerm || 0,
+    speedLoanGrossRedemption: fd._kpcGross || 0, speedLoanInterest: fd._kpcInterest || 0,
+    speedLoanBrokerFee: fd._kpcBroker || 0, speedLoanNetLiquidity: fd._speedNetLiquidity || null,
+    source: fd.source || '', notes: fd.notes || '',
+    nfcIntent: fd._nfcIntent || 'net_on_top', nfcNetLoanAmount: fd._nfcNetLoan || 0,
+    nfcNetCashToBorrower: fd._nfcNetCashToBorrower || 0, nfcContingency: fd._nfcContingency || 0,
+    nfcLegalsCost: fd._nfcLegalsCost || 0, nfcAddLegals: fd._nfcAddLegals || false,
+    nfcCoverSpeedCosts: fd._nfcCoverSpeed || false, nfcSpeedCost: fd._nfcSpeedCost || 0,
+    submittedAt: new Date().toISOString(),
+    utm_source: utm.utm_source || '', utm_medium: utm.utm_medium || '',
+    utm_campaign: utm.utm_campaign || '', utm_content: utm.utm_content || '',
+    utm_term: utm.utm_term || '', fbclid: utm.fbclid || ''
+  };
+  console.log('[LEAD CRM] Firing webhooks', { name: payload.firstName + ' ' + payload.lastName, mobile: payload.mobile });
+  var flat = {};
+  Object.keys(payload).forEach(function(k) {
+    var v = payload[k]; flat[k] = (v === null || v === undefined) ? '' : String(v);
+  });
+  var zapierPost = fetch(ZAPIER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(flat).toString()
+  }).then(function(r) { console.log('[ZAPIER] ' + r.status); return r; })
+    .catch(function(e) { console.error('[ZAPIER] failed:', e && e.message); });
+  var tomPost;
+  if (TOM_URL && TOM_URL !== 'https://skirt-reel-quantitative-bathroom.trycloudflare.com') {
+    tomPost = fetch(TOM_URL + '/new-lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+      body: JSON.stringify(payload)
+    }).then(function(r) { console.log('[TOM] ' + r.status); return r; })
+      .catch(function(e) { console.warn('[TOM] failed (non-fatal):', e && e.message); });
+  } else {
+    tomPost = Promise.resolve('skipped');
+    console.log('[TOM] Endpoint skipped — not configured.');
+  }
+  return Promise.allSettled([zapierPost, tomPost]);
+}
+
 function submitForm() {
   const btn = document.getElementById('submitBtn');
   btn.textContent = 'Submitting...'; btn.disabled = true;
@@ -3510,7 +3567,7 @@ function submitForm() {
   // ── POST 2: Tom endpoint (JSON, FULL payload — Pre-LOR needs mortgage, arrears, LTV, NFC)
   // TOM_URL is set when Tom's public webhook is live. Until then, skip silently.
   var tomPost;
-  if (typeof TOM_URL !== 'https://skirt-reel-quantitative-bathroom.trycloudflare.com' && TOM_URL) {
+  if (TOM_URL && TOM_URL !== 'https://skirt-reel-quantitative-bathroom.trycloudflare.com') {
     tomPost = fetch(TOM_URL, {
       method: 'POST',
       headers: {
@@ -3686,6 +3743,16 @@ nextStep = function(from) {
       return;
     }
     if (validationMsg) { validationMsg.style.display = 'none'; }
+  }
+  /* ── P0 FIX: Fire lead capture when borrower advances past Step 4 ── */
+  if (from === 4) {
+    if (!window._leadSubmitted) {
+      window._leadSubmitted = true;
+      sendLeadToCRM().catch(function(e) {
+        console.error('[LEAD POST FAILED]', e);
+        window._leadSubmitted = false; // allow retry
+      });
+    }
   }
   _origNextStep(from);
 };
