@@ -1994,14 +1994,14 @@ fbq('track', 'PageView');
   <div class="q5-tier-wrap">
     <div class="q5-tier-label">Select Your Credit Profile</div>
     <div class="q5-tier-toggle">
-      <button type="button" class="q5-tier-btn q5-active" data-tier="proven_exit"
+      <button type="button" class="q5-tier-btn" data-tier="proven_exit"
               onclick="q5SetTier('proven_exit', this)">
         <span class="q5-tooltip">
           Tier 1: Prime Institutional<span class="q5-tooltip-text">Strictly ≤40% LTV with flawless credit. Executable, documented exit strategy required for deployment.</span>
         </span>
         <span>0.80–0.85%/mo</span>
       </button>
-      <button type="button" class="q5-tier-btn" data-tier="standard"
+      <button type="button" class="q5-tier-btn q5-active" data-tier="standard"
               onclick="q5SetTier('standard', this)">
         Tier 2: Standard<span>0.93–0.95%/mo</span>
       </button>
@@ -3891,33 +3891,31 @@ function showAVMMessage(data, borrowerEstimate) {
   var Q5_STRIPE      = 'https://buy.stripe.com/4gM7sM2HR6AH4Qf7MJ7IY0r';
   var Q5_SUCCESS_FEE = 1950;
 
-  var q5Tier = 'proven_exit';
+  var q5Tier = 'standard';
 
   /* ── Rate table — LOCKED (do not change without Byron approval) ──
      proven_exit : Property listed OR DIP provided
-       A: 0.80%  Max 65% LTV  AVM eligible  MT Finance
-       B: 0.85%  Max 70% LTV  Somo
+       A: 0.55%  Max 70% LTV  MT Finance prime
+       B: 0.85%  Max 70% LTV  Somo flexible exit
      standard    : Typical borrower
-       A: 0.93%  Max 70% LTV
-       B: 0.95%  Max 70% LTV
+       A: 0.93%  Max 70% LTV  Somo
+       B: 0.95%  Max 65% LTV  AVM Eligible  MT Finance
      val_only    : Self-declared exit, no evidence
-       A: 0.95%  Self-declared exit  Max 70% LTV
-       B: 1.10%  Val only / challenged credit  Max 70% LTV
-       C: 1.30%  Major hair (shown only on val_only tier)
+       A: 1.10%  Asset-backed  Max 70% LTV
+       B: 0.90%  AVM Eligible  Max 65% LTV
   ── */
   var Q5_RATES = {
     proven_exit: [
-      { rate: 0.0080, maxLTV: 0.65, label: 'AVM route eligible · Max 65% LTV',   lender: '' },
-      { rate: 0.0085, maxLTV: 0.70, label: 'Full valuation · Max 70% LTV',          lender: '' }
+      { rate: 0.0055, maxLTV: 0.70, label: 'Prime rate · Max 70% LTV',    avm: false },  // Option A — MT Finance prime
+      { rate: 0.0085, maxLTV: 0.70, label: 'Flexible exit · Max 70% LTV', avm: false }   // Option B — Somo
     ],
     standard: [
-      { rate: 0.0093, maxLTV: 0.70, label: 'Standard criteria',                   lender: '' },
-      { rate: 0.0095, maxLTV: 0.70, label: 'Standard criteria',                   lender: '' }
+      { rate: 0.0093, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false },  // Option A — Somo
+      { rate: 0.0095, maxLTV: 0.65, label: 'AVM Eligible · Max 65% LTV',  avm: true  }   // Option B — MT Finance
     ],
     val_only: [
-      { rate: 0.0095, maxLTV: 0.70, label: 'Self-declared exit',                  lender: '' },
-      { rate: 0.0110, maxLTV: 0.70, label: 'Val only · challenged credit',         lender: '' },
-      { rate: 0.0130, maxLTV: 0.70, label: 'Major hair — complex case',            lender: '' }
+      { rate: 0.0110, maxLTV: 0.70, label: 'Asset-backed · Max 70% LTV',  avm: false },  // Option A
+      { rate: 0.0090, maxLTV: 0.65, label: 'AVM Eligible · Max 65% LTV',  avm: true  }   // Option B
     ]
   };
 
@@ -4198,19 +4196,6 @@ function showAVMMessage(data, borrowerEstimate) {
             + '</div>';
     }
 
-    /* AVM / legal undertaking badges */
-    if (idx === 0) {
-      /* Option A: AVM eligible at ≤65% */
-      html += '<div class="q5-avm-badge" id="q5AvmBadge">'
-            + '✅ AVM Eligible: No physical RICS valuation survey required (up to 65% LTV). Solicitors still required. Subject to algorithmic confidence score.'
-            + '</div>';
-    } else if (idx === 1) {
-      /* Option B: £1,560 Lender Legal Undertaking — can roll into loan */
-      html += '<div style="font-size:0.75rem;background:rgba(44,181,172,0.08);border:1px solid rgba(44,181,172,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#2CB5AC;">'
-            + '£1,560 Lender Legal Undertaking applies. This can be rolled into the loan and deducted from proceeds at completion — no upfront cash required.'
-            + '</div>';
-    }
-
     html += '<div class="q5-hero-label">Net Release on Day 1</div>'
           + '<div class="q5-hero-amount">' + fmt(q.net_release_day1) + '</div>'
           + '<div class="q5-hero-sub">Funds released on completion</div>'
@@ -4233,13 +4218,37 @@ function showAVMMessage(data, borrowerEstimate) {
     html += '<div class="q5-bd-divider"></div>';
     html += '<div class="q5-bd-row q5-net-row"><span class="q5-bd-lbl">Net Release on Day 1</span><span class="q5-bd-val q5-teal">' + fmt(q.net_release_day1) + '</span></div>';
     html += '<div class="q5-bd-row"><span class="q5-bd-lbl">Posfin Success Fee &#42;</span><span class="q5-bd-val q5-tbc">TBC — confirmed on call</span></div>';
-    html += '<div class="q5-bd-row q5-est-row"><span class="q5-bd-lbl">Estimated Net to Borrower</span><span class="q5-bd-val q5-green">' + fmt(q.estimated_net_borrower) + '</span></div>';
+    html += '<div class="q5-bd-row q5-est-row"><span class="q5-bd-lbl">Estimated Net to Borrower</span><span class="q5-bd-val q5-green">—</span></div>';
 
     /* Standard footnote */
     html += '<div class="q5-footnote">&#42; Payable from loan proceeds at completion. No upfront cost to you.</div>';
 
+    /* Option A/B badges — placed above neon pink footnote */
+    /* Option A badge */
+    if (idx === 0) {
+      // Option A = Somo route on standard/val_only = roll-up available
+      html += '<div style="font-size:0.75rem;background:rgba(44,181,172,0.08);border:1px solid rgba(44,181,172,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#2CB5AC;">'
+            + '\u00a3 1,560 Lender Legal Undertaking \u2014 can be rolled into the loan and deducted from proceeds at completion. No upfront cash required.'
+            + '</div>';
+    }
+    /* Option B badge */
+    if (idx === 1) {
+      if (q5Tier === 'proven_exit') {
+        // Somo route — roll-up
+        html += '<div style="font-size:0.75rem;background:rgba(44,181,172,0.08);border:1px solid rgba(44,181,172,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#2CB5AC;">'
+              + '\u00a3 1,560 Lender Legal Undertaking \u2014 can be rolled into the loan and deducted from proceeds at completion. No upfront cash required.'
+              + '</div>';
+      } else {
+        // MT Finance route — deposit required, AVM eligible
+        html += '<div style="font-size:0.75rem;background:rgba(255,193,7,0.08);border:1px solid rgba(255,193,7,0.3);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#F7C948;">'
+              + '\u2705 AVM Eligible \u2014 No RICS survey required up to 65% LTV. Solicitors still required.<br>'
+              + '\u00a3 1,560 Lender Legal Undertaking \u2014 payable as a deposit to your solicitor once terms are accepted. Note: second charges capped at 65% LTV on this route.'
+              + '</div>';
+      }
+    }
+
     /* Neon pink footnote — both cards */
-    html += '<div class="q5-neon-footnote">💡 Posfin may be able to cover processing costs on select deals — ask us about eligibility.</div>';
+    html += '<div class="q5-neon-footnote">\ud83d\udca1 Posfin may be able to cover processing costs on select deals \u2014 ask us about eligibility.</div>';
 
     html += '</div>'; /* end q5-breakdown */
 
@@ -4267,11 +4276,17 @@ function showAVMMessage(data, borrowerEstimate) {
 
     /* Option C — val_only only */
     var c2wrap = el('q5C2Wrap');
+    var gridEl = el('q5Grid');
     if (q5Tier === 'val_only' && quotes[2]) {
       renderCard(el('q5C2'), quotes[2], 2);
       if (c2wrap) c2wrap.style.display = '';
     } else {
       if (c2wrap) c2wrap.style.display = 'none';
+      /* Force two-col layout when val_only has no Option C card */
+      if (gridEl) {
+        gridEl.classList.remove('q5-three-col');
+        gridEl.classList.add('q5-two-col');
+      }
     }
 
     showEl(el('q5Grid'));
