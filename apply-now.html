@@ -2003,7 +2003,7 @@ fbq('track', 'PageView');
       </button>
       <button type="button" class="q5-tier-btn q5-active" data-tier="standard"
               onclick="q5SetTier('standard', this)">
-        Tier 2: Standard<span>0.93–0.95%/mo</span>
+        Tier 2: Standard<span>0.85–0.95%/mo</span>
       </button>
       <button type="button" class="q5-tier-btn" data-tier="val_only"
               onclick="q5SetTier('val_only', this)">
@@ -3907,11 +3907,11 @@ function showAVMMessage(data, borrowerEstimate) {
   var Q5_RATES = {
     proven_exit: [
       { rate: 0.0055, maxLTV: 0.40, label: 'Ultra-prime · Max 40% LTV',   avm: true  },  // Option A — benchmark prime rate, AVM eligible
-      { rate: 0.0080, maxLTV: 0.70, label: 'Prime · Max 70% LTV',         avm: false }   // Option B — MT Finance prime
+      { rate: 0.0080, maxLTV: 0.70, label: 'Max 70% LTV',                  avm: false }   // Option B — Prime 70% LTV
     ],
     standard: [
-      { rate: 0.0093, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false },  // Option A — Somo
-      { rate: 0.0095, maxLTV: 0.65, label: 'AVM Eligible · Max 65% LTV',  avm: true  }   // Option B — MT Finance
+      { rate: 0.0085, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false },  // Option A — 0.85%
+      { rate: 0.0095, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false }   // Option B — 0.95%
     ],
     val_only: [
       { rate: 0.0110, maxLTV: 0.70, label: 'Asset-backed · Max 70% LTV',  avm: false },  // Option A
