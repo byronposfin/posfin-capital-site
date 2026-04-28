@@ -4091,8 +4091,13 @@ function showAVMMessage(data, borrowerEstimate) {
   /* ── Product display helpers ── */
   function productEyebrow(idx) { return 'MAIN LOAN'; }
   function productName(idx) {
-    if (idx === 0) return 'Option A \u2014 Prime Liquidity Line';
-    if (idx === 1) return 'Option B \u2014 Flexible Leverage Line';
+    if (q5Tier === 'proven_exit') {
+      if (idx === 0) return 'Option A \u2014 AVM Route · Max 65% LTV';
+      if (idx === 1) return 'Option B \u2014 Flexible Exit · Max 70% LTV';
+    } else {
+      if (idx === 0) return 'Option A \u2014 Flexible Exit · Max 70% LTV';
+      if (idx === 1) return 'Option B \u2014 AVM Route · Max 65% LTV';
+    }
     return 'Option C \u2014 Alternative Credit Profile';
   }
 
@@ -4224,27 +4229,24 @@ function showAVMMessage(data, borrowerEstimate) {
     html += '<div class="q5-footnote">&#42; Payable from loan proceeds at completion. No upfront cost to you.</div>';
 
     /* Option A/B badges — placed above neon pink footnote */
-    /* Option A badge */
-    if (idx === 0) {
-      // Option A = Somo route on standard/val_only = roll-up available
-      html += '<div style="font-size:0.75rem;background:rgba(44,181,172,0.08);border:1px solid rgba(44,181,172,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#2CB5AC;">'
-            + '\u00a3 1,560 Lender Legal Undertaking \u2014 can be rolled into the loan and deducted from proceeds at completion. No upfront cash required.'
+    /* 
+     * BADGE LOGIC:
+     * Proven Exit: Option A = MT Finance (max 65%, AVM, deposit £1,560) | Option B = Somo (max 70%, roll-up)
+     * Standard/Val Only: Option A = Somo (max 70%, roll-up) | Option B = MT Finance (max 65%, AVM, deposit)
+     */
+    var isMTFinanceCard = (q5Tier === 'proven_exit' && idx === 0) || (q5Tier !== 'proven_exit' && idx === 1);
+    var isSomoCard      = !isMTFinanceCard;
+
+    if (isMTFinanceCard) {
+      html += '<div style="font-size:0.75rem;background:rgba(255,193,7,0.08);border:1px solid rgba(255,193,7,0.3);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#F7C948;">'
+            + '\u2705 AVM Eligible \u2014 No RICS valuation survey required up to 65% LTV. Solicitors still required.<br>'
+            + '\u00a3 1,560 Lender Legal Undertaking \u2014 payable as a deposit to your solicitor once terms are accepted. Second charges capped at 65% LTV on this route.'
             + '</div>';
     }
-    /* Option B badge */
-    if (idx === 1) {
-      if (q5Tier === 'proven_exit') {
-        // Somo route — roll-up
-        html += '<div style="font-size:0.75rem;background:rgba(44,181,172,0.08);border:1px solid rgba(44,181,172,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#2CB5AC;">'
-              + '\u00a3 1,560 Lender Legal Undertaking \u2014 can be rolled into the loan and deducted from proceeds at completion. No upfront cash required.'
-              + '</div>';
-      } else {
-        // MT Finance route — deposit required, AVM eligible
-        html += '<div style="font-size:0.75rem;background:rgba(255,193,7,0.08);border:1px solid rgba(255,193,7,0.3);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#F7C948;">'
-              + '\u2705 AVM Eligible \u2014 No RICS survey required up to 65% LTV. Solicitors still required.<br>'
-              + '\u00a3 1,560 Lender Legal Undertaking \u2014 payable as a deposit to your solicitor once terms are accepted. Note: second charges capped at 65% LTV on this route.'
-              + '</div>';
-      }
+    if (isSomoCard) {
+      html += '<div style="font-size:0.75rem;background:rgba(44,181,172,0.08);border:1px solid rgba(44,181,172,0.25);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.6rem;color:#2CB5AC;">'
+            + '\u00a3 1,560 Lender Legal Undertaking \u2014 can be rolled into the loan and deducted from proceeds at completion. No upfront deposit required. Up to 70% LTV on 2nd charge.'
+            + '</div>';
     }
 
     /* Neon pink footnote — both cards */
