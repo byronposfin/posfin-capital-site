@@ -1999,7 +1999,7 @@ fbq('track', 'PageView');
         <span class="q5-tooltip">
           Tier 1: Prime Institutional<span class="q5-tooltip-text">Strictly ≤40% LTV with flawless credit. Executable, documented exit strategy required for deployment.</span>
         </span>
-        <span>0.80–0.85%/mo</span>
+        <span>0.55–0.80%/mo</span>
       </button>
       <button type="button" class="q5-tier-btn q5-active" data-tier="standard"
               onclick="q5SetTier('standard', this)">
@@ -3906,8 +3906,8 @@ function showAVMMessage(data, borrowerEstimate) {
   ── */
   var Q5_RATES = {
     proven_exit: [
-      { rate: 0.0055, maxLTV: 0.70, label: 'Prime rate · Max 70% LTV',    avm: false },  // Option A — MT Finance prime
-      { rate: 0.0085, maxLTV: 0.70, label: 'Flexible exit · Max 70% LTV', avm: false }   // Option B — Somo
+      { rate: 0.0055, maxLTV: 0.40, label: 'Ultra-prime · Max 40% LTV',   avm: true  },  // Option A — benchmark prime rate, AVM eligible
+      { rate: 0.0080, maxLTV: 0.70, label: 'Prime · Max 70% LTV',         avm: false }   // Option B — MT Finance prime
     ],
     standard: [
       { rate: 0.0093, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false },  // Option A — Somo
@@ -4092,8 +4092,8 @@ function showAVMMessage(data, borrowerEstimate) {
   function productEyebrow(idx) { return 'MAIN LOAN'; }
   function productName(idx) {
     if (q5Tier === 'proven_exit') {
-      if (idx === 0) return 'Option A \u2014 AVM Route · Max 65% LTV';
-      if (idx === 1) return 'Option B \u2014 Flexible Exit · Max 70% LTV';
+      if (idx === 0) return 'Option A \u2014 Ultra-Prime · Max 40% LTV';
+      if (idx === 1) return 'Option B \u2014 Prime · Max 70% LTV';
     } else {
       if (idx === 0) return 'Option A \u2014 Flexible Exit · Max 70% LTV';
       if (idx === 1) return 'Option B \u2014 AVM Route · Max 65% LTV';
