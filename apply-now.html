@@ -861,6 +861,7 @@ body { background: var(--navy); }
   flex-shrink: 0;
 }
 .q5-bd-val.q5-minus { color: var(--amber); }
+.q5-bd-val.q5-tbc { color: var(--gray); font-style: italic; font-size: 0.82rem; }
 .q5-bd-val.q5-teal  { color: var(--teal); font-size: 0.93rem; }
 .q5-bd-val.q5-green { color: var(--green); font-size: 0.95rem; }
 
@@ -4225,13 +4226,13 @@ function showAVMMessage(data, borrowerEstimate) {
     /* Breakdown */
     html += '<div class="q5-breakdown">';
     html += '<div class="q5-bd-row"><span class="q5-bd-lbl">Gross Loan Facility</span><span class="q5-bd-val">' + fmt(q.gross_loan) + '</span></div>';
-    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">Lender Arrangement Fee</span><span class="q5-bd-val q5-minus">&minus;&nbsp;' + fmt(q.lender_arrangement_fee) + '</span></div>';
-    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">Lender Admin Fee</span><span class="q5-bd-val q5-minus">&minus;&nbsp;' + fmt(q.lender_admin_fee) + '</span></div>';
-    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">' + brokerLbl + '</span><span class="q5-bd-val q5-minus">&minus;&nbsp;' + fmt(q.broker_fee) + '</span></div>';
-    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">' + intLabel + '</span><span class="q5-bd-val q5-minus">&minus;&nbsp;' + fmt(q.interest_total) + '</span></div>';
+    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">Lender Arrangement Fee</span><span class="q5-bd-val q5-tbc">TBC</span></div>';
+    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">Lender Admin Fee</span><span class="q5-bd-val q5-tbc">TBC</span></div>';
+    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">' + brokerLbl + '</span><span class="q5-bd-val q5-tbc">TBC</span></div>';
+    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">' + intLabel + '</span><span class="q5-bd-val q5-tbc">TBC</span></div>';
     html += '<div class="q5-bd-divider"></div>';
     html += '<div class="q5-bd-row q5-net-row"><span class="q5-bd-lbl">Net Release on Day 1</span><span class="q5-bd-val q5-teal">' + fmt(q.net_release_day1) + '</span></div>';
-    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">Posfin Success Fee &#42;</span><span class="q5-bd-val q5-minus">&minus;&nbsp;' + fmt(successFee) + '</span></div>';
+    html += '<div class="q5-bd-row"><span class="q5-bd-lbl">Posfin Success Fee &#42;</span><span class="q5-bd-val q5-tbc">TBC — confirmed on call</span></div>';
     html += '<div class="q5-bd-row q5-est-row"><span class="q5-bd-lbl">Estimated Net to Borrower</span><span class="q5-bd-val q5-green">' + fmt(q.estimated_net_borrower) + '</span></div>';
 
     /* Standard footnote */
