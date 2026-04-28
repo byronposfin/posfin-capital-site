@@ -4180,8 +4180,12 @@ function showAVMMessage(data, borrowerEstimate) {
 
     var html = '';
 
-    /* Recommended banner on Option A */
-    if (idx === 0) {
+    /* Recommended banner on Option A — special treatment for Tier 1 ultra-prime */
+    if (idx === 0 && q5Tier === 'proven_exit') {
+      html += '<div style="background:linear-gradient(90deg,#D4A853,#f0c96e);color:#1C184F;font-size:0.7rem;font-weight:800;letter-spacing:0.12em;text-align:center;padding:0.4rem 1rem;border-radius:4px 4px 0 0;text-transform:uppercase;">'
+            + '\u2b50 Lowest Market Benchmark Rate'
+            + '</div>';
+    } else if (idx === 0) {
       html += '<div class="q5-rec-banner">'
             + '<span class="q5-rec-banner-dot"></span>'
             + '&#9733; Recommended'
@@ -4250,6 +4254,23 @@ function showAVMMessage(data, borrowerEstimate) {
     }
 
     /* Neon pink footnote — both cards */
+    /* Tier 1 eligibility note */
+    if (q5Tier === 'proven_exit') {
+      if (idx === 0) {
+        html += '<div style="font-size:0.72rem;color:#aaa;font-style:italic;margin-bottom:0.5rem;line-height:1.5;">'
+              + 'To access this rate you must demonstrate a perfect credit score and borrowing requirements within 40% LTV. '
+              + '<strong style="color:#D4A853;">Most applicants are best suited to Tier 2 Standard.</strong> '
+              + 'We will ensure you are allocated to the right lender with a genuine, completable offer.'
+              + '</div>';
+      }
+      if (idx === 1) {
+        html += '<div style="font-size:0.7rem;color:#888;font-style:italic;margin-bottom:0.5rem;line-height:1.5;border-top:1px solid rgba(255,255,255,0.06);padding-top:0.5rem;">'
+              + '&#9733; <strong style="color:#aaa;">A note on market rates:</strong> Any broker can issue an indicative rate. What matters is whether it actually completes. '
+              + 'We only present rates we can genuinely deliver. If you have been quoted a lower rate elsewhere, ask them which lender, on what LTV, and what their completion rate is. '
+              + 'Confetti offers are easy to give. Funded loans are what we do.'
+              + '</div>';
+      }
+    }
     html += '<div class="q5-neon-footnote">\ud83d\udca1 Posfin may be able to cover processing costs on select deals \u2014 ask us about eligibility.</div>';
 
     html += '</div>'; /* end q5-breakdown */
