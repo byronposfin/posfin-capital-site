@@ -4350,7 +4350,7 @@ function showAVMMessage(data, borrowerEstimate) {
           net_release_day1:       p.netRelease || p.netLoan || p.netLoanRequested,
           gross_ltv_pct:          p.grossLtvPct,
           net_ltv_pct:            p.netLtvPct,
-          max_ltv_pct:            p.avmFriendly ? 65 : (p.grossLtvPct ? parseFloat(p.grossLtvPct) : 70),
+          max_ltv_pct:            p._ltv_cap || (p.avmFriendly ? 65 : (p.grossLtvPct ? parseFloat(p.grossLtvPct) : 70)),
           term_months:            p.termMonths,
           lender_arrangement_fee: p.arrangementFee,
           lender_admin_fee:       p.adminFee,

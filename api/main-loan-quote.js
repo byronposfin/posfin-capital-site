@@ -503,6 +503,39 @@ function routeAndQuote(input) {
     }
   }
 
+  // ── proven_exit special handling: MT Finance first (0.55%/40% LTV), then Somo (0.80%/65%), then Somo again (0.80%/70%)
+  if (credit_tier === 'proven_exit') {
+    // Option A: MT Finance at 0.55%, capped at 40% LTV
+    const maxNetA = Math.max(0, (property_value * 0.40) - existingDebt) * 0.95; // 40% LTV net approx
+    const netA = Math.min(loan_amount_requested, maxNetA);
+    if (netA > 0) {
+      const mtA = mtCalc({ netLoan: netA, termMonths: term_months, propertyValue: property_value, existingDebt, regulated, rateOverride: 0.0055 });
+      if (mtA) { mtA.avmFriendly = true; mtA._ltv_cap = 40; products.push(mtA); }
+    }
+    // Option B: Somo at 0.80%, 65% LTV
+    const maxNetB = Math.max(0, (property_value * 0.65) - existingDebt) * 0.92;
+    const netB = Math.min(loan_amount_requested, maxNetB);
+    if (netB > 0) {
+      const somoB = somoFromNet({ netTarget: netB, termMonths: term_months, propertyValue: property_value, existingDebt, regulated, rateOverride: 0.0080 });
+      if (somoB) { somoB.avmFriendly = true; somoB._ltv_cap = 65; products.push(somoB); }
+    }
+    // Option C: Somo at 0.80%, 70% LTV
+    const somoC = somoFromNet({ netTarget: loan_amount_requested, termMonths: term_months, propertyValue: property_value, existingDebt, regulated, rateOverride: 0.0080 });
+    if (somoC) { somoC.avmFriendly = false; somoC._ltv_cap = 70; products.push(somoC); }
+    // Return early — skip standard routing below
+    const peProducts = products.map(function(p) {
+      const ltv = p._ltv_cap || (p.grossLtvPct ? parseFloat(p.grossLtvPct) : 70);
+      return Object.assign({}, p, { avmFriendly: p.avmFriendly });
+    });
+    return res.status(200).json({
+      status: 'ok',
+      summary: { property_value: body.property_value, loan_amount_requested: body.loan_amount_requested, credit_tier: 'proven_exit' },
+      products: peProducts,
+      products_found: peProducts.length,
+      caveat: 'Indicative figures only. Subject to valuation, full credit underwrite, and lender confirmation. Not a commitment to lend.',
+    });
+  }
+
   // ── 2. Somo Main Loan ────────────────────────────────────────────────────────
   if (!regulated) {
     let somoResult = null;
