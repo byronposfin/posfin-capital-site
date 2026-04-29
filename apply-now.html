@@ -665,8 +665,19 @@ body { background: var(--navy); }
 .q5-cards-grid.q5-visible { display: grid; animation: fadeIn 0.4s ease; }
 @media (min-width: 700px) {
   .q5-cards-grid.q5-two-col  { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-  .q5-cards-grid.q5-three-col { grid-template-columns: repeat(3, 1fr); gap: 1.3rem; }
+  .q5-cards-grid.q5-three-col { grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
 }
+/* Compact card styles when 3 cards showing */
+.q5-cards-grid.q5-three-col .q5-card { padding: 0; }
+.q5-cards-grid.q5-three-col .q5-card-head { padding: 1rem 0.9rem 0.7rem; }
+.q5-cards-grid.q5-three-col .q5-hero-amount { font-size: 1.8rem !important; }
+.q5-cards-grid.q5-three-col .q5-product-name { font-size: 0.9rem !important; }
+.q5-cards-grid.q5-three-col .q5-meta { gap: 0.4rem; }
+.q5-cards-grid.q5-three-col .q5-meta-value { font-size: 0.85rem; }
+.q5-cards-grid.q5-three-col .q5-bd-row { font-size: 0.75rem; padding: 0.3rem 0.9rem; }
+.q5-cards-grid.q5-three-col .q5-cta { padding: 0.8rem 0.9rem; }
+.q5-cards-grid.q5-three-col .q5-btn-lock, 
+.q5-cards-grid.q5-three-col .q5-btn-speak-primary { font-size: 0.75rem; padding: 0.6rem 0.5rem; }
 
 /* ── Individual card ── */
 .q5-card {
