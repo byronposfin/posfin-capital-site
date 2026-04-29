@@ -464,7 +464,7 @@ function routeAndQuote(input) {
   // standard: use lender rate cards as-is (LTV-tiered Somo / flat MT Finance)
   // val_only: force 1.10%/month — equity-only, low/bad credit, self-declared exit, no evidence required
   const PRIME_RATE    = 0.0085;
-  const VAL_ONLY_RATE = 0.0110;
+  const VAL_ONLY_RATE = 0.0095;  // Tier 3 base rate — 0.95%
   // proven_exit tier uses specific rates per option (0.55% ultra-prime, 0.80% standard prime)
   const PROVEN_EXIT_ULTRA_RATE = 0.0055;  // Option A — ultra-prime, max 40% LTV
   const PROVEN_EXIT_PRIME_RATE = 0.0080;  // Options B+C — prime, 65-70% LTV
