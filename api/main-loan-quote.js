@@ -465,9 +465,12 @@ function routeAndQuote(input) {
   // val_only: force 1.10%/month — equity-only, low/bad credit, self-declared exit, no evidence required
   const PRIME_RATE    = 0.0085;
   const VAL_ONLY_RATE = 0.0110;
+  // proven_exit tier uses specific rates per option (0.55% ultra-prime, 0.80% standard prime)
+  const PROVEN_EXIT_ULTRA_RATE = 0.0055;  // Option A — ultra-prime, max 40% LTV
+  const PROVEN_EXIT_PRIME_RATE = 0.0080;  // Options B+C — prime, 65-70% LTV
   const creditTierRateOverride = {
-    somo: credit_tier === 'val_only' ? VAL_ONLY_RATE : (credit_tier === 'prime' ? PRIME_RATE : null),
-    mt:   credit_tier === 'val_only' ? VAL_ONLY_RATE : (credit_tier === 'prime' ? PRIME_RATE : null),
+    somo: credit_tier === 'val_only' ? VAL_ONLY_RATE : (credit_tier === 'prime' ? PRIME_RATE : credit_tier === 'proven_exit' ? PROVEN_EXIT_PRIME_RATE : null),
+    mt:   credit_tier === 'val_only' ? VAL_ONLY_RATE : (credit_tier === 'prime' ? PRIME_RATE : credit_tier === 'proven_exit' ? PROVEN_EXIT_ULTRA_RATE : null),
   };
 
   if (!property_value || property_value <= 0) throw new Error('property_value required and must be > 0');
@@ -732,8 +735,8 @@ function _handlerImpl(req, res) {
     (body.other_charges_amount   || 0);
 
   const indicativeLtv = (body.loan_amount_requested + existingDebt) / body.property_value;
-  /* Map proven_exit (Step 5 UI tier name) → prime (internal API tier name) */
-  const activeTier    = (body.credit_tier === 'proven_exit') ? 'prime' : (body.credit_tier || 'standard');
+  /* proven_exit is its own tier — do NOT map to prime */
+  const activeTier    = body.credit_tier || 'standard';
 
   return res.status(200).json({
     status:   'ok',
