@@ -507,7 +507,8 @@ function routeAndQuote(input) {
   // ── proven_exit special handling: MT Finance first (0.55%/40% LTV), then Somo (0.80%/65%), then Somo again (0.80%/70%)
   if (credit_tier === 'proven_exit') {
     // Option A: MT Finance at 0.55%, capped at 40% LTV
-    const maxNetA = Math.max(0, (property_value * 0.40) - existingDebt) * 0.95; // 40% LTV net approx
+    // Use full requested amount if within 40% LTV — only cap if they asked for too much
+    const maxNetA = Math.max(0, (property_value * 0.40) - existingDebt);
     const netA = Math.min(loan_amount_requested, maxNetA);
     if (netA > 0) {
       const mtA = mtCalc({ netLoan: netA, termMonths: term_months, propertyValue: property_value, existingDebt, regulated, rateOverride: 0.0055 });

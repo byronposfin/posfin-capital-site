@@ -667,7 +667,8 @@ body { background: var(--navy); }
   .q5-cards-grid.q5-two-col  { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
   .q5-cards-grid.q5-three-col { grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
 }
-/* Compact card styles when 3 cards showing */
+/* Compact card styles when 3 cards showing — equal height aligned */
+.q5-cards-grid.q5-three-col { align-items: start; }
 .q5-cards-grid.q5-three-col .q5-card { padding: 0; }
 .q5-cards-grid.q5-three-col .q5-card-head { padding: 1rem 0.9rem 0.7rem; }
 .q5-cards-grid.q5-three-col .q5-hero-amount { font-size: 1.8rem !important; }
@@ -4193,11 +4194,14 @@ function showAVMMessage(data, borrowerEstimate) {
 
     var html = '';
 
-    /* Gold banner on Option A only for Tier 1 ultra-prime */
+    /* Gold banner on Option A only for Tier 1 ultra-prime; spacer on B+C for alignment */
     if (idx === 0 && q5Tier === 'proven_exit') {
       html += '<div style="background:linear-gradient(90deg,#D4A853,#f0c96e);color:#1C184F;font-size:0.7rem;font-weight:800;letter-spacing:0.12em;text-align:center;padding:0.4rem 1rem;border-radius:4px 4px 0 0;text-transform:uppercase;">'
             + '\u2b50 Lowest Market Benchmark Rate'
             + '</div>';
+    } else if (q5Tier === 'proven_exit' && (idx === 1 || idx === 2)) {
+      // Spacer to align B and C with A's gold banner height
+      html += '<div style="height:32px;border-radius:4px 4px 0 0;"></div>';
     } else if (idx === 0) {
       html += '<div class="q5-rec-banner">'
             + '<span class="q5-rec-banner-dot"></span>'
