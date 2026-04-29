@@ -3906,9 +3906,9 @@ function showAVMMessage(data, borrowerEstimate) {
   ── */
   var Q5_RATES = {
     proven_exit: [
-      { rate: 0.0055, maxLTV: 0.40, label: 'Ultra-Prime · Max 40% LTV',   avm: true  },  // Option A — benchmark ultra-prime, AVM eligible
-      { rate: 0.0080, maxLTV: 0.65, label: 'AVM Route · Max 65% LTV',     avm: true  },  // Option B — MT Finance, AVM eligible
-      { rate: 0.0080, maxLTV: 0.70, label: 'Flexible Exit · Max 70% LTV', avm: false }   // Option C — Somo, full val
+      { rate: 0.0055, maxLTV: 0.40, label: 'Ultra-Prime · Max 40% LTV',   avm: true  },  // Option A — 0.55% benchmark, AVM eligible
+      { rate: 0.0055, maxLTV: 0.65, label: 'AVM Route · Max 65% LTV',     avm: true  },  // Option B — 0.55% benchmark, AVM eligible
+      { rate: 0.0080, maxLTV: 0.70, label: 'Flexible Exit · Max 70% LTV', avm: false }   // Option C — 0.80%, Somo, full val
     ],
     standard: [
       { rate: 0.0085, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false },  // Option A — 0.85%
@@ -4182,8 +4182,8 @@ function showAVMMessage(data, borrowerEstimate) {
 
     var html = '';
 
-    /* Recommended banner on Option A — special treatment for Tier 1 ultra-prime */
-    if (idx === 0 && q5Tier === 'proven_exit') {
+    /* Gold banner on Options A and B for Tier 1 ultra-prime */
+    if ((idx === 0 || idx === 1) && q5Tier === 'proven_exit') {
       html += '<div style="background:linear-gradient(90deg,#D4A853,#f0c96e);color:#1C184F;font-size:0.7rem;font-weight:800;letter-spacing:0.12em;text-align:center;padding:0.4rem 1rem;border-radius:4px 4px 0 0;text-transform:uppercase;">'
             + '\u2b50 Lowest Market Benchmark Rate'
             + '</div>';
