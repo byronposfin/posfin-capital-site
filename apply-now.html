@@ -3906,9 +3906,9 @@ function showAVMMessage(data, borrowerEstimate) {
   ── */
   var Q5_RATES = {
     proven_exit: [
-      { rate: 0.0055, maxLTV: 0.40, label: 'Ultra-Prime · Max 40% LTV',   avm: true  },  // Option A — 0.55% benchmark, AVM eligible
-      { rate: 0.0055, maxLTV: 0.65, label: 'AVM Route · Max 65% LTV',     avm: true  },  // Option B — 0.55% benchmark, AVM eligible
-      { rate: 0.0080, maxLTV: 0.70, label: 'Flexible Exit · Max 70% LTV', avm: false }   // Option C — 0.80%, Somo, full val
+      { rate: 0.0055, maxLTV: 0.40, label: 'Ultra-Prime · Max 40% LTV',   avm: true  },  // Option A — 0.55%/40% gold banner
+      { rate: 0.0080, maxLTV: 0.65, label: 'AVM Route · Max 65% LTV',     avm: true  },  // Option B — 0.80%/65% no banner
+      { rate: 0.0080, maxLTV: 0.70, label: 'Flexible Exit · Max 70% LTV', avm: false }   // Option C — 0.80%/70% no banner
     ],
     standard: [
       { rate: 0.0085, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false },  // Option A — 0.85%
@@ -4136,7 +4136,7 @@ function showAVMMessage(data, borrowerEstimate) {
       monthly_rate_pct:       rate * 100,
       factor_rate:            parseFloat((1 + rate * term).toFixed(4)),
       term_months:            term,
-      max_ltv_pct:            rateConfig.maxLTV * 100,
+      max_ltv_pct:            (rateConfig.maxLTV || 0.70) * 100,
       route_label:            rateConfig.label,
       lender:                 rateConfig.lender,
       regulated:              regulated
@@ -4182,8 +4182,8 @@ function showAVMMessage(data, borrowerEstimate) {
 
     var html = '';
 
-    /* Gold banner on Options A and B for Tier 1 ultra-prime */
-    if ((idx === 0 || idx === 1) && q5Tier === 'proven_exit') {
+    /* Gold banner on Option A only for Tier 1 ultra-prime */
+    if (idx === 0 && q5Tier === 'proven_exit') {
       html += '<div style="background:linear-gradient(90deg,#D4A853,#f0c96e);color:#1C184F;font-size:0.7rem;font-weight:800;letter-spacing:0.12em;text-align:center;padding:0.4rem 1rem;border-radius:4px 4px 0 0;text-transform:uppercase;">'
             + '\u2b50 Lowest Market Benchmark Rate'
             + '</div>';
@@ -4339,7 +4339,7 @@ function showAVMMessage(data, borrowerEstimate) {
           net_release_day1:       p.netRelease || p.netLoan || p.netLoanRequested,
           gross_ltv_pct:          p.grossLtvPct,
           net_ltv_pct:            p.netLtvPct,
-          max_ltv_pct:            p.avmFriendly ? 65 : 70,
+          max_ltv_pct:            p.avmFriendly ? 65 : (p.grossLtvPct ? parseFloat(p.grossLtvPct) : 70),
           term_months:            p.termMonths,
           lender_arrangement_fee: p.arrangementFee,
           lender_admin_fee:       p.adminFee,
@@ -4457,6 +4457,11 @@ function showAVMMessage(data, borrowerEstimate) {
       if (quotes.length === 1) {
         var fb = buildFallback(form);
         if (fb && fb.length > 1) quotes = [quotes[0], fb[1]];
+      }
+      /* proven_exit needs 3 cards — pad with fallback Option C if API returns only 2 */
+      if (quotes.length === 2 && q5Tier === 'proven_exit') {
+        var fb3 = buildFallback(form);
+        if (fb3 && fb3.length > 2) quotes = [quotes[0], quotes[1], fb3[2]];
       }
       hideEl(el('q5FallbackNotice'));
       renderAll(quotes, form.gross_ltv);
