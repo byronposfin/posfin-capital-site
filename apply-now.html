@@ -3346,7 +3346,7 @@ function buildSummary() {
   const ltvClass = ltv <= 50 ? 'green' : ltv <= 70 ? 'amber' : 'red';
   let rows = [
     ['Name', formData.firstName + ' ' + formData.lastName, ''],
-    ['Date of Birth', formData.dob || '—', ''],
+    ['Date of Birth', formData.dob ? formData.dob.split('-').reverse().join('/') : '—', ''],
     ['Mobile', formData.mobile, ''],
     ['Email', formData.email, ''],
     ['Contact Preference', formData.contactPref, ''],
