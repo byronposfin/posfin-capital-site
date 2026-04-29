@@ -3906,8 +3906,9 @@ function showAVMMessage(data, borrowerEstimate) {
   ── */
   var Q5_RATES = {
     proven_exit: [
-      { rate: 0.0055, maxLTV: 0.40, label: 'Ultra-prime · Max 40% LTV',   avm: true  },  // Option A — benchmark prime rate, AVM eligible
-      { rate: 0.0080, maxLTV: 0.70, label: 'Max 70% LTV',                  avm: false }   // Option B — Prime 70% LTV
+      { rate: 0.0055, maxLTV: 0.40, label: 'Ultra-Prime · Max 40% LTV',   avm: true  },  // Option A — benchmark ultra-prime, AVM eligible
+      { rate: 0.0080, maxLTV: 0.65, label: 'AVM Route · Max 65% LTV',     avm: true  },  // Option B — MT Finance, AVM eligible
+      { rate: 0.0080, maxLTV: 0.70, label: 'Flexible Exit · Max 70% LTV', avm: false }   // Option C — Somo, full val
     ],
     standard: [
       { rate: 0.0085, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false },  // Option A — 0.85%
@@ -4074,7 +4075,7 @@ function showAVMMessage(data, borrowerEstimate) {
     var c2wrap = el('q5C2Wrap');
     var grid   = el('q5Grid');
     if (c2wrap && grid) {
-      if (tier === 'val_only') {
+      if (tier === 'val_only' || tier === 'proven_exit') {
         c2wrap.style.display = '';
         grid.classList.remove('q5-two-col');
         grid.classList.add('q5-three-col');
@@ -4093,7 +4094,8 @@ function showAVMMessage(data, borrowerEstimate) {
   function productName(idx) {
     if (q5Tier === 'proven_exit') {
       if (idx === 0) return 'Option A \u2014 Ultra-Prime · Max 40% LTV';
-      if (idx === 1) return 'Option B \u2014 Prime · Max 70% LTV';
+      if (idx === 1) return 'Option B \u2014 AVM Route · Max 65% LTV';
+      return 'Option C \u2014 Flexible Exit · Max 70% LTV';
     } else {
       if (idx === 0) return 'Option A \u2014 Flexible Exit · Max 70% LTV';
       if (idx === 1) return 'Option B \u2014 AVM Route · Max 65% LTV';
@@ -4300,11 +4302,11 @@ function showAVMMessage(data, borrowerEstimate) {
     /* Option C — val_only only */
     var c2wrap = el('q5C2Wrap');
     var gridEl = el('q5Grid');
-    if (q5Tier === 'val_only' && quotes[2]) {
+    if ((q5Tier === 'val_only' || q5Tier === 'proven_exit') && quotes[2]) {
       renderCard(el('q5C2'), quotes[2], 2);
       if (c2wrap) c2wrap.style.display = '';
     } else {
-      if (c2wrap) c2wrap.style.display = 'none';
+      if (c2wrap && q5Tier !== 'proven_exit') c2wrap.style.display = 'none';
       /* Force two-col layout when val_only has no Option C card */
       if (gridEl) {
         gridEl.classList.remove('q5-three-col');
