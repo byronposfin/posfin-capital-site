@@ -523,17 +523,7 @@ function routeAndQuote(input) {
     const somoC = somoFromNet({ netTarget: loan_amount_requested, termMonths: term_months, propertyValue: property_value, existingDebt, regulated, rateOverride: 0.0080 });
     if (somoC) { somoC.avmFriendly = false; somoC._ltv_cap = 70; products.push(somoC); }
     // Return early — skip standard routing below
-    const peProducts = products.map(function(p) {
-      const ltv = p._ltv_cap || (p.grossLtvPct ? parseFloat(p.grossLtvPct) : 70);
-      return Object.assign({}, p, { avmFriendly: p.avmFriendly });
-    });
-    return res.status(200).json({
-      status: 'ok',
-      summary: { property_value: body.property_value, loan_amount_requested: body.loan_amount_requested, credit_tier: 'proven_exit' },
-      products: peProducts,
-      products_found: peProducts.length,
-      caveat: 'Indicative figures only. Subject to valuation, full credit underwrite, and lender confirmation. Not a commitment to lend.',
-    });
+    return products;
   }
 
   // ── 2. Somo Main Loan ────────────────────────────────────────────────────────
