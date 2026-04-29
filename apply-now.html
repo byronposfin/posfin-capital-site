@@ -4364,7 +4364,7 @@ function showAVMMessage(data, borrowerEstimate) {
           product:                p.product,
           recommended:            p.recommended,
           avm_friendly:           !!p.avmFriendly,
-          route_label:            p.avmFriendly ? 'AVM Eligible · Max 65% LTV' : 'Full Valuation · Max 70% LTV',
+          route_label:            p._ltv_cap ? (p.avmFriendly ? 'AVM Eligible · Max ' + p._ltv_cap + '% LTV' : 'Max ' + p._ltv_cap + '% LTV') : (p.avmFriendly ? 'AVM Eligible · Max 65% LTV' : 'Full Valuation · Max 70% LTV'),
           broker_fee_paid_by_lender: true
         };
       });
