@@ -467,9 +467,10 @@ function routeAndQuote(input) {
   const VAL_ONLY_RATE = 0.0095;  // Tier 3 base rate — 0.95%
   // proven_exit tier: both lenders use 0.55% (ultra-prime benchmark)
   const PROVEN_EXIT_RATE = 0.0055;  // Both options — 0.55% benchmark rate
+  const STANDARD_RATE = 0.0085;  // Tier 2 both options 0.85%
   const creditTierRateOverride = {
-    somo: credit_tier === 'val_only' ? VAL_ONLY_RATE : (credit_tier === 'prime' ? PRIME_RATE : credit_tier === 'proven_exit' ? PROVEN_EXIT_RATE : null),
-    mt:   credit_tier === 'val_only' ? VAL_ONLY_RATE : (credit_tier === 'prime' ? PRIME_RATE : credit_tier === 'proven_exit' ? PROVEN_EXIT_RATE : null),
+    somo: credit_tier === 'val_only' ? VAL_ONLY_RATE : credit_tier === 'prime' ? PRIME_RATE : credit_tier === 'proven_exit' ? PROVEN_EXIT_RATE : credit_tier === 'standard' ? STANDARD_RATE : null,
+    mt:   credit_tier === 'val_only' ? VAL_ONLY_RATE : credit_tier === 'prime' ? PRIME_RATE : credit_tier === 'proven_exit' ? PROVEN_EXIT_RATE : credit_tier === 'standard' ? STANDARD_RATE : null,
   };
 
   if (!property_value || property_value <= 0) throw new Error('property_value required and must be > 0');

@@ -2014,7 +2014,7 @@ fbq('track', 'PageView');
       </button>
       <button type="button" class="q5-tier-btn q5-active" data-tier="standard"
               onclick="q5SetTier('standard', this)">
-        Tier 2: Standard<span>0.85–0.95%/mo</span>
+        Tier 2: Standard<span>0.85%/mo</span>
       </button>
       <button type="button" class="q5-tier-btn" data-tier="val_only"
               onclick="q5SetTier('val_only', this)">
@@ -3923,7 +3923,7 @@ function showAVMMessage(data, borrowerEstimate) {
     ],
     standard: [
       { rate: 0.0085, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false },  // Option A — 0.85%
-      { rate: 0.0095, maxLTV: 0.70, label: 'Max 70% LTV',                 avm: false }   // Option B — 0.95%
+      { rate: 0.0085, maxLTV: 0.65, label: 'AVM Eligible \u00b7 Max 65% LTV',  avm: true  }   // Option B — 0.85%
     ],
     val_only: [
       { rate: 0.0095, maxLTV: 0.70, label: 'Asset-backed · Max 70% LTV',  avm: false },  // Option A — 0.95%
