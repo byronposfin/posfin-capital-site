@@ -496,6 +496,21 @@ body { background: var(--navy); }
    Main Loan only — Speed Loan removed 27 Apr 2026
    ══════════════════════════════════════════════════════════ */
 
+/* ── Dev Finance Section ── */
+.dev-finance-section { display:none; margin-bottom:1.8rem; padding:1.5rem; border:1px solid rgba(46,196,182,0.2); border-radius:8px; background:rgba(46,196,182,0.03); animation:fadeIn 0.4s ease; }
+.dev-finance-section.show { display:block; }
+.dev-finance-heading { font-family:var(--serif); font-size:1.05rem; font-weight:600; color:var(--teal); margin-bottom:0.3rem; }
+.dev-finance-sub { font-size:0.78rem; color:var(--gray); margin-bottom:1.2rem; line-height:1.5; }
+.dev-radio-group { display:flex; flex-direction:column; gap:0.5rem; margin-top:0.3rem; }
+.dev-radio-btn { display:flex; align-items:center; gap:10px; padding:0.75rem 1rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:6px; cursor:pointer; transition:all 0.3s; }
+.dev-radio-btn:hover { border-color:rgba(46,196,182,0.3); }
+.dev-radio-btn.selected { border-color:var(--teal); background:rgba(46,196,182,0.06); }
+.dev-radio-btn input[type="radio"] { accent-color:var(--teal); width:16px; height:16px; flex-shrink:0; cursor:pointer; }
+.dev-radio-btn span { font-size:0.88rem; color:var(--white); }
+.dev-conditional { display:none; margin-top:0.8rem; animation:fadeIn 0.3s ease; }
+.dev-conditional.show { display:block; }
+@media (max-width:768px) { .dev-finance-section { padding:1rem; } }
+
 /* ── Back-to-Back Buffer Warning ── */
 .q5-b2b-warning {
   display: none;
@@ -1881,7 +1896,7 @@ fbq('track', 'PageView');
         </div>
         <!-- ★★★ END BACK-TO-BACK ★★★ -->
         <div class="form-group"><label class="form-label">Purpose of Loan</label>
-          <select class="form-select" id="purpose"><option value="">Select...</option><option value="property_purchase">Property Purchase</option><option value="auction">Auction Purchase</option><option value="refurbishment">Refurbishment / Renovation</option><option value="business_capital">Business Capital</option><option value="debt_consolidation">Debt Consolidation</option><option value="chain_break">Chain Break</option><option value="tax_bill">Tax Bill / HMRC</option><option value="development">Development Finance</option><option value="other">Other</option></select>
+          <select class="form-select" id="purpose" onchange="onPurposeChange(this.value)"><option value="">Select...</option><option value="property_purchase">Property Purchase</option><option value="auction">Auction Purchase</option><option value="refurbishment">Refurbishment / Renovation</option><option value="business_capital">Business Capital</option><option value="debt_consolidation">Debt Consolidation</option><option value="chain_break">Chain Break</option><option value="tax_bill">Tax Bill / HMRC</option><option value="development">Development Finance</option><option value="other">Other</option></select>
         </div>
         <div class="form-group"><label class="form-label">How Did You Hear About Us?</label>
           <select class="form-select" id="source"><option value="">Select...</option><option value="facebook">Facebook / Instagram</option><option value="google">Google Search</option><option value="referral">Referral / Word of Mouth</option><option value="broker">Broker / Introducer</option><option value="other">Other</option></select>
@@ -1966,6 +1981,113 @@ fbq('track', 'PageView');
           <!-- Mandatory validation message -->
           <div id="exitValidationMsg" style="display:none;margin-top:0.6rem;font-size:0.78rem;color:var(--red);font-weight:600;">⚠ Please select an exit strategy before continuing.</div>
         </div>
+
+        <!-- ═══ DEV FINANCE DETAILS (shown only when purpose = development) ═══ -->
+        <div class="dev-finance-section" id="devFinanceSection">
+          <div class="dev-finance-heading">🏗 Development Finance Details</div>
+          <div class="dev-finance-sub">Help us understand your project so we can match you with specialist development lenders.</div>
+
+          <div class="form-group">
+            <label class="form-label">Type of Development</label>
+            <select class="form-select" id="devType" onchange="formData.devType=this.value">
+              <option value="">Select...</option>
+              <option value="ground_up">Ground-up new build</option>
+              <option value="heavy_refurb">Heavy refurbishment (50%+ of value)</option>
+              <option value="conversion">Conversion (commercial to resi etc)</option>
+              <option value="light_refurb">Light refurbishment</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Do you own the site already, or are you purchasing?</label>
+            <div class="dev-radio-group">
+              <label class="dev-radio-btn" onclick="selectDevOwnership('own',this)">
+                <input type="radio" name="devOwnership" value="own"> <span>I already own the site</span>
+              </label>
+              <label class="dev-radio-btn" onclick="selectDevOwnership('purchasing',this)">
+                <input type="radio" name="devOwnership" value="purchasing"> <span>I am purchasing the site</span>
+              </label>
+            </div>
+            <!-- Purchase price — only shown when purchasing -->
+            <div class="dev-conditional" id="devPurchasePriceGroup">
+              <label class="form-label" style="margin-top:0.8rem;">If purchasing — purchase price (£)</label>
+              <input class="form-input" type="text" id="devPurchasePrice" placeholder="e.g. 200,000" oninput="formatCurrency(this);formData.devPurchasePrice=this.value">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Do you have planning permission?</label>
+            <select class="form-select" id="devPlanning" onchange="formData.devPlanning=this.value">
+              <option value="">Select...</option>
+              <option value="full">Full planning granted</option>
+              <option value="outline">Outline planning granted</option>
+              <option value="permitted">Permitted development</option>
+              <option value="none">No planning yet</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Estimated GDV on completion (£)</label>
+              <input class="form-input" type="text" id="devGDV" placeholder="e.g. 850,000" oninput="formatCurrency(this);formData.devGDV=this.value">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total build / construction costs (£)</label>
+              <input class="form-input" type="text" id="devBuildCost" placeholder="e.g. 300,000" oninput="formatCurrency(this);formData.devBuildCost=this.value">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Anticipated build timeframe</label>
+            <select class="form-select" id="devTimeframe" onchange="formData.devTimeframe=this.value">
+              <option value="">Select...</option>
+              <option value="under_6m">Under 6 months</option>
+              <option value="6_12m">6–12 months</option>
+              <option value="12_18m">12–18 months</option>
+              <option value="18_24m">18–24 months</option>
+              <option value="24m_plus">24+ months</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Development exit strategy</label>
+            <select class="form-select" id="devExit" onchange="formData.devExit=this.value">
+              <option value="">Select...</option>
+              <option value="sale_units">Sale of completed units</option>
+              <option value="refinance_btl">Refinance to BTL/term loan</option>
+              <option value="part_sale">Part sale, part retain</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Have you completed similar projects before?</label>
+            <div class="dev-radio-group">
+              <label class="dev-radio-btn" onclick="selectDevExperience('yes',this)">
+                <input type="radio" name="devExperience" value="yes"> <span>Yes</span>
+              </label>
+              <label class="dev-radio-btn" onclick="selectDevExperience('no',this)">
+                <input type="radio" name="devExperience" value="no"> <span>No — first project</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Do you have a main contractor appointed?</label>
+            <div class="dev-radio-group">
+              <label class="dev-radio-btn" onclick="selectDevContractor('appointed',this)">
+                <input type="radio" name="devContractor" value="appointed"> <span>Yes — contractor appointed</span>
+              </label>
+              <label class="dev-radio-btn" onclick="selectDevContractor('procuring',this)">
+                <input type="radio" name="devContractor" value="procuring"> <span>No — still procuring</span>
+              </label>
+              <label class="dev-radio-btn" onclick="selectDevContractor('self_build',this)">
+                <input type="radio" name="devContractor" value="self_build"> <span>Self-build / own team</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <!-- ═══ END DEV FINANCE DETAILS ═══ -->
 
         <div class="form-nav"><button class="form-back" onclick="prevStep(3)">← Back</button><button class="form-next" onclick="nextStep(3)">Review &amp; Submit →</button></div>
       </div>
@@ -2710,7 +2832,11 @@ function setStatus(id, msg, color) {
 
 // ═══ FORM ENGINE ═══
 let currentStep = 1;
-const formData = {};
+const formData = {
+  devType: '', devOwnership: '', devPurchasePrice: '', devPlanning: '',
+  devGDV: '', devBuildCost: '', devTimeframe: '', devExit: '',
+  devExperience: '', devContractor: ''
+};
 let hasArrears = false;
 
 // ★★★ KPC CALCULATOR ENGINE — Back-to-Back with Gross Redemption ★★★
@@ -3338,6 +3464,27 @@ function nextStep(from) {
     formData.purpose = document.getElementById('purpose').value;
     formData.source = document.getElementById('source').value;
     formData.notes = document.getElementById('notes').value;
+    // ═ Dev Finance fields (only populated when purpose = development) ═
+    if (formData.purpose === 'development') {
+      formData.devType = document.getElementById('devType').value;
+      formData.devPlanning = document.getElementById('devPlanning').value;
+      formData.devGDV = document.getElementById('devGDV').value;
+      formData.devBuildCost = document.getElementById('devBuildCost').value;
+      formData.devTimeframe = document.getElementById('devTimeframe').value;
+      formData.devExit = document.getElementById('devExit').value;
+      formData.devPurchasePrice = document.getElementById('devPurchasePrice').value;
+      // Radio values already stored via onclick handlers; fallback read here
+      var owRad = document.querySelector('input[name="devOwnership"]:checked');
+      if (owRad) formData.devOwnership = owRad.value;
+      var expRad = document.querySelector('input[name="devExperience"]:checked');
+      if (expRad) formData.devExperience = expRad.value;
+      var conRad = document.querySelector('input[name="devContractor"]:checked');
+      if (conRad) formData.devContractor = conRad.value;
+    } else {
+      formData.devType = ''; formData.devOwnership = ''; formData.devPurchasePrice = '';
+      formData.devPlanning = ''; formData.devGDV = ''; formData.devBuildCost = '';
+      formData.devTimeframe = ''; formData.devExit = ''; formData.devExperience = ''; formData.devContractor = '';
+    }
     // ═══ NET FUNDS CRYSTALLISER — trigger before proceeding ═══
     if (!nfcConfirmed) {
       openNfc();
@@ -3386,6 +3533,37 @@ function buildSummary() {
     ['Source', formData.source || '—', ''],
     ['Notes', formData.notes || '—', '']
   ]);
+  // ═ Development Finance Details (shown when devType is set) ═
+  if (formData.devType) {
+    var devLabels = {
+      ground_up: 'Ground-up new build', heavy_refurb: 'Heavy refurbishment (50%+)',
+      conversion: 'Conversion', light_refurb: 'Light refurbishment'
+    };
+    var planLabels = {
+      full: 'Full planning granted', outline: 'Outline planning granted',
+      permitted: 'Permitted development', none: 'No planning yet'
+    };
+    var tfrLabels = {
+      under_6m: 'Under 6 months', '6_12m': '6–12 months', '12_18m': '12–18 months',
+      '18_24m': '18–24 months', '24m_plus': '24+ months'
+    };
+    var devExitLabels = {
+      sale_units: 'Sale of completed units', refinance_btl: 'Refinance to BTL/term loan',
+      part_sale: 'Part sale, part retain', other: 'Other'
+    };
+    rows.push(['', '', '']);
+    rows.push(['── DEVELOPMENT FINANCE DETAILS ──', '', 'teal']);
+    rows.push(['  Dev Type', devLabels[formData.devType] || formData.devType, '']);
+    rows.push(['  Site Ownership', formData.devOwnership === 'own' ? 'Already own the site' : formData.devOwnership === 'purchasing' ? 'Purchasing the site' : '—', '']);
+    if (formData.devOwnership === 'purchasing' && formData.devPurchasePrice) rows.push(['  Purchase Price', '£' + formData.devPurchasePrice, '']);
+    rows.push(['  Planning', planLabels[formData.devPlanning] || formData.devPlanning || '—', '']);
+    if (formData.devGDV) rows.push(['  GDV (Estimated)', '£' + formData.devGDV, 'green']);
+    if (formData.devBuildCost) rows.push(['  Build / Construction Costs', '£' + formData.devBuildCost, 'amber']);
+    rows.push(['  Build Timeframe', tfrLabels[formData.devTimeframe] || formData.devTimeframe || '—', '']);
+    rows.push(['  Dev Exit Strategy', devExitLabels[formData.devExit] || formData.devExit || '—', '']);
+    rows.push(['  Prior Experience', formData.devExperience === 'yes' ? 'Yes — experienced developer' : formData.devExperience === 'no' ? 'No — first project' : '—', formData.devExperience === 'no' ? 'amber' : '']);
+    rows.push(['  Main Contractor', formData.devContractor === 'appointed' ? 'Yes — appointed' : formData.devContractor === 'procuring' ? 'No — still procuring' : formData.devContractor === 'self_build' ? 'Self-build / own team' : '—', '']);
+  }
   // ═══ NFC CRYSTALLISER SUMMARY ═══
   if (formData._nfcNetLoan) {
     rows.push(['', '', '']); // spacer
@@ -3455,6 +3633,11 @@ function sendLeadToCRM() {
     speedLoanGrossRedemption: fd._kpcGross || 0, speedLoanInterest: fd._kpcInterest || 0,
     speedLoanBrokerFee: fd._kpcBroker || 0, speedLoanNetLiquidity: fd._speedNetLiquidity || null,
     source: fd.source || '', notes: fd.notes || '',
+    devType: fd.devType || '', devOwnership: fd.devOwnership || '',
+    devPurchasePrice: fd.devPurchasePrice || '', devPlanning: fd.devPlanning || '',
+    devGDV: fd.devGDV || '', devBuildCost: fd.devBuildCost || '',
+    devTimeframe: fd.devTimeframe || '', devExit: fd.devExit || '',
+    devExperience: fd.devExperience || '', devContractor: fd.devContractor || '',
     nfcIntent: fd._nfcIntent || 'net_on_top', nfcNetLoanAmount: fd._nfcNetLoan || 0,
     nfcNetCashToBorrower: fd._nfcNetCashToBorrower || 0, nfcContingency: fd._nfcContingency || 0,
     nfcLegalsCost: fd._nfcLegalsCost || 0, nfcAddLegals: fd._nfcAddLegals || false,
@@ -3697,6 +3880,46 @@ function downloadScorecardPDF() {
 
 // ═══ EXIT STRATEGY EXPLORER ═══
 var selectedExit = '';
+// ═══ DEV FINANCE HELPERS ═══
+function onPurposeChange(val) {
+  formData.devSection = (val === 'development');
+  var sec = document.getElementById('devFinanceSection');
+  if (val === 'development') {
+    sec.classList.add('show');
+  } else {
+    sec.classList.remove('show');
+  }
+}
+function selectDevOwnership(val, el) {
+  formData.devOwnership = val;
+  document.querySelectorAll('.dev-radio-btn input[name="devOwnership"]').forEach(function(r) {
+    r.closest('.dev-radio-btn').classList.remove('selected');
+  });
+  el.classList.add('selected');
+  var grp = document.getElementById('devPurchasePriceGroup');
+  if (val === 'purchasing') {
+    grp.classList.add('show');
+  } else {
+    grp.classList.remove('show');
+    formData.devPurchasePrice = '';
+    document.getElementById('devPurchasePrice').value = '';
+  }
+}
+function selectDevExperience(val, el) {
+  formData.devExperience = val;
+  document.querySelectorAll('.dev-radio-btn input[name="devExperience"]').forEach(function(r) {
+    r.closest('.dev-radio-btn').classList.remove('selected');
+  });
+  el.classList.add('selected');
+}
+function selectDevContractor(val, el) {
+  formData.devContractor = val;
+  document.querySelectorAll('.dev-radio-btn input[name="devContractor"]').forEach(function(r) {
+    r.closest('.dev-radio-btn').classList.remove('selected');
+  });
+  el.classList.add('selected');
+}
+
 function selectExit(el, exitType) {
   document.querySelectorAll('.exit-opt').forEach(function(opt) {
     opt.style.borderColor = 'rgba(255,255,255,0.08)';
