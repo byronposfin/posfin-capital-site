@@ -1633,7 +1633,13 @@ fbq('track', 'PageView');
           <div id="avmResult" style="display:none;padding:0.9rem 1rem;border-radius:6px;font-size:0.82rem;line-height:1.5;"></div>
         </div>
 
-        <div class="form-group"><label class="form-label">Current 1st Mortgage Balance (£) *</label><input class="form-input" type="text" id="mortgage1" placeholder="e.g. 150,000 (enter 0 if no mortgage)" oninput="formatCurrency(this);calcLTV()"></div>
+        <div class="form-group"><label class="form-label">Current 1st Mortgage Balance (£) *</label><input class="form-input" type="text" id="mortgage1" placeholder="e.g. 150,000 (enter 0 if no mortgage)" oninput="formatCurrency(this);calcLTV();toggleMortgageProvider()"></div>
+
+        <!-- 1ST CHARGE PROVIDER -->
+        <div class="form-group" id="mortgage1ProviderGroup" style="display:none;">
+          <label class="form-label">1st Charge Provider (Lender Name) *</label>
+          <input class="form-input" type="text" id="mortgage1Provider" placeholder="e.g. Halifax, Nationwide, Santander, NatWest..." oninput="formData.mortgage1Provider=this.value.trim()">
+        </div>
 
         <!-- ARREARS -->
         <div class="form-group">
@@ -3237,6 +3243,12 @@ function confirmNfc() {
   nextStep(3);
 }
 
+function toggleMortgageProvider() {
+  var m1 = parseCurrency(document.getElementById('mortgage1').value);
+  var grp = document.getElementById('mortgage1ProviderGroup');
+  if (grp) grp.style.display = (m1 > 0) ? '' : 'none';
+}
+
 function setArrears(val) {
   hasArrears = val;
   document.querySelectorAll('.arrears-btn').forEach((b, i) => {
@@ -3446,6 +3458,15 @@ function nextStep(from) {
     if (!addr) { alert('Please enter the property address. Use the postcode search or type it manually.'); document.getElementById('propHouse').focus(); return; }
     if (!pv) { alert('Please enter the estimated property value.'); document.getElementById('propValue').focus(); return; }
     if (!m1) { alert('Please enter the current 1st mortgage balance (enter 0 if no mortgage).'); document.getElementById('mortgage1').focus(); return; }
+    // Validate 1st charge provider if mortgage > 0
+    var m1num = parseCurrency(m1);
+    if (m1num > 0) {
+      var prov = document.getElementById('mortgage1Provider').value.trim();
+      if (!prov) { alert('Please enter the 1st charge provider (lender name).'); document.getElementById('mortgage1Provider').focus(); return; }
+      formData.mortgage1Provider = prov;
+    } else {
+      formData.mortgage1Provider = '';
+    }
     formData.propertyAddress = addr;
     formData.propValue = pv;
     formData.mortgage1 = m1;
@@ -3624,6 +3645,7 @@ function sendLeadToCRM() {
     mortgage1Gross: fd.mortgage1 || '0', arrearsAmount: fd.arrears || '0',
     hasArrears: fd.hasArrears || false, secondCharges: fd.mortgage2 || '0',
     chargeHolders: JSON.stringify(fd.chargeHolders || []),
+    mortgage1Provider: fd.mortgage1Provider || '',
     totalRedemptionRequired: fd._redemptionTotal || 0,
     propertyType: fd.propType || '', currentLTV: fd._ltv || 0,
     maxBorrowable70: fd._maxBorrow || 0, loanAmountRequested: fd.loanAmount || '',
@@ -3700,6 +3722,7 @@ function submitForm() {
       hasArrears: fd.hasArrears || false,
       secondCharges: fd.mortgage2 || '0',
       chargeHolders: JSON.stringify(fd.chargeHolders || []),
+      mortgage1Provider: fd.mortgage1Provider || '',
       totalRedemptionRequired: fd._redemptionTotal || 0,
       propertyType: fd.propType || '',
       currentLTV: fd._ltv || 0,
