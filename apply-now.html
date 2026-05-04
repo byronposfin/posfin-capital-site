@@ -684,7 +684,7 @@ body { background: var(--navy); }
 }
 /* Compact card styles when 3 cards showing — equal height aligned */
 .q5-cards-grid.q5-three-col { align-items: start; }
-.q5-cards-grid.q5-three-col .q5-card { padding: 0; }
+.q5-cards-grid.q5-three-col .q5-card { padding: 0; min-width: 0; overflow: hidden; }
 .q5-cards-grid.q5-three-col .q5-card-head { padding: 1rem 0.9rem 0.7rem; }
 .q5-cards-grid.q5-three-col .q5-hero-amount { font-size: 1.8rem !important; }
 .q5-cards-grid.q5-three-col .q5-product-name { font-size: 0.9rem !important; }
@@ -4600,7 +4600,7 @@ function showAVMMessage(data, borrowerEstimate) {
           net_release_day1:       p.netRelease || p.netLoan || p.netLoanRequested,
           gross_ltv_pct:          p.grossLtvPct,
           net_ltv_pct:            p.netLtvPct,
-          max_ltv_pct:            p._ltv_cap || (p.avmFriendly ? 65 : (p.grossLtvPct ? parseFloat(p.grossLtvPct) : 70)),
+          max_ltv_pct:            p._ltv_cap || (function() { var rs = Q5_RATES[q5Tier] || Q5_RATES['standard']; var rc = rs[i] || rs[0]; return Math.round((rc.maxLTV || 0.70) * 100); })(),
           term_months:            p.termMonths,
           lender_arrangement_fee: p.arrangementFee,
           lender_admin_fee:       p.adminFee,
@@ -4614,7 +4614,7 @@ function showAVMMessage(data, borrowerEstimate) {
           product:                p.product,
           recommended:            p.recommended,
           avm_friendly:           !!p.avmFriendly,
-          route_label:            p._ltv_cap ? (p.avmFriendly ? 'AVM Eligible · Max ' + p._ltv_cap + '% LTV' : 'Max ' + p._ltv_cap + '% LTV') : (p.avmFriendly ? 'AVM Eligible · Max 65% LTV' : 'Full Valuation · Max 70% LTV'),
+          route_label:            p._ltv_cap ? (p.avmFriendly ? 'AVM Eligible · Max ' + p._ltv_cap + '% LTV' : 'Max ' + p._ltv_cap + '% LTV') : (function() { var rs = Q5_RATES[q5Tier] || Q5_RATES['standard']; var rc = rs[i] || rs[0]; return rc.label || (p.avmFriendly ? 'AVM Eligible · Max 65% LTV' : 'Full Valuation · Max 70% LTV'); })(),
           broker_fee_paid_by_lender: true
         };
       });
