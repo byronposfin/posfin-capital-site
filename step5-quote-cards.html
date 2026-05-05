@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <!--
   ╔══════════════════════════════════════════════════════════════╗
-  ║  STEP 5 — YOUR LIVE QUOTE                                    ║
+  ║  STEP 5 - YOUR LIVE QUOTE                                    ║
   ║  Posfin Capital · posfincapital.com/apply-now                ║
   ║  Built by Tom Reginald / OpenClaw · 27 Apr 2026              ║
-  ║  REBUILT: 27 Apr 2026 — Main Loan only (Speed removed)       ║
+  ║  REBUILT: 27 Apr 2026 - Main Loan only (Speed removed)       ║
   ╠══════════════════════════════════════════════════════════════╣
   ║  DROP-IN INSTRUCTIONS FOR ALI:                               ║
   ║                                                              ║
@@ -38,8 +38,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Step 5 — Your Live Quote (Standalone Preview)</title>
-  <!-- Google Fonts — already loaded in apply-now.html; included here for standalone preview only -->
+  <title>Step 5 - Your Live Quote (Standalone Preview)</title>
+  <!-- Google Fonts - already loaded in apply-now.html; included here for standalone preview only -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <!-- Base variables from apply-now.html (already present on production) -->
@@ -55,7 +55,7 @@
       --sans: 'DM Sans', -apple-system, sans-serif;
       --mono: 'JetBrains Mono', monospace;
     }
-    /* Preview wrapper — remove in production */
+    /* Preview wrapper - remove in production */
     body { font-family: var(--sans); background: var(--navy); color: var(--white);
            -webkit-font-smoothing: antialiased; padding: 2rem 1.5rem; }
     /* Stub classes so preview renders correctly */
@@ -81,15 +81,80 @@
 <body>
 
 <!-- ═══════════════════════════════════════════════════════════
-     ▼▼▼  START OF DROP-IN CONTENT — copy from here  ▼▼▼
+     ▼▼▼  START OF DROP-IN CONTENT - copy from here  ▼▼▼
      ═══════════════════════════════════════════════════════════ -->
 
 <style>
 /* ══════════════════════════════════════════════════════════
    STEP 5 · YOUR LIVE QUOTE  ·  Posfin Capital
    All rules prefixed .q5- to avoid collisions with existing CSS
-   Main Loan only — Speed Loan removed 27 Apr 2026
+   Main Loan only - Speed Loan removed 27 Apr 2026
    ══════════════════════════════════════════════════════════ */
+
+/* ── Pre-qualifying question ── */
+.q5-prequal {
+  margin-bottom: 1.5rem;
+  padding: 1.4rem 1.5rem;
+  background: rgba(46,196,182,0.04);
+  border: 1px solid rgba(46,196,182,0.2);
+  border-radius: 8px;
+  animation: fadeIn 0.35s ease;
+}
+.q5-prequal-heading {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--white);
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.q5-prequal-opts { display: flex; flex-direction: column; gap: 0.6rem; }
+.q5-prequal-btn {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: var(--white);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  font-family: var(--sans);
+  width: 100%;
+}
+.q5-prequal-btn:hover { border-color: var(--teal); }
+.q5-prequal-btn.q5-pq-selected { border-color: var(--teal); background: rgba(46,196,182,0.1); }
+.q5-pq-dot {
+  flex: 0 0 18px; width: 18px; height: 18px;
+  border-radius: 50%; border: 2px solid rgba(255,255,255,0.3);
+  margin-top: 2px; display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s;
+}
+.q5-pq-selected .q5-pq-dot { border-color: var(--teal); }
+.q5-pq-dot-inner { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); display: none; }
+.q5-pq-selected .q5-pq-dot-inner { display: block; }
+.q5-pq-text { display: flex; flex-direction: column; gap: 0.2rem; }
+.q5-pq-label { font-weight: 600; font-size: 0.9rem; line-height: 1.35; }
+.q5-pq-sub { font-size: 0.78rem; color: var(--gray); line-height: 1.4; }
+.q5-placeholder {
+  display: none;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--gray);
+  font-size: 0.88rem;
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+.q5-placeholder.q5-visible { display: block; animation: fadeIn 0.3s ease; }
+.q5-cta-anchor {
+  font-size: 0.76rem;
+  color: var(--gray);
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+  padding: 0 0.5rem;
+}
 
 /* ── Back-to-Back Buffer Warning ── */
 .q5-b2b-warning {
@@ -481,7 +546,7 @@
   border-radius: 0 3px 3px 0;
 }
 
-/* Neon pink footnote — appears on both cards */
+/* Neon pink footnote - appears on both cards */
 .q5-neon-footnote {
   margin-top: 0.55rem;
   padding: 0.45rem 0.7rem;
@@ -493,7 +558,7 @@
   border-radius: 0 3px 3px 0;
 }
 
-/* MT Finance note — below Option A card only */
+/* MT Finance note - below Option A card only */
 .q5-mt-note {
   margin-top: 0.65rem;
   font-size: 0.7rem;
@@ -649,7 +714,7 @@
 </style>
 
 <!-- ═══════════════════════════════════════════════════════════
-     STEP 5 FORM STEP — drop inside .form-container
+     STEP 5 FORM STEP - drop inside .form-container
      Place AFTER <div class="form-step" data-step="4"> block
      and BEFORE <div class="form-success" id="formSuccess">
      ═══════════════════════════════════════════════════════════ -->
@@ -658,6 +723,31 @@
   <!-- ── Back-to-Back Buffer Warning (shown if backToBack or speed loan detected) ── -->
   <div class="q5-b2b-warning" id="q5B2BWarning">
     ⚠️ <strong>Structural Covenant (The Buffer Rule):</strong> The Main Loan net release on Day 1 must exceed your Speed Loan gross redemption by a minimum of <strong>£10,000</strong>. This liquidity buffer is non-negotiable. Reduce your Speed Loan allocation to clear the covenant.
+  </div>
+
+  <!-- ── Pre-qualifying question ── -->
+  <div class="q5-prequal" id="q5Prequal">
+    <div class="q5-prequal-heading">One quick question to tailor your offer:</div>
+    <div class="q5-prequal-opts">
+      <button type="button" class="q5-prequal-btn" data-pq="rolled" onclick="q5SelectPQ('rolled', this)">
+        <span class="q5-pq-dot"><span class="q5-pq-dot-inner"></span></span>
+        <span class="q5-pq-text">
+          <span class="q5-pq-label">I'd prefer all costs rolled into the loan wherever possible</span>
+          <span class="q5-pq-sub">(No upfront costs — fees added to facility · up to 70% LTV)</span>
+        </span>
+      </button>
+      <button type="button" class="q5-prequal-btn" data-pq="self" onclick="q5SelectPQ('self', this)">
+        <span class="q5-pq-dot"><span class="q5-pq-dot-inner"></span></span>
+        <span class="q5-pq-text">
+          <span class="q5-pq-label">I can cover my own processing costs upfront</span>
+          <span class="q5-pq-sub">(Solicitor deposit, valuations if required — typically £1,500–£3,000 · up to 65% LTV, slightly lower rate)</span>
+        </span>
+      </button>
+    </div>
+  </div>
+  <!-- Placeholder shown before pre-qual answered -->
+  <div class="q5-placeholder q5-visible" id="q5Placeholder">
+    Select above to see your tailored offer
   </div>
 
   <div class="capture-badge">✓ Details reviewed &amp; confirmed</div>
@@ -673,15 +763,15 @@
         <span class="q5-tooltip">
           Tier 1: Prime Institutional<span class="q5-tooltip-text">Strictly ≤40% LTV with flawless credit. Executable, documented exit strategy required for deployment.</span>
         </span>
-        <span>0.80–0.85%/mo</span>
+        <span>0.80-0.85%/mo</span>
       </button>
       <button type="button" class="q5-tier-btn" data-tier="standard"
               onclick="q5SetTier('standard', this)">
-        Tier 2: Standard Commercial<span>0.93–0.95%/mo</span>
+        Tier 2: Standard Commercial<span>0.93-0.95%/mo</span>
       </button>
       <button type="button" class="q5-tier-btn" data-tier="val_only"
               onclick="q5SetTier('val_only', this)">
-        Tier 3: Asset-Backed / Non-Status<span>0.95–1.10%/mo</span>
+        Tier 3: Asset-Backed / Non-Status<span>0.95-1.10%/mo</span>
       </button>
     </div>
     <!-- Proven Exit caveat (shown only on proven_exit tier) -->
@@ -692,13 +782,13 @@
 
   <!-- ── Fallback notice (shown only when API is unreachable) ── -->
   <div class="q5-fallback-notice" id="q5FallbackNotice">
-    ⚠ <strong style="color:var(--amber)">Illustrative figures</strong> — Our live pricing engine is temporarily unavailable. These are market-rate estimates only. Speak with Byron or Chris for your confirmed, lender-specific terms.
+    ⚠ <strong style="color:var(--amber)">Illustrative figures</strong> - Our live pricing engine is temporarily unavailable. These are market-rate estimates only. Speak with Byron or Chris for your confirmed, lender-specific terms.
   </div>
 
   <!-- ── Loading ── -->
   <div class="q5-loading" id="q5Loading">
     <div class="q5-spinner"></div>
-    <div class="q5-loading-text">Generating your indicative terms…</div>
+    <div class="q5-loading-text">Generating your indicative terms...</div>
   </div>
 
   <!-- ── Error ── -->
@@ -709,19 +799,19 @@
     </div>
     <a href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27d%20like%20to%20discuss%20my%20loan%20quote."
        target="_blank" class="q5-btn-speak-primary" style="display:inline-block;width:auto;padding:0.7rem 1.5rem;border-radius:4px;">
-      💬 Consult Origination (Byron / Chris)
+      💬 I'd prefer to speak to someone first
     </a>
   </div>
 
   <!-- ── Quote cards: 2 or 3 depending on tier (val_only shows Option C) ── -->
   <div class="q5-cards-grid q5-two-col" id="q5Grid">
-    <!-- Option A card — may show LTV overlay if gross LTV > 65% -->
+    <!-- Option A card - may show LTV overlay if gross LTV > 65% -->
     <div style="position:relative;">
       <div class="q5-card q5-recommended" id="q5C0"></div>
       <div class="q5-ltv-overlay" id="q5LtvOverlay">
         <div class="q5-ltv-overlay-text" id="q5LtvOverlayText"></div>
       </div>
-      <!-- MT Finance note — Option A only -->
+      <!-- MT Finance note - Option A only -->
       <div class="q5-mt-note" id="q5MtNote">
         Note: This facility requires a £1,560 institutional legal undertaking payable prior to legal deployment.
       </div>
@@ -730,7 +820,7 @@
     <div>
       <div class="q5-card" id="q5C1"></div>
     </div>
-    <!-- Option C card — val_only tier only, hidden by default -->
+    <!-- Option C card - val_only tier only, hidden by default -->
     <div id="q5C2Wrap" style="display:none;">
       <div class="q5-card" id="q5C2"></div>
     </div>
@@ -742,7 +832,7 @@
       These are indicative terms based on real-time market data. Final execution subject to full underwriting, valuation, and final credit committee approval. FCA Authorised · FRN 913022.
     </div>
     <div class="q5-exit-note">
-      <strong>Exit Strategy —</strong>
+      <strong>Exit Strategy -</strong>
       <strong>Option A:</strong> Requires active open-market sales listing or executable Mortgage Decision in Principle. AVM routing available at ≤65% LTV, contingent on data-led confidence scores.
       <strong>Option B:</strong> Agnostic exit accepted (sale, refinance, or alternative documented liquidity event).
     </div>
@@ -764,9 +854,9 @@
 
 <script>
 /* ════════════════════════════════════════════════════════════
-   STEP 5 — QUOTE ENGINE  ·  Posfin Capital
+   STEP 5 - QUOTE ENGINE  ·  Posfin Capital
    Tom Reginald / OpenClaw  ·  27 Apr 2026
-   REBUILD: Main Loan only — Speed removed. Rate tiers corrected.
+   REBUILD: Main Loan only - Speed removed. Rate tiers corrected.
    ════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -780,7 +870,7 @@
 
   var q5Tier = 'proven_exit';
 
-  /* ── Rate table — LOCKED (do not change without Byron approval) ──
+  /* ── Rate table - LOCKED (do not change without Byron approval) ──
      proven_exit : Property listed OR DIP provided
        A: 0.80%  Max 65% LTV  AVM eligible  MT Finance
        B: 0.85%  Max 70% LTV  Somo
@@ -804,17 +894,17 @@
     val_only: [
       { rate: 0.0095, maxLTV: 0.70, label: 'Self-declared exit',                  lender: '' },
       { rate: 0.0110, maxLTV: 0.70, label: 'Val only · challenged credit',         lender: '' },
-      { rate: 0.0130, maxLTV: 0.70, label: 'Major hair — complex case',            lender: '' }
+      { rate: 0.0130, maxLTV: 0.70, label: 'Major hair - complex case',            lender: '' }
     ]
   };
 
   /* ── Helpers ── */
   function fmt(n) {
-    if (!n && n !== 0) return '—';
+    if (!n && n !== 0) return '-';
     return '£' + Math.round(n).toLocaleString('en-GB');
   }
   function pct(n, dp) {
-    if (!n && n !== 0) return '—';
+    if (!n && n !== 0) return '-';
     return (n).toFixed(dp !== undefined ? dp : 2) + '%';
   }
   function el(id) { return document.getElementById(id); }
@@ -1114,22 +1204,23 @@
     /* Standard footnote */
     html += '<div class="q5-footnote">&#42; Payable from loan proceeds at completion. No upfront cost to you.</div>';
 
-    /* Neon pink footnote — both cards */
-    html += '<div class="q5-neon-footnote">💡 Posfin may be able to cover processing costs on select deals — ask us about eligibility.</div>';
+    /* Neon pink footnote - both cards */
+    html += '<div class="q5-neon-footnote">💡 Posfin may be able to cover processing costs on select deals - ask us about eligibility.</div>';
 
     html += '</div>'; /* end q5-breakdown */
 
     /* CTA */
     html += '<div class="q5-cta">';
     if (regulated) {
-      html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-primary">&#128172; Consult Origination instead</a>';
+      html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-primary">I&rsquo;d prefer to speak to someone first</a>';
     } else {
       html += '<a href="' + stripeUrl + '" target="_blank" class="q5-btn-lock"'
-            + ' onclick="q5Track(\'main_option_' + String.fromCharCode(65 + idx) + '\')">'
-            + 'Execute Terms \u2014 £500 Commitment'
-            + '</a>';
+            + ' onclick="q5Track(\'main_option_' + String.fromCharCode(65 + idx) + '\')">'  
+            + 'I&rsquo;m interested &mdash; call me to confirm my options'
+            + '</a>'
+            + '<p class="q5-cta-anchor">Lock in your indicative terms online now for £395 &mdash; save £105 vs confirming on call</p>';
     }
-    html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-secondary">&#128172; Consult Origination instead</a>';
+    html += '<a href="' + Q5_WA + '" target="_blank" class="q5-btn-speak-secondary">I&rsquo;d prefer to speak to someone first</a>';
     html += '</div>'; /* end q5-cta */
 
     cardEl.innerHTML = html;
@@ -1141,7 +1232,7 @@
     renderCard(el('q5C0'), quotes[0], 0);
     if (quotes[1]) renderCard(el('q5C1'), quotes[1], 1);
 
-    /* Option C — val_only only */
+    /* Option C - val_only only */
     var c2wrap = el('q5C2Wrap');
     if (q5Tier === 'val_only' && quotes[2]) {
       renderCard(el('q5C2'), quotes[2], 2);
@@ -1150,7 +1241,8 @@
       if (c2wrap) c2wrap.style.display = 'none';
     }
 
-    showEl(el('q5Grid'));
+    /* Apply PQ filter — shows single card based on pre-qual answer, or placeholder */
+    q5ApplyPQFilter();
     showEl(el('q5Footer'));
 
     /* Apply LTV fade after rendering (so AVM badge exists in DOM) */
@@ -1163,7 +1255,7 @@
     if (data && Array.isArray(data.quotes) && data.quotes.length >= 2) {
       return data.quotes.slice(0, 3);
     }
-    /* Alternate: { main_loan_option_a: {…}, main_loan_option_b: {…} } */
+    /* Alternate: { main_loan_option_a: {...}, main_loan_option_b: {...} } */
     var out = [];
     if (data.main_loan_option_a) out.push(Object.assign({ idx: 0 }, data.main_loan_option_a));
     if (data.main_loan_option_b) out.push(Object.assign({ idx: 1 }, data.main_loan_option_b));
@@ -1186,10 +1278,10 @@
   function q5AvmCheck(form, onContinue) {
     var stated   = form.property_value;
     var avmMid   = numVal('avmMid') || parseFloat(document.getElementById('avmMid')?.value || 0);
-    if (!avmMid || avmMid <= 0) { onContinue(stated); return; } // No AVM — proceed with stated
+    if (!avmMid || avmMid <= 0) { onContinue(stated); return; } // No AVM - proceed with stated
     var variance = (stated - avmMid) / avmMid;
-    if (variance <= 0.05) { onContinue(avmMid); return; }        // Within 5% — use AVM silently
-    /* >5% difference — show popup */
+    if (variance <= 0.05) { onContinue(avmMid); return; }        // Within 5% - use AVM silently
+    /* >5% difference - show popup */
     var modal = document.getElementById('q5AvmModal');
     if (!modal) {
       modal = document.createElement('div');
@@ -1199,7 +1291,7 @@
         '<h3 style="color:#F39C12;margin:0 0 1rem;">⚠️ Value Check Required</h3>'+
         '<p style="font-size:0.9rem;margin-bottom:1rem;">Our data suggests this property is worth approximately <strong style="color:#2CB5AC;">£'+ avmMid.toLocaleString() +'</strong>. Your stated value of <strong>£'+ stated.toLocaleString() +'</strong> is <strong style="color:#F39C12;">'+ Math.round(variance*100) +'% higher</strong> than our assessment.</p>'+
         '<p style="font-size:0.85rem;margin-bottom:1rem;">How would you like to proceed?</p>'+
-        '<label style="display:block;margin-bottom:0.5rem;cursor:pointer;"><input type="radio" name="avmChoice" value="avm" checked> Continue with our assessed value (£'+ avmMid.toLocaleString() +') <em style="color:#2CB5AC;">— recommended</em></label>'+
+        '<label style="display:block;margin-bottom:0.5rem;cursor:pointer;"><input type="radio" name="avmChoice" value="avm" checked> Continue with our assessed value (£'+ avmMid.toLocaleString() +') <em style="color:#2CB5AC;">- recommended</em></label>'+
         '<label style="display:block;margin-bottom:1rem;cursor:pointer;"><input type="radio" name="avmChoice" value="stated"> Continue with my stated value (£'+ stated.toLocaleString() +')</label>'+
         '<p style="font-size:0.8rem;color:#aaa;margin-bottom:0.5rem;">If using stated value, please indicate why:</p>'+
         '<label style="display:block;font-size:0.8rem;"><input type="checkbox" id="avmReason1"> Recent refurbishment / extension completed</label>'+
@@ -1238,7 +1330,7 @@
     /* Back-to-back check (independent of API) */
     q5CheckB2B(form);
 
-    /* AVM value check — may show popup if >5% variance */
+    /* AVM value check - may show popup if >5% variance */
     q5AvmCheck(form, function(confirmedValue) {
       form.property_value = confirmedValue;
       /* Recalculate LTV with confirmed value */
@@ -1261,11 +1353,11 @@
       /* If API returns no Main Loan products (loan < £100K minimum), show helpful message */
       if (!quotes || quotes.length === 0) {
         hideEl(el('q5Loading'));
-        q5ShowError('Main Loan facilities start from £100,000. For smaller amounts (£26K–£100K), our Speed Loan is available in 3–5 days with no valuation required. Speak with Byron or Chris to discuss your options.');
+        q5ShowError('Main Loan facilities start from £100,000. For smaller amounts (£26K-£100K), our Speed Loan is available in 3-5 days with no valuation required. Speak with Byron or Chris to discuss your options.');
         return;
       }
       if (quotes.length === 1) {
-        /* Only one product — show it plus fallback for second slot */
+        /* Only one product - show it plus fallback for second slot */
         var fallback = buildFallback(form);
         if (fallback && fallback.length > 1) quotes = [quotes[0], fallback[1]];
       }
@@ -1273,7 +1365,7 @@
       renderAll(quotes, form.gross_ltv);
     })
     .catch(function (err) {
-      console.warn('[Q5] API unavailable — using client-side fallback.', err.message);
+      console.warn('[Q5] API unavailable - using client-side fallback.', err.message);
       hideEl(el('q5Loading'));
       var fallback = buildFallback(form);
       if (!fallback || fallback.length < 2) {
@@ -1287,6 +1379,51 @@
 
   /* Expose for tier toggle */
   window.q5Fetch = q5Fetch;
+
+  /* ── Pre-qualifying question ── */
+  var q5PQChoice = null; // null | 'self' | 'rolled'
+
+  window.q5SelectPQ = function(choice, btn) {
+    q5PQChoice = choice;
+    document.querySelectorAll('.q5-prequal-btn').forEach(function(b) {
+      b.classList.remove('q5-pq-selected');
+    });
+    if (btn) btn.classList.add('q5-pq-selected');
+    hideEl(el('q5Placeholder'));
+    q5ApplyPQFilter();
+  };
+
+  function q5ApplyPQFilter() {
+    var grid = el('q5Grid');
+    if (!grid) return;
+
+    if (!q5PQChoice) {
+      hideEl(grid);
+      showEl(el('q5Placeholder'));
+      return;
+    }
+
+    hideEl(el('q5Placeholder'));
+
+    /* Find the wrapper divs for Option A and B */
+    var cards = grid.querySelectorAll(':scope > div');
+    var wrapA = cards[0]; // Option A (rolled costs, 70% LTV)
+    var wrapB = cards[1]; // Option B (own costs, 65% LTV)
+
+    if (q5PQChoice === 'rolled') {
+      /* Show Option A only — full width */
+      if (wrapA) wrapA.style.display = '';
+      if (wrapB) wrapB.style.display = 'none';
+    } else {
+      /* 'self' — Show Option B only — full width */
+      if (wrapA) wrapA.style.display = 'none';
+      if (wrapB) wrapB.style.display = '';
+    }
+
+    /* Force single column */
+    grid.classList.remove('q5-two-col', 'q5-three-col');
+    showEl(grid);
+  }
 
   /* ── Conversion tracking ── */
   window.q5Track = function (product) {
@@ -1335,7 +1472,7 @@
 <!-- ════ STANDALONE PREVIEW ONLY: mock stub functions ════ -->
 <script>
 /* These stubs let the file render in isolation for preview.
-   In apply-now.html these are already defined — don't copy these. */
+   In apply-now.html these are already defined - don't copy these. */
 if (typeof showStep  === 'undefined') window.showStep  = function(n) { console.log('[preview] showStep', n); };
 if (typeof nextStep  === 'undefined') window.nextStep  = function(n) { console.log('[preview] nextStep', n); };
 if (typeof prevStep  === 'undefined') window.prevStep  = function(n) { console.log('[preview] prevStep', n); };
