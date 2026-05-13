@@ -1735,13 +1735,13 @@ fbq('track', 'PageView');
               </div>
               <div style="padding:1.2rem;border-radius:6px;border:1px solid rgba(212,168,83,0.2);background:rgba(212,168,83,0.04);text-align:center;">
                 <div style="font-size:1.3rem;margin-bottom:0.3rem;">🏦</div>
-                <div style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;font-weight:700;">Main Loan</div>
+                <div style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;font-weight:700;">Main Loan / Bridge</div>
                 <div style="font-size:1rem;font-weight:700;color:var(--white);margin-top:0.3rem;">£100K – £5M</div>
                 <div style="font-size:0.75rem;color:var(--gold);margin-top:0.2rem;">Up to 70% LTV · 10–15 days</div>
               </div>
             </div>
             <div style="margin-top:0.6rem;font-size:0.62rem;color:var(--gray);line-height:1.55;font-style:italic;">
-              *Main Loans may involve upfront costs such as valuation fees, lender lock-in fees, or the Posfin Commitment Advance (£500). Typical range: £500–£2,500. <span style="color:var(--teal);font-weight:600;font-style:normal;">Where Posfin covers these costs on your behalf, a premium may be added. Both the original costs and the premium are recovered from the loan proceeds upon successful completion — so you pay nothing out of pocket upfront.</span> Eligibility is assessed on a case-by-case basis. Ask your broker for details.
+              *Main Loan / Bridge facilities may involve upfront costs such as valuation fees, lender lock-in fees, or the Posfin Commitment Advance (£500). Typical range: £500–£2,500. <span style="color:var(--teal);font-weight:600;font-style:normal;">Where Posfin covers these costs on your behalf, a premium may be added. Both the original costs and the premium are recovered from the loan proceeds upon successful completion — so you pay nothing out of pocket upfront.</span> Eligibility is assessed on a case-by-case basis. Ask your broker for details.
             </div>
           </div>
         </div>
@@ -2096,6 +2096,50 @@ fbq('track', 'PageView');
         </div>
         <!-- ═══ END DEV FINANCE DETAILS ═══ -->
 
+        <!-- ═══ REFURBISHMENT DETAILS ═══ -->
+        <div class="dev-finance-section" id="refurbSection">
+          <div class="dev-finance-heading">🔧 Refurbishment Details</div>
+          <div class="dev-finance-sub">Tell us more about your refurbishment or renovation project.</div>
+
+          <div class="form-group">
+            <label class="form-label">Did you buy this property recently or do you already own it?</label>
+            <div class="dev-radio-group">
+              <label class="dev-radio-btn" onclick="selectRefurbOwnership('buying',this)">
+                <input type="radio" name="refurbOwnership" value="buying"> <span>I am buying it now / recently purchased</span>
+              </label>
+              <label class="dev-radio-btn" onclick="selectRefurbOwnership('owned',this)">
+                <input type="radio" name="refurbOwnership" value="owned"> <span>I already own it</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Buying now: show Purchase Price only -->
+          <div class="dev-conditional" id="refurbBuyingGroup">
+            <div class="form-group">
+              <label class="form-label">Purchase Price (£) *</label>
+              <input class="form-input" type="text" id="refurbPurchasePrice" placeholder="e.g. 250,000" oninput="formatCurrency(this);formData.refurbPurchasePrice=this.value">
+            </div>
+          </div>
+
+          <!-- Already owned: show purchase price, amount paid, and date -->
+          <div class="dev-conditional" id="refurbOwnedGroup">
+            <div class="form-group">
+              <label class="form-label">Purchase Price (£) *</label>
+              <input class="form-input" type="text" id="refurbOwnedPurchasePrice" placeholder="e.g. 250,000" oninput="formatCurrency(this);formData.refurbOwnedPurchasePrice=this.value">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Amount Purchased At (£) *</label>
+              <p style="font-size:0.78rem;color:var(--gray);margin-bottom:0.5rem;line-height:1.5;">The price you actually paid — used to verify uplift from the refurbishment.</p>
+              <input class="form-input" type="text" id="refurbAmountPurchasedAt" placeholder="e.g. 220,000" oninput="formatCurrency(this);formData.refurbAmountPurchasedAt=this.value">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Purchase Date *</label>
+              <input class="form-input" type="date" id="refurbPurchaseDate" onchange="formData.refurbPurchaseDate=this.value">
+            </div>
+          </div>
+        </div>
+        <!-- ═══ END REFURBISHMENT DETAILS ═══ -->
+
         <div class="form-nav"><button class="form-back" onclick="prevStep(3)">← Back</button><button class="form-next" onclick="nextStep(3)">Review &amp; Submit →</button></div>
       </div>
 
@@ -2129,7 +2173,7 @@ fbq('track', 'PageView');
 
   <div class="capture-badge">✓ Details reviewed &amp; confirmed</div>
   <div class="form-step-title">Your Indicative Capital Stack</div>
-  <div class="form-step-sub">Indicative Main Loan terms generated from your inputs. Select a credit profile and choose an option to lock in terms.</div>
+  <div class="form-step-sub">Indicative Main Loan / Bridge terms generated from your inputs. Select a credit profile and choose an option to lock in terms.</div>
 
   <!-- ── Credit profile toggle ── -->
   <div class="q5-tier-wrap">
@@ -3907,11 +3951,34 @@ var selectedExit = '';
 // ═══ DEV FINANCE HELPERS ═══
 function onPurposeChange(val) {
   formData.devSection = (val === 'development');
+  formData.refurbSection = (val === 'refurbishment');
   var sec = document.getElementById('devFinanceSection');
+  var refurbSec = document.getElementById('refurbSection');
   if (val === 'development') {
     sec.classList.add('show');
   } else {
     sec.classList.remove('show');
+  }
+  if (val === 'refurbishment') {
+    refurbSec.classList.add('show');
+  } else {
+    refurbSec.classList.remove('show');
+  }
+}
+function selectRefurbOwnership(val, el) {
+  formData.refurbOwnership = val;
+  document.querySelectorAll('.dev-radio-btn input[name="refurbOwnership"]').forEach(function(r) {
+    r.closest('.dev-radio-btn').classList.remove('selected');
+  });
+  el.classList.add('selected');
+  var buyingGrp = document.getElementById('refurbBuyingGroup');
+  var ownedGrp = document.getElementById('refurbOwnedGroup');
+  if (val === 'buying') {
+    buyingGrp.classList.add('show');
+    ownedGrp.classList.remove('show');
+  } else {
+    ownedGrp.classList.add('show');
+    buyingGrp.classList.remove('show');
   }
 }
 function selectDevOwnership(val, el) {
