@@ -1574,7 +1574,7 @@ fbq('track', 'PageView');
         <div class="form-group"><label class="form-label">Date of Birth *</label><input class="form-input" type="date" id="dob" required></div>
 
         <div class="form-group">
-          <label class="form-label">Residential Address *</label>
+          <label class="form-label">Home / Residential Address * <small style="font-weight:400;text-transform:none;letter-spacing:0;opacity:0.7;">(where you currently live)</small></label>
           <div class="addr-lookup">
             <input class="form-input" type="text" id="resPostcode" placeholder="Postcode" style="max-width:180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAddress('res');}">
             <button type="button" class="addr-btn" onclick="lookupAddress('res')">Find</button>
@@ -1582,7 +1582,7 @@ fbq('track', 'PageView');
           <div class="addr-dropdown" id="resDropdown">
             <select id="resSelect" onchange="pickAddress('res')"><option value="">— Select address —</option></select>
           </div>
-          <div class="addr-status" id="resStatus" style="color:var(--gray);">Enter postcode and click Find, or type your full address below.</div>
+          <div class="addr-status" id="resStatus" style="color:var(--gray);">Enter your home postcode and click Find, or type your full address below.</div>
           <div class="addr-fields" id="resFields">
             <input class="form-input" type="text" id="resHouse" placeholder="House number or name *" style="margin-top:0.5rem;">
             <input class="form-input" type="text" id="resStreet" placeholder="Street name *" style="margin-top:0.4rem;">
@@ -1602,7 +1602,7 @@ fbq('track', 'PageView');
 
         <!-- ═══ PROPERTY ADDRESS ═══ -->
         <div class="form-group">
-          <label class="form-label">Property Address *</label>
+          <label class="form-label">Security Property Address * <small style="font-weight:400;text-transform:none;letter-spacing:0;opacity:0.7;">(the property being used as security — enter again even if same as home address)</small></label>
           <div class="addr-lookup">
             <input class="form-input" type="text" id="propPostcode" placeholder="Postcode" style="max-width:180px;" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAddress('prop');}">
             <button type="button" class="addr-btn" onclick="lookupAddress('prop')">Find</button>
@@ -1610,7 +1610,7 @@ fbq('track', 'PageView');
           <div class="addr-dropdown" id="propDropdown">
             <select id="propSelect" onchange="pickAddress('prop')"><option value="">— Select address —</option></select>
           </div>
-          <div class="addr-status" id="propStatus" style="color:var(--gray);">Enter postcode and click Find, or type the full property address below.</div>
+          <div class="addr-status" id="propStatus" style="color:var(--gray);">Enter the security property postcode and click Find, or type the full address below. If same as home address, please enter it again.</div>
           <div class="addr-fields" id="propFields">
             <input class="form-input" type="text" id="propHouse" placeholder="House number or name *" style="margin-top:0.5rem;">
             <input class="form-input" type="text" id="propStreet" placeholder="Street name *" style="margin-top:0.4rem;">

@@ -360,9 +360,16 @@ fbq('track', 'PageView');
   </div>
 
   <div class="field">
-    <label for="propertyAddress">Property Address <span class="req">*</span></label>
+    <label for="homeAddress">Home / Residential Address <span class="req">*</span></label>
+    <input type="text" id="homeAddress" name="homeAddress" autocomplete="home street-address" required placeholder="Where you currently live">
+    <div class="field-error">Home address required</div>
+  </div>
+
+  <div class="field">
+    <label for="propertyAddress">Security Property Address <span class="req">*</span></label>
+    <small style="display:block;margin-bottom:0.4rem;opacity:0.65;font-size:0.82rem;">The property being used as security. Enter again even if same as home address.</small>
     <input type="text" id="propertyAddress" name="propertyAddress" autocomplete="street-address" required placeholder="Postcode is fine to start">
-    <div class="field-error">Property address required</div>
+    <div class="field-error">Security property address required</div>
   </div>
 
   <div class="field-row">
@@ -498,6 +505,7 @@ fbq('track', 'PageView');
       name: form.name.value.trim(),
       phone: form.phone.value.trim(),
       email: form.email.value.trim(),
+      homeAddress: form.homeAddress.value.trim(),
       propertyAddress: form.propertyAddress.value.trim(),
       propertyValue: form.propertyValue.value.trim(),
       loanAmount: form.loanAmount.value.trim(),
