@@ -4,32 +4,7 @@
   "redirects": [
     {
       "source": "/development-exit-finance",
-      "destination": "https://posfin-pages.vercel.app/dev-exit",
-      "permanent": false
-    },
-    {
-      "source": "/dev-exit",
-      "destination": "https://posfin-pages.vercel.app/dev-exit",
-      "permanent": false
-    },
-    {
-      "source": "/development-finance",
-      "destination": "https://posfin-pages.vercel.app/development-finance",
-      "permanent": false
-    },
-    {
-      "source": "/speed-loan",
-      "destination": "https://posfin-pages.vercel.app/speed-loan",
-      "permanent": false
-    },
-    {
-      "source": "/main-loan",
-      "destination": "https://posfin-pages.vercel.app/main-loan",
-      "permanent": false
-    },
-    {
-      "source": "/back-to-back",
-      "destination": "https://posfin-pages.vercel.app/back-to-back",
+      "destination": "/dev-exit",
       "permanent": false
     },
     {
