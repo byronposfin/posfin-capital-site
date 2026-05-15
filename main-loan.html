@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Main Loan — Bridging Finance Up to 70% LTV | Posfin Capital</title>
+<meta name="description" content="Bridging finance from £100K–£5M+. Up to 70% LTV, first and second charge, funded in 10-15 days. FCA authorised broker with access to MT Finance, Somo, NHF and more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --teal:#2EC4B6;--teal-dim:rgba(46,196,182,0.12);
+  --navy:#0A0E1A;--navy-light:#111828;--navy-mid:#1A2035;
+  --white:#F8F9FA;--gray:#8892A4;--gold:#D4A853;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'DM Sans',-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--sans);background:var(--navy);color:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--navy)}
+::-webkit-scrollbar-thumb{background:var(--teal);border-radius:3px}
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:1.25rem 3rem;display:flex;align-items:center;justify-content:space-between;background:rgba(10,14,26,0.9);backdrop-filter:blur(20px) saturate(1.5);border-bottom:1px solid rgba(46,196,182,0.08);transition:all 0.4s}
+.nav-logo img{height:40px;width:auto}
+.nav-right{display:flex;align-items:center;gap:1.5rem}
+.nav-fca{font-family:var(--mono);font-size:0.65rem;color:var(--gray);opacity:0.6}
+.nav-cta{padding:0.6rem 1.8rem;background:transparent;border:1px solid var(--teal);color:var(--teal);font-family:var(--sans);font-size:0.78rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;border-radius:2px;display:inline-block}
+.nav-cta:hover{background:var(--teal);color:var(--navy)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;z-index:1001}
+.hamburger span{width:24px;height:2px;background:var(--teal);transition:all 0.3s}
+.mobile-nav{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--navy);z-index:999;padding:6rem 3rem 3rem;flex-direction:column;gap:2rem}
+.mobile-nav.open{display:flex}
+.mobile-nav a{font-size:1.2rem;font-weight:500;color:var(--white);border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:1rem}
+.hero{padding:9rem 3rem 5rem;position:relative;overflow:hidden;min-height:70vh;display:flex;align-items:center}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 60% 40%,rgba(46,196,182,0.06) 0%,transparent 60%),linear-gradient(180deg,var(--navy) 0%,var(--navy-light) 100%)}
+.hero-grid{position:absolute;inset:0;opacity:0.025;background-image:linear-gradient(rgba(46,196,182,0.4) 1px,transparent 1px),linear-gradient(90deg,rgba(46,196,182,0.4) 1px,transparent 1px);background-size:80px 80px}
+.hero-inner{position:relative;max-width:900px;margin:0 auto;width:100%}
+.hero-tag{display:inline-flex;align-items:center;gap:0.5rem;font-family:var(--mono);font-size:0.7rem;color:var(--teal);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.5rem;padding:0.4rem 1rem;border:1px solid rgba(46,196,182,0.2);border-radius:2px;background:rgba(46,196,182,0.05)}
+.hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+.hero-h1{font-family:var(--serif);font-size:clamp(2.8rem,5vw,4.2rem);font-weight:500;line-height:1.1;letter-spacing:-0.02em;margin-bottom:1.2rem}
+.hero-h1 em{font-style:italic;color:var(--teal)}
+.hero-sub{font-size:1.05rem;color:var(--gray);line-height:1.7;max-width:580px;margin-bottom:2.5rem}
+.btn-primary{display:inline-block;padding:1rem 2.5rem;background:var(--teal);color:var(--navy);font-family:var(--sans);font-weight:700;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;transition:all 0.3s}
+.btn-primary:hover{box-shadow:0 0 30px rgba(46,196,182,0.3);transform:translateY(-1px)}
+.stats-bar{background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)}
+.stats-inner{max-width:1400px;margin:0 auto;padding:2.5rem 3rem;display:grid;grid-template-columns:repeat(4,1fr);gap:2rem}
+.stat-item{text-align:center;padding:1rem}
+.stat-label{font-family:var(--mono);font-size:0.65rem;color:var(--teal);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem}
+.stat-value{font-family:var(--serif);font-size:1.9rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.3rem}
+.stat-desc{font-size:0.78rem;color:var(--gray)}
+section{padding:6rem 3rem;position:relative}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-tag{font-family:var(--mono);font-size:0.68rem;color:var(--teal);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.75rem}
+.section-title{font-family:var(--serif);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:500;line-height:1.15;margin-bottom:1rem}
+.section-sub{font-size:1rem;color:var(--gray);max-width:560px;line-height:1.7;margin-bottom:3rem}
+.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(46,196,182,0.15) 20%,rgba(46,196,182,0.15) 80%,transparent)}
+.reasons-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:3rem}
+.reason-card{padding:2.5rem;border:1px solid rgba(255,255,255,0.06);border-radius:6px;background:linear-gradient(145deg,rgba(255,255,255,0.02),rgba(255,255,255,0.005));transition:all 0.4s;position:relative;overflow:hidden}
+.reason-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:0;background:var(--teal);transition:height 0.4s}
+.reason-card:hover{border-color:rgba(46,196,182,0.2);transform:translateY(-3px)}
+.reason-card:hover::before{height:100%}
+.reason-num{font-family:var(--mono);font-size:0.65rem;color:var(--teal);letter-spacing:0.15em;margin-bottom:1rem;opacity:0.7}
+.reason-title{font-family:var(--serif);font-size:1.25rem;font-weight:500;margin-bottom:0.75rem}
+.reason-body{font-size:0.88rem;color:var(--gray);line-height:1.7}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;margin-top:3rem}
+.bullet-list{list-style:none;display:flex;flex-direction:column;gap:0.85rem}
+.bullet-list li{display:flex;align-items:flex-start;gap:0.75rem;font-size:0.92rem;color:var(--gray);line-height:1.6}
+.bullet-list li::before{content:'→';color:var(--teal);font-family:var(--mono);font-size:0.8rem;flex-shrink:0;margin-top:0.1rem}
+.lender-panel{margin-top:3rem}
+.lender-label{font-family:var(--mono);font-size:0.65rem;color:var(--gray);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1rem;opacity:0.7}
+.lender-tags{display:flex;flex-wrap:wrap;gap:0.75rem}
+.lender-tag{padding:0.45rem 1.1rem;border:1px solid rgba(255,255,255,0.1);border-radius:2px;font-family:var(--mono);font-size:0.72rem;color:var(--gray);letter-spacing:0.05em}
+.steps{display:flex;flex-direction:column;gap:0;margin-top:3rem;counter-reset:step}
+.step{display:grid;grid-template-columns:60px 1fr;gap:1.5rem;padding:2rem 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.step:last-child{border-bottom:none}
+.step-num{width:48px;height:48px;border:1px solid rgba(46,196,182,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.78rem;color:var(--teal);flex-shrink:0}
+.step-content .step-title{font-size:1.05rem;font-weight:600;margin-bottom:0.4rem}
+.step-content .step-body{font-size:0.88rem;color:var(--gray);line-height:1.6}
+.cta-section{text-align:center;padding:7rem 3rem;background:linear-gradient(180deg,var(--navy-light) 0%,var(--navy) 100%);position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(46,196,182,0.05) 0%,transparent 60%)}
+.cta-inner{position:relative;max-width:640px;margin:0 auto}
+.cta-h2{font-family:var(--serif);font-size:clamp(2rem,3.5vw,3rem);font-weight:500;line-height:1.15;margin-bottom:1rem}
+.cta-h2 em{font-style:italic;color:var(--teal)}
+.cta-sub{color:var(--gray);font-size:1rem;margin-bottom:2.5rem;line-height:1.7}
+.terms-note{font-family:var(--mono);font-size:0.62rem;color:var(--gray);opacity:0.5;margin-top:1.5rem}
+.footer{padding:4rem 3rem 2.5rem;border-top:1px solid rgba(255,255,255,0.05);background:rgba(0,0,0,0.25)}
+.footer-inner{max-width:1400px;margin:0 auto}
+.footer-bottom{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.5rem}
+.footer-legal{font-size:0.72rem;color:var(--gray);opacity:0.5;max-width:700px;line-height:1.7}
+.footer-copy{font-size:0.72rem;color:var(--gray);opacity:0.4;white-space:nowrap}
+@media(max-width:900px){
+  .nav{padding:1rem 1.5rem}
+  .nav-fca{display:none}
+  .hamburger{display:flex}
+  .hero{padding:7rem 1.5rem 4rem}
+  .stats-inner{grid-template-columns:repeat(2,1fr);padding:2rem 1.5rem}
+  section{padding:4rem 1.5rem}
+  .reasons-grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  .cta-section{padding:5rem 1.5rem}
+  .footer{padding:3rem 1.5rem 2rem}
+  .footer-bottom{flex-direction:column}
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="nav-logo"><a href="/"><img src="/logo.png" alt="Posfin Capital"></a></div>
+  <div class="nav-right">
+    <span class="nav-fca">FCA: 913022</span>
+    <a href="/apply-now" class="nav-cta">Apply Now</a>
+  </div>
+  <div class="hamburger" onclick="document.getElementById('mobileNav').classList.toggle('open')"><span></span><span></span><span></span></div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+  <a href="/" onclick="this.parentElement.classList.remove('open')">Home</a>
+  <a href="/speed-loan" onclick="this.parentElement.classList.remove('open')">Speed Loan</a>
+  <a href="/main-loan" onclick="this.parentElement.classList.remove('open')">Main Loan</a>
+  <a href="/back-to-back" onclick="this.parentElement.classList.remove('open')">Back-to-Back</a>
+  <a href="/apply-now" onclick="this.parentElement.classList.remove('open')" class="nav-cta" style="text-align:center;margin-top:1rem">Apply Now</a>
+</div>
+
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-tag"><span class="dot"></span>Main Loan</div>
+    <h1 class="hero-h1">Bridging Finance.<br><em>Up to 70% LTV.</em></h1>
+    <p class="hero-sub">Maximum leverage for complex deals. £100K–£5M+, first and second charge, funded in 10–15 days through our established lender panel.</p>
+    <a href="/apply-now" class="btn-primary">Get Indicative Terms</a>
+  </div>
+</section>
+
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-label">Loan Size</div>
+      <div class="stat-value">£100K–£5M+</div>
+      <div class="stat-desc">First and second charge</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Max LTV</div>
+      <div class="stat-value">70%</div>
+      <div class="stat-desc">Gross loan including roll-up</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Funded In</div>
+      <div class="stat-value">10–15 days</div>
+      <div class="stat-desc">From formal instruction</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Term</div>
+      <div class="stat-value">Up to 18 months</div>
+      <div class="stat-desc">Interest roll-up available</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<section>
+  <div class="section-inner">
+    <div class="section-tag">Why Posfin</div>
+    <h2 class="section-title">The lender panel that moves when you need it to</h2>
+    <p class="section-sub">Main Loans are for deals that need institutional leverage and professional execution.</p>
+    <div class="reasons-grid">
+      <div class="reason-card">
+        <div class="reason-num">01</div>
+        <div class="reason-title">Your bank needs 3 months</div>
+        <div class="reason-body">Commercial mortgages, development finance, portfolio refinancing — all take quarters with a high street bank. Bridging delivers in weeks. Same result, fraction of the time.</div>
+      </div>
+      <div class="reason-card">
+        <div class="reason-num">02</div>
+        <div class="reason-title">You need maximum leverage</div>
+        <div class="reason-body">Up to 70% LTV means you can unlock significant capital from an asset without selling. Chain breaks, auction purchases, equity release, development bridging — all covered.</div>
+      </div>
+      <div class="reason-card">
+        <div class="reason-num">03</div>
+        <div class="reason-title">Your deal is complex</div>
+        <div class="reason-body">Adverse credit, second charges, multiple properties, unusual use cases — our lender panel has seen it. We match your deal to the lender with appetite for exactly your scenario.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <div class="section-tag">What We Fund</div>
+        <h2 class="section-title">Residential to commercial, standard to complex</h2>
+        <p class="section-sub">Our lender panel provides flexibility across property type, charge position, and borrower profile.</p>
+        <div class="lender-panel">
+          <div class="lender-label">Lender Panel</div>
+          <div class="lender-tags">
+            <span class="lender-tag">MT Finance</span>
+            <span class="lender-tag">Somo</span>
+            <span class="lender-tag">NHF</span>
+            <span class="lender-tag">Certain Bridge</span>
+            <span class="lender-tag">Mercantile Trust</span>
+            <span class="lender-tag">Shawbrook</span>
+            <span class="lender-tag">Avamore</span>
+            <span class="lender-tag">Allica Bank</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <ul class="bullet-list">
+          <li>Residential — houses, flats, HMOs</li>
+          <li>Commercial — offices, retail, industrial</li>
+          <li>First and second charge positions</li>
+          <li>Up to 70% LTV on most property types</li>
+          <li>Adverse credit considered</li>
+          <li>Regulated and unregulated bridging</li>
+          <li>Interest roll-up or serviced options</li>
+          <li>Terms from 1 month to 18 months</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section>
+  <div class="section-inner">
+    <div class="section-tag">The Process</div>
+    <h2 class="section-title">From enquiry to drawdown in two weeks</h2>
+    <p class="section-sub">Structured, fast, professional. No unnecessary delays built in.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <div class="step-title">Indicative terms — same day</div>
+          <div class="step-body">Submit your enquiry. We assess the deal, run an automated valuation, and structure initial terms. You'll have indicative figures before the end of the day.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <div class="step-title">Formal application — 24–48 hours</div>
+          <div class="step-body">Once you accept indicative terms, we package the formal application to your matched lender. Document requirements are straightforward and we guide you through exactly what's needed.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <div class="step-title">Lender offer — Week 1</div>
+          <div class="step-body">The lender issues a formal offer, typically within 5–7 working days of receiving the complete application. We review all terms before presenting to you.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <div class="step-title">Legal &amp; valuation — Week 1–2</div>
+          <div class="step-body">We work with Ackroyd Legal to handle solicitor requirements. An independent valuation is instructed where required. Both processes run simultaneously to minimise elapsed time.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">05</div>
+        <div class="step-content">
+          <div class="step-title">Drawdown — Day 10–15</div>
+          <div class="step-body">Once legal and valuation are complete, funds are drawn down and transferred. In most cases the entire process from enquiry to completion runs 10–15 working days.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-h2">Maximum leverage.<br><em>Minimum delay.</em></h2>
+    <p class="cta-sub">Tell us your property, your loan requirement, and your exit. We'll structure the deal and match it to the right lender today.</p>
+    <a href="/apply-now" class="btn-primary">Apply Now</a>
+    <p class="terms-note">Min. 1 month or 50% of term · subject to lender · Security required · FCA authorised FRN 913022</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-bottom">
+      <p class="footer-legal">Posfin Capital Ltd is authorised and regulated by the Financial Conduct Authority (FRN: 913022). Company No. 12148846. Registered address: 96 Kensington High Street, London W8 4SG. Bridging finance is secured against property. Your property may be repossessed if you do not keep up repayments.</p>
+      <p class="footer-copy">© 2025 Posfin Capital Ltd · FCA FRN 913022</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll',function(){
+  var n=document.getElementById('nav');
+  n.style.padding=window.scrollY>50?'0.8rem 3rem':'1.25rem 3rem';
+});
+</script>
+</body>
+</html>
