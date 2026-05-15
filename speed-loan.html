@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speed Loan — Bridging Finance in 72 Hours | Posfin Capital</title>
+<meta name="description" content="Bridging finance from £26K–£500K funded in as little as 72 hours. Up to 50% net LTV, no solicitors required, zero upfront costs. FCA authorised.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --teal:#2EC4B6;--teal-dim:rgba(46,196,182,0.12);--teal-glow:rgba(46,196,182,0.35);
+  --navy:#0A0E1A;--navy-light:#111828;--navy-mid:#1A2035;
+  --white:#F8F9FA;--gray:#8892A4;--gold:#D4A853;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'DM Sans',-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--sans);background:var(--navy);color:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--navy)}
+::-webkit-scrollbar-thumb{background:var(--teal);border-radius:3px}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:1.25rem 3rem;display:flex;align-items:center;justify-content:space-between;background:rgba(10,14,26,0.9);backdrop-filter:blur(20px) saturate(1.5);border-bottom:1px solid rgba(46,196,182,0.08);transition:all 0.4s}
+.nav-logo img{height:40px;width:auto}
+.nav-right{display:flex;align-items:center;gap:1.5rem}
+.nav-fca{font-family:var(--mono);font-size:0.65rem;color:var(--gray);opacity:0.6}
+.nav-cta{padding:0.6rem 1.8rem;background:transparent;border:1px solid var(--teal);color:var(--teal);font-family:var(--sans);font-size:0.78rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all 0.3s;border-radius:2px;display:inline-block}
+.nav-cta:hover{background:var(--teal);color:var(--navy)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;z-index:1001}
+.hamburger span{width:24px;height:2px;background:var(--teal);transition:all 0.3s}
+.mobile-nav{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--navy);z-index:999;padding:6rem 3rem 3rem;flex-direction:column;gap:2rem}
+.mobile-nav.open{display:flex}
+.mobile-nav a{font-size:1.2rem;font-weight:500;color:var(--white);border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:1rem}
+
+/* HERO */
+.hero{padding:9rem 3rem 5rem;position:relative;overflow:hidden;min-height:70vh;display:flex;align-items:center}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 60% 40%,rgba(46,196,182,0.06) 0%,transparent 60%),linear-gradient(180deg,var(--navy) 0%,var(--navy-light) 100%)}
+.hero-grid{position:absolute;inset:0;opacity:0.025;background-image:linear-gradient(rgba(46,196,182,0.4) 1px,transparent 1px),linear-gradient(90deg,rgba(46,196,182,0.4) 1px,transparent 1px);background-size:80px 80px}
+.hero-inner{position:relative;max-width:900px;margin:0 auto;width:100%}
+.hero-tag{display:inline-flex;align-items:center;gap:0.5rem;font-family:var(--mono);font-size:0.7rem;color:var(--teal);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:1.5rem;padding:0.4rem 1rem;border:1px solid rgba(46,196,182,0.2);border-radius:2px;background:rgba(46,196,182,0.05)}
+.hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+.hero-h1{font-family:var(--serif);font-size:clamp(2.8rem,5vw,4.2rem);font-weight:500;line-height:1.1;letter-spacing:-0.02em;margin-bottom:1.2rem}
+.hero-h1 em{font-style:italic;color:var(--teal)}
+.hero-sub{font-size:1.05rem;color:var(--gray);line-height:1.7;max-width:580px;margin-bottom:2.5rem}
+.btn-primary{display:inline-block;padding:1rem 2.5rem;background:var(--teal);color:var(--navy);font-family:var(--sans);font-weight:700;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;border-radius:2px;transition:all 0.3s}
+.btn-primary:hover{box-shadow:0 0 30px rgba(46,196,182,0.3);transform:translateY(-1px)}
+
+/* STATS BAR */
+.stats-bar{background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)}
+.stats-inner{max-width:1400px;margin:0 auto;padding:2.5rem 3rem;display:grid;grid-template-columns:repeat(4,1fr);gap:2rem}
+.stat-item{text-align:center;padding:1rem}
+.stat-label{font-family:var(--mono);font-size:0.65rem;color:var(--teal);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.5rem}
+.stat-value{font-family:var(--serif);font-size:1.9rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.3rem}
+.stat-desc{font-size:0.78rem;color:var(--gray)}
+
+/* SECTIONS */
+section{padding:6rem 3rem;position:relative}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-tag{font-family:var(--mono);font-size:0.68rem;color:var(--teal);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.75rem}
+.section-title{font-family:var(--serif);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:500;line-height:1.15;margin-bottom:1rem}
+.section-sub{font-size:1rem;color:var(--gray);max-width:560px;line-height:1.7;margin-bottom:3rem}
+.divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(46,196,182,0.15) 20%,rgba(46,196,182,0.15) 80%,transparent)}
+
+/* REASONS GRID */
+.reasons-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:3rem}
+.reason-card{padding:2.5rem;border:1px solid rgba(255,255,255,0.06);border-radius:6px;background:linear-gradient(145deg,rgba(255,255,255,0.02),rgba(255,255,255,0.005));transition:all 0.4s;position:relative;overflow:hidden}
+.reason-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:0;background:var(--teal);transition:height 0.4s}
+.reason-card:hover{border-color:rgba(46,196,182,0.2);transform:translateY(-3px)}
+.reason-card:hover::before{height:100%}
+.reason-num{font-family:var(--mono);font-size:0.65rem;color:var(--teal);letter-spacing:0.15em;margin-bottom:1rem;opacity:0.7}
+.reason-title{font-family:var(--serif);font-size:1.25rem;font-weight:500;margin-bottom:0.75rem}
+.reason-body{font-size:0.88rem;color:var(--gray);line-height:1.7}
+
+/* BULLETS SECTION */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start;margin-top:3rem}
+.bullet-list{list-style:none;display:flex;flex-direction:column;gap:0.85rem}
+.bullet-list li{display:flex;align-items:flex-start;gap:0.75rem;font-size:0.92rem;color:var(--gray);line-height:1.6}
+.bullet-list li::before{content:'→';color:var(--teal);font-family:var(--mono);font-size:0.8rem;flex-shrink:0;margin-top:0.1rem}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:0;margin-top:3rem;counter-reset:step}
+.step{display:grid;grid-template-columns:60px 1fr;gap:1.5rem;padding:2rem 0;border-bottom:1px solid rgba(255,255,255,0.05);position:relative}
+.step:last-child{border-bottom:none}
+.step-num{width:48px;height:48px;border:1px solid rgba(46,196,182,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.78rem;color:var(--teal);flex-shrink:0}
+.step-content .step-title{font-size:1.05rem;font-weight:600;margin-bottom:0.4rem}
+.step-content .step-body{font-size:0.88rem;color:var(--gray);line-height:1.6}
+
+/* CTA SECTION */
+.cta-section{text-align:center;padding:7rem 3rem;background:linear-gradient(180deg,var(--navy-light) 0%,var(--navy) 100%);position:relative;overflow:hidden}
+.cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 50% 50%,rgba(46,196,182,0.05) 0%,transparent 60%)}
+.cta-inner{position:relative;max-width:640px;margin:0 auto}
+.cta-h2{font-family:var(--serif);font-size:clamp(2rem,3.5vw,3rem);font-weight:500;line-height:1.15;margin-bottom:1rem}
+.cta-h2 em{font-style:italic;color:var(--teal)}
+.cta-sub{color:var(--gray);font-size:1rem;margin-bottom:2.5rem;line-height:1.7}
+.terms-note{font-family:var(--mono);font-size:0.62rem;color:var(--gray);opacity:0.5;margin-top:1.5rem}
+
+/* FOOTER */
+.footer{padding:4rem 3rem 2.5rem;border-top:1px solid rgba(255,255,255,0.05);background:rgba(0,0,0,0.25)}
+.footer-inner{max-width:1400px;margin:0 auto}
+.footer-bottom{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.5rem}
+.footer-legal{font-size:0.72rem;color:var(--gray);opacity:0.5;max-width:700px;line-height:1.7}
+.footer-copy{font-size:0.72rem;color:var(--gray);opacity:0.4;white-space:nowrap}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .nav{padding:1rem 1.5rem}
+  .nav-fca{display:none}
+  .hamburger{display:flex}
+  .hero{padding:7rem 1.5rem 4rem}
+  .stats-inner{grid-template-columns:repeat(2,1fr);padding:2rem 1.5rem}
+  section{padding:4rem 1.5rem}
+  .reasons-grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+  .cta-section{padding:5rem 1.5rem}
+  .footer{padding:3rem 1.5rem 2rem}
+  .footer-bottom{flex-direction:column}
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="nav-logo"><a href="/"><img src="/logo.png" alt="Posfin Capital"></a></div>
+  <div class="nav-right">
+    <span class="nav-fca">FCA: 913022</span>
+    <a href="/apply-now" class="nav-cta">Apply Now</a>
+  </div>
+  <div class="hamburger" onclick="document.getElementById('mobileNav').classList.toggle('open')"><span></span><span></span><span></span></div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+  <a href="/" onclick="this.parentElement.classList.remove('open')">Home</a>
+  <a href="/speed-loan" onclick="this.parentElement.classList.remove('open')">Speed Loan</a>
+  <a href="/main-loan" onclick="this.parentElement.classList.remove('open')">Main Loan</a>
+  <a href="/back-to-back" onclick="this.parentElement.classList.remove('open')">Back-to-Back</a>
+  <a href="/apply-now" onclick="this.parentElement.classList.remove('open')" class="nav-cta" style="text-align:center;margin-top:1rem">Apply Now</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-tag"><span class="dot"></span>Speed Loan</div>
+    <h1 class="hero-h1">Bridging finance.<br><em>72 hours.</em></h1>
+    <p class="hero-sub">When time is the deal. £26K–£500K, up to 50% net LTV, no solicitors required, zero upfront costs. Funded while others are still filing paperwork.</p>
+    <a href="/apply-now" class="btn-primary">Get Your Terms</a>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-label">Loan Size</div>
+      <div class="stat-value">£26K–£500K</div>
+      <div class="stat-desc">Residential & commercial</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Max Net LTV</div>
+      <div class="stat-value">50%</div>
+      <div class="stat-desc">Clean, defensible position</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Funded In</div>
+      <div class="stat-value">72hrs–5 days</div>
+      <div class="stat-desc">From signed terms</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Upfront Cost</div>
+      <div class="stat-value">None</div>
+      <div class="stat-desc">No fees until completion</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- WHY SPEED MATTERS -->
+<section>
+  <div class="section-inner">
+    <div class="section-tag">Why Speed Matters</div>
+    <h2 class="section-title">The cost of waiting is higher than you think</h2>
+    <p class="section-sub">Speed Loans exist for one reason: when the deal can't wait for the normal process.</p>
+    <div class="reasons-grid">
+      <div class="reason-card">
+        <div class="reason-num">01</div>
+        <div class="reason-title">Your bank won't move fast enough</div>
+        <div class="reason-body">High street banks take 6–12 weeks minimum. Bridging decisions at Posfin happen same day. The window closes before your bank has even assigned a case manager.</div>
+      </div>
+      <div class="reason-card">
+        <div class="reason-num">02</div>
+        <div class="reason-title">Solicitors are slowing things down</div>
+        <div class="reason-body">Standard bridging requires solicitors on both sides. Speed Loans use an equitable charge — no solicitor instruction required. That eliminates weeks of back-and-forth.</div>
+      </div>
+      <div class="reason-card">
+        <div class="reason-num">03</div>
+        <div class="reason-title">You need certainty, not a timeline</div>
+        <div class="reason-body">Auctions, chain breaks, vendor ultimatums. When someone says "funds or we walk," you need to be able to say yes in 72 hours. That's exactly what a Speed Loan delivers.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHO QUALIFIES -->
+<section>
+  <div class="section-inner">
+    <div class="two-col">
+      <div>
+        <div class="section-tag">Who Qualifies</div>
+        <h2 class="section-title">Designed for straightforward deals at sensible LTV</h2>
+        <p class="section-sub">Speed Loans are high-certainty, low-complexity products. If you tick these boxes, we can move immediately.</p>
+      </div>
+      <div>
+        <ul class="bullet-list">
+          <li>Residential or commercial property in England &amp; Wales</li>
+          <li>Loan amount between £26K and £500K</li>
+          <li>Combined debt (including this loan) under 50% net LTV</li>
+          <li>First or second charge considered</li>
+          <li>Clear, credible exit strategy in place</li>
+          <li>No requirement for borrower's own solicitor</li>
+          <li>No upfront valuation or legal costs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="section-inner">
+    <div class="section-tag">How It Works</div>
+    <h2 class="section-title">Four steps from enquiry to funded</h2>
+    <p class="section-sub">No committees, no committees, no delays. Just a clear process designed around your urgency.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <div class="step-title">60-second form</div>
+          <div class="step-body">Tell us the property, the loan amount, and your exit. That's all we need to start. No lengthy applications, no document packs at this stage.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <div class="step-title">Same-day decision</div>
+          <div class="step-body">We run an automated valuation on the property and assess your LTV position. You'll have a clear yes or no — and indicative terms — within hours of your enquiry.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <div class="step-title">Terms issued within 24 hours</div>
+          <div class="step-body">If you accept, formal terms follow within 24 hours. We use an equitable charge structure, which means no solicitor instruction on the borrower side. Review and sign.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <div class="step-title">Funds in 72 hours</div>
+          <div class="step-body">Once terms are signed and the charge is registered, funds are released. In most cases that's 72 hours from the point of instruction. No surprises.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-h2">Ready to move in<br><em>72 hours?</em></h2>
+    <p class="cta-sub">Tell us your deal. We'll give you a decision today.</p>
+    <a href="/apply-now" class="btn-primary">Apply Now</a>
+    <p class="terms-note">3-month term · Min. 1 month or 50% of term · subject to lender · FCA authorised FRN 913022</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-bottom">
+      <p class="footer-legal">Posfin Capital Ltd is authorised and regulated by the Financial Conduct Authority (FRN: 913022). Company No. 12148846. Registered address: 96 Kensington High Street, London W8 4SG. Bridging finance is secured against property. Your property may be repossessed if you do not keep up repayments.</p>
+      <p class="footer-copy">© 2025 Posfin Capital Ltd · FCA FRN 913022</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll',function(){
+  var n=document.getElementById('nav');
+  n.style.padding=window.scrollY>50?'0.8rem 3rem':'1.25rem 3rem';
+});
+</script>
+</body>
+</html>
