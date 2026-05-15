@@ -34,7 +34,7 @@
     },
     {
       "source": "/apply",
-      "destination": "https://posfin-pages.vercel.app",
+      "destination": "/apply-now",
       "permanent": false
     }
   ],
