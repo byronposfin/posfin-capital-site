@@ -149,7 +149,7 @@
       color: rgba(255,255,255,0.4);
       margin-bottom: 14px;
     }
-    .detail-row {
+    .detail-row { align-items: flex-start;
       display: flex;
       justify-content: space-between;
       font-size: 12px;
@@ -158,7 +158,7 @@
       color: white;
     }
     .detail-row:last-child { border-bottom: none; }
-    .detail-row .lbl { color: rgba(255,255,255,0.45); white-space: nowrap; }
+    .detail-row .lbl { color: rgba(255,255,255,0.45); white-space: nowrap; min-width: 90px; flex-shrink: 0; }
     .detail-row .val { font-weight: 500; }
 
     /* Arrow column */
