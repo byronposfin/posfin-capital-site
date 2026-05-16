@@ -385,6 +385,15 @@ fbq('track', 'PageView');
     </div>
   </div>
 
+  <div class="field" style="margin-bottom:1.4rem">
+    <label style="display:block;font-weight:600;margin-bottom:0.5rem">Is this amount on top of your existing mortgage, or does it include clearing it?</label>
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="net_on_top" style="accent-color:#00B5B0"> On top of my existing mortgage &mdash; I want to keep it in place</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="first_charge_refi" style="accent-color:#00B5B0"> Includes clearing my existing mortgage &mdash; I want to replace it</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="not_sure" style="accent-color:#00B5B0"> Not sure &mdash; happy to discuss on the call</label>
+    </div>
+  </div>
+
   <div class="field">
     <label for="purpose">Purpose of Loan <span class="req">*</span></label>
     <select id="purpose" name="purpose" required>
@@ -509,6 +518,7 @@ fbq('track', 'PageView');
       propertyAddress: form.propertyAddress.value.trim(),
       propertyValue: form.propertyValue.value.trim(),
       loanAmount: form.loanAmount.value.trim(),
+      loanIntent: (form.querySelector('input[name="loanIntent"]:checked') || {}).value || '',
       purpose: form.purpose.value,
       userAgent: navigator.userAgent,
       referrer: document.referrer || 'direct',

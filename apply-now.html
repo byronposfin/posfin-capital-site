@@ -1768,15 +1768,6 @@ fbq('track', 'PageView');
           </div>
         </div>
 
-        <div class="form-group" style="margin-bottom:1.6rem">
-          <label class="form-label">What type of finance are you looking for? *</label>
-          <div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.6rem">
-            <button type="button" class="charge-pos-btn" id="chargeSecond" onclick="setChargePosition('second_charge')" style="text-align:left;padding:0.85rem 1.1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-radius:4px;color:var(--white);font-size:0.88rem;cursor:pointer;transition:all 0.25s">Second charge &mdash; leave my first mortgage as it is</button>
-            <button type="button" class="charge-pos-btn" id="chargeFirst" onclick="setChargePosition('first_charge_refi')" style="text-align:left;padding:0.85rem 1.1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-radius:4px;color:var(--white);font-size:0.88rem;cursor:pointer;transition:all 0.25s">First charge refinance &mdash; replace my existing mortgage entirely</button>
-            <button type="button" class="charge-pos-btn" id="chargeNotSure" onclick="setChargePosition('not_sure')" style="text-align:left;padding:0.85rem 1.1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.12);border-radius:4px;color:var(--white);font-size:0.88rem;cursor:pointer;transition:all 0.25s">Not sure &mdash; happy to discuss</button>
-          </div>
-        </div>
-
         <div class="form-row">
           <div class="form-group"><label class="form-label">How Quickly Do You Need It?</label>
             <select class="form-select" id="timeframe" onchange="updateTimeframeEmphasis()"><option value="">Select...</option><option value="urgent">ASAP / Under 1 Week</option><option value="2weeks">Within 2 Weeks</option><option value="1month">Within 1 Month</option><option value="flexible">Flexible / No Rush</option></select>
@@ -3109,23 +3100,6 @@ function setLoanIntent(val) {
   });
   var selected = document.getElementById(
     val === 'net_on_top' ? 'intentOnTop' : val === 'first_charge_refi' ? 'intentReplace' : 'intentNotSureLoan'
-  );
-  if (selected) {
-    selected.style.borderColor = 'var(--teal)';
-    selected.style.background = 'rgba(46,196,182,0.08)';
-    selected.style.color = 'var(--teal)';
-  }
-}
-
-function setChargePosition(val) {
-  formData.chargePositionIntent = val;
-  document.querySelectorAll('.charge-pos-btn').forEach(function(b) {
-    b.style.borderColor = 'rgba(255,255,255,0.12)';
-    b.style.background = 'rgba(255,255,255,0.03)';
-    b.style.color = 'var(--white)';
-  });
-  var selected = document.getElementById(
-    val === 'second_charge' ? 'chargeSecond' : val === 'first_charge_refi' ? 'chargeFirst' : 'chargeNotSure'
   );
   if (selected) {
     selected.style.borderColor = 'var(--teal)';
