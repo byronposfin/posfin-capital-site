@@ -3401,16 +3401,21 @@ function addChargeRow() {
   var id = chargeCounter;
   var row = document.createElement('div');
   row.id = 'chargeRow_' + id;
-  row.style.cssText = 'display:grid;grid-template-columns:1fr 140px 36px;gap:0.6rem;align-items:start;margin-bottom:0.6rem;animation:fadeIn 0.3s ease;';
-  row.innerHTML = '<div>'
-    + '<input class="form-input" type="text" id="chargeName_' + id + '" placeholder="Lender / charge holder name" style="font-size:0.88rem;">'
+  row.style.cssText = 'margin-bottom:0.9rem;padding:0.8rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:5px;animation:fadeIn 0.3s ease;';
+  row.innerHTML = '<div style="font-size:0.7rem;font-family:var(--mono);letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-bottom:0.5rem;">Charge ' + id + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 140px 36px;gap:0.6rem;align-items:center;">'
+    + '<div>'
+    + '<label style="font-size:0.75rem;color:var(--gray);margin-bottom:3px;display:block;">Provider / Lender Name *</label>'
+    + '<input class="form-input" type="text" id="chargeName_' + id + '" placeholder="e.g. Barclays, HMRC, Charging Order..." style="font-size:0.88rem;">'
     + '</div>'
     + '<div>'
-    + '<input class="form-input" type="text" id="chargeAmount_' + id + '" placeholder="£ amount" style="font-size:0.88rem;" oninput="formatCurrency(this);sumCharges()">'
+    + '<label style="font-size:0.75rem;color:var(--gray);margin-bottom:3px;display:block;">Balance (£) *</label>'
+    + '<input class="form-input" type="text" id="chargeAmount_' + id + '" placeholder="e.g. 25,000" style="font-size:0.88rem;" oninput="formatCurrency(this);sumCharges()">'
     + '</div>'
+    + '<div style="padding-top:18px;">'
     + '<button type="button" onclick="removeChargeRow(' + id + ')" style="width:36px;height:42px;display:flex;align-items:center;justify-content:center;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);border-radius:4px;color:var(--red);cursor:pointer;transition:all 0.3s;font-size:1.1rem;" title="Remove">'
     + '×'
-    + '</button>';
+    + '</button></div></div>';
   document.getElementById('chargesList').appendChild(row);
 }
 
