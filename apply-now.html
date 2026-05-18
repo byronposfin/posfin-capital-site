@@ -1704,6 +1704,30 @@ fbq('track', 'PageView');
           </div>
         </div>
 
+        <!-- ═══ CHARGE REQUEST — TOP UP vs FROM WITHIN ═══ -->
+        <div id="chargeRequestSection" style="display:none;margin-bottom:1.5rem;animation:fadeIn 0.4s ease;">
+          <div style="padding:1rem 1.1rem;border-radius:6px;border:1px solid rgba(46,196,182,0.2);background:rgba(46,196,182,0.03);">
+            <p style="font-size:0.85rem;font-weight:600;color:var(--white);margin-bottom:0.3rem;">How would you like to structure your loan?</p>
+            <p style="font-size:0.78rem;color:var(--gray);margin-bottom:1rem;line-height:1.5;">You have existing charges totalling <strong style="color:var(--amber)" id="chargeRequestTotal">£0</strong> that must be redeemed at completion. Tell us how you'd like your loan amount to work:</p>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+              <label id="chargeReqLabel1" onclick="setChargeRequest('top_up')" style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.85rem 1rem;border-radius:5px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s;">
+                <input type="radio" name="chargeRequest" id="chargeReqTopUp" value="top_up" style="margin-top:3px;accent-color:var(--teal);flex-shrink:0;">
+                <div>
+                  <div style="font-size:0.85rem;font-weight:600;color:var(--white);margin-bottom:0.2rem;">I need my requested amount <em style="color:var(--teal);font-style:normal;">on top of</em> the redemptions</div>
+                  <div style="font-size:0.76rem;color:var(--gray);line-height:1.5;">The lender will gross up your loan to cover both your cash need and the redemptions. <span style="color:var(--white);">Net to you = your requested amount.</span></div>
+                </div>
+              </label>
+              <label id="chargeReqLabel2" onclick="setChargeRequest('from_within')" style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.85rem 1rem;border-radius:5px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);cursor:pointer;transition:all 0.2s;">
+                <input type="radio" name="chargeRequest" id="chargeReqWithin" value="from_within" style="margin-top:3px;accent-color:var(--teal);flex-shrink:0;">
+                <div>
+                  <div style="font-size:0.85rem;font-weight:600;color:var(--white);margin-bottom:0.2rem;">The redemptions should come <em style="color:var(--amber);font-style:normal;">from within</em> my requested amount</div>
+                  <div style="font-size:0.76rem;color:var(--gray);line-height:1.5;">Your requested loan covers the redemptions. <span style="color:var(--white);">Net to you = requested amount minus <span id="chargeReqDeductDisplay">£0</span> redemptions.</span></div>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <!-- LTV INDICATOR -->
         <div class="ltv-indicator" id="ltvIndicator">
           <div class="ltv-row">
@@ -3324,6 +3348,22 @@ function toggleMortgageProvider() {
   if (grp) grp.style.display = (m1 > 0) ? '' : 'none';
 }
 
+function setChargeRequest(val) {
+  formData.chargeRequest = val;
+  var l1 = document.getElementById('chargeReqLabel1');
+  var l2 = document.getElementById('chargeReqLabel2');
+  var r1 = document.getElementById('chargeReqTopUp');
+  var r2 = document.getElementById('chargeReqWithin');
+  if (l1 && l2) {
+    var selStyle = 'border-color:var(--teal);background:rgba(46,196,182,0.07);';
+    var defStyle = 'border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);';
+    l1.style.cssText += (val === 'top_up' ? selStyle : defStyle);
+    l2.style.cssText += (val === 'from_within' ? selStyle : defStyle);
+  }
+  if (r1) r1.checked = (val === 'top_up');
+  if (r2) r2.checked = (val === 'from_within');
+}
+
 function setArrears(val) {
   hasArrears = val;
   document.querySelectorAll('.arrears-btn').forEach((b, i) => {
@@ -3479,8 +3519,20 @@ function calcLTV() {
       arrearsRow.style.display = 'none';
     }
     document.getElementById('redemptionTotal').textContent = '\u00a3' + totalRedemption.toLocaleString('en-GB');
+    // Show charge request section
+    var crs = document.getElementById('chargeRequestSection');
+    if (crs) {
+      crs.style.display = 'block';
+      var fmt = '\u00a3' + totalRedemption.toLocaleString('en-GB');
+      var el1 = document.getElementById('chargeRequestTotal');
+      var el2 = document.getElementById('chargeReqDeductDisplay');
+      if (el1) el1.textContent = fmt;
+      if (el2) el2.textContent = fmt;
+    }
   } else {
     redemptionNotice.style.display = 'none';
+    var crs = document.getElementById('chargeRequestSection');
+    if (crs) crs.style.display = 'none';
   }
 
   // Store calc data
@@ -3721,6 +3773,7 @@ function sendLeadToCRM() {
     hasArrears: fd.hasArrears || false, secondCharges: fd.mortgage2 || '0',
     chargeHolders: JSON.stringify(fd.chargeHolders || []),
     mortgage1Provider: fd.mortgage1Provider || '',
+    chargeRequest: fd.chargeRequest || '',
     loanIntent: fd.loanIntent || '',
     chargePositionIntent: fd.chargePositionIntent || '',
     totalRedemptionRequired: fd._redemptionTotal || 0,
