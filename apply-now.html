@@ -3758,7 +3758,7 @@ function sendLeadToCRM() {
   }).then(function(r) { console.log('[ZAPIER] ' + r.status); return r; })
     .catch(function(e) { console.error('[ZAPIER] failed:', e && e.message); });
   var tomPost;
-  if (TOM_URL && TOM_URL !== 'https://skirt-reel-quantitative-bathroom.trycloudflare.com') {
+  if (TOM_URL && TOM_URL !== 'https://shemika-charl-t.ngrok-free.dev') {
     tomPost = fetch(TOM_URL + '/new-lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
@@ -3865,7 +3865,7 @@ function submitForm() {
   // ── POST 2: Tom endpoint (JSON, FULL payload — Pre-LOR needs mortgage, arrears, LTV, NFC)
   // TOM_URL is set when Tom's public webhook is live. Until then, skip silently.
   var tomPost;
-  if (TOM_URL && TOM_URL !== 'https://skirt-reel-quantitative-bathroom.trycloudflare.com') {
+  if (TOM_URL && TOM_URL !== 'https://shemika-charl-t.ngrok-free.dev') {
     tomPost = fetch(TOM_URL, {
       method: 'POST',
       headers: {
