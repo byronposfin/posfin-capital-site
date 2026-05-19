@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Client Remortgage Questionnaire & Instruction · Posfin Capital</title>
+<meta name="description" content="Ackroyd Legal — Remortgage Questionnaire & Client Instruction Form, prepared by Posfin Capital. FCA Authorised — FRN 913022." />
+<link rel="preload" as="image" href="/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300..700;1,300..700&family=Playfair+Display:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy-deep: #13113A;
+    --navy: #1C184F;
+    --cream: #FAF8F3;
+    --cream-warm: #F5F1E8;
+    --white: #FFFFFF;
+    --text-primary: #1A1A2E;
+    --text-secondary: #5A5770;
+    --text-muted: #6F6B7A;
+    --teal: #00B5B0;
+    --teal-hover: #009996;
+    --teal-soft: rgba(0, 181, 176, 0.06);
+    --gold: #D4A853;
+    --border: #E5E1D6;
+    --border-card: #E8E4DB;
+    --border-strong: #CFC9B8;
+    --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+    --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: rgba(0, 181, 176, 0.12);
+    scroll-behavior: smooth;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--cream);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  button, label, input, select, textarea, a {
+    touch-action: manipulation;
+  }
+  a { color: var(--teal); text-decoration: none; }
+  a:hover { color: var(--teal-hover); }
+
+  /* ═════════ TOP STATUS BAR ═════════ */
+  .topbar {
+    background: var(--navy-deep);
+    color: rgba(255, 255, 255, 0.78);
+    font-family: var(--font-body);
+  }
+  .topbar-inner {
+    max-width: 1280px; margin: 0 auto;
+    padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; letter-spacing: 0.12em;
+  }
+  .topbar .left { text-transform: uppercase; font-weight: 500; }
+  .topbar .right { text-transform: uppercase; }
+  @media (max-width: 640px) { .topbar .right { display: none; } }
+
+  /* ═════════ HERO ═════════ */
+  .hero {
+    background: linear-gradient(180deg, #1C184F 0%, #13113A 100%);
+    color: var(--white);
+    font-family: var(--font-body);
+  }
+  .hero-top {
+    max-width: 1280px; margin: 0 auto;
+    padding: 40px 24px 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .hero-top .logo-wrap img { height: 38px; width: auto; display: block; }
+  .hero-top .logo-sub {
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 6px;
+  }
+  .hero-top .phone {
+    font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.78);
+    padding: 8px 0;
+    min-height: 44px;
+    display: inline-flex; align-items: center;
+  }
+
+  .hero-body {
+    max-width: 1280px; margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .hero-eyebrow {
+    font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+  .hero-headline {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(38px, 6vw, 76px);
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    max-width: 22ch;
+    margin: 0 0 32px;
+  }
+  .hero-headline .accent {
+    font-style: italic;
+    color: var(--gold);
+    font-weight: 500;
+  }
+  .hero-lede {
+    max-width: 64ch;
+    font-size: clamp(16px, 1.4vw, 19px);
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.82);
+    margin: 0 0 16px;
+    font-weight: 400;
+  }
+  .hero-lede strong { color: var(--white); font-weight: 500; }
+
+  .hero-meta {
+    margin-top: 60px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 720px) { .hero-meta { grid-template-columns: 1fr 1fr; } }
+  .meta-block .meta-label {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .meta-block .meta-value {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(16px, 1.6vw, 22px);
+    letter-spacing: -0.01em;
+    color: var(--white);
+  }
+
+  /* ═════════ FORM WRAPPER ═════════ */
+  .form-section {
+    background: var(--cream);
+    padding: clamp(48px, 6vw, 96px) 24px;
+  }
+  .form-wrap {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  /* ═════════ SECTION CARDS ═════════ */
+  .section-card {
+    background: var(--white);
+    border: 1px solid var(--border-card);
+    padding: clamp(32px, 4vw, 56px);
+    margin-bottom: 24px;
+  }
+  .section-head {
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-family: var(--font-body);
+    font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 12px;
+  }
+  .section-card h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(28px, 3vw, 38px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--navy);
+    margin: 0 0 12px;
+  }
+  .section-card h2 .accent {
+    font-style: italic;
+    color: var(--gold);
+    font-weight: 500;
+  }
+  .section-card .section-desc {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 58ch;
+  }
+
+  /* Subsection heads inside a card */
+  .subsection-head {
+    display: flex; align-items: center; gap: 12px;
+    margin: 36px 0 20px;
+  }
+  .subsection-rule {
+    width: 24px; height: 1px;
+    background: var(--teal);
+  }
+  .subsection-head h3 {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+    color: var(--navy);
+    margin: 0;
+  }
+
+  /* ═════════ GRID & FIELDS ═════════ */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 24px;
+  }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field.col-2 { grid-column: 1 / -1; }
+
+  .field label,
+  fieldset.radio-set > legend {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--navy);
+    padding: 0;
+  }
+  .field label .opt {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    font-style: italic;
+    color: var(--text-muted);
+    margin-left: 4px;
+  }
+
+  /* Input / select / textarea — match site convention exactly */
+  .field input[type="text"],
+  .field input[type="email"],
+  .field input[type="tel"],
+  .field input[type="number"],
+  .field input[type="date"],
+  .field input[type="month"],
+  .field select,
+  .field textarea {
+    width: 100%;
+    height: 54px;
+    padding: 0 18px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--text-primary);
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s ease;
+  }
+  .field textarea {
+    height: auto;
+    min-height: 96px;
+    padding: 14px 18px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1L6 6L11 1' stroke='%231C184F' stroke-width='1.5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 18px center;
+    padding-right: 42px;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--teal);
+  }
+
+  /* Radio set — site's pill style */
+  fieldset.radio-set {
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  fieldset.radio-set > legend {
+    margin-bottom: 12px;
+  }
+  .radio-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  @media (max-width: 480px) { .radio-options { grid-template-columns: 1fr; } }
+  .radio-options.three { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 600px) { .radio-options.three { grid-template-columns: 1fr; } }
+
+  .radio-options label {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    min-height: 54px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--text-primary);
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .radio-options label:hover { border-color: var(--border-strong); }
+  .radio-options input[type="radio"] {
+    position: absolute; opacity: 0; pointer-events: none;
+  }
+  .radio-options label .radio-dot {
+    flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    background: var(--white);
+    transition: border-color 0.15s ease;
+  }
+  .radio-options label:has(input:checked) {
+    border-color: var(--teal);
+    background: var(--teal-soft);
+  }
+  .radio-options label:has(input:checked) .radio-dot {
+    border-color: var(--teal);
+    background: radial-gradient(circle, var(--teal) 0, var(--teal) 5px, transparent 5px);
+  }
+
+  /* Helper text under field */
+  .field-help {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: -2px;
+  }
+
+  /* ═════════ CONDITIONAL REVEAL ═════════ */
+  .conditional {
+    background: var(--cream-warm);
+    border-left: 2px solid var(--teal);
+    padding: 24px 28px;
+    margin-top: 28px;
+    animation: revealConditional 0.35s ease;
+  }
+  @keyframes revealConditional {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═════════ BORROWER REPEAT BLOCKS ═════════ */
+  .borrower-block {
+    background: var(--cream-warm);
+    border: 1px solid var(--border);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .borrower-block:not(:first-child) {
+    animation: revealConditional 0.35s ease;
+  }
+  .borrower-head {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .borrower-label {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--navy);
+  }
+  .borrower-num {
+    font-style: normal; font-weight: 600; color: var(--teal);
+  }
+  .btn-remove-borrower {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 10px 16px;
+    min-height: 44px;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .btn-remove-borrower:hover {
+    color: var(--teal);
+    border-color: var(--teal);
+    background: var(--teal-soft);
+  }
+
+  .repeat-controls {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--navy);
+    color: var(--navy);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .btn-ghost:hover { background: var(--navy); color: var(--cream); }
+  .btn-ghost:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-ghost:disabled:hover { background: transparent; color: var(--navy); }
+  .repeat-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ═════════ DISCLOSURES ═════════ */
+  .disclosure-row {
+    padding: 22px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .disclosure-row:first-child { padding-top: 0; }
+  .disclosure-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .disclosure-q {
+    margin: 0 0 14px;
+    font-size: 15px;
+    color: var(--text-primary);
+    max-width: 64ch;
+  }
+  .disclosure-radio {
+    display: flex; gap: 8px;
+    max-width: 320px;
+  }
+  @media (max-width: 480px) {
+    .disclosure-radio { max-width: none; }
+  }
+  .disclosure-radio label {
+    flex: 1;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    min-height: 48px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .disclosure-radio label:hover { border-color: var(--border-strong); }
+  .disclosure-radio input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
+  .disclosure-radio label .radio-dot {
+    flex-shrink: 0; width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    background: var(--white);
+  }
+  .disclosure-radio label:has(input:checked) {
+    border-color: var(--teal);
+    background: var(--teal-soft);
+  }
+  .disclosure-radio label:has(input:checked) .radio-dot {
+    border-color: var(--teal);
+    background: radial-gradient(circle, var(--teal) 0, var(--teal) 4px, transparent 4px);
+  }
+  .disclosure-detail {
+    margin-top: 16px;
+  }
+  .disclosure-detail label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+  .disclosure-detail textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px 14px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    color: var(--text-primary);
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    outline: none;
+    resize: vertical;
+  }
+  .disclosure-detail textarea:focus { border-color: var(--teal); }
+
+  /* ═════════ FORM OF AUTHORITY / DECLARATION ═════════ */
+  .auth-list { display: flex; flex-direction: column; gap: 12px; }
+  .auth-row {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 16px 20px;
+    background: var(--cream-warm);
+    border-left: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .auth-row:hover { background: var(--teal-soft); }
+  .auth-row input[type="checkbox"] {
+    appearance: auto;
+    -webkit-appearance: checkbox;
+    accent-color: var(--teal);
+    width: 18px; height: 18px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .auth-row:has(input:checked) { border-left-color: var(--teal); }
+  .auth-row span {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+  }
+  .auth-row:has(input:checked) span { color: var(--text-primary); }
+
+  /* ═════════ SUBMIT BLOCK ═════════ */
+  .submit-block {
+    background: var(--navy);
+    color: var(--cream);
+    padding: clamp(40px, 5vw, 64px);
+    margin-top: 32px;
+  }
+  .submit-eyebrow {
+    font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+  .submit-title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(28px, 3vw, 36px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 20px;
+    color: var(--white);
+  }
+  .submit-title .accent { font-style: italic; color: var(--gold); }
+  .submit-note {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: rgba(248, 244, 236, 0.75);
+    max-width: 64ch;
+    margin: 0 0 32px;
+  }
+  .btn-submit {
+    display: inline-flex; align-items: center; gap: 14px;
+    background: var(--teal);
+    color: var(--white);
+    border: none;
+    padding: 20px 32px;
+    min-height: 60px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-radius: 0;
+  }
+  .btn-submit:hover { background: var(--teal-hover); }
+  .btn-submit:disabled { opacity: 0.55; cursor: progress; }
+  .btn-submit .btn-arrow { font-size: 16px; font-family: var(--font-body); letter-spacing: 0; }
+  .submit-error {
+    margin-top: 20px;
+    color: #F2C8CD;
+    font-size: 13.5px;
+    border-left: 2px solid #F2C8CD;
+    padding-left: 14px;
+    max-width: 60ch;
+  }
+
+  /* ═════════ SUCCESS STATE ═════════ */
+  .success-state {
+    background: var(--cream);
+    padding: clamp(80px, 12vw, 160px) 24px;
+  }
+  .success-inner { max-width: 720px; margin: 0 auto; }
+  .success-state .eyebrow {
+    font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 24px;
+  }
+  .success-state h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 0 0 24px;
+    color: var(--navy);
+  }
+  .success-state h2 .accent { font-style: italic; color: var(--gold); }
+  .success-body {
+    font-size: 17px; line-height: 1.6;
+    color: var(--text-secondary);
+    max-width: 56ch;
+    margin: 0 0 32px;
+  }
+  .success-ref {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 24px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .success-ref strong {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 24px;
+    color: var(--gold);
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+
+  /* ═════════ FOOTER ═════════ */
+  .footer {
+    background: var(--navy-deep);
+    color: rgba(255, 255, 255, 0.78);
+    font-family: var(--font-body);
+  }
+  .footer-inner {
+    max-width: 1280px; margin: 0 auto;
+    padding: 56px 24px 48px;
+    display: grid;
+    grid-template-columns: 5fr 3fr 4fr;
+    gap: 32px;
+  }
+  @media (max-width: 880px) {
+    .footer-inner { grid-template-columns: 1fr; gap: 32px; }
+  }
+  .footer img { height: 36px; width: auto; margin-bottom: 14px; display: block; }
+  .footer p { margin: 0 0 8px; }
+  .footer .footer-blurb {
+    font-size: 14px; line-height: 1.65;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 44ch;
+  }
+  .footer-h {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .footer-block p {
+    font-size: 14px; line-height: 1.65;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .footer-block strong { color: rgba(255, 255, 255, 0.92); font-weight: 600; }
+  .footer-block a { color: rgba(255, 255, 255, 0.7); }
+  .footer-bottom {
+    max-width: 1280px; margin: 0 auto;
+    padding: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex; flex-wrap: wrap; justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+
+  /* ═════════ CURRENCY INPUT ═════════ */
+  .currency-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .currency-prefix {
+    position: absolute;
+    left: 18px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-muted);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .field input.currency-field {
+    padding-left: 36px;
+  }
+  .field input.currency-field:focus + .currency-prefix,
+  .field .currency-input:focus-within .currency-prefix {
+    color: var(--navy);
+  }
+
+  /* ═════════ MISC ═════════ */
+  [hidden] { display: none !important; }
+
+  /* ═════════ MOBILE BREAKPOINTS ═════════ */
+  /* Tablet & below */
+  @media (max-width: 720px) {
+    .hero-meta { grid-template-columns: 1fr 1fr; gap: 20px; }
+    .hero-body { padding: 48px 24px 72px; }
+  }
+
+  /* Phone */
+  @media (max-width: 560px) {
+    .topbar-inner { padding: 10px 16px; font-size: 10px; }
+    .topbar .left { letter-spacing: 0.1em; }
+
+    .hero-top { padding: 28px 16px 8px; }
+    .hero-top .logo-wrap img { height: 32px; }
+    .hero-top .phone { font-size: 11px; }
+    .hero-body { padding: 36px 16px 56px; }
+    .hero-headline { margin-bottom: 24px; }
+    .hero-lede { font-size: 15.5px; }
+    .hero-meta { margin-top: 40px; padding-top: 24px; gap: 16px 12px; }
+
+    .form-section { padding: 32px 16px 56px; }
+    .section-card { padding: 28px 20px; margin-bottom: 16px; }
+    .section-head { margin-bottom: 28px; padding-bottom: 20px; }
+    .section-card .section-desc { font-size: 14.5px; }
+
+    .borrower-block { padding: 20px 16px; }
+    .conditional { padding: 20px 16px; margin-top: 22px; }
+
+    /* Pill radios at full width */
+    .radio-options { grid-template-columns: 1fr; }
+    .radio-options.three { grid-template-columns: 1fr; }
+
+    /* Auth + declaration checkboxes */
+    .auth-row { padding: 14px 16px; gap: 12px; }
+    .auth-row span { font-size: 14px; }
+
+    /* Disclosure rows */
+    .disclosure-q { font-size: 14.5px; }
+    .disclosure-radio label { padding: 10px 14px; font-size: 14px; }
+
+    /* Submit block */
+    .submit-block { padding: 36px 20px; margin-top: 24px; }
+    .btn-submit { padding: 18px 24px; font-size: 13px; min-height: 56px; width: 100%; justify-content: center; }
+    .submit-note { font-size: 14px; }
+
+    /* Success */
+    .success-state { padding: 72px 16px; }
+
+    /* Footer */
+    .footer-inner { padding: 40px 16px 32px; gap: 28px; }
+    .footer-bottom { padding: 20px 16px; font-size: 11px; }
+  }
+
+  /* Very narrow phones (iPhone SE 1st gen etc.) */
+  @media (max-width: 380px) {
+    .hero-meta { grid-template-columns: 1fr; }
+    .section-card { padding: 24px 16px; }
+    .meta-block .meta-value { font-size: 15px; }
+  }
+
+  /* Disable smooth scroll for reduced-motion users */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═════════ TOP STATUS BAR ═════════ -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <span class="left">Posfin Capital · Solicitor Instruction Pack</span>
+    <span class="right">FCA Authorised · FRN 913022</span>
+  </div>
+</div>
+
+<!-- ═════════ HERO ═════════ -->
+<section class="hero">
+  <div class="hero-top">
+    <div class="logo-wrap">
+      <img src="/logo.png" alt="Posfin Capital" />
+      <div class="logo-sub">Client Instruction Pack</div>
+    </div>
+    <a href="tel:+447446950389" class="phone">+44 7446 950 389</a>
+  </div>
+  <div class="hero-body">
+    <p class="hero-eyebrow">Confidential · Ackroyd Legal</p>
+    <h1 class="hero-headline">
+      Client Remortgage Questionnaire <span class="accent">& Instruction.</span>
+    </h1>
+    <p class="hero-lede">
+      The combined Remortgage Questionnaire and Client Instruction Form required by Ackroyd Legal to act on your behalf. <strong>Completion is mandatory before searches, redemption requests or title work can commence.</strong>
+    </p>
+    <p class="hero-lede">
+      Allow approximately fifteen minutes. Information is held under our Privacy Policy and shared only with Ackroyd Legal and parties material to the transaction. A formal Form of Authority will be issued for e-signature on submission.
+    </p>
+
+    <div class="hero-meta">
+      <div class="meta-block">
+        <div class="meta-label">Reference</div>
+        <div class="meta-value" id="ref-display">To be assigned</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Solicitor</div>
+        <div class="meta-value">Ackroyd Legal</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Engaged by</div>
+        <div class="meta-value">Posfin Capital Ltd</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ FORM ═════════ -->
+<section class="form-section">
+  <div class="form-wrap">
+    <form id="instruction-form" novalidate>
+
+      <!-- ───── 01 · THE PROPERTY ───── -->
+      <section class="section-card" id="section-1">
+        <header class="section-head">
+          <div class="section-num">Section 01</div>
+          <h2>The <span class="accent">property.</span></h2>
+          <p class="section-desc">The asset over which the security will be granted.</p>
+        </header>
+
+        <div class="grid">
+          <div class="field col-2">
+            <label for="prop-addr1">Property address — line 1</label>
+            <input type="text" id="prop-addr1" name="property_address_line1" required autocomplete="address-line1" />
+          </div>
+          <div class="field col-2">
+            <label for="prop-addr2">Property address — line 2 <span class="opt">(optional)</span></label>
+            <input type="text" id="prop-addr2" name="property_address_line2" autocomplete="address-line2" />
+          </div>
+          <div class="field">
+            <label for="prop-town">Town / City</label>
+            <input type="text" id="prop-town" name="property_town" required />
+          </div>
+          <div class="field">
+            <label for="prop-postcode">Postcode</label>
+            <input type="text" id="prop-postcode" name="property_postcode" required pattern="^[A-Za-z]{1,2}[0-9R][0-9A-Za-z]? ?[0-9][A-Za-z]{2}$" />
+          </div>
+          <div class="field">
+            <label for="prop-title-no">HMLR title number <span class="opt">(if known)</span></label>
+            <input type="text" id="prop-title-no" name="property_title_number" />
+          </div>
+          <div class="field">
+            <label for="prop-type">Property type</label>
+            <select id="prop-type" name="property_type" required>
+              <option value="">— Select —</option>
+              <option>Detached house</option>
+              <option>Semi-detached house</option>
+              <option>Terraced house</option>
+              <option>Flat / Apartment</option>
+              <option>Maisonette</option>
+              <option>Bungalow</option>
+              <option>Mixed-use</option>
+              <option>Commercial</option>
+              <option>Land</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="prop-tenure">Tenure</label>
+            <select id="prop-tenure" name="property_tenure" required data-conditional-trigger="leasehold" data-conditional-value="Leasehold">
+              <option value="">— Select —</option>
+              <option value="Freehold">Freehold</option>
+              <option value="Leasehold">Leasehold</option>
+              <option value="Commonhold">Commonhold</option>
+              <option value="Share of Freehold">Share of Freehold</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="prop-use">Property is used as</label>
+            <select id="prop-use" name="property_use" required>
+              <option value="">— Select —</option>
+              <option>Main residence</option>
+              <option>Buy-to-Let / Investment</option>
+              <option>Second home</option>
+              <option>Holiday let</option>
+              <option>Vacant</option>
+              <option>Commercial premises</option>
+              <option>Mixed-use</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="prop-year-built">Year built <span class="opt">(approx.)</span></label>
+            <input type="number" id="prop-year-built" name="property_year_built" min="1500" max="2030" />
+          </div>
+          <div class="field">
+            <label for="prop-value">Current estimated value</label>
+            <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="prop-value" name="property_value" class="currency-field" data-currency="true" required /></div>
+          </div>
+          <div class="field">
+            <label for="prop-purchase-date">Date originally purchased</label>
+            <input type="month" id="prop-purchase-date" name="property_purchase_date" />
+          </div>
+          <div class="field">
+            <label for="prop-purchase-price">Original purchase price</label>
+            <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="prop-purchase-price" name="property_purchase_price" class="currency-field" data-currency="true" /></div>
+          </div>
+        </div>
+
+        <!-- LEASEHOLD CONDITIONAL -->
+        <div class="conditional" data-conditional-target="leasehold" hidden>
+          <div class="subsection-head">
+            <span class="subsection-rule"></span>
+            <h3>Leasehold particulars</h3>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="lh-term">Original lease term (years)</label>
+              <input type="number" id="lh-term" name="leasehold_term_years" min="0" />
+            </div>
+            <div class="field">
+              <label for="lh-unexpired">Unexpired term (years)</label>
+              <input type="number" id="lh-unexpired" name="leasehold_unexpired_years" min="0" />
+            </div>
+            <div class="field">
+              <label for="lh-ground-rent">Ground rent <span class="opt">(per annum)</span></label>
+              <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="lh-ground-rent" name="leasehold_ground_rent" class="currency-field" data-currency="true" /></div>
+            </div>
+            <div class="field">
+              <label for="lh-service-charge">Service charge <span class="opt">(per annum)</span></label>
+              <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="lh-service-charge" name="leasehold_service_charge" class="currency-field" data-currency="true" /></div>
+            </div>
+            <div class="field col-2">
+              <label for="lh-freeholder">Freeholder name &amp; address</label>
+              <textarea id="lh-freeholder" name="leasehold_freeholder"></textarea>
+            </div>
+            <div class="field col-2">
+              <label for="lh-managing">Managing agent name &amp; address <span class="opt">(if any)</span></label>
+              <textarea id="lh-managing" name="leasehold_managing_agent"></textarea>
+            </div>
+            <div class="field col-2">
+              <fieldset class="radio-set">
+                <legend>Any ground rent or service charge arrears?</legend>
+                <div class="radio-options">
+                  <label><input type="radio" name="leasehold_arrears" value="No" /><span class="radio-dot"></span>No</label>
+                  <label><input type="radio" name="leasehold_arrears" value="Yes" /><span class="radio-dot"></span>Yes</label>
+                </div>
+              </fieldset>
+            </div>
+            <div class="field col-2">
+              <fieldset class="radio-set">
+                <legend>Any forfeiture or possession proceedings, current or threatened?</legend>
+                <div class="radio-options">
+                  <label><input type="radio" name="leasehold_forfeiture" value="No" /><span class="radio-dot"></span>No</label>
+                  <label><input type="radio" name="leasehold_forfeiture" value="Yes" /><span class="radio-dot"></span>Yes</label>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── 02 · BORROWERS ───── -->
+      <section class="section-card" id="section-2">
+        <header class="section-head">
+          <div class="section-num">Section 02</div>
+          <h2>The <span class="accent">borrowers.</span></h2>
+          <p class="section-desc">Every party named on the existing title or who will be named on the new facility.</p>
+        </header>
+
+        <div id="borrowers-container"></div>
+
+        <div class="repeat-controls">
+          <button type="button" class="btn-ghost" id="add-borrower">＋ Add another borrower</button>
+          <span class="repeat-hint">Maximum four borrowers.</span>
+        </div>
+      </section>
+
+      <!-- ───── 03 · CURRENT CHARGES ───── -->
+      <section class="section-card" id="section-3">
+        <header class="section-head">
+          <div class="section-num">Section 03</div>
+          <h2>Current <span class="accent">charges.</span></h2>
+          <p class="section-desc">Every mortgage, second charge or registered charge presently against the property.</p>
+        </header>
+        <div class="grid">
+          <div class="field">
+            <label for="curr-lender">Current lender / charge holder</label>
+            <input type="text" id="curr-lender" name="current_lender" required />
+          </div>
+          <div class="field">
+            <label for="curr-acct">Mortgage / account number</label>
+            <input type="text" id="curr-acct" name="current_account_number" />
+          </div>
+          <div class="field">
+            <label for="curr-balance">Outstanding balance</label>
+            <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="curr-balance" name="current_balance" class="currency-field" data-currency="true" required /></div>
+          </div>
+          <div class="field">
+            <label for="curr-redemption">Estimated redemption figure</label>
+            <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="curr-redemption" name="current_redemption" class="currency-field" data-currency="true" /></div>
+          </div>
+          <div class="field">
+            <label for="curr-monthly">Monthly payment</label>
+            <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="curr-monthly" name="current_monthly_payment" class="currency-field" data-currency="true" /></div>
+          </div>
+          <div class="field">
+            <label for="curr-rate">Interest rate (%)</label>
+            <input type="number" id="curr-rate" name="current_interest_rate" min="0" step="0.01" />
+          </div>
+          <div class="field col-2">
+            <fieldset class="radio-set">
+              <legend>Are payments currently up to date?</legend>
+              <div class="radio-options three">
+                <label><input type="radio" name="current_payments_uptodate" value="Yes" /><span class="radio-dot"></span>Yes</label>
+                <label><input type="radio" name="current_payments_uptodate" value="No" /><span class="radio-dot"></span>No</label>
+                <label><input type="radio" name="current_payments_uptodate" value="In arrangement" /><span class="radio-dot"></span>In a managed arrangement</label>
+              </div>
+            </fieldset>
+          </div>
+          <div class="field col-2">
+            <label for="curr-other-charges">Any other charges, second charges, or restrictions on the title? <span class="opt">(Provide details, or write "None".)</span></label>
+            <textarea id="curr-other-charges" name="current_other_charges" required></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── 04 · NEW FACILITY ───── -->
+      <section class="section-card" id="section-4">
+        <header class="section-head">
+          <div class="section-num">Section 04</div>
+          <h2>The new <span class="accent">facility.</span></h2>
+          <p class="section-desc">The bridging facility being arranged through Posfin Capital.</p>
+        </header>
+        <div class="grid">
+          <div class="field">
+            <label for="new-amount">Loan amount sought</label>
+            <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="new-amount" name="new_loan_amount" class="currency-field" data-currency="true" required /></div>
+          </div>
+          <div class="field">
+            <label for="new-term">Term (months)</label>
+            <input type="number" id="new-term" name="new_loan_term_months" min="1" max="36" required />
+          </div>
+          <div class="field col-2">
+            <label for="new-purpose">Primary purpose of the loan</label>
+            <select id="new-purpose" name="new_loan_purpose" required>
+              <option value="">— Select —</option>
+              <option>Capital raise — business expansion</option>
+              <option>Capital raise — working capital</option>
+              <option>Refinance of existing charge</option>
+              <option>Refurbishment / development</option>
+              <option>Property acquisition</option>
+              <option>Tax liability</option>
+              <option>Debt consolidation</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field col-2">
+            <label for="new-repayment">Stated source of repayment at term</label>
+            <select id="new-repayment" name="new_loan_repayment" required>
+              <option value="">— Select —</option>
+              <option>Sale of the security property</option>
+              <option>Sale of another asset</option>
+              <option>Refinance onto a term mortgage</option>
+              <option>Refinance onto a development facility</option>
+              <option>Business cashflow / liquidity event</option>
+              <option>Investment maturity</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field col-2">
+            <label for="new-repayment-detail">Detail on repayment strategy</label>
+            <textarea id="new-repayment-detail" name="new_loan_repayment_detail" required></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── 05 · USE OF FUNDS ───── -->
+      <section class="section-card" id="section-5">
+        <header class="section-head">
+          <div class="section-num">Section 05</div>
+          <h2>Use of <span class="accent">funds.</span></h2>
+          <p class="section-desc">A line-by-line breakdown of how the net advance will be deployed. Solicitor, lender and broker fees are excluded from this section.</p>
+        </header>
+        <div class="grid">
+          <div class="field col-2">
+            <label for="uof-breakdown">Itemised use of funds <span class="opt">(one line per use, with £ amount)</span></label>
+            <textarea id="uof-breakdown" name="use_of_funds_breakdown" required placeholder="e.g.&#10;Redeem existing first charge — £450,000&#10;Working capital injection — £75,000&#10;VAT liability — £25,000"></textarea>
+          </div>
+          <div class="field col-2">
+            <fieldset class="radio-set">
+              <legend>Do you have documentary evidence available for each line item above?</legend>
+              <div class="radio-options three">
+                <label><input type="radio" name="use_of_funds_evidence" value="Yes" required /><span class="radio-dot"></span>Yes — on request</label>
+                <label><input type="radio" name="use_of_funds_evidence" value="Partial" /><span class="radio-dot"></span>Partial — will follow</label>
+                <label><input type="radio" name="use_of_funds_evidence" value="No" /><span class="radio-dot"></span>No</label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── 06 · OCCUPANTS ───── -->
+      <section class="section-card" id="section-6">
+        <header class="section-head">
+          <div class="section-num">Section 06</div>
+          <h2><span class="accent">Occupants.</span></h2>
+          <p class="section-desc">All persons aged 17 or over occupying the property at completion. Each adult occupant who is not a named borrower must sign a Deed of Consent.</p>
+        </header>
+        <div class="grid">
+          <div class="field col-2">
+            <fieldset class="radio-set">
+              <legend>Will any person aged 17+ other than the borrowers occupy the property at completion?</legend>
+              <div class="radio-options">
+                <label><input type="radio" name="other_occupants_present" value="No" required /><span class="radio-dot"></span>No</label>
+                <label><input type="radio" name="other_occupants_present" value="Yes" data-conditional-trigger="occupants" data-conditional-value="Yes" /><span class="radio-dot"></span>Yes</label>
+              </div>
+            </fieldset>
+          </div>
+          <div class="field col-2 conditional" data-conditional-target="occupants" hidden>
+            <label for="occupants-detail">Provide name, age and relationship for each additional occupant aged 17 or over</label>
+            <textarea id="occupants-detail" name="other_occupants_detail" placeholder="e.g.&#10;Jane Doe — 19 — daughter&#10;Robert Smith — 71 — father"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── 07 · INSURANCE ───── -->
+      <section class="section-card" id="section-7">
+        <header class="section-head">
+          <div class="section-num">Section 07</div>
+          <h2>Buildings <span class="accent">insurance.</span></h2>
+          <p class="section-desc">The incoming lender must be noted as Interested Party on the policy prior to drawdown.</p>
+        </header>
+        <div class="grid">
+          <div class="field">
+            <label for="ins-provider">Insurance provider</label>
+            <input type="text" id="ins-provider" name="insurance_provider" required />
+          </div>
+          <div class="field">
+            <label for="ins-policy">Policy number</label>
+            <input type="text" id="ins-policy" name="insurance_policy_number" required />
+          </div>
+          <div class="field">
+            <label for="ins-sum">Sum insured</label>
+            <div class="currency-input"><span class="currency-prefix">£</span><input type="text" inputmode="numeric" autocomplete="off" id="ins-sum" name="insurance_sum_insured" class="currency-field" data-currency="true" required /></div>
+          </div>
+          <div class="field">
+            <label for="ins-expiry">Policy renewal date</label>
+            <input type="date" id="ins-expiry" name="insurance_renewal_date" required />
+          </div>
+          <div class="field col-2">
+            <fieldset class="radio-set">
+              <legend>I will instruct the insurer to note the incoming lender as Interested Party prior to drawdown.</legend>
+              <div class="radio-options">
+                <label><input type="radio" name="insurance_lender_noted" value="Confirmed" required /><span class="radio-dot"></span>Confirmed</label>
+                <label><input type="radio" name="insurance_lender_noted" value="Will instruct" /><span class="radio-dot"></span>Will instruct upon request</label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── 08 · DISCLOSURES ───── -->
+      <section class="section-card" id="section-8">
+        <header class="section-head">
+          <div class="section-num">Section 08</div>
+          <h2><span class="accent">Disclosures.</span></h2>
+          <p class="section-desc">Any answer of Yes does not preclude completion; it must be disclosed in writing for compliance and AML purposes.</p>
+        </header>
+
+        <div class="disclosure-row">
+          <p class="disclosure-q">Has any borrower ever been declared bankrupt or entered an IVA?</p>
+          <div class="disclosure-radio">
+            <label><input type="radio" name="disc_bankruptcy" value="No" required /><span class="radio-dot"></span>No</label>
+            <label><input type="radio" name="disc_bankruptcy" value="Yes" data-conditional-trigger="disc-bankruptcy" data-conditional-value="Yes" /><span class="radio-dot"></span>Yes</label>
+          </div>
+          <div class="conditional disclosure-detail" data-conditional-target="disc-bankruptcy" hidden>
+            <label for="disc-bankruptcy-detail">Details</label>
+            <textarea id="disc-bankruptcy-detail" name="disc_bankruptcy_detail"></textarea>
+          </div>
+        </div>
+
+        <div class="disclosure-row">
+          <p class="disclosure-q">Any CCJs, defaults or unsatisfied judgments against any borrower in the last six years?</p>
+          <div class="disclosure-radio">
+            <label><input type="radio" name="disc_ccj" value="No" required /><span class="radio-dot"></span>No</label>
+            <label><input type="radio" name="disc_ccj" value="Yes" data-conditional-trigger="disc-ccj" data-conditional-value="Yes" /><span class="radio-dot"></span>Yes</label>
+          </div>
+          <div class="conditional disclosure-detail" data-conditional-target="disc-ccj" hidden>
+            <label for="disc-ccj-detail">Details</label>
+            <textarea id="disc-ccj-detail" name="disc_ccj_detail"></textarea>
+          </div>
+        </div>
+
+        <div class="disclosure-row">
+          <p class="disclosure-q">Any unspent criminal convictions against any borrower?</p>
+          <div class="disclosure-radio">
+            <label><input type="radio" name="disc_criminal" value="No" required /><span class="radio-dot"></span>No</label>
+            <label><input type="radio" name="disc_criminal" value="Yes" data-conditional-trigger="disc-criminal" data-conditional-value="Yes" /><span class="radio-dot"></span>Yes</label>
+          </div>
+          <div class="conditional disclosure-detail" data-conditional-target="disc-criminal" hidden>
+            <label for="disc-criminal-detail">Details</label>
+            <textarea id="disc-criminal-detail" name="disc_criminal_detail"></textarea>
+          </div>
+        </div>
+
+        <div class="disclosure-row">
+          <p class="disclosure-q">Any current or pending litigation, divorce proceedings or matrimonial disputes affecting the property or any borrower?</p>
+          <div class="disclosure-radio">
+            <label><input type="radio" name="disc_litigation" value="No" required /><span class="radio-dot"></span>No</label>
+            <label><input type="radio" name="disc_litigation" value="Yes" data-conditional-trigger="disc-litigation" data-conditional-value="Yes" /><span class="radio-dot"></span>Yes</label>
+          </div>
+          <div class="conditional disclosure-detail" data-conditional-target="disc-litigation" hidden>
+            <label for="disc-litigation-detail">Details</label>
+            <textarea id="disc-litigation-detail" name="disc_litigation_detail"></textarea>
+          </div>
+        </div>
+
+        <div class="disclosure-row">
+          <p class="disclosure-q">Is any borrower a Politically Exposed Person (PEP), a family member of a PEP, or a known close associate?</p>
+          <div class="disclosure-radio">
+            <label><input type="radio" name="disc_pep" value="No" required /><span class="radio-dot"></span>No</label>
+            <label><input type="radio" name="disc_pep" value="Yes" data-conditional-trigger="disc-pep" data-conditional-value="Yes" /><span class="radio-dot"></span>Yes</label>
+          </div>
+          <div class="conditional disclosure-detail" data-conditional-target="disc-pep" hidden>
+            <label for="disc-pep-detail">Details</label>
+            <textarea id="disc-pep-detail" name="disc_pep_detail"></textarea>
+          </div>
+        </div>
+
+        <div class="disclosure-row">
+          <p class="disclosure-q">Are any of the funds being raised, or any deposit/equity contributed, sourced from outside the UK or from a third party?</p>
+          <div class="disclosure-radio">
+            <label><input type="radio" name="disc_source" value="No" required /><span class="radio-dot"></span>No</label>
+            <label><input type="radio" name="disc_source" value="Yes" data-conditional-trigger="disc-source" data-conditional-value="Yes" /><span class="radio-dot"></span>Yes</label>
+          </div>
+          <div class="conditional disclosure-detail" data-conditional-target="disc-source" hidden>
+            <label for="disc-source-detail">Details</label>
+            <textarea id="disc-source-detail" name="disc_source_detail"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── 09 · FORM OF AUTHORITY ───── -->
+      <section class="section-card" id="section-9">
+        <header class="section-head">
+          <div class="section-num">Section 09</div>
+          <h2>Form of <span class="accent">authority.</span></h2>
+          <p class="section-desc">By ticking each acknowledgement below you instruct Ackroyd Legal to act on your behalf and authorise the actions set out. A formal Form of Authority will be issued for e-signature on submission.</p>
+        </header>
+
+        <div class="auth-list">
+          <label class="auth-row"><input type="checkbox" name="auth_act" required /><span>I authorise Ackroyd Legal to act on my behalf in connection with this remortgage and any incidental matters.</span></label>
+          <label class="auth-row"><input type="checkbox" name="auth_hmlr" required /><span>I authorise Ackroyd Legal to obtain official copies and title information from HM Land Registry in respect of the property above.</span></label>
+          <label class="auth-row"><input type="checkbox" name="auth_lender_liaison" required /><span>I authorise Ackroyd Legal to liaise with my current lender(s), any registered charge holders, managing agents, and the incoming lender for the purposes of this transaction.</span></label>
+          <label class="auth-row"><input type="checkbox" name="auth_searches" required /><span>I authorise Ackroyd Legal to undertake all necessary conveyancing searches, including the use of indemnity insurance where appropriate.</span></label>
+          <label class="auth-row"><input type="checkbox" name="auth_redemption" required /><span>I authorise Ackroyd Legal to accept Posfin-sourced redemption statements for the purposes of solicitor undertaking where formally provided.</span></label>
+          <label class="auth-row"><input type="checkbox" name="auth_thirdfort" required /><span>I consent to electronic verification of my identity via Thirdfort and to such checks being relied upon by the solicitor and incoming lender.</span></label>
+          <label class="auth-row"><input type="checkbox" name="auth_el" required /><span>I confirm I have read, understood and signed the Posfin Capital Engagement Letter associated with this matter.</span></label>
+        </div>
+      </section>
+
+      <!-- ───── 10 · DECLARATION ───── -->
+      <section class="section-card" id="section-10">
+        <header class="section-head">
+          <div class="section-num">Section 10</div>
+          <h2><span class="accent">Declaration.</span></h2>
+          <p class="section-desc">To be completed by the lead borrower on behalf of all named borrowers.</p>
+        </header>
+
+        <div class="auth-list" style="margin-bottom: 28px;">
+          <label class="auth-row"><input type="checkbox" name="declaration_truth" required /><span>I declare that the information given in this Questionnaire and Instruction Form is true, complete and accurate to the best of my knowledge and belief. I understand that material misstatement may render the loan facility void and may constitute an offence under the Fraud Act 2006.</span></label>
+          <label class="auth-row"><input type="checkbox" name="declaration_sharing" required /><span>I consent to my personal data being shared between Posfin Capital Limited, Ackroyd Legal, the incoming lender, the surveyor and any party material to the completion of this transaction, in accordance with the Posfin Privacy Policy and applicable data protection law.</span></label>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <label for="dec-name">Lead borrower — full legal name</label>
+            <input type="text" id="dec-name" name="declaration_name" required />
+          </div>
+          <div class="field">
+            <label for="dec-date">Date</label>
+            <input type="date" id="dec-date" name="declaration_date" required />
+          </div>
+          <div class="field col-2">
+            <label for="dec-signature">Typed signature <span class="opt">(your typed name confirms intent; a formal e-signature request will follow)</span></label>
+            <input type="text" id="dec-signature" name="declaration_signature" required />
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── SUBMIT ───── -->
+      <div class="submit-block">
+        <p class="submit-eyebrow">Submit Instruction</p>
+        <h2 class="submit-title">Lodge the pack <span class="accent">to your solicitor.</span></h2>
+        <p class="submit-note">On submission this pack is delivered to Posfin Capital Operations and forwarded to Ackroyd Legal under standing instruction. A copy is returned to the lead borrower's email for record.</p>
+        <button type="submit" class="btn-submit" id="submit-btn">
+          <span class="btn-label">Submit instruction</span>
+          <span class="btn-arrow">→</span>
+        </button>
+        <p class="submit-error" id="submit-error" hidden></p>
+      </div>
+
+    </form>
+  </div>
+</section>
+
+<!-- ═════════ SUCCESS STATE ═════════ -->
+<section class="success-state" id="success-state" hidden>
+  <div class="success-inner">
+    <p class="eyebrow">Received</p>
+    <h2>Instruction <span class="accent">lodged.</span></h2>
+    <p class="success-body">
+      Your completed Questionnaire and Instruction has been delivered to Posfin Capital Operations and forwarded to Ackroyd Legal under standing instruction. The Form of Authority for formal e-signature will follow within one business day, alongside next-step confirmations via WhatsApp.
+    </p>
+    <p class="success-ref"><span>Submission reference</span><strong id="success-ref-value">—</strong></p>
+  </div>
+</section>
+
+<!-- ═════════ FOOTER ═════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div>
+      <img src="/logo.png" alt="Posfin Capital" />
+      <p class="footer-blurb">An institutional bridging finance brokerage authorised and regulated by the Financial Conduct Authority. Specialist in development finance, development exit, and complex bridging cases.</p>
+    </div>
+    <div class="footer-block">
+      <div class="footer-h">Office</div>
+      <p>96 Kensington High Street<br />London W8 4SG<br />United Kingdom</p>
+      <p style="margin-top: 12px;"><a href="mailto:byron.hill@posfincapital.com">byron.hill@posfincapital.com</a></p>
+    </div>
+    <div class="footer-block">
+      <div class="footer-h">Authorisation &amp; Registration</div>
+      <p>Posfin Capital Ltd is authorised and regulated by the Financial Conduct Authority. FCA Firm Reference Number <strong>913022</strong>.</p>
+      <p style="margin-top: 8px;">Company No: <strong>12148846</strong> · ICO: <strong>ZA542657</strong></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 Posfin Capital Ltd. All rights reserved.</div>
+    <div>Your home may be repossessed if you do not keep up repayments on a mortgage or any other debt secured on it.</div>
+  </div>
+</footer>
+
+<!-- ═════════ BORROWER TEMPLATE ═════════ -->
+<template id="borrower-template">
+  <article class="borrower-block">
+    <header class="borrower-head">
+      <span class="borrower-label">Borrower <span class="borrower-num">1</span></span>
+      <button type="button" class="btn-remove-borrower" hidden>Remove</button>
+    </header>
+    <div class="grid">
+      <div class="field">
+        <label>Title</label>
+        <select name="borrower_title" required>
+          <option value="">— Select —</option>
+          <option>Mr</option><option>Mrs</option><option>Ms</option><option>Miss</option><option>Mx</option><option>Dr</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Full legal name</label>
+        <input type="text" name="borrower_name" required autocomplete="name" />
+      </div>
+      <div class="field col-2">
+        <label>Any previous names in the last six years <span class="opt">(or write "None")</span></label>
+        <input type="text" name="borrower_previous_names" required />
+      </div>
+      <div class="field">
+        <label>Date of birth</label>
+        <input type="date" name="borrower_dob" required />
+      </div>
+      <div class="field">
+        <label>Nationality</label>
+        <input type="text" name="borrower_nationality" required />
+      </div>
+      <div class="field">
+        <label>National Insurance number</label>
+        <input type="text" name="borrower_nino" placeholder="QQ 12 34 56 C" />
+      </div>
+      <div class="field">
+        <label>Marital status</label>
+        <select name="borrower_marital" required>
+          <option value="">— Select —</option>
+          <option>Single</option><option>Married / Civil Partnership</option><option>Cohabiting</option><option>Separated</option><option>Divorced</option><option>Widowed</option>
+        </select>
+      </div>
+      <div class="field col-2">
+        <label>Current residential address</label>
+        <textarea name="borrower_current_address" required></textarea>
+      </div>
+      <div class="field">
+        <label>Time at current address (years)</label>
+        <input type="number" name="borrower_time_at_address" min="0" step="0.5" required />
+      </div>
+      <div class="field">
+        <label>Mobile</label>
+        <input type="tel" name="borrower_phone" required autocomplete="tel" />
+      </div>
+      <div class="field col-2">
+        <label>Email address</label>
+        <input type="email" name="borrower_email" required autocomplete="email" />
+      </div>
+      <div class="field">
+        <label>Employment status</label>
+        <select name="borrower_employment" required>
+          <option value="">— Select —</option>
+          <option>Employed</option>
+          <option>Self-employed</option>
+          <option>Company director</option>
+          <option>Retired</option>
+          <option>Not employed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Occupation</label>
+        <input type="text" name="borrower_occupation" required />
+      </div>
+      <div class="field col-2">
+        <label>Employer / Trading name <span class="opt">(if applicable)</span></label>
+        <input type="text" name="borrower_employer" />
+      </div>
+    </div>
+  </article>
+</template>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   POSFIN × STIRLING ACKROYD — FORM CONTROLLER
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const CONFIG = {
+  // PASTE YOUR ZAPIER CATCH HOOK URL HERE:
+  WEBHOOK_URL: "https://hooks.zapier.com/hooks/catch/REPLACE_ME/REPLACE_ME/",
+  MAX_BORROWERS: 4,
+  REF_PREFIX: "POSFIN-LS",
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  initBorrowers();
+  initConditionals();
+  initRefDisplay();
+  initCurrencyFields();
+  initSubmission();
+  setDefaultDate();
+});
+
+/* BORROWERS */
+function initBorrowers() {
+  const container = document.getElementById("borrowers-container");
+  const template = document.getElementById("borrower-template");
+  const addBtn = document.getElementById("add-borrower");
+
+  function renderBorrowerCount() {
+    container.querySelectorAll(".borrower-block").forEach((block, idx) => {
+      const num = block.querySelector(".borrower-num");
+      if (num) num.textContent = idx + 1;
+      block.querySelector(".btn-remove-borrower").hidden = idx === 0;
+    });
+    addBtn.disabled = container.querySelectorAll(".borrower-block").length >= CONFIG.MAX_BORROWERS;
+  }
+
+  function addBorrower() {
+    if (container.querySelectorAll(".borrower-block").length >= CONFIG.MAX_BORROWERS) return;
+    const clone = template.content.cloneNode(true);
+    container.appendChild(clone);
+    const newBlock = container.lastElementChild;
+    newBlock.querySelector(".btn-remove-borrower").addEventListener("click", () => {
+      newBlock.remove();
+      renderBorrowerCount();
+    });
+    renderBorrowerCount();
+    requestAnimationFrame(() => {
+      newBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+      const firstInput = newBlock.querySelector("input, select, textarea");
+      if (firstInput) firstInput.focus({ preventScroll: true });
+    });
+  }
+
+  addBtn.addEventListener("click", addBorrower);
+  addBorrower();
+}
+
+/* CONDITIONALS */
+function initConditionals() {
+  const form = document.getElementById("instruction-form");
+  const targets = document.querySelectorAll("[data-conditional-target]");
+
+  function evaluateTarget(targetEl) {
+    const key = targetEl.getAttribute("data-conditional-target");
+    const triggers = document.querySelectorAll(`[data-conditional-trigger="${key}"]`);
+    let shouldShow = false;
+    triggers.forEach((t) => {
+      const revealVal = t.getAttribute("data-conditional-value");
+      if (revealVal === null) return;
+      const isRadioOrCheckbox = t.tagName === "INPUT" && (t.type === "radio" || t.type === "checkbox");
+      if (isRadioOrCheckbox) {
+        if (t.checked && t.value === revealVal) shouldShow = true;
+      } else {
+        if (t.value === revealVal) shouldShow = true;
+      }
+    });
+    targetEl.hidden = !shouldShow;
+    targetEl.querySelectorAll("input, select, textarea").forEach((el) => {
+      if (!shouldShow) {
+        if (el.required) { el.dataset.wasRequired = "1"; el.required = false; }
+      } else if (el.dataset.wasRequired === "1") {
+        el.required = true;
+      }
+    });
+  }
+
+  form.addEventListener("change", () => targets.forEach(evaluateTarget));
+  targets.forEach(evaluateTarget);
+}
+
+/* REFERENCE DISPLAY */
+function initRefDisplay() {
+  const refDisplay = document.getElementById("ref-display");
+  const updateRef = () => {
+    const firstBorrowerName = document.querySelector('input[name="borrower_name"]');
+    if (!firstBorrowerName || !firstBorrowerName.value.trim()) {
+      refDisplay.textContent = "To be assigned";
+      return;
+    }
+    const surname = firstBorrowerName.value.trim()
+      .split(/\s+/).pop().toUpperCase().replace(/[^A-Z]/g, "");
+    refDisplay.textContent = `${CONFIG.REF_PREFIX}-${surname || "____"}`;
+  };
+  document.addEventListener("input", (e) => {
+    if (e.target.matches('input[name="borrower_name"]')) updateRef();
+  });
+}
+
+/* DEFAULT DATE */
+function setDefaultDate() {
+  const decDate = document.getElementById("dec-date");
+  if (decDate && !decDate.value) {
+    decDate.value = new Date().toISOString().slice(0, 10);
+  }
+}
+
+
+/* CURRENCY FORMATTING */
+function initCurrencyFields() {
+  function formatWithCommas(digits) {
+    if (!digits) return '';
+    return Number(digits).toLocaleString('en-GB');
+  }
+  document.querySelectorAll('[data-currency="true"]').forEach((input) => {
+    input.addEventListener('input', (e) => {
+      const target = e.target;
+      const oldLength = target.value.length;
+      const cursorPos = target.selectionStart;
+      const digits = target.value.replace(/\D/g, '');
+      const formatted = formatWithCommas(digits);
+      target.value = formatted;
+      // Restore cursor position relative to commas added/removed
+      const newLength = formatted.length;
+      const newPos = Math.max(0, cursorPos + (newLength - oldLength));
+      try { target.setSelectionRange(newPos, newPos); } catch(e) {}
+    });
+    input.addEventListener('paste', (e) => {
+      // Let the input event handler run after paste
+      setTimeout(() => {
+        const digits = input.value.replace(/\D/g, '');
+        input.value = formatWithCommas(digits);
+      }, 0);
+    });
+  });
+}
+
+/* SUBMISSION */
+function initSubmission() {
+  const form = document.getElementById("instruction-form");
+  const errorEl = document.getElementById("submit-error");
+  const submitBtn = document.getElementById("submit-btn");
+  const btnLabel = submitBtn.querySelector(".btn-label");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+
+    if (!form.checkValidity()) {
+      const firstInvalid = form.querySelector(":invalid");
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+        firstInvalid.focus({ preventScroll: true });
+      }
+      errorEl.textContent = "Several required fields are incomplete. The form has been scrolled to the first item that needs your attention.";
+      errorEl.hidden = false;
+      return;
+    }
+
+    const payload = buildPayload(form);
+    submitBtn.disabled = true;
+    btnLabel.textContent = "Submitting…";
+
+    try {
+      if (CONFIG.WEBHOOK_URL.includes("REPLACE_ME")) {
+        console.warn("[Posfin] WEBHOOK_URL not configured. Payload that WOULD be sent:", payload);
+        await new Promise((r) => setTimeout(r, 600));
+        showSuccess(payload.reference);
+        return;
+      }
+      const res = await fetch(CONFIG.WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`Submission failed (${res.status})`);
+      showSuccess(payload.reference);
+    } catch (err) {
+      console.error(err);
+      errorEl.textContent = "We were unable to lodge your instruction at this time. Please retry, or contact Posfin Operations directly at aadi@posfincapital.com if the issue persists.";
+      errorEl.hidden = false;
+      submitBtn.disabled = false;
+      btnLabel.textContent = "Submit instruction";
+    }
+  });
+}
+
+function buildPayload(form) {
+  const obj = {
+    submitted_at: new Date().toISOString(),
+    reference: document.getElementById("ref-display").textContent,
+    source: "ackroyd-instruction-form",
+  };
+  obj.borrowers = Array.from(document.querySelectorAll(".borrower-block")).map((block) => {
+    const result = {};
+    block.querySelectorAll("[name]").forEach((field) => {
+      if (field.type === "radio") { if (field.checked) result[field.name] = field.value; }
+      else if (field.type === "checkbox") { result[field.name] = field.checked; }
+      else { result[field.name] = field.value; }
+    });
+    return result;
+  });
+  form.querySelectorAll("[name]").forEach((field) => {
+    if (field.closest(".borrower-block")) return;
+    const key = field.name;
+    if (field.type === "radio") {
+      if (field.checked) obj[key] = field.value;
+      else if (!(key in obj)) obj[key] = null;
+    } else if (field.type === "checkbox") {
+      obj[key] = field.checked;
+    } else if (field.dataset.currency === "true") {
+      // Currency fields: strip commas and convert to number
+      const raw = (field.value || "").replace(/\D/g, "");
+      obj[key] = raw ? Number(raw) : null;
+    } else {
+      obj[key] = field.value;
+    }
+  });
+  return obj;
+}
+
+function showSuccess(reference) {
+  document.getElementById("instruction-form").hidden = true;
+  document.querySelector(".hero").style.display = "none";
+  const success = document.getElementById("success-state");
+  document.getElementById("success-ref-value").textContent = reference || "—";
+  success.hidden = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+</script>
+</body>
+</html>
