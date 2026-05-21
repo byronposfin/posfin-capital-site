@@ -3575,7 +3575,7 @@ function nextStep(from) {
     const resAddr = document.getElementById('residentialAddress').value.trim();
     if (!fn || !ln || !mob || !em || !cp) { alert('Please complete all required fields.'); return; }
     if (!dob) { alert('Please enter your date of birth.'); document.getElementById('dob').focus(); return; }
-    if (!resAddr) { alert('Please enter your residential address. Use the postcode search or type it manually.'); document.getElementById('resHouse').focus(); return; }
+    // Residential address is optional — capture if filled, do not block progression
     formData.firstName = fn; formData.lastName = ln; formData.mobile = mob;
     formData.email = em; formData.contactPref = document.getElementById('contactPref').value;
     formData.creditProfile = document.getElementById('creditProfile').value;
