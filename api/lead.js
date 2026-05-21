@@ -343,13 +343,12 @@ export default async function handler(req, res) {
     const row = formatter(data, ts);
 
     // Auth via service account JSON stored in Vercel env
-    const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-    if (!saJson) {
-      console.error('[Lead API] GOOGLE_SERVICE_ACCOUNT_JSON not set');
+    const saB64 = process.env.GOOGLE_SA_B64;
+    if (!saB64) {
+      console.error('[Lead API] GOOGLE_SA_B64 not set');
       res.status(500).json({ error: 'Server misconfiguration' }); return;
     }
-
-    const credentials = JSON.parse(saJson);
+    const credentials = JSON.parse(Buffer.from(saB64, 'base64').toString('utf8'));
     const auth = new google.auth.GoogleAuth({
       credentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
