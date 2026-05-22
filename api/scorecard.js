@@ -1,138 +1,143 @@
 /**
- * Posfin Capital — Deal Scorecard
+ * Posfin Capital — Deal Scorecard (Permanent URL)
  * GET /api/scorecard?ref=POSFIN-ML-SMITH
  *
- * Reads deal data from PIPELINE tab and renders a branded HTML scorecard.
- * URL is permanent — shareable with broker and borrower.
+ * Reads from PIPELINE tab, renders the same format as the on-screen
+ * Step 5 confirmation. Shareable with broker (Telegram) and borrower (WATI).
  */
 
 import { google } from 'googleapis';
 
 const SHEET_ID = '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
 
-function fmt(v) {
-  if (!v || v === 'TBC' || v === '') return '—';
-  return v;
-}
-
+function fmt(v) { return v && v !== 'TBC' && v !== '' ? v : '—'; }
 function fmtCurrency(v) {
   if (!v || v === 'TBC' || v === '') return '—';
   const n = Number(String(v).replace(/[^\d.]/g, ''));
-  if (isNaN(n) || n === 0) return '—';
-  return '£' + n.toLocaleString('en-GB');
+  return isNaN(n) || n === 0 ? '—' : '£' + n.toLocaleString('en-GB');
+}
+
+function row(label, value, opts = {}) {
+  const color = opts.teal ? '#00B5B0' : opts.amber ? '#D4A853' : '#1C184F';
+  const weight = opts.bold ? '700' : '500';
+  return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:0.4rem 0;border-bottom:1px solid rgba(28,24,79,0.07)">
+    <span style="font-size:0.82rem;color:#6F6B7A">${label}</span>
+    <span style="font-size:0.85rem;font-weight:${weight};color:${color}">${value || '—'}</span>
+  </div>`;
+}
+
+function section(label) {
+  return `<p style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:#D4A853;font-family:monospace;margin:1.2rem 0 0.5rem">${label}</p>`;
 }
 
 function scorecard(d) {
   const now = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  const productColour = {
-    'Speed Loan': '#00B5B0',
-    'Main Loan': '#1C184F',
-    'Back-to-Back': '#7B5EA7',
-    'Development Finance': '#D4A853',
-    'Dev Exit': '#2E7D32',
-  }[d.product] || '#1C184F';
+
+  const additionsRows = [];
+  let totalAdditions = 0;
+  if (d.secondChargeBalance && Number(String(d.secondChargeBalance).replace(/[^\d]/g,'')) > 0) {
+    const v = Number(String(d.secondChargeBalance).replace(/[^\d]/g,''));
+    totalAdditions += v;
+    additionsRows.push(row(`Redeem 2nd charge — ${d.secondChargeProvider || 'TBC'}`, fmtCurrency(v), { amber: true }));
+  }
+  if (d.legalBuffer) {
+    totalAdditions += 3000;
+    additionsRows.push(row('Legal cost buffer', '£3,000', { amber: true }));
+  }
+  if (d.overrunBuffer) {
+    totalAdditions += 10000;
+    additionsRows.push(row('Contingency buffer', '£10,000', { amber: true }));
+  }
+
+  const additionsSection = additionsRows.length > 0 ? `
+    <div style="margin-bottom:1.2rem;padding:0.8rem;border-radius:5px;background:rgba(212,168,83,0.05);border:1px solid rgba(212,168,83,0.2)">
+      ${section('Additions to Loan')}
+      ${additionsRows.join('')}
+      <div style="display:flex;justify-content:space-between;padding-top:0.4rem;margin-top:0.2rem;border-top:1px solid rgba(212,168,83,0.3)">
+        <span style="font-size:0.82rem;font-weight:700;color:#1C184F">Total additions</span>
+        <span style="font-size:0.85rem;font-weight:700;color:#D4A853">${fmtCurrency(totalAdditions)}</span>
+      </div>
+    </div>` : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Posfin Capital · Deal Scorecard · ${d.ref}</title>
+<title>Posfin Capital · ${d.ref}</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#FAF8F3;font-family:'DM Sans',sans-serif;color:#1A1A2E;min-height:100vh}
+body{background:#FAF8F3;font-family:'DM Sans',-apple-system,sans-serif;color:#1A1A2E;min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:2rem 1.25rem 4rem}
+.header{text-align:center;padding-bottom:1.5rem;border-bottom:2px solid #1C184F;margin-bottom:0.5rem}
+.icon{font-size:2.5rem;margin-bottom:0.75rem}
+.headline{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;color:#1C184F;margin:0 0 0.4rem}
+.subline{font-size:0.82rem;color:#5A5770}
+.scorecard-label{font-size:10px;text-transform:uppercase;letter-spacing:0.18em;color:#9E9AAA;font-family:monospace;margin:1rem 0 0.75rem}
+.ref-box{margin-top:1.5rem;padding:1rem;border-radius:5px;background:#1C184F;text-align:center}
+.ref-label{color:rgba(255,255,255,0.7);font-size:0.78rem;margin-bottom:0.3rem}
+.ref-value{color:#00B5B0;font-family:monospace;font-size:0.9rem;font-weight:600}
+.ref-sub{color:rgba(255,255,255,0.6);font-size:0.75rem;margin-top:0.6rem}
 .top-bar{background:#13113A;color:rgba(255,255,255,0.78);padding:10px 24px;font-size:11px;letter-spacing:0.12em;display:flex;justify-content:space-between;align-items:center}
-.header{background:linear-gradient(180deg,#1C184F 0%,#13113A 100%);padding:32px 40px 28px;color:#fff}
-.logo{height:32px;width:auto;margin-bottom:16px}
-.product-badge{display:inline-block;padding:4px 14px;border-radius:2px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-weight:600;margin-bottom:16px}
-.header h1{font-family:'Playfair Display',serif;font-size:28px;font-weight:500;margin-bottom:6px}
-.header .ref{font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:4px}
-.generated{font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.1em}
-.body{max-width:760px;margin:0 auto;padding:32px 24px 64px}
-.section{margin-bottom:28px;background:#fff;border:1px solid #E8E4DB;border-radius:4px;overflow:hidden}
-.section-header{padding:12px 20px;background:#1C184F;color:#fff;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;font-weight:600}
-.rows{padding:0 20px}
-.row{display:flex;padding:11px 0;border-bottom:1px solid #F0EDE5;font-size:14px;align-items:baseline}
-.row:last-child{border-bottom:none}
-.label{width:44%;color:#6F6B7A;flex-shrink:0;font-size:13px}
-.value{flex:1;color:#1A1A2E;font-weight:500}
-.value.teal{color:#00B5B0}
-.value.gold{color:#D4A853}
-.value.red{color:#C62828}
-.value.green{color:#2E7D32}
-.ltv-bar{height:8px;background:#E8E4DB;border-radius:4px;margin-top:6px;overflow:hidden}
-.ltv-fill{height:100%;border-radius:4px;transition:width 0.3s}
-.flag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:0.08em}
-.flag.green{background:#E8F5E9;color:#2E7D32}
-.flag.amber{background:#FFF3E0;color:#E65100}
-.flag.red{background:#FFEBEE;color:#C62828}
-.footer{text-align:center;padding:24px;font-size:11px;color:#9E9AAA;letter-spacing:0.08em}
-@media(max-width:600px){.label{width:46%}.body{padding:20px 12px 48px}}
+.generated{font-size:11px;color:#9E9AAA;text-align:center;margin-top:2rem}
+@media(max-width:600px){.wrap{padding:1.5rem 1rem 3rem}.top-bar{flex-direction:column;gap:4px;text-align:center}}
 </style>
 </head>
 <body>
 <div class="top-bar">
   <span>POSFIN CAPITAL · BRIDGING FINANCE SPECIALISTS</span>
-  <span>FCA Authorised · FRN 913022</span>
+  <span>FCA AUTHORISED · FRN 913022</span>
 </div>
-<div class="header">
-  <img class="logo" src="https://posfincapital.com/logo.png" alt="Posfin Capital"/>
-  <div class="product-badge" style="background:${productColour};color:#fff">${fmt(d.product)}</div>
-  <div class="ref">${fmt(d.ref)}</div>
-  <h1>${fmt(d.borrowerName)}</h1>
-  <div class="generated">Generated ${now}</div>
-</div>
-<div class="body">
-
-  <div class="section">
-    <div class="section-header">Borrower</div>
-    <div class="rows">
-      <div class="row"><span class="label">Name</span><span class="value">${fmt(d.borrowerName)}</span></div>
-      <div class="row"><span class="label">Mobile</span><span class="value">${fmt(d.mobile)}</span></div>
-      <div class="row"><span class="label">Email</span><span class="value">${fmt(d.email)}</span></div>
-    </div>
+<div class="wrap">
+  <div class="header">
+    <div class="icon">${d.product === 'Speed Loan' ? '⚡' : d.product?.includes('Dev') ? '🏗' : '✅'}</div>
+    <h2 class="headline">Application received.</h2>
+    <p class="subline">Byron or Chris will call you within 30 minutes during business hours with your indicative terms.</p>
   </div>
 
-  <div class="section">
-    <div class="section-header">Security Property</div>
-    <div class="rows">
-      <div class="row"><span class="label">Address</span><span class="value">${fmt(d.securityAddress)}</span></div>
-      <div class="row"><span class="label">Stated Value</span><span class="value">${fmtCurrency(d.propertyValue)}</span></div>
-      <div class="row"><span class="label">1st Charge Lender</span><span class="value">${fmt(d.firstChargeLender)}</span></div>
-      <div class="row"><span class="label">1st Charge Balance</span><span class="value">${fmtCurrency(d.firstChargeBalance)}</span></div>
-      <div class="row"><span class="label">Arrears</span><span class="value ${d.arrears && d.arrears !== 'None' ? 'red' : ''}">${fmt(d.arrears)}${d.arrearsAmount ? ' · ' + fmtCurrency(d.arrearsAmount) : ''}</span></div>
-      <div class="row"><span class="label">2nd / Other Charges</span><span class="value">${fmt(d.secondCharges)}${d.secondChargeProvider ? ' · ' + d.secondChargeProvider : ''}${d.secondChargeBalance ? ' · ' + fmtCurrency(d.secondChargeBalance) : ''}</span></div>
-    </div>
+  <p class="scorecard-label">Your scorecard</p>
+
+  <div style="margin-bottom:1.2rem">
+    ${section('Your Details')}
+    ${row('Name', fmt(d.borrowerName))}
+    ${row('Mobile', fmt(d.mobile))}
+    ${row('Email', fmt(d.email))}
   </div>
 
-  <div class="section">
-    <div class="section-header">Loan Structure</div>
-    <div class="rows">
-      <div class="row"><span class="label">Product</span><span class="value" style="color:${productColour};font-weight:600">${fmt(d.product)}</span></div>
-      <div class="row"><span class="label">Requested</span><span class="value teal">${fmtCurrency(d.loanAmount)}</span></div>
-      <div class="row"><span class="label">Estimated LTV</span><span class="value">
-        ${fmt(d.ltv)}
-        ${d.ltvFlag ? `<span class="flag ${d.ltvFlag === 'PASS' ? 'green' : d.ltvFlag === 'WARN' ? 'amber' : 'red'}">${d.ltvFlag}</span>` : ''}
-      </span></div>
-      <div class="row"><span class="label">Purpose</span><span class="value">${fmt(d.purpose)}</span></div>
-      <div class="row"><span class="label">Exit Strategy</span><span class="value">${fmt(d.exit)}</span></div>
-      <div class="row"><span class="label">Regulated</span><span class="value">${fmt(d.regulated)}</span></div>
-    </div>
+  <div style="margin-bottom:1.2rem">
+    ${section('The Security Property')}
+    ${row('Address', fmt(d.securityAddress))}
+    ${row('Postcode', fmt(d.postcode))}
+    ${row('Estimated Value', fmtCurrency(d.propertyValue))}
+    ${d.tenure ? row('Tenure', fmt(d.tenure)) : ''}
+    ${row('1st Charge Lender', fmt(d.firstChargeLender) || 'None')}
+    ${row('Mortgage Balance', fmtCurrency(d.firstChargeBalance))}
+    ${d.arrearsAmount && d.arrearsAmount !== '0' ? row('Arrears', fmtCurrency(d.arrearsAmount), { amber: true }) : ''}
+    ${d.secondCharges === 'Yes' ? row(`2nd Charge (${d.secondChargeProvider || 'TBC'})`, fmtCurrency(d.secondChargeBalance), { amber: true }) : ''}
   </div>
 
-  ${d.additionalInfo ? `
-  <div class="section">
-    <div class="section-header">Additional Notes</div>
-    <div class="rows">
-      <div class="row" style="display:block;padding:14px 0"><span style="font-size:14px;color:#1A1A2E;line-height:1.6">${d.additionalInfo}</span></div>
-    </div>
-  </div>` : ''}
+  ${additionsSection}
 
-</div>
-<div class="footer">
-  Posfin Capital Limited · FCA FRN 913022 · 96 Kensington High Street, London W8 4SG<br/>
-  This scorecard is confidential and prepared for internal use and borrower review only.
+  <div style="margin-bottom:1.2rem">
+    ${section('Your Loan')}
+    ${row('Net cash to you on day 1', fmtCurrency(d.netCash), { teal: true, bold: true })}
+    ${totalAdditions > 0 ? row('Additions (redemptions + buffers)', fmtCurrency(totalAdditions), { amber: true }) : ''}
+    ${row('Total facility required', (fmtCurrency(d.totalFacility) || '—') + ' (approx, before lender fees)', { bold: true })}
+    ${row('Net or gross', fmt(d.netOrGross))}
+    ${row('Purpose', fmt(d.purpose))}
+    ${row('Exit strategy', fmt(d.exitStrategy))}
+    ${d.timescale ? row('Timescale', fmt(d.timescale)) : ''}
+    ${d.ltv ? row('Estimated LTV', fmt(d.ltv)) : ''}
+  </div>
+
+  <div class="ref-box">
+    <p class="ref-label">Reference</p>
+    <p class="ref-value">${d.ref}</p>
+    <p class="ref-sub">Check your WhatsApp — your scorecard is on its way to ${fmt(d.mobile)}</p>
+  </div>
+
+  <p class="generated">Generated ${now} · Posfin Capital Ltd · FCA FRN 913022 · 96 Kensington High Street, London W8 4SG</p>
 </div>
 </body>
 </html>`;
@@ -155,51 +160,68 @@ export default async function handler(req, res) {
     });
     const sheets = google.sheets({ version: 'v4', auth });
 
-    // Search PIPELINE tab for this ref
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: `'PIPELINE'!A:AQ`,
     });
     const rows = result.data.values || [];
-    const dataRow = rows.find(r => r[20] === ref); // col U = deal ref
 
+    // Find row by deal ref (col U = index 20)
+    const dataRow = rows.find(r => r[20] === ref);
     if (!dataRow) {
-      res.status(404).send(`Scorecard not found for ref: ${ref}`);
+      res.status(404).send(`<html><body style="font-family:sans-serif;text-align:center;padding:4rem">
+        <h2 style="color:#1C184F">Scorecard not found</h2>
+        <p style="color:#6F6B7A">Reference: ${ref}</p>
+        <p style="color:#6F6B7A;margin-top:1rem">This deal may not have been submitted via the website form.</p>
+      </body></html>`);
       return;
     }
 
-    // Map columns from pipeline row
+    // Parse summary text from col A
+    const summary = dataRow[0] || '';
+    const get = (pattern) => summary.match(pattern)?.[1]?.trim() || '';
+
+    const loanAmount = dataRow[18] || '';
+    const propertyValue = dataRow[21] || '';
+    const firstChargeBalance = dataRow[23] || '';
+    const arrearsAmount = dataRow[25] || '';
+    const secondChargeBalance = dataRow[27] || '';
+    const secondChargeProvider = dataRow[26] || '';
+
+    // Calculate net cash
+    const loan = Number(String(loanAmount).replace(/[^\d]/g, '')) || 0;
+    const arrears = Number(String(arrearsAmount).replace(/[^\d]/g, '')) || 0;
+    const sc = Number(String(secondChargeBalance).replace(/[^\d]/g, '')) || 0;
+    const hasAdditions = arrears > 0 || sc > 0;
+    const netCash = hasAdditions ? Math.max(0, loan - arrears - sc) : loan;
+
     const d = {
       ref,
-      borrowerName: `${dataRow[5] || ''} ${dataRow[6] || ''}`.trim() || dataRow[0]?.slice(0, 40) || 'Borrower',
+      borrowerName: `${dataRow[5] || ''} ${dataRow[6] || ''}`.trim() || get(/Name: ([^\n]+)/),
       mobile:       dataRow[3] || '',
       email:        dataRow[4] || '',
       product:      dataRow[11] || '',
-      securityAddress: dataRow[0]?.match(/Address: ([^\n]+)/)?.[1] || '',
-      propertyValue:   dataRow[21] || '',
+      securityAddress: get(/Address: ([^\n]+)/),
+      postcode:     get(/Postcode: ([^\n]+)/),
+      propertyValue,
+      tenure:       get(/tenure.*?([^\n·]+)/i),
       firstChargeLender: dataRow[22] || '',
-      firstChargeBalance: dataRow[23] || '',
-      arrears:      '',
-      arrearsAmount: dataRow[25] || '',
-      secondCharges: '',
-      secondChargeProvider: dataRow[26] || '',
-      secondChargeBalance:  dataRow[27] || '',
-      loanAmount:   dataRow[18] || '',
-      ltv:          '',
-      ltvFlag:      '',
-      purpose:      '',
-      exit:         '',
-      regulated:    '',
-      additionalInfo: dataRow[1] || '',
+      firstChargeBalance,
+      arrearsAmount,
+      secondCharges: sc > 0 ? 'Yes' : 'No',
+      secondChargeProvider,
+      secondChargeBalance,
+      legalBuffer:  summary.includes('Legal cost buffer') || summary.includes('legalBuffer: Yes'),
+      overrunBuffer: summary.includes('Contingency buffer') || summary.includes('overrunBuffer: Yes'),
+      loanAmount,
+      netCash,
+      totalFacility: loan,
+      netOrGross:   get(/Net or gross: ([^\n]+)/),
+      purpose:      get(/🎯 PURPOSE\n([^\n]+)/),
+      exitStrategy: get(/🚪 EXIT\n([^\n]+)/),
+      timescale:    get(/Timescale: ([^\n]+)/),
+      ltv:          get(/LTV: ([^\n]+)/),
     };
-
-    // Parse summary text for richer data
-    const summary = dataRow[0] || '';
-    d.purpose  = summary.match(/🎯 PURPOSE\n([^\n]+)/)?.[1] || '';
-    d.exit     = summary.match(/🚪 EXIT\n([^\n]+)/)?.[1] || '';
-    d.regulated = summary.match(/Regulated[^·\n]*(?:·\s*)?([^\n·]+regulated[^\n]*)/i)?.[0]?.split('·')?.[0]?.trim() || '';
-    d.arrears  = summary.match(/Arrears: ([^\n·]+)/)?.[1]?.trim() || '';
-    d.securityAddress = d.securityAddress || summary.match(/Address: ([^\n]+)/)?.[1]?.trim() || '';
 
     const html = scorecard(d);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
