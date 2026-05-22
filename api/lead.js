@@ -363,8 +363,58 @@ export default async function handler(req, res) {
       pipelineRowNumber = await appendRowAtFirstEmpty(sheets, 'PIPELINE', pipelineRow);
     }
 
-    console.log(`[Lead API] ${data.deal_ref} → ${tabName}`);
-    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber }); return;
+    // ── Scorecard URL ──────────────────────────────────────────────────
+    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://posfincapital.com';
+    const scorecardUrl = data.deal_ref ? `${BASE_URL}/api/scorecard?ref=${encodeURIComponent(data.deal_ref)}` : null;
+
+    // ── Save scorecard URL back to PIPELINE row (col AQ = 43) ─────────
+    if (scorecardUrl && pipelineRowNumber) {
+      try {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID,
+          range: `'PIPELINE'!AQ${pipelineRowNumber}`,
+          valueInputOption: 'USER_ENTERED',
+          requestBody: { values: [[`=HYPERLINK("${scorecardUrl}","View Scorecard")`]] },
+        });
+      } catch (e) { console.warn('[Lead API] Scorecard URL write failed:', e.message); }
+    }
+
+    // ── Telegram broker alert ──────────────────────────────────────────
+    const TELE_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    const isMain = ['main_loan', 'development_finance', 'development_exit_finance'].includes(product);
+    const brokerName = data.assigned_broker === 'Chris' ? 'Chris' : 'Byron';
+    // Main loans £250k+ → round-robin Byron/Chris; Speed loans → Byron
+    const loanAmt = Number(String(data.loan_amount || data.loan_needed || data.full_loan_required || '0').replace(/[^\d]/g,''));
+    const CHAT_BYRON = '1750758657';
+    const CHAT_CHRIS = '8634157536';
+    const recipientId = (isMain && loanAmt >= 250000) ? CHAT_BYRON : CHAT_BYRON; // default Byron; Chris gets separate notification if his deal
+
+    if (TELE_TOKEN && data.deal_ref) {
+      const productLabel = pipelineRow ? pipelineRow[11] : product.replace(/_/g,' ');
+      const name = `${data.first_name || ''} ${data.last_name || ''}`.trim();
+      const msg = [
+        `🦅 *New ${productLabel} Lead*`,
+        ``,
+        `*Ref:* ${data.deal_ref}`,
+        `*Name:* ${name}`,
+        `*Mobile:* ${data.mobile || 'TBC'}`,
+        `*Email:* ${data.email || 'TBC'}`,
+        `*Property:* ${data.property_address || data.site_address || 'TBC'}`,
+        `*Loan:* ${data.loan_amount || data.loan_needed || data.full_loan_required || 'TBC'}`,
+        `*LTV:* ${data.estimated_ltv || 'TBC'} ${data.ltv_flag ? '(' + data.ltv_flag + ')' : ''}`,
+        `*Exit:* ${data.exit_strategy || 'TBC'}`,
+        scorecardUrl ? `\n[📊 View Scorecard](${scorecardUrl})` : '',
+      ].filter(Boolean).join('\n');
+
+      fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: recipientId, text: msg, parse_mode: 'Markdown', disable_web_page_preview: false }),
+      }).catch(e => console.warn('[Lead API] Telegram failed:', e.message));
+    }
+
+    console.log(`[Lead API] ${data.deal_ref} → ${tabName} | Scorecard: ${scorecardUrl}`);
+    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, scorecardUrl }); return;
 
   } catch (err) {
     console.error('[Lead API Error]', err);
