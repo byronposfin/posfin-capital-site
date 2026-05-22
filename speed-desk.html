@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Speed Desk · Posfin Capital · Funds in 3–5 Days · No Upfront Cost</title>
+<meta name="description" content="£50,000 to £300,000. Equitable charge. 12 months. Zero upfront cost. No monthly repayments. Funds in 3–5 working days. FCA authorised — FRN 913022."/>
+<link rel="preload" as="image" href="/logo.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:#FAF8F3;color:#1A1A2E;-webkit-font-smoothing:antialiased}
+/* ── NAV ── */
+.nav{background:#13113A;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.nav img{height:34px;width:auto}
+.nav a{color:rgba(255,255,255,.78);font-size:12px;letter-spacing:.18em;text-transform:uppercase;text-decoration:none}
+/* ── HERO ── */
+.hero{background:linear-gradient(180deg,#1C184F 0%,#0D0B2E 100%);color:#fff;padding:80px 24px 72px}
+.hero-inner{max-width:960px;margin:0 auto}
+.desk-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,181,176,.12);border:1px solid rgba(0,181,176,.3);color:#00B5B0;font-size:11px;letter-spacing:.22em;text-transform:uppercase;padding:6px 14px;margin-bottom:28px}
+.desk-badge .dot{width:6px;height:6px;border-radius:50%;background:#00B5B0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(44px,7vw,88px);font-weight:500;line-height:.95;letter-spacing:-.02em;margin-bottom:32px}
+.hero h1 em{font-style:italic;color:#00B5B0}
+.hero-sub{font-size:clamp(17px,2vw,21px);color:rgba(255,255,255,.82);max-width:640px;line-height:1.6;margin-bottom:40px}
+.hero-sub strong{color:#fff;font-weight:600}
+/* ── STATS BAR ── */
+.stats{margin-top:56px;padding-top:36px;border-top:1px solid rgba(255,255,255,.15);display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+@media(max-width:640px){.stats{grid-template-columns:1fr 1fr;gap:20px}}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.22em;color:#00B5B0;margin-bottom:8px}
+.stat-value{font-family:'Playfair Display',serif;font-size:clamp(22px,3vw,30px);font-weight:500;color:#fff}
+/* ── ZERO FRICTION ── */
+.zero{background:#00B5B0;color:#fff;padding:28px 24px;text-align:center}
+.zero p{font-size:clamp(16px,2vw,20px);font-weight:700;letter-spacing:.04em;max-width:800px;margin:0 auto}
+/* ── HOW ── */
+.how{max-width:960px;margin:0 auto;padding:72px 24px}
+.section-tag{font-size:11px;text-transform:uppercase;letter-spacing:.28em;color:#6F6B7A;margin-bottom:20px}
+.how h2{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,52px);font-weight:500;color:#1C184F;line-height:1.1;letter-spacing:-.01em;margin-bottom:48px}
+.how h2 em{font-style:italic;color:#00B5B0}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:32px}
+@media(max-width:640px){.steps{grid-template-columns:1fr 1fr;gap:20px}}
+.step-num{font-family:'Playfair Display',serif;font-size:52px;font-weight:500;color:#E8E4DB;line-height:1;margin-bottom:12px}
+.step-title{font-size:15px;font-weight:700;color:#1C184F;margin-bottom:6px}
+.step-body{font-size:13px;color:#6F6B7A;line-height:1.6}
+/* ── ELIGIBLE ── */
+.eligible{background:#1C184F;color:#fff;padding:72px 24px}
+.eligible-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+@media(max-width:680px){.eligible-inner{grid-template-columns:1fr}}
+.eligible h2{font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,44px);font-weight:500;line-height:1.1;letter-spacing:-.01em;margin-bottom:28px}
+.eligible h2 em{font-style:italic;color:#D4A853}
+.check-list{list-style:none;display:flex;flex-direction:column;gap:14px}
+.check-list li{display:flex;align-items:flex-start;gap:14px;font-size:15px;color:rgba(255,255,255,.88);line-height:1.5}
+.check-list li .icon{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(0,181,176,.15);border:1px solid #00B5B0;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.check-list li .icon svg path{stroke:#00B5B0}
+.cross-list li .icon{background:rgba(178,58,72,.15);border-color:rgba(178,58,72,.5)}
+.cross-list li .icon svg path{stroke:rgba(255,255,255,.6)}
+/* ── CTA ── */
+.cta{background:#FAF8F3;padding:80px 24px;text-align:center}
+.cta h2{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,52px);font-weight:500;color:#1C184F;line-height:1.1;margin-bottom:20px}
+.cta h2 em{font-style:italic;color:#00B5B0}
+.cta p{color:#6F6B7A;font-size:17px;max-width:520px;margin:0 auto 36px;line-height:1.6}
+.btn-primary{display:inline-flex;align-items:center;gap:12px;background:#00B5B0;color:#fff;padding:20px 40px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;border:none;cursor:pointer;transition:background .2s}
+.btn-primary:hover{background:#009996}
+.btn-ghost{display:inline-flex;align-items:center;gap:10px;background:transparent;color:#1C184F;padding:18px 32px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;border:1px solid #1C184F;margin-left:16px;transition:all .2s}
+.btn-ghost:hover{background:#1C184F;color:#fff}
+/* ── FOOTER ── */
+.footer{background:#13113A;color:rgba(255,255,255,.6);padding:40px 24px;text-align:center;font-size:12px;line-height:1.8}
+.footer strong{color:#fff}
+@media(max-width:480px){.btn-ghost{margin-left:0;margin-top:12px}.cta .btn-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/"><img src="/logo.png" alt="Posfin Capital"/></a>
+  <a href="tel:+447446950389">+44 7446 950 389</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="desk-badge"><span class="dot"></span>Speed Desk · Posfin Capital</div>
+    <h1>Funded in<br/><em>3–5 days.</em></h1>
+    <p class="hero-sub">
+      £50,000 to £300,000. 12-month term. Equitable charge.<br/>
+      <strong>Zero upfront cost. Zero monthly repayments.</strong><br/>
+      We provide the solicitor. You provide the property.
+    </p>
+    <a href="/speed-loan#apply" class="btn-primary" style="display:inline-flex;align-items:center;gap:12px;background:#00B5B0;color:#fff;padding:20px 40px;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none">
+      Apply Now — 60 Seconds
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+    <div class="stats">
+      <div><div class="stat-label">Payout</div><div class="stat-value">3–5 Days</div></div>
+      <div><div class="stat-label">Upfront Cost</div><div class="stat-value">Zero</div></div>
+      <div><div class="stat-label">Loan Range</div><div class="stat-value">£50K–£300K</div></div>
+      <div><div class="stat-label">Term</div><div class="stat-value">12 Months</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="zero">
+  <p>No valuation fee &nbsp;·&nbsp; No solicitor cost &nbsp;·&nbsp; No commitment advance &nbsp;·&nbsp; No monthly payments &nbsp;·&nbsp; No surprises</p>
+</div>
+
+<section class="how">
+  <div class="section-tag">How it works</div>
+  <h2>Enquire today.<br/><em>Funded this week.</em></h2>
+  <div class="steps">
+    <div>
+      <div class="step-num">01</div>
+      <div class="step-title">Apply in 60 seconds</div>
+      <div class="step-body">Name, property address, loan amount. That's all we need to start.</div>
+    </div>
+    <div>
+      <div class="step-num">02</div>
+      <div class="step-title">Terms within the hour</div>
+      <div class="step-body">We run our AVM, confirm the equity position and issue indicative terms — same day.</div>
+    </div>
+    <div>
+      <div class="step-num">03</div>
+      <div class="step-title">Legals provided</div>
+      <div class="step-body">We instruct the solicitor. You don't pay anything upfront. Legals handled on your behalf.</div>
+    </div>
+    <div>
+      <div class="step-num">04</div>
+      <div class="step-title">Funds in 3–5 days</div>
+      <div class="step-body">Equitable charge registered. Money in your account. 12 months, no monthly payments due.</div>
+    </div>
+  </div>
+</section>
+
+<section class="eligible">
+  <div class="eligible-inner">
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.28em;color:#D4A853;margin-bottom:20px">Who qualifies</div>
+      <h2>Clean equity.<br/><em>Fast cash.</em></h2>
+      <ul class="check-list" style="margin-top:8px">
+        <li><span class="icon"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>UK property with equity (up to 75% LTV)</li>
+        <li><span class="icon"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Residential, commercial or mixed-use</li>
+        <li><span class="icon"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Business use — any purpose</li>
+        <li><span class="icon"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Adverse credit considered</li>
+        <li><span class="icon"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>England &amp; Wales</li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.28em;color:rgba(255,255,255,.4);margin-bottom:20px">Not for Speed Desk</div>
+      <ul class="check-list cross-list" style="margin-top:48px">
+        <li><span class="icon"><svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round"/></svg></span>Combined debt above 75% LTV</li>
+        <li><span class="icon"><svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round"/></svg></span>Loans below £50,000</li>
+        <li><span class="icon"><svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round"/></svg></span>Regulated residential (primary home, personal use)</li>
+        <li><span class="icon"><svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round"/></svg></span>Scotland or Northern Ireland</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="section-tag" style="text-align:center">Ready to move</div>
+  <h2>Your terms.<br/><em>Within the hour.</em></h2>
+  <p>Tell us your property and the amount. We handle everything else — including the solicitor.</p>
+  <div class="btn-wrap">
+    <a href="/speed-loan#apply" class="btn-primary">Apply Now — Free &amp; No Obligation</a>
+    <a href="tel:+447773339444" class="btn-ghost">Call Byron Direct</a>
+  </div>
+  <p style="margin-top:24px;font-size:12px;color:#9E9AAA">Your property may be repossessed if you do not keep up repayments on a loan secured against it.</p>
+</section>
+
+<footer class="footer">
+  <strong>Posfin Capital Limited</strong> &nbsp;·&nbsp; FCA Authorised &nbsp;·&nbsp; FRN 913022 &nbsp;·&nbsp; Co. 12148846<br/>
+  96 Kensington High Street, London W8 4SG &nbsp;·&nbsp; <a href="mailto:byron.hill@posfincapital.com" style="color:rgba(255,255,255,.6)">byron.hill@posfincapital.com</a>
+</footer>
+
+</body>
+</html>
