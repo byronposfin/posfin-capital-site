@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Schedule of Works | Posfin Capital</title>
+<meta name="description" content="Schedule of Works submission for refurbishment and development bridging finance. Posfin Capital Limited, FCA FRN 913022.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1C184F;
+    --navy-90:rgba(28,24,79,.9);
+    --navy-10:rgba(28,24,79,.08);
+    --teal:#00B5B0;
+    --teal-dark:#008C88;
+    --gold:#D4A853;
+    --cream:#FAF8F3;
+    --ink:#15131F;
+    --muted:#6B6B7A;
+    --line:#E4E2DA;
+    --line-strong:#C9C6BA;
+    --white:#FFFFFF;
+    --error:#B3261E;
+    --success:#1F6F4E;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{
+    font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* ── Header ─────────────────────────── */
+  .topbar{
+    background:var(--navy);
+    color:var(--white);
+    padding:18px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .brand{
+    font-family:'Playfair Display',serif;
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:.3px;
+    color:var(--white);
+    text-decoration:none;
+  }
+  .topbar .frn{
+    font-size:12px;
+    color:rgba(255,255,255,.7);
+    letter-spacing:.4px;
+  }
+
+  /* ── Hero ───────────────────────────── */
+  .hero{
+    background:var(--navy);
+    color:var(--white);
+    padding:48px 24px 56px;
+    border-bottom:4px solid var(--gold);
+  }
+  .hero-inner{max-width:840px;margin:0 auto}
+  .eyebrow{
+    color:var(--gold);
+    font-size:13px;
+    letter-spacing:2.5px;
+    font-weight:600;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .hero h1{
+    font-family:'Playfair Display',serif;
+    font-size:44px;
+    line-height:1.1;
+    font-weight:700;
+    margin-bottom:18px;
+    letter-spacing:-.5px;
+  }
+  .hero p{
+    font-size:17px;
+    line-height:1.6;
+    color:rgba(255,255,255,.85);
+    max-width:680px;
+  }
+
+  /* ── Form container ─────────────────── */
+  .wrap{
+    max-width:840px;
+    margin:0 auto;
+    padding:48px 24px 80px;
+  }
+
+  .section{
+    background:var(--white);
+    border:1px solid var(--line);
+    padding:36px 32px;
+    margin-bottom:24px;
+  }
+  .section-num{
+    display:inline-block;
+    color:var(--teal);
+    font-size:13px;
+    letter-spacing:2px;
+    font-weight:600;
+    margin-bottom:8px;
+  }
+  .section h2{
+    font-family:'Playfair Display',serif;
+    font-size:26px;
+    font-weight:600;
+    color:var(--navy);
+    margin-bottom:8px;
+    letter-spacing:-.2px;
+  }
+  .section .lede{
+    color:var(--muted);
+    font-size:15px;
+    margin-bottom:28px;
+    line-height:1.55;
+  }
+
+  /* ── Fields ─────────────────────────── */
+  .field{margin-bottom:20px}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+  .field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+  .field-row .field,.field-row-3 .field{margin-bottom:0}
+
+  label{
+    display:block;
+    font-size:14px;
+    font-weight:500;
+    color:var(--navy);
+    margin-bottom:8px;
+    letter-spacing:.1px;
+  }
+  label .req{color:var(--teal);margin-left:2px}
+  label .opt{color:var(--muted);font-weight:400;font-size:13px;margin-left:6px}
+
+  .hint{
+    font-size:13px;
+    color:var(--muted);
+    margin-top:6px;
+    line-height:1.4;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="number"],
+  select,
+  textarea{
+    width:100%;
+    height:54px;
+    padding:0 16px;
+    border:1px solid var(--line-strong);
+    background:var(--white);
+    font-family:inherit;
+    font-size:16px;
+    color:var(--ink);
+    border-radius:0;
+    -webkit-appearance:none;
+    appearance:none;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  textarea{
+    height:auto;
+    min-height:120px;
+    padding:14px 16px;
+    line-height:1.5;
+    resize:vertical;
+  }
+  select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231C184F' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 18px center;
+    padding-right:44px;
+  }
+  input:focus,select:focus,textarea:focus{
+    outline:none;
+    border-color:var(--teal);
+    box-shadow:0 0 0 3px rgba(0,181,176,.15);
+  }
+
+  /* Currency input */
+  .currency{position:relative}
+  .currency::before{
+    content:'£';
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--navy);
+    font-size:16px;
+    font-weight:500;
+    pointer-events:none;
+    z-index:1;
+  }
+  .currency input{padding-left:30px}
+
+  /* Radios & checkboxes */
+  .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .choice-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .choice{
+    position:relative;
+    border:1px solid var(--line-strong);
+    padding:14px 16px;
+    cursor:pointer;
+    transition:border-color .12s ease,background .12s ease;
+    min-height:54px;
+    display:flex;
+    align-items:center;
+    font-size:15px;
+    color:var(--ink);
+    user-select:none;
+  }
+  .choice input{position:absolute;opacity:0;pointer-events:none}
+  .choice:hover{border-color:var(--navy)}
+  .choice.is-checked{
+    border-color:var(--teal);
+    background:rgba(0,181,176,.06);
+    color:var(--navy);
+    font-weight:500;
+  }
+
+  .checkbox-row{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:14px 16px;
+    border:1px solid var(--line-strong);
+    cursor:pointer;
+    margin-bottom:10px;
+    min-height:54px;
+  }
+  .checkbox-row input{
+    width:20px;
+    height:20px;
+    margin-top:2px;
+    flex-shrink:0;
+    accent-color:var(--teal);
+  }
+  .checkbox-row span{font-size:15px;line-height:1.5;color:var(--ink)}
+  .checkbox-row:hover{border-color:var(--navy)}
+
+  /* ── Repeating blocks ───────────────── */
+  .repeat-block{
+    border:1px solid var(--line-strong);
+    background:var(--cream);
+    padding:24px;
+    margin-bottom:16px;
+    position:relative;
+  }
+  .repeat-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .repeat-head h3{
+    font-family:'Playfair Display',serif;
+    font-size:18px;
+    font-weight:600;
+    color:var(--navy);
+  }
+  .remove-btn{
+    background:none;
+    border:1px solid var(--line-strong);
+    color:var(--muted);
+    font-family:inherit;
+    font-size:13px;
+    padding:6px 12px;
+    cursor:pointer;
+    transition:all .12s ease;
+    min-height:32px;
+  }
+  .remove-btn:hover{
+    border-color:var(--error);
+    color:var(--error);
+  }
+  .add-btn{
+    background:var(--white);
+    border:1px dashed var(--teal);
+    color:var(--teal-dark);
+    font-family:inherit;
+    font-size:14px;
+    font-weight:500;
+    padding:14px 20px;
+    cursor:pointer;
+    width:100%;
+    transition:all .12s ease;
+    min-height:48px;
+    letter-spacing:.2px;
+  }
+  .add-btn:hover{
+    background:rgba(0,181,176,.06);
+    border-style:solid;
+  }
+
+  /* ── Signature pad ──────────────────── */
+  .sig-wrap{
+    border:1px solid var(--line-strong);
+    background:var(--white);
+    position:relative;
+  }
+  .sig-canvas{
+    width:100%;
+    height:180px;
+    display:block;
+    cursor:crosshair;
+    touch-action:none;
+  }
+  .sig-bar{
+    border-top:1px solid var(--line);
+    padding:10px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--cream);
+    font-size:13px;
+    color:var(--muted);
+  }
+  .sig-clear{
+    background:none;
+    border:none;
+    color:var(--navy);
+    font-family:inherit;
+    font-size:13px;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:4px 0;
+  }
+
+  /* ── Submit ─────────────────────────── */
+  .submit-section{
+    background:var(--navy);
+    color:var(--white);
+    padding:36px 32px;
+    text-align:center;
+  }
+  .submit-section h2{
+    font-family:'Playfair Display',serif;
+    color:var(--white);
+    margin-bottom:12px;
+  }
+  .submit-section p{
+    color:rgba(255,255,255,.8);
+    font-size:15px;
+    margin-bottom:24px;
+  }
+  .submit-btn{
+    background:var(--teal);
+    color:var(--white);
+    border:none;
+    padding:18px 48px;
+    font-family:inherit;
+    font-size:16px;
+    font-weight:600;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:background .15s ease;
+    min-height:60px;
+    width:100%;
+    max-width:380px;
+  }
+  .submit-btn:hover:not(:disabled){background:var(--teal-dark)}
+  .submit-btn:disabled{opacity:.6;cursor:not-allowed}
+
+  /* ── Conditional sections ───────────── */
+  .conditional{display:none}
+  .conditional.is-shown{display:block}
+
+  /* ── Status messages ────────────────── */
+  .status{
+    padding:16px 20px;
+    margin-top:20px;
+    border:1px solid;
+    font-size:15px;
+    display:none;
+  }
+  .status.is-shown{display:block}
+  .status.error{
+    background:#FDECEA;
+    border-color:var(--error);
+    color:var(--error);
+  }
+  .status.success{
+    background:#E8F4EE;
+    border-color:var(--success);
+    color:var(--success);
+  }
+
+  /* ── Footer ─────────────────────────── */
+  .footer{
+    background:var(--navy);
+    color:rgba(255,255,255,.7);
+    padding:32px 24px;
+    text-align:center;
+    font-size:13px;
+    line-height:1.6;
+  }
+  .footer strong{color:var(--white);font-weight:600}
+  .footer .addr{margin-top:8px;font-size:12px;color:rgba(255,255,255,.5)}
+
+  /* ── Responsive ─────────────────────── */
+  @media(max-width:560px){
+    .hero{padding:36px 20px 44px}
+    .hero h1{font-size:32px}
+    .hero p{font-size:15px}
+    .eyebrow{font-size:11px;letter-spacing:2px}
+    .wrap{padding:32px 16px 60px}
+    .section{padding:28px 20px}
+    .section h2{font-size:22px}
+    .field-row,.field-row-3{grid-template-columns:1fr;gap:0}
+    .field-row .field,.field-row-3 .field{margin-bottom:20px}
+    .choice-grid,.choice-grid-3{grid-template-columns:1fr}
+    .submit-section{padding:28px 20px}
+    .repeat-block{padding:20px 16px}
+    .topbar{padding:14px 16px}
+    .brand{font-size:18px}
+    .topbar .frn{font-size:11px}
+  }
+  @media(max-width:380px){
+    .hero h1{font-size:28px}
+    .section h2{font-size:20px}
+    .submit-btn{padding:16px 24px;font-size:15px}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="https://posfincapital.com" class="brand">Posfin Capital</a>
+  <span class="frn">FCA FRN 913022</span>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Refurbishment &amp; Development Finance</div>
+    <h1>Schedule of Works</h1>
+    <p>To finalise your facility, we require a detailed schedule of the works planned at the security property. This document supports lender underwriting, drawdown sequencing, and surveyor instruction. All figures are treated in strict confidence.</p>
+  </div>
+</section>
+
+<form id="sowForm" class="wrap" novalidate>
+
+  <div id="prefillBanner" style="display:none;background:rgba(0,181,176,.08);border-left:3px solid var(--teal);padding:14px 20px;margin-bottom:24px;color:var(--navy);font-size:14px;line-height:1.5;">
+    We've pre-filled some details from your file. Please review each section and update if anything has changed.
+  </div>
+
+  <input type="hidden" id="dealToken" name="dealToken">
+
+  <!-- ─── 1. Borrower ───────────────── -->
+  <div class="section">
+    <span class="section-num">SECTION 01</span>
+    <h2>Borrower</h2>
+    <p class="lede">Your contact details so we can match this submission to your file.</p>
+
+    <div class="field">
+      <label for="borrowerName">Borrower full legal name <span class="req">*</span></label>
+      <input type="text" id="borrowerName" name="borrowerName" required>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="email">Email <span class="req">*</span></label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="field">
+        <label for="mobile">Mobile <span class="req">*</span></label>
+        <input type="tel" id="mobile" name="mobile" inputmode="tel" required>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 2. Property ───────────────── -->
+  <div class="section">
+    <span class="section-num">SECTION 02</span>
+    <h2>Security Property</h2>
+    <p class="lede">The property at which the works will be carried out.</p>
+
+    <div class="field">
+      <label for="propAddress">Full property address <span class="req">*</span></label>
+      <input type="text" id="propAddress" name="propAddress" required>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="postcode">Postcode <span class="req">*</span></label>
+        <input type="text" id="postcode" name="postcode" required>
+      </div>
+      <div class="field">
+        <label for="tenure">Tenure <span class="req">*</span></label>
+        <select id="tenure" name="tenure" required>
+          <option value="">Select tenure…</option>
+          <option value="Freehold">Freehold</option>
+          <option value="Leasehold">Leasehold</option>
+          <option value="Commercial freehold">Commercial freehold</option>
+          <option value="Mixed">Mixed-use</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Current property condition <span class="req">*</span></label>
+      <div class="choice-grid">
+        <label class="choice"><input type="radio" name="condition" value="Vacant possession"> Vacant possession</label>
+        <label class="choice"><input type="radio" name="condition" value="Tenanted"> Tenanted</label>
+        <label class="choice"><input type="radio" name="condition" value="Owner occupied"> Owner occupied</label>
+        <label class="choice"><input type="radio" name="condition" value="Part-built / unfinished"> Part-built / unfinished</label>
+        <label class="choice"><input type="radio" name="condition" value="Derelict / uninhabitable"> Derelict / uninhabitable</label>
+        <label class="choice"><input type="radio" name="condition" value="Other"> Other</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 3. Project Overview ──────── -->
+  <div class="section">
+    <span class="section-num">SECTION 03</span>
+    <h2>Project Overview</h2>
+    <p class="lede">High-level summary of the works and the resulting end value.</p>
+
+    <div class="field">
+      <label>Type of works <span class="req">*</span></label>
+      <div class="choice-grid">
+        <label class="choice"><input type="radio" name="workType" value="Light refurbishment"> Light refurbishment</label>
+        <label class="choice"><input type="radio" name="workType" value="Heavy refurbishment"> Heavy refurbishment</label>
+        <label class="choice"><input type="radio" name="workType" value="Conversion (e.g. HMO / flats)"> Conversion (HMO / flats)</label>
+        <label class="choice"><input type="radio" name="workType" value="Extension"> Extension</label>
+        <label class="choice"><input type="radio" name="workType" value="Ground-up new build"> Ground-up new build</label>
+        <label class="choice"><input type="radio" name="workType" value="Mixed scope"> Mixed scope</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="workSummary">Brief project summary <span class="req">*</span></label>
+      <textarea id="workSummary" name="workSummary" placeholder="In 2–4 sentences: what is being done, why, and what is the intended outcome." required></textarea>
+    </div>
+
+    <div class="field-row-3">
+      <div class="field">
+        <label for="currentValue">Current open-market value <span class="req">*</span></label>
+        <div class="currency"><input type="text" id="currentValue" name="currentValue" inputmode="numeric" data-currency required></div>
+      </div>
+      <div class="field">
+        <label for="postWorksValue">Post-works value (GDV) <span class="req">*</span></label>
+        <div class="currency"><input type="text" id="postWorksValue" name="postWorksValue" inputmode="numeric" data-currency required></div>
+      </div>
+      <div class="field">
+        <label for="totalBudget">Total works budget <span class="req">*</span></label>
+        <div class="currency"><input type="text" id="totalBudget" name="totalBudget" inputmode="numeric" data-currency required></div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="startDate">Target start date <span class="req">*</span></label>
+        <input type="date" id="startDate" name="startDate" required>
+      </div>
+      <div class="field">
+        <label for="completionDate">Target completion date <span class="req">*</span></label>
+        <input type="date" id="completionDate" name="completionDate" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="endUse">Intended end use <span class="req">*</span></label>
+      <select id="endUse" name="endUse" required>
+        <option value="">Select intended use…</option>
+        <option value="Sale">Sale on open market</option>
+        <option value="Refinance to term">Refinance to long-term mortgage</option>
+        <option value="Rent (single AST)">Rent — single AST</option>
+        <option value="Rent (HMO)">Rent — HMO</option>
+        <option value="Owner occupy">Owner occupy</option>
+        <option value="Mixed">Mixed (combination of the above)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ─── 4. Schedule of Works Items ── -->
+  <div class="section">
+    <span class="section-num">SECTION 04</span>
+    <h2>Itemised Schedule</h2>
+    <p class="lede">Break the project into work packages or phases. Add as many as required. Costs should reflect tendered quotes where available; clearly mark estimates as such in the description.</p>
+
+    <div id="worksList"></div>
+
+    <button type="button" class="add-btn" id="addWorkBtn">+ Add another work package</button>
+  </div>
+
+  <!-- ─── 5. Contractor ─────────────── -->
+  <div class="section">
+    <span class="section-num">SECTION 05</span>
+    <h2>Lead Contractor</h2>
+    <p class="lede">The primary contractor or project manager carrying out the works. Sub-contractors can be listed in the notes.</p>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="contractorName">Contractor / company name <span class="req">*</span></label>
+        <input type="text" id="contractorName" name="contractorName" required>
+      </div>
+      <div class="field">
+        <label for="contractorContact">Lead contact name <span class="req">*</span></label>
+        <input type="text" id="contractorContact" name="contractorContact" required>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="contractorEmail">Contractor email <span class="req">*</span></label>
+        <input type="email" id="contractorEmail" name="contractorEmail" required>
+      </div>
+      <div class="field">
+        <label for="contractorPhone">Contractor phone <span class="req">*</span></label>
+        <input type="tel" id="contractorPhone" name="contractorPhone" inputmode="tel" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="accreditations">Trade accreditations <span class="opt">optional</span></label>
+      <input type="text" id="accreditations" name="accreditations" placeholder="e.g. NHBC, FMB, CIOB, Gas Safe, NICEIC">
+    </div>
+
+    <div class="field">
+      <label for="priorProjects">Recent comparable projects <span class="opt">optional</span></label>
+      <textarea id="priorProjects" name="priorProjects" placeholder="Briefly describe 1–3 similar projects the contractor has completed in the last 3 years."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Contractor insurances in place <span class="req">*</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="ins_pl"> <span>Public liability insurance (£2M minimum)</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="ins_el"> <span>Employer's liability insurance</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="ins_pi"> <span>Professional indemnity insurance (where designs / drawings produced in-house)</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="ins_cont"> <span>Contract works / contractor's all-risks cover</span></label>
+    </div>
+  </div>
+
+  <!-- ─── 6. Planning & Compliance ─── -->
+  <div class="section">
+    <span class="section-num">SECTION 06</span>
+    <h2>Planning &amp; Compliance</h2>
+    <p class="lede">Regulatory and consent position of the project. Be straightforward — lenders prefer disclosed risk to discovered risk.</p>
+
+    <div class="field">
+      <label>Planning permission status <span class="req">*</span></label>
+      <div class="choice-grid">
+        <label class="choice"><input type="radio" name="planningStatus" value="Not required" data-planning="none"> Not required (permitted dev / cosmetic)</label>
+        <label class="choice"><input type="radio" name="planningStatus" value="Granted" data-planning="granted"> Granted</label>
+        <label class="choice"><input type="radio" name="planningStatus" value="Submitted, awaiting decision" data-planning="pending"> Submitted — awaiting decision</label>
+        <label class="choice"><input type="radio" name="planningStatus" value="Not yet submitted" data-planning="pending"> Not yet submitted</label>
+      </div>
+    </div>
+
+    <div class="field conditional" id="planningRefField">
+      <label for="planningRef">Planning application reference <span class="opt">if known</span></label>
+      <input type="text" id="planningRef" name="planningRef" placeholder="Local authority planning ref">
+    </div>
+
+    <div class="field">
+      <label>Building regulations <span class="req">*</span></label>
+      <div class="choice-grid">
+        <label class="choice"><input type="radio" name="buildingRegs" value="Not required"> Not required</label>
+        <label class="choice"><input type="radio" name="buildingRegs" value="Full plans application"> Full plans application</label>
+        <label class="choice"><input type="radio" name="buildingRegs" value="Building notice"> Building notice</label>
+        <label class="choice"><input type="radio" name="buildingRegs" value="To be confirmed"> To be confirmed</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Property classification <span class="opt">tick any that apply</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="class_listed"> <span>Listed building (Grade I, II* or II)</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="class_conservation"> <span>Within a conservation area</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="class_aonb"> <span>AONB / National Park / SSSI</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="class_flood"> <span>Flood Zone 2 or 3</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="class_party"> <span>Party Wall Act notices required</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="class_warranty"> <span>10-year structural warranty required (e.g. LABC, ICW, BuildZone)</span></label>
+    </div>
+  </div>
+
+  <!-- ─── 7. Funding Breakdown ──────── -->
+  <div class="section">
+    <span class="section-num">SECTION 07</span>
+    <h2>Funding Breakdown</h2>
+    <p class="lede">How the works are being funded. The sum of these figures should reconcile to the total works budget in Section 03.</p>
+
+    <div class="field-row-3">
+      <div class="field">
+        <label for="loanForWorks">Loan amount towards works <span class="req">*</span></label>
+        <div class="currency"><input type="text" id="loanForWorks" name="loanForWorks" inputmode="numeric" data-currency required></div>
+      </div>
+      <div class="field">
+        <label for="ownContribution">Borrower's own contribution <span class="req">*</span></label>
+        <div class="currency"><input type="text" id="ownContribution" name="ownContribution" inputmode="numeric" data-currency required></div>
+      </div>
+      <div class="field">
+        <label for="otherFunding">Other funding sources <span class="opt">optional</span></label>
+        <div class="currency"><input type="text" id="otherFunding" name="otherFunding" inputmode="numeric" data-currency></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="drawdownPref">Drawdown preference <span class="req">*</span></label>
+      <select id="drawdownPref" name="drawdownPref" required>
+        <option value="">Select drawdown approach…</option>
+        <option value="Single advance at completion">Single advance at completion</option>
+        <option value="Staged drawdowns against monitoring surveyor visits">Staged drawdowns against monitoring surveyor visits</option>
+        <option value="Staged in arrears">Staged in arrears (works completed before release)</option>
+        <option value="To be agreed with lender">To be agreed with lender</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ─── 8. Risk & Exit ────────────── -->
+  <div class="section">
+    <span class="section-num">SECTION 08</span>
+    <h2>Risk &amp; Exit</h2>
+    <p class="lede">Contingency, identified risks and your route to repaying the bridge.</p>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="contingency">Contingency built into budget (%) <span class="req">*</span></label>
+        <input type="text" id="contingency" name="contingency" inputmode="numeric" placeholder="e.g. 10" required>
+        <div class="hint">Lenders typically expect 10–15% contingency on heavy refurb and above.</div>
+      </div>
+      <div class="field">
+        <label for="exitStrategy">Primary exit strategy <span class="req">*</span></label>
+        <select id="exitStrategy" name="exitStrategy" required>
+          <option value="">Select exit…</option>
+          <option value="Open market sale">Open market sale</option>
+          <option value="Refinance to BTL / term mortgage">Refinance to BTL / term mortgage</option>
+          <option value="Refinance to commercial mortgage">Refinance to commercial mortgage</option>
+          <option value="Cash from other liquidity event">Cash from other liquidity event</option>
+          <option value="Combination">Combination</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="exitDetail">Exit strategy detail <span class="req">*</span></label>
+      <textarea id="exitDetail" name="exitDetail" placeholder="How and when will the loan be repaid? If refinance, indicate the lender and product class being targeted. If sale, indicate expected agent and asking price." required></textarea>
+    </div>
+
+    <div class="field">
+      <label for="risks">Identified risks <span class="opt">optional but recommended</span></label>
+      <textarea id="risks" name="risks" placeholder="Any known risks: planning conditions, party wall issues, asbestos, structural unknowns, contractor availability, programme overruns, etc."></textarea>
+    </div>
+  </div>
+
+  <!-- ─── 9. Supporting Documents ──── -->
+  <div class="section">
+    <span class="section-num">SECTION 09</span>
+    <h2>Supporting Documents</h2>
+    <p class="lede">Provide a shared link (Google Drive, Dropbox, OneDrive) to your supporting documents. Ensure the link is set to "anyone with the link can view".</p>
+
+    <div class="field">
+      <label for="docsLink">Shared folder link <span class="req">*</span></label>
+      <input type="text" id="docsLink" name="docsLink" placeholder="https://drive.google.com/… or https://www.dropbox.com/…" required>
+    </div>
+
+    <div class="field">
+      <label>Documents included <span class="opt">tick any that apply</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="doc_quotes"> <span>Contractor quotes / tender returns</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="doc_drawings"> <span>Architectural / structural drawings</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="doc_planning"> <span>Planning decision notice / application documents</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="doc_buildingregs"> <span>Building regulations approval</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="doc_insurance"> <span>Contractor insurance certificates</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="doc_warranty"> <span>Structural warranty certificate / quote</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="doc_photos"> <span>Property photographs (current condition)</span></label>
+      <label class="checkbox-row"><input type="checkbox" name="doc_cashflow"> <span>Project cashflow / drawdown schedule</span></label>
+    </div>
+  </div>
+
+  <!-- ─── 10. Declaration & Signature ─ -->
+  <div class="section">
+    <span class="section-num">SECTION 10</span>
+    <h2>Declaration &amp; Signature</h2>
+    <p class="lede">The figures and statements above will be relied upon by Posfin Capital and the funding lender(s). Please sign below to confirm accuracy.</p>
+
+    <label class="checkbox-row"><input type="checkbox" name="dec_accurate" required> <span>I confirm the information provided in this Schedule of Works is true, complete and accurate to the best of my knowledge.</span></label>
+
+    <label class="checkbox-row"><input type="checkbox" name="dec_changes" required> <span>I undertake to notify Posfin Capital of any material change to the schedule, contractor or budget prior to drawdown.</span></label>
+
+    <label class="checkbox-row"><input type="checkbox" name="dec_share" required> <span>I consent to Posfin Capital sharing this document with prospective funding lenders, monitoring surveyors and Ackroyd Legal for the purposes of underwriting and completion.</span></label>
+
+    <div class="field" style="margin-top:24px">
+      <label>Signature <span class="req">*</span></label>
+      <div class="sig-wrap">
+        <canvas id="sigCanvas" class="sig-canvas"></canvas>
+        <div class="sig-bar">
+          <span>Sign with mouse or finger</span>
+          <button type="button" class="sig-clear" id="sigClear">Clear signature</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="sigName">Print full name <span class="req">*</span></label>
+        <input type="text" id="sigName" name="sigName" required>
+      </div>
+      <div class="field">
+        <label for="sigDate">Date <span class="req">*</span></label>
+        <input type="date" id="sigDate" name="sigDate" required>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Submit ─────────────────────── -->
+  <div class="submit-section">
+    <h2>Submit Schedule of Works</h2>
+    <p>Aadi will acknowledge receipt within one business hour and confirm next steps.</p>
+    <button type="submit" class="submit-btn" id="submitBtn">Submit to Posfin</button>
+    <div class="status error" id="statusError"></div>
+    <div class="status success" id="statusSuccess"></div>
+  </div>
+
+</form>
+
+<footer class="footer">
+  <strong>Posfin Capital Limited</strong> &nbsp;·&nbsp; FCA FRN 913022 &nbsp;·&nbsp; Companies House 12148846
+  <div class="addr">96 Kensington High Street, London W8 4SG</div>
+</footer>
+
+<script>
+  // ── Config ─────────────────────────────
+  const WEBHOOK_URL = 'REPLACE_ME'; // ← Zapier Catch Hook URL
+  const PREFILL_URL = 'https://script.google.com/macros/s/AKfycbwn1OhEeM_2_X0Ci6_SHsabIcA7aDREbigzpY8XD7fLN-cjrQyh6Agp6xLLoakBRXrW0w/exec';
+
+  // ── Pre-fill from token (Apps Script lookup) ──
+  async function prefillForm(){
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('t');
+    if(!token) return;
+
+    document.getElementById('dealToken').value = token;
+
+    if(PREFILL_URL === 'REPLACE_ME_APPS_SCRIPT_URL') return;
+
+    try{
+      const res = await fetch(`${PREFILL_URL}?t=${encodeURIComponent(token)}`);
+      const data = await res.json();
+      if(data.error || !data.found){
+        console.warn('Pre-fill: ', data.error || 'no data');
+        return;
+      }
+
+      let filled = 0;
+
+      // Populate inputs / selects / textareas by ID
+      for(const [key, val] of Object.entries(data)){
+        if(key === 'found' || key === 'token') continue;
+        const el = document.getElementById(key);
+        if(el && el.tagName !== undefined){
+          el.value = val;
+          // Fire input event so currency formatting kicks in
+          el.dispatchEvent(new Event('input', { bubbles:true }));
+          // Fire change for selects (in case of conditional logic later)
+          el.dispatchEvent(new Event('change', { bubbles:true }));
+          filled++;
+        }
+      }
+
+      // Populate radios — match name + value
+      document.querySelectorAll('input[type="radio"]').forEach(r=>{
+        const expected = data[r.name];
+        if(expected && r.value === expected){
+          r.checked = true;
+          r.dispatchEvent(new Event('change', { bubbles:true }));
+          filled++;
+        }
+      });
+
+      if(filled > 0){
+        document.getElementById('prefillBanner').style.display = 'block';
+      }
+    }catch(err){
+      console.warn('Pre-fill error:', err);
+    }
+  }
+  prefillForm();
+
+  // ── Currency formatting ────────────────
+  function escapeRegex(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+  document.querySelectorAll('[data-currency]').forEach(el=>{
+    el.addEventListener('input',e=>{
+      const raw=e.target.value.replace(/[^\d]/g,'');
+      if(!raw){e.target.value='';return}
+      e.target.value=Number(raw).toLocaleString('en-GB');
+    });
+  });
+
+  // ── Custom radio/checkbox styling ──────
+  document.querySelectorAll('.choice input[type="radio"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      document.querySelectorAll(`.choice input[name="${r.name}"]`).forEach(other=>{
+        other.closest('.choice').classList.toggle('is-checked',other.checked);
+      });
+    });
+  });
+
+  // ── Conditional: planning reference ───
+  document.querySelectorAll('input[name="planningStatus"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const show = r.dataset.planning === 'granted' || r.dataset.planning === 'pending';
+      document.getElementById('planningRefField').classList.toggle('is-shown',show);
+    });
+  });
+
+  // ── Repeating work packages ────────────
+  let workCount = 0;
+  const worksList = document.getElementById('worksList');
+
+  function addWorkBlock(){
+    workCount++;
+    const idx = workCount;
+    const html = `
+      <div class="repeat-block" data-work-block>
+        <div class="repeat-head">
+          <h3>Work package ${idx}</h3>
+          ${idx>1?`<button type="button" class="remove-btn" onclick="removeWorkBlock(this)">Remove</button>`:''}
+        </div>
+        <div class="field">
+          <label>Description of works <span class="req">*</span></label>
+          <textarea name="work_desc_${idx}" placeholder="e.g. Strip out, structural alterations to ground floor, kitchen install, finishes" required></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Estimated cost <span class="req">*</span></label>
+            <div class="currency"><input type="text" name="work_cost_${idx}" inputmode="numeric" data-currency required></div>
+          </div>
+          <div class="field">
+            <label>Cost basis</label>
+            <select name="work_basis_${idx}">
+              <option value="Tendered quote">Tendered quote</option>
+              <option value="Estimate">Estimate</option>
+              <option value="Allowance / placeholder">Allowance / placeholder</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Phase start</label>
+            <input type="date" name="work_start_${idx}">
+          </div>
+          <div class="field">
+            <label>Phase end</label>
+            <input type="date" name="work_end_${idx}">
+          </div>
+        </div>
+        <div class="field">
+          <label>Notes / sub-contractors <span class="opt">optional</span></label>
+          <input type="text" name="work_notes_${idx}">
+        </div>
+      </div>`;
+    worksList.insertAdjacentHTML('beforeend', html);
+    // Wire currency formatting on the new block
+    worksList.querySelectorAll('[data-currency]').forEach(el=>{
+      if(el.dataset.wired) return;
+      el.dataset.wired='1';
+      el.addEventListener('input',e=>{
+        const raw=e.target.value.replace(/[^\d]/g,'');
+        e.target.value = raw ? Number(raw).toLocaleString('en-GB') : '';
+      });
+    });
+  }
+
+  function removeWorkBlock(btn){
+    btn.closest('[data-work-block]').remove();
+  }
+
+  document.getElementById('addWorkBtn').addEventListener('click', addWorkBlock);
+  addWorkBlock(); // start with one
+
+  // ── Signature pad ──────────────────────
+  const canvas = document.getElementById('sigCanvas');
+  const ctx = canvas.getContext('2d');
+  let drawing = false, hasSignature = false;
+
+  function resizeCanvas(){
+    const ratio = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#1C184F';
+  }
+  resizeCanvas();
+  window.addEventListener('resize', ()=>{
+    const data = canvas.toDataURL();
+    resizeCanvas();
+    const img = new Image();
+    img.onload = ()=> ctx.drawImage(img, 0, 0, canvas.getBoundingClientRect().width, canvas.getBoundingClientRect().height);
+    img.src = data;
+  });
+
+  function getPos(e){
+    const rect = canvas.getBoundingClientRect();
+    const pt = e.touches ? e.touches[0] : e;
+    return {x: pt.clientX - rect.left, y: pt.clientY - rect.top};
+  }
+  function startDraw(e){e.preventDefault(); drawing=true; const p=getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y);}
+  function moveDraw(e){if(!drawing) return; e.preventDefault(); const p=getPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); hasSignature=true;}
+  function endDraw(){drawing=false}
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', moveDraw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('mouseleave', endDraw);
+  canvas.addEventListener('touchstart', startDraw, {passive:false});
+  canvas.addEventListener('touchmove', moveDraw, {passive:false});
+  canvas.addEventListener('touchend', endDraw);
+
+  document.getElementById('sigClear').addEventListener('click', ()=>{
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    hasSignature = false;
+  });
+
+  // ── Submission ─────────────────────────
+  const form = document.getElementById('sowForm');
+  const statusError = document.getElementById('statusError');
+  const statusSuccess = document.getElementById('statusSuccess');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusError.classList.remove('is-shown');
+    statusSuccess.classList.remove('is-shown');
+
+    // Validate required radios
+    const radioGroups = ['condition','workType','planningStatus','buildingRegs'];
+    for(const g of radioGroups){
+      if(!form.querySelector(`input[name="${g}"]:checked`)){
+        statusError.textContent = `Please complete all required fields (missing: ${g}).`;
+        statusError.classList.add('is-shown');
+        return;
+      }
+    }
+    if(!hasSignature){
+      statusError.textContent = 'Please provide a signature before submitting.';
+      statusError.classList.add('is-shown');
+      window.scrollTo({top: document.getElementById('sigCanvas').getBoundingClientRect().top + window.scrollY - 100, behavior:'smooth'});
+      return;
+    }
+    if(!form.checkValidity()){
+      statusError.textContent = 'Please complete all required fields highlighted above.';
+      statusError.classList.add('is-shown');
+      form.reportValidity();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    // Collect data
+    const data = {};
+    new FormData(form).forEach((v,k)=> data[k]=v);
+
+    // Collect work packages
+    const works = [];
+    document.querySelectorAll('[data-work-block]').forEach((blk,i)=>{
+      const idx = i+1;
+      const get = n => blk.querySelector(`[name="work_${n}_${blk.querySelector('[name^="work_desc_"]').name.split('_').pop()}"]`)?.value || '';
+      const suffix = blk.querySelector('[name^="work_desc_"]').name.split('_').pop();
+      works.push({
+        index: idx,
+        description: blk.querySelector(`[name="work_desc_${suffix}"]`)?.value || '',
+        cost: blk.querySelector(`[name="work_cost_${suffix}"]`)?.value || '',
+        basis: blk.querySelector(`[name="work_basis_${suffix}"]`)?.value || '',
+        start: blk.querySelector(`[name="work_start_${suffix}"]`)?.value || '',
+        end: blk.querySelector(`[name="work_end_${suffix}"]`)?.value || '',
+        notes: blk.querySelector(`[name="work_notes_${suffix}"]`)?.value || ''
+      });
+    });
+    data.workPackages = works;
+    data.signatureImage = canvas.toDataURL('image/png');
+    data.submittedAt = new Date().toISOString();
+    data.formVersion = 'schedule-of-works-v1.0';
+
+    try{
+      const res = await fetch(WEBHOOK_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      });
+      if(!res.ok) throw new Error('Webhook returned ' + res.status);
+
+      statusSuccess.textContent = 'Submitted. Aadi will be in touch shortly to confirm receipt and next steps.';
+      statusSuccess.classList.add('is-shown');
+      submitBtn.textContent = 'Submitted ✓';
+      window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
+    }catch(err){
+      console.error(err);
+      statusError.textContent = 'Submission failed. Please email aadi@posfincapital.com or try again in a moment.';
+      statusError.classList.add('is-shown');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit to Posfin';
+    }
+  });
+</script>
+
+</body>
+</html>
