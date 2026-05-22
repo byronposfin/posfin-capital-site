@@ -193,6 +193,19 @@ function formatPipelineRow(d, ts, product) {
     `Address: ${securityAddress}`,
     `Postcode: ${d.postcode || 'TBC'}`,
     '',
+    '🏡 PROPERTY SPEC',
+    (() => {
+      const parts = [];
+      if (d.spec_beds)        parts.push(`${d.spec_beds} bed`);
+      if (d.spec_baths)       parts.push(`${d.spec_baths} bath`);
+      if (d.spec_receptions)  parts.push(`${d.spec_receptions} reception`);
+      if (d.spec_parking && d.spec_parking !== 'None') parts.push(d.spec_parking);
+      if (d.spec_garden === 'Yes') parts.push('Garden');
+      if (d.spec_sqft)        parts.push(`~${d.spec_sqft} ${d.spec_sqft_unit || 'sq ft'}`);
+      if (d.spec_year_built)  parts.push(`Built: ${d.spec_year_built}`);
+      return parts.length ? parts.join(' · ') : 'Spec TBC — confirm on call';
+    })(),
+    '',
     '📊 VALUATION',
     `Stated/GDV: ${formatCurrency(value)}`,
     '',
