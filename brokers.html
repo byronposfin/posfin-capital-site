@@ -403,7 +403,45 @@ footer img.flogo{height:32px;width:auto;margin-bottom:12px;}
           <label>Tell us about your referral network (optional)</label>
           <textarea placeholder="e.g. estate agents, solicitors, accountants, IFAs — how you typically source clients..."></textarea>
         </div>
-        <button class="btn-submit" type="submit">Register as Introducer →</button>
+        <button class="btn-submit" type="button" id="submitBtn" onclick="submitForm()">Register as Introducer →</button>
+<div id="successMsg" style="display:none;background:#00B5B0;color:#fff;padding:20px;text-align:center;margin-top:16px;border-radius:2px;">
+  <strong>✅ Agreement sent to your email.</strong><br/>
+  <span style="font-size:13px;">Please check your inbox and sign your Introducer Agreement. Byron will countersign within 24 hours. You can then start introducing cases immediately.</span>
+</div>
+<div id="errorMsg" style="display:none;background:#E05555;color:#fff;padding:16px;text-align:center;margin-top:16px;font-size:13px;"></div>
+<script>
+async function submitForm() {
+  const btn = document.getElementById("submitBtn");
+  btn.textContent = "Sending Agreement…"; btn.disabled = true;
+  const data = {
+    first_name: document.querySelector("input[placeholder='First name']").value,
+    last_name: document.querySelector("input[placeholder='Last name']").value,
+    company: document.querySelector("input[placeholder='Your company or trading name']").value,
+    mobile: document.querySelector("input[type='tel']").value,
+    email: document.querySelector("input[type='email']").value,
+    fca_status: document.querySelectorAll("select")[0].value,
+    case_type: document.querySelectorAll("select")[1].value,
+    has_live_case: document.querySelectorAll("select")[2].value,
+    network: document.querySelector("textarea").value,
+  };
+  try {
+    const r = await fetch("/api/introducer", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(data) });
+    const j = await r.json();
+    if (j.ok) {
+      document.getElementById("successMsg").style.display="block";
+      btn.style.display="none";
+    } else {
+      document.getElementById("errorMsg").textContent = j.error || "Something went wrong. Please email enquiries@posfincapital.com";
+      document.getElementById("errorMsg").style.display="block";
+      btn.textContent="Register as Introducer →"; btn.disabled=false;
+    }
+  } catch(e) {
+    document.getElementById("errorMsg").textContent="Connection error. Please email enquiries@posfincapital.com";
+    document.getElementById("errorMsg").style.display="block";
+    btn.textContent="Register as Introducer →"; btn.disabled=false;
+  }
+}
+</script>
         <p class="form-note">By submitting you confirm you have read and understood the Mere Introducer framework above. Posfin Capital Limited is authorised and regulated by the Financial Conduct Authority FRN 913022.</p>
       </div>
     </div>
