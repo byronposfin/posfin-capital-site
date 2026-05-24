@@ -24,7 +24,7 @@
     },
     {
       "source": "/go/dev",
-      "destination": "https://posfincapital.com/apply/dev?utm_source=facebook&utm_medium=paid&utm_campaign=dev-finance&utm_content=fb-short",
+      "destination": "/dev-exit?utm_source=facebook&utm_medium=paid&utm_campaign=dev-finance&utm_content=fb-short",
       "permanent": false
     }
   ],
