@@ -14,17 +14,17 @@
     },
     {
       "source": "/go/speed",
-      "destination": "https://posfincapital.com/apply/speed?utm_source=facebook&utm_medium=paid&utm_campaign=speed-loan&utm_content=fb-short",
+      "destination": "/apply/speed",
       "permanent": false
     },
     {
       "source": "/go/bridge",
-      "destination": "https://posfincapital.com/apply/bridge?utm_source=facebook&utm_medium=paid&utm_campaign=bank-bridge&utm_content=fb-short",
+      "destination": "/apply/bridge",
       "permanent": false
     },
     {
       "source": "/go/dev",
-      "destination": "/dev-exit?utm_source=facebook&utm_medium=paid&utm_campaign=dev-finance&utm_content=fb-short",
+      "destination": "/dev-exit",
       "permanent": false
     }
   ],
