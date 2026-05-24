@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Broker & Introducer Panel | Posfin Capital</title>
+<meta name="description" content="Introduce a bridging finance case to Posfin Capital. Access Shawbrook, Allica Bank, Cavendish and Mercantile Trust. £1,000 per completed case. FCA Authorised FRN 913022."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="icon" href="/favicon.ico"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:#FAF8F3;color:#1A1A2E;-webkit-font-smoothing:antialiased;}
+.topbar{background:#13113A;color:rgba(255,255,255,0.78);font-size:11px;letter-spacing:0.12em;padding:10px 40px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase;}
+nav{background:#1C184F;padding:16px 40px;display:flex;align-items:center;justify-content:space-between;}
+nav a.logo img{height:36px;width:auto;}
+.nav-links{display:flex;gap:28px;align-items:center;}
+.nav-links a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.04em;transition:color 0.2s;}
+.nav-links a:hover{color:#00B5B0;}
+.nav-links a.cta{background:#00B5B0;color:#fff;padding:8px 20px;font-weight:600;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;}
+
+/* HERO */
+.hero{background:linear-gradient(180deg,#1C184F 0%,#13113A 100%);color:#fff;padding:64px 40px 72px;text-align:center;}
+.hero-badge{display:inline-block;background:#D4A853;color:#13113A;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;padding:5px 14px;margin-bottom:20px;}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(30px,4.5vw,48px);font-weight:400;line-height:1.15;margin-bottom:16px;}
+.hero h1 em{font-style:italic;color:#00B5B0;}
+.hero p{color:rgba(255,255,255,0.65);font-size:16px;max-width:560px;margin:0 auto 40px;line-height:1.75;}
+.hero-stats{display:flex;justify-content:center;gap:0;border-top:1px solid rgba(255,255,255,0.1);padding-top:40px;max-width:700px;margin:0 auto;}
+.hero-stat{flex:1;text-align:center;padding:0 24px;border-right:1px solid rgba(255,255,255,0.08);}
+.hero-stat:last-child{border:none;}
+.hero-stat-val{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:400;color:#00B5B0;}
+.hero-stat-lbl{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;text-transform:uppercase;margin-top:4px;}
+
+/* TRUST BAR */
+.trustbar{background:rgba(0,181,176,0.08);border-bottom:1px solid rgba(0,181,176,0.2);padding:12px 40px;text-align:center;font-size:11px;color:#00B5B0;letter-spacing:0.14em;font-weight:600;text-transform:uppercase;}
+
+/* SECTION BASE */
+section{padding:72px 40px;}
+.container{max-width:1100px;margin:0 auto;}
+.section-label{font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#00B5B0;margin-bottom:10px;}
+h2{font-family:'Playfair Display',serif;font-size:clamp(24px,3vw,36px);font-weight:400;color:#1C184F;margin-bottom:16px;line-height:1.2;}
+.section-desc{font-size:15px;color:#6F6B7A;line-height:1.8;max-width:580px;margin-bottom:48px;}
+
+/* PANEL ACCESS */
+.panel-section{background:#FAF8F3;}
+.panel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+.panel-card{background:#fff;border:1px solid #E8E4DB;border-top:3px solid #1C184F;padding:28px 32px;}
+.panel-card.highlight{border-top-color:#00B5B0;}
+.panel-lender{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#00B5B0;margin-bottom:8px;}
+.panel-card h3{font-family:'Playfair Display',serif;font-size:20px;font-weight:500;color:#1C184F;margin-bottom:10px;}
+.panel-card p{font-size:13px;color:#6F6B7A;line-height:1.75;margin-bottom:16px;}
+.panel-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.tag{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 10px;background:rgba(0,181,176,0.08);color:#00B5B0;border:1px solid rgba(0,181,176,0.2);}
+.tag.gold{background:rgba(212,168,83,0.1);color:#D4A853;border-color:rgba(212,168,83,0.25);}
+
+/* HOW IT WORKS */
+.how-section{background:#fff;}
+.steps-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0;position:relative;margin-top:48px;}
+.steps-row::before{content:'';position:absolute;top:28px;left:16%;right:16%;height:1px;background:linear-gradient(90deg,#00B5B0,rgba(0,181,176,0.2));}
+.step{text-align:center;padding:0 24px;}
+.step-num{width:56px;height:56px;border-radius:50%;border:2px solid #00B5B0;background:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-family:'Playfair Display',serif;font-size:1.3rem;color:#00B5B0;position:relative;z-index:2;}
+.step h4{font-family:'Playfair Display',serif;font-size:18px;font-weight:500;color:#1C184F;margin-bottom:8px;}
+.step p{font-size:13px;color:#6F6B7A;line-height:1.7;}
+
+/* FEE SECTION */
+.fee-section{background:#1C184F;color:#fff;}
+.fee-section h2{color:#fff;}
+.fee-section .section-desc{color:rgba(255,255,255,0.55);}
+.fee-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:0;}
+.fee-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:32px;}
+.fee-card.primary{border-color:rgba(0,181,176,0.3);background:rgba(0,181,176,0.06);}
+.fee-val{font-family:'Playfair Display',serif;font-size:3rem;font-weight:400;color:#00B5B0;margin-bottom:4px;}
+.fee-label{font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:16px;}
+.fee-card p{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.75;}
+.fee-card ul{list-style:none;padding:0;margin-top:12px;}
+.fee-card ul li{font-size:13px;color:rgba(255,255,255,0.6);padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:flex-start;gap:10px;line-height:1.5;}
+.fee-card ul li::before{content:'→';color:#00B5B0;font-size:12px;flex-shrink:0;margin-top:1px;}
+
+/* RULES */
+.rules-section{background:#FAF8F3;}
+.rules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:0;}
+.rule-card{background:#fff;border:1px solid #E8E4DB;padding:28px;}
+.rule-num{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:400;color:#E8E4DB;margin-bottom:12px;}
+.rule-card h4{font-size:15px;font-weight:600;color:#1C184F;margin-bottom:8px;}
+.rule-card p{font-size:13px;color:#6F6B7A;line-height:1.7;}
+.rule-do{border-top:3px solid #00B5B0;}
+.rule-dont{border-top:3px solid #E05555;}
+.dont-label{font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#E05555;margin-bottom:8px;}
+.do-label{font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#00B5B0;margin-bottom:8px;}
+
+/* FORM */
+.form-section{background:#fff;}
+.form-wrap{max-width:640px;margin:0 auto;}
+.form-box{background:#FAF8F3;border:1px solid #E8E4DB;border-top:3px solid #1C184F;padding:40px;}
+.form-box h3{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:#1C184F;margin-bottom:6px;}
+.form-box .sub{font-size:13px;color:#6F6B7A;margin-bottom:32px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-group{display:flex;flex-direction:column;margin-bottom:16px;}
+.form-group label{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6F6B7A;margin-bottom:6px;}
+.form-group input,.form-group select,.form-group textarea{border:1px solid #E5E1D6;border-radius:2px;padding:12px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:#1A1A2E;background:#fff;outline:none;transition:border-color 0.2s;width:100%;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#1C184F;}
+.form-group textarea{min-height:90px;resize:vertical;}
+.btn-submit{background:#1C184F;color:#fff;border:none;padding:16px 32px;font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;transition:background 0.2s;margin-top:8px;}
+.btn-submit:hover{background:#00B5B0;}
+.form-note{font-size:11px;color:#9E9AAA;margin-top:12px;line-height:1.65;text-align:center;}
+.agreement-bar{background:rgba(0,181,176,0.06);border:1px solid rgba(0,181,176,0.2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;}
+.agreement-bar span{font-size:13px;color:#1A1A2E;font-weight:500;}
+.agreement-bar a{font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#00B5B0;text-decoration:none;white-space:nowrap;}
+
+/* FOOTER */
+footer{background:#13113A;color:rgba(255,255,255,0.78);padding:56px 40px 32px;}
+.footer-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
+.footer-col h4{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#D4A853;margin-bottom:16px;font-weight:700;}
+.footer-col p,.footer-col a{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.8;text-decoration:none;display:block;}
+.footer-col a:hover{color:#00B5B0;}
+footer img.flogo{height:32px;width:auto;margin-bottom:12px;}
+.footer-bottom{max-width:1100px;margin:0 auto;border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.footer-bottom p{font-size:11px;color:rgba(255,255,255,0.35);}
+.footer-links a{font-size:11px;color:rgba(255,255,255,0.3);text-decoration:none;margin-left:20px;}
+.footer-links a:hover{color:#00B5B0;}
+
+@media(max-width:768px){
+  .topbar,.nav-links{display:none;}
+  section{padding:48px 20px;}
+  .hero{padding:48px 20px 56px;}
+  .hero-stats{flex-wrap:wrap;}
+  .hero-stat{border:none;padding:12px;}
+  .panel-grid,.fee-grid,.rules-grid,.steps-row{grid-template-columns:1fr;}
+  .steps-row::before{display:none;}
+  .form-row{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .footer-bottom{flex-direction:column;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>Posfin Capital · Bridging Finance Specialists</span>
+  <span>FCA Authorised · FRN 913022</span>
+</div>
+
+<nav>
+  <a href="/" class="logo"><img src="/logo.png" alt="Posfin Capital"/></a>
+  <div class="nav-links">
+    <a href="/speed-loan">Speed Loan</a>
+    <a href="/bank-bridge">Bank Bridge</a>
+    <a href="/dev-exit">Dev Exit</a>
+    <a href="/brokers" style="color:#00B5B0;font-weight:600;">Brokers</a>
+    <a href="/apply/speed" class="cta">Apply Now</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Broker &amp; Introducer Panel</div>
+  <h1>Introduce a Deal.<br>We Fund It. <em>You Earn.</em></h1>
+  <p>Access Shawbrook Bank, Allica Bank, Cavendish and Mercantile Trust — lenders most brokers cannot reach. Pass us the name, number and loan requirement. We handle everything else.</p>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-val">£1,000</div>
+      <div class="hero-stat-lbl">Per Completed Case</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">4</div>
+      <div class="hero-stat-lbl">Exclusive Lenders</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">72hr</div>
+      <div class="hero-stat-lbl">Speed Loan Funding</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val">75%</div>
+      <div class="hero-stat-lbl">Max LTV Available</div>
+    </div>
+  </div>
+</div>
+
+<div class="trustbar">◆ Shawbrook Bank Panel &nbsp;·&nbsp; ◆ Allica Bank Panel &nbsp;·&nbsp; ◆ Cavendish Speed Loan &nbsp;·&nbsp; ◆ Mercantile Trust &nbsp;·&nbsp; ◆ FCA Authorised FRN 913022</div>
+
+<!-- LENDER PANEL -->
+<section class="panel-section">
+  <div class="container">
+    <div class="section-label">Exclusive Lender Access</div>
+    <h2>The Lenders Most Brokers Can't Access</h2>
+    <p class="section-desc">Posfin Capital holds direct panel access to four specialist lenders. When you introduce a case, your client benefits from institutional capital that most brokers simply cannot place.</p>
+    <div class="panel-grid">
+
+      <div class="panel-card highlight">
+        <div class="panel-lender">Shawbrook Bank</div>
+        <h3>Bank Bridge — Regulated Capital</h3>
+        <p>Shawbrook is a UK-regulated bank — not a private fund. Most brokers are not on the Shawbrook bridging panel. Posfin is. Institutional rates, higher LTV, and a lender with real bank certainty behind every deal.</p>
+        <div class="panel-tags">
+          <span class="tag">1st &amp; 2nd Charge</span>
+          <span class="tag">Up to 75% LTV</span>
+          <span class="tag">£100K–£5M</span>
+          <span class="tag">10–15 Days</span>
+        </div>
+      </div>
+
+      <div class="panel-card highlight">
+        <div class="panel-lender">Allica Bank</div>
+        <h3>Bank Bridge — Institutional Rates</h3>
+        <p>A second regulated UK bank on the Posfin panel. Allica gives clients a genuine choice of institutional capital — competitive rates with the security of a real bank balance sheet behind the loan.</p>
+        <div class="panel-tags">
+          <span class="tag">Regulated UK Bank</span>
+          <span class="tag">Bank Capital</span>
+          <span class="tag">Competitive Rates</span>
+          <span class="tag">Senior Desk</span>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-lender">Cavendish</div>
+        <h3>Speed Loan — 12-Month Equitable Charge</h3>
+        <p>Cavendish funds equitable charge speed loans in 3–5 working days with zero upfront costs and no borrower solicitors required. 12-month term — not 3 months. The fastest institutional bridging product in the market.</p>
+        <div class="panel-tags">
+          <span class="tag">£26K–£500K</span>
+          <span class="tag">12 Months</span>
+          <span class="tag">3–5 Days</span>
+          <span class="tag gold">No Upfront Costs</span>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-lender">Mercantile Trust</div>
+        <h3>Speed Loan — Scotland, 2nd Charge &amp; High Broker Fee</h3>
+        <p>Mercantile Trust extends to Scotland and Northern Ireland and offers up to 15% broker fee on speed loan products. Equitable charge for E&amp;W plus second charge with consent across all UK jurisdictions.</p>
+        <div class="panel-tags">
+          <span class="tag">All UK inc. Scotland</span>
+          <span class="tag">2nd Charge</span>
+          <span class="tag gold">Up to 15% Broker Fee</span>
+          <span class="tag">Speed Loan</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="container" style="text-align:center;">
+    <div class="section-label">How It Works</div>
+    <h2>Three Steps. That's It.</h2>
+    <p class="section-desc" style="margin:0 auto 56px;">You are a Mere Introducer. You pass us the lead. We handle qualification, underwriting, documentation, solicitors, and completion. You invoice us on drawdown.</p>
+    <div class="steps-row">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>You Introduce</h4>
+        <p>Pass us the borrower's name, contact number, and loan requirement. That's all. No fact-finds. No advice. No compliance risk.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>We Handle Everything</h4>
+        <p>Posfin qualifies, underwrites, places with the right lender, generates documentation, instructs solicitors, and drives to completion. Your client is in expert hands.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>You Get Paid</h4>
+        <p>£1,000 fixed fee on net drawdown — every time. Invoice us on completion. Payment within 5 working days. No volume targets. No minimums.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEE STRUCTURE -->
+<section class="fee-section">
+  <div class="container">
+    <div class="section-label" style="color:rgba(0,181,176,0.8);">Remuneration</div>
+    <h2>Simple. Transparent. Fixed.</h2>
+    <p class="section-desc">No confusing percentage structures. No volume tiers. £1,000 per completed case — every case, every time.</p>
+    <div class="fee-grid">
+      <div class="fee-card primary">
+        <div class="fee-val">£1,000</div>
+        <div class="fee-label">Fixed Referral Fee</div>
+        <p>Paid on net drawdown of every completed loan facility you introduce. Submit your invoice on confirmation of completion.</p>
+        <ul>
+          <li>Speed Loans — £1,000 per case</li>
+          <li>Bank Bridge — £1,000 per case</li>
+          <li>Dev Exit — £1,000 per case</li>
+          <li>All products, all sizes</li>
+          <li>No VAT applicable</li>
+        </ul>
+      </div>
+      <div class="fee-card">
+        <div class="fee-val">90</div>
+        <div class="fee-label">Day Clawback Period</div>
+        <p>If a borrower defaults, enters arrears, or is subject to enforcement within 90 days of drawdown, the referral fee is repayable in full within 7 days of demand.</p>
+        <ul>
+          <li>Protects both parties</li>
+          <li>Incentivises quality over volume</li>
+          <li>24-month client ownership to Posfin</li>
+          <li>No further fee for returning clients within 24 months</li>
+          <li>Standard industry Mere Introducer terms</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES -->
+<section class="rules-section">
+  <div class="container">
+    <div class="section-label">Regulatory Firewall</div>
+    <h2>What You Do. What You Don't.</h2>
+    <p class="section-desc">Posfin operates under the FCA Mere Introducer framework. Your role is strictly limited — which protects you from compliance risk and keeps everything clean.</p>
+    <div class="rules-grid">
+      <div class="rule-card rule-do">
+        <div class="do-label">✓ You Do This</div>
+        <div class="rule-num">01</div>
+        <h4>Pass the Introduction</h4>
+        <p>Name, contact number, and loan requirement. Three pieces of information. That's the full extent of your role as an introducer.</p>
+      </div>
+      <div class="rule-card rule-dont">
+        <div class="dont-label">✗ You Never Do This</div>
+        <div class="rule-num">02</div>
+        <h4>No Advice. No Fact-Finds.</h4>
+        <p>Do not advise on loan products, assess suitability, or complete fact-finds — especially for regulated mortgage contracts. This is the FCA regulatory firewall that protects you.</p>
+      </div>
+      <div class="rule-card rule-do">
+        <div class="do-label">✓ We Handle This</div>
+        <div class="rule-num">03</div>
+        <h4>Everything Else</h4>
+        <p>Qualification, AVM, underwriting, lender selection, documentation, KYC, solicitors, completion, and investor reporting. You introduce — we execute.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REGISTER FORM -->
+<section class="form-section" id="register">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:48px;">
+      <div class="section-label">Register as an Introducer</div>
+      <h2>Start Introducing Today</h2>
+      <p class="section-desc" style="margin:0 auto;">Complete the form below. We'll send you our Master Introducer Agreement to review and sign. Once countersigned by Posfin Capital, you can begin introducing cases immediately.</p>
+    </div>
+    <div class="form-wrap">
+      <div class="form-box">
+        <h3>Introducer Registration</h3>
+        <p class="sub">Senior broker responds within 2 hours on business days.</p>
+
+        <div class="agreement-bar">
+          <span>📄 Master Introducer Agreement — available on request</span>
+          <a href="mailto:enquiries@posfincapital.com?subject=Introducer Agreement Request">Request Agreement →</a>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name *</label>
+            <input type="text" placeholder="First name"/>
+          </div>
+          <div class="form-group">
+            <label>Last Name *</label>
+            <input type="text" placeholder="Last name"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Company / Trading Name</label>
+            <input type="text" placeholder="Your company or trading name"/>
+          </div>
+          <div class="form-group">
+            <label>Mobile *</label>
+            <input type="tel" placeholder="+44 7..."/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" placeholder="name@company.com"/>
+        </div>
+        <div class="form-group">
+          <label>Are you FCA Authorised?</label>
+          <select>
+            <option value="">Select...</option>
+            <option>Yes — FCA Authorised (provide FRN)</option>
+            <option>No — Mere Introducer only</option>
+            <option>Appointed Representative</option>
+            <option>Not sure</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>What type of cases do you typically see?</label>
+          <select>
+            <option value="">Select...</option>
+            <option>Residential bridging — speed loan range</option>
+            <option>Residential bridging — main loan range</option>
+            <option>Development finance / dev exit</option>
+            <option>Mixed — all types</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Do you have a case to introduce right now?</label>
+          <select>
+            <option value="">Select...</option>
+            <option>Yes — I have a live case</option>
+            <option>No — registering for future cases</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tell us about your referral network (optional)</label>
+          <textarea placeholder="e.g. estate agents, solicitors, accountants, IFAs — how you typically source clients..."></textarea>
+        </div>
+        <button class="btn-submit" type="submit">Register as Introducer →</button>
+        <p class="form-note">By submitting you confirm you have read and understood the Mere Introducer framework above. Posfin Capital Limited is authorised and regulated by the Financial Conduct Authority FRN 913022.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <img class="flogo" src="/logo.png" alt="Posfin Capital"/>
+      <p>An institutional bridging finance brokerage authorised and regulated by the Financial Conduct Authority. FCA FRN 913022 · Co. 12148846 · ICO ZA542657</p>
+    </div>
+    <div class="footer-col">
+      <h4>Products</h4>
+      <a href="/speed-loan">Speed Loan</a>
+      <a href="/bank-bridge">Bank Bridge</a>
+      <a href="/dev-exit">Dev Exit</a>
+      <a href="/back-to-back">Back-to-Back</a>
+    </div>
+    <div class="footer-col">
+      <h4>Brokers</h4>
+      <a href="/brokers">Introducer Panel</a>
+      <a href="/brokers#register">Register Now</a>
+      <a href="mailto:enquiries@posfincapital.com">Contact Senior Desk</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="/privacy-policy">Privacy Policy</a>
+      <a href="/cookie-policy">Cookie Policy</a>
+      <a href="/complaints">Complaints</a>
+      <a href="/risk-warnings">Risk Warnings</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Posfin Capital Ltd. All rights reserved. · 96 Kensington High Street, London W8 4SG</p>
+    <div class="footer-links">
+      <a href="/privacy-policy">Privacy</a>
+      <a href="/cookie-policy">Cookies</a>
+      <a href="/complaints">Complaints</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
