@@ -2229,7 +2229,7 @@ fbq('track', 'PageView');
       </button>
       <button type="button" class="q5-tier-btn" data-tier="val_only"
               onclick="q5SetTier('val_only', this)">
-        Tier 3: Asset-Backed / Non-Status<span>0.95%/mo</span>
+        Tier 3: Asset-Backed / Non-Status<span>1.35%/mo</span>
       </button>
     </div>
     <!-- Proven Exit caveat (shown only on proven_exit tier) -->
@@ -4317,7 +4317,7 @@ function showAVMMessage(data, borrowerEstimate) {
        B: 0.85%  Max 70% LTV  Somo flexible exit
      standard    : Typical borrower
        A: 0.93%  Max 70% LTV  Somo
-       B: 0.95%  Max 65% LTV  AVM Eligible  MT Finance
+       B: 1.35%  Max 65% LTV  AVM Eligible  MT Finance
      val_only    : Self-declared exit, no evidence
        A: 1.10%  Asset-backed  Max 70% LTV
        B: 0.90%  AVM Eligible  Max 65% LTV
@@ -4333,8 +4333,8 @@ function showAVMMessage(data, borrowerEstimate) {
       { rate: 0.0085, maxLTV: 0.65, label: 'AVM Eligible \u00b7 Max 65% LTV',  avm: true  }   // Option B — 0.85%
     ],
     val_only: [
-      { rate: 0.0095, maxLTV: 0.70, label: 'Asset-backed · Max 70% LTV',  avm: false },  // Option A — 0.95%
-      { rate: 0.0095, maxLTV: 0.65, label: 'AVM Eligible · Max 65% LTV',  avm: true  }   // Option B — 0.95%
+      { rate: 0.0135, maxLTV: 0.70, label: 'Asset-backed · Max 70% LTV',  avm: false },  // Option A — 1.35% (Cavendish)
+      { rate: 0.0135, maxLTV: 0.65, label: 'AVM Eligible · Max 65% LTV',  avm: true  }   // Option B — 1.35% (Cavendish)
     ]
   };
 
