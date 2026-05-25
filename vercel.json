@@ -26,6 +26,11 @@
       "source": "/go/dev",
       "destination": "/dev-exit",
       "permanent": false
+    },
+    {
+      "source": "/go/senior",
+      "destination": "/senior-desk",
+      "permanent": false
     }
   ],
   "headers": [
