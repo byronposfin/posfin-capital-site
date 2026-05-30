@@ -162,12 +162,21 @@ export default async function handler(req, res) {
 
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: `'PIPELINE'!A:AQ`,
+      range: `'PIPELINE'!A:BO`,
     });
     const rows = result.data.values || [];
+    const headers = rows[0] || [];
+    const idx = (names) => {
+      const list = Array.isArray(names) ? names : [names];
+      return headers.findIndex(h => list.some(name => String(h || '').toLowerCase().includes(String(name).toLowerCase())));
+    };
+    const val = (row, names) => {
+      const i = idx(names);
+      return i >= 0 ? (row[i] || '') : '';
+    };
 
-    // Find row by deal ref (col U = index 20)
-    const dataRow = rows.find(r => r[20] === ref);
+    const refIdx = idx(['🔖 Ref', 'Ref']);
+    const dataRow = rows.slice(1).find(r => String(r[refIdx] || '').trim() === ref);
     if (!dataRow) {
       res.status(404).send(`<html><body style="font-family:sans-serif;text-align:center;padding:4rem">
         <h2 style="color:#1C184F">Scorecard not found</h2>
@@ -177,16 +186,16 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Parse summary text from col A
+    // Parse summary text from col A as fallback only; current data should come from headers.
     const summary = dataRow[0] || '';
     const get = (pattern) => summary.match(pattern)?.[1]?.trim() || '';
 
-    const loanAmount = dataRow[18] || '';
-    const propertyValue = dataRow[21] || '';
-    const firstChargeBalance = dataRow[23] || '';
-    const arrearsAmount = dataRow[25] || '';
-    const secondChargeBalance = dataRow[27] || '';
-    const secondChargeProvider = dataRow[26] || '';
+    const loanAmount = val(dataRow, ['💷 Net', 'FNR — Final Net Request', 'Net (£)']);
+    const propertyValue = val(dataRow, ['📊 Property Value (Stated)', 'Property Value (Stated)']);
+    const firstChargeBalance = val(dataRow, ['1st Charge Clean', '1st Charge Gross']);
+    const arrearsAmount = val(dataRow, ['Arrears']);
+    const secondChargeBalance = val(dataRow, ['2nd Charge Balance']);
+    const secondChargeProvider = val(dataRow, ['2nd Charge Provider']);
 
     // Calculate net cash
     const loan = Number(String(loanAmount).replace(/[^\d]/g, '')) || 0;
@@ -197,15 +206,15 @@ export default async function handler(req, res) {
 
     const d = {
       ref,
-      borrowerName: `${dataRow[5] || ''} ${dataRow[6] || ''}`.trim() || get(/Name: ([^\n]+)/),
-      mobile:       dataRow[3] || '',
-      email:        dataRow[4] || '',
-      product:      dataRow[11] || '',
-      securityAddress: get(/Address: ([^\n]+)/),
-      postcode:     get(/Postcode: ([^\n]+)/),
+      borrowerName: `${val(dataRow, ['👤 First Name', 'First Name'])} ${val(dataRow, ['👤 Last Name', 'Last Name'])}`.trim() || get(/Name: ([^\n]+)/),
+      mobile:       val(dataRow, ['📱 Mobile', 'Mobile']),
+      email:        val(dataRow, ['📧 Email', 'Email']),
+      product:      val(dataRow, ['⚡ Product', 'Product']),
+      securityAddress: val(dataRow, ['Security Address']) || get(/Address of Security Property: ([^\n]+)/) || get(/Address: ([^\n]+)/),
+      postcode:     val(dataRow, ['Postcode']) || get(/Postcode: ([^\n]+)/),
       propertyValue,
-      tenure:       get(/tenure.*?([^\n·]+)/i),
-      firstChargeLender: dataRow[22] || '',
+      tenure:       val(dataRow, ['Tenure']) || get(/Tenure: ([^\n]+)/),
+      firstChargeLender: val(dataRow, ['1st Charge Provider']),
       firstChargeBalance,
       arrearsAmount,
       secondCharges: sc > 0 ? 'Yes' : 'No',
@@ -216,11 +225,11 @@ export default async function handler(req, res) {
       loanAmount,
       netCash,
       totalFacility: loan,
-      netOrGross:   get(/Net or gross: ([^\n]+)/),
-      purpose:      get(/🎯 PURPOSE\n([^\n]+)/),
-      exitStrategy: get(/🚪 EXIT\n([^\n]+)/),
-      timescale:    get(/Timescale: ([^\n]+)/),
-      ltv:          get(/LTV: ([^\n]+)/),
+      netOrGross:   val(dataRow, ['Net or Gross']) || get(/Net or gross: ([^\n]+)/),
+      purpose:      val(dataRow, ['Purpose of Funds']) || get(/\n\n([^\n]+)\n\nExit via/),
+      exitStrategy: val(dataRow, ['Exit Strategy']) || get(/Exit via ([^\n]+)/),
+      timescale:    val(dataRow, ['ETA Completion Days', 'Legal ETA Days']) || get(/Completion Date ETA: ([^\n]+)/) || get(/Timescale: ([^\n]+)/),
+      ltv:          val(dataRow, ['Combined LTV%', 'Current LTV']) || get(/LTV: ([^\n]+)/),
     };
 
     const html = scorecard(d);
