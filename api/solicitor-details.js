@@ -95,19 +95,33 @@ async function findPipelineRow(sheets, d) {
 async function updatePipeline(sheets, d, ts) {
   const rowNumber = await findPipelineRow(sheets, d);
   const notes = detailsBlock(d, ts);
+  const solicitorSummary = [
+    '⚖️ SOLICITOR DETAILS RECEIVED',
+    `Firm: ${d.firm_name || 'TBC'}`,
+    `Address: ${String(d.firm_address || 'TBC').replace(/\s*\n\s*/g, ', ')}`,
+    `Firm phone: ${d.firm_phone || 'TBC'}`,
+    `Acting solicitor: ${d.acting_solicitor_name || 'TBC'}`,
+    `Solicitor email: ${d.acting_solicitor_email || 'TBC'}`,
+    `Solicitor direct phone: ${d.acting_solicitor_phone || 'TBC'}`,
+  ].join('\n');
   if (rowNumber) {
     const current = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: `'PIPELINE'!B${rowNumber}:L${rowNumber}`,
+      range: `'PIPELINE'!A${rowNumber}:L${rowNumber}`,
     });
     const values = current.data.values?.[0] || [];
-    const existingNotes = values[0] || '';
+    const existingSummary = values[0] || '';
+    const existingNotes = values[1] || '';
+    const nextSummary = existingSummary.includes('⚖️ SOLICITOR DETAILS RECEIVED')
+      ? `${existingSummary}\n\n${solicitorSummary}`
+      : [existingSummary, solicitorSummary].filter(Boolean).join('\n\n');
     const nextNotes = [existingNotes, notes].filter(Boolean).join('\n\n---\n');
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: SHEET_ID,
       requestBody: {
         valueInputOption: 'USER_ENTERED',
         data: [
+          { range: `'PIPELINE'!A${rowNumber}`, values: [[nextSummary]] },
           { range: `'PIPELINE'!B${rowNumber}`, values: [[nextNotes]] },
           { range: `'PIPELINE'!I${rowNumber}`, values: [['SOLICITOR DETAILS RECEIVED']] },
           { range: `'PIPELINE'!L${rowNumber}`, values: [['Review solicitor details / handover']] },
