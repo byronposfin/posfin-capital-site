@@ -3,6 +3,11 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/development-exit",
+      "destination": "/dev-exit",
+      "permanent": false
+    },
+    {
       "source": "/development-exit-finance",
       "destination": "/dev-exit",
       "permanent": false
