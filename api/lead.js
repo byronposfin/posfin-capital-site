@@ -276,6 +276,29 @@ function columnName(n) {
   return s;
 }
 
+async function ensureSheetHasRow(sheets, tabName, rowNumber) {
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId: SHEET_ID,
+    fields: 'sheets(properties(sheetId,title,gridProperties(rowCount)))',
+  });
+  const sheet = (meta.data.sheets || []).find(s => s.properties?.title === tabName);
+  if (!sheet) throw new Error(`Sheet not found: ${tabName}`);
+  const currentRows = sheet.properties?.gridProperties?.rowCount || 0;
+  if (currentRows >= rowNumber) return;
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SHEET_ID,
+    requestBody: {
+      requests: [{
+        appendDimension: {
+          sheetId: sheet.properties.sheetId,
+          dimension: 'ROWS',
+          length: rowNumber - currentRows,
+        },
+      }],
+    },
+  });
+}
+
 async function appendRowAtFirstEmpty(sheets, tabName, row) {
   const colA = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
@@ -287,6 +310,7 @@ async function appendRowAtFirstEmpty(sheets, tabName, row) {
     if (String(r?.[0] || '').trim()) last = idx + 1;
   });
   const nextRow = Math.max(last + 1, 2);
+  await ensureSheetHasRow(sheets, tabName, nextRow);
   const endCol = columnName(row.length);
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
