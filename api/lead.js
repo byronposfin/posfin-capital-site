@@ -413,6 +413,19 @@ export default async function handler(req, res) {
     let pipelineRowNumber = null;
     if (pipelineRow) {
       pipelineRowNumber = await appendRowAtFirstEmpty(sheets, 'PIPELINE', pipelineRow);
+      try {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID,
+          range: `'PIPELINE'!BH${pipelineRowNumber}:BI${pipelineRowNumber}`,
+          valueInputOption: 'USER_ENTERED',
+          requestBody: {
+            values: [[
+              data.property_address || data.site_address || '',
+              data.residential_address || data.home_address || data.property_address || data.site_address || '',
+            ]],
+          },
+        });
+      } catch (e) { console.warn('[Lead API] Pipeline address detail write failed:', e.message); }
     }
 
     // ── Scorecard URL ──────────────────────────────────────────────────
