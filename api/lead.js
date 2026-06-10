@@ -19,6 +19,7 @@ const TAB_MAP = {
   development_exit_finance:  'Dev Exit Leads',
   speed_loan:                'Speed Loan Leads',
   main_loan:                 'Main Loan Leads',
+  bank_bridge:               'Main Loan Leads',
   back_to_back:              'Back to Back Leads',
   trade_finance:             'Trade Finance Leads',
 };
@@ -153,26 +154,27 @@ function fmtDateShort(ts) {
 }
 
 function formatPipelineRow(d, ts, product) {
-  if (!['main_loan', 'speed_loan', 'back_to_back', 'development_finance', 'development_exit_finance'].includes(product)) return null;
+  if (!['main_loan', 'bank_bridge', 'speed_loan', 'back_to_back', 'development_finance', 'development_exit_finance'].includes(product)) return null;
   const first = d.first_name || '';
   const last = d.last_name || '';
   const isSpeed = product === 'speed_loan';
   const productLabel = product === 'speed_loan' ? 'Speed Loan'
     : product === 'main_loan' ? 'Main Loan'
+    : product === 'bank_bridge' ? 'Bank Bridge'
     : product === 'back_to_back' ? 'Back-to-Back'
     : product === 'development_finance' ? 'Development Finance'
     : 'Dev Exit';
   const requestedAmount = product === 'speed_loan' ? d.loan_needed
-    : product === 'main_loan' ? d.loan_amount
+    : (product === 'main_loan' || product === 'bank_bridge') ? d.loan_amount
     : product === 'back_to_back' ? d.full_loan_required
     : product === 'development_finance' ? d.loan_size_gbp
     : d.gross_borrowing_gbp || d.loan_size_gbp;
   const term = product === 'speed_loan' ? '3 months'
-    : product === 'main_loan' ? '12 months'
+    : (product === 'main_loan' || product === 'bank_bridge') ? '12 months'
     : product === 'back_to_back' ? '3 + 12 months'
     : product === 'development_finance' ? 'Development term TBC'
     : (d.term || 'Dev exit term TBC');
-  const purpose = product === 'main_loan' ? d.loan_purpose : (d.purpose_of_funds || d.loan_purpose || d.use_of_funds || d.biggest_challenge);
+  const purpose = (product === 'main_loan' || product === 'bank_bridge') ? d.loan_purpose : (d.purpose_of_funds || d.loan_purpose || d.use_of_funds || d.biggest_challenge);
   const source = `${productLabel} form`;
   const securityAddress = d.property_address || d.site_address || 'TBC';
   const value = d.property_value || d.gdv_estimate_gbp || d.scheme_value || d.scheme_value_gbp;
@@ -336,10 +338,7 @@ export default async function handler(req, res) {
 
     const tabName = TAB_MAP[product];
     if (!tabName) {
-      return Response.json(
-        { error: `Unknown product: ${product}` },
-        { status: 400 }
-      );
+      res.status(400).json({ error: `Unknown product: ${product}` }); return;
     }
 
     const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
@@ -349,6 +348,7 @@ export default async function handler(req, res) {
       development_exit_finance: formatDevExitRow,
       speed_loan:               formatSpeedLoanRow,
       main_loan:                formatMainLoanRow,
+      bank_bridge:              formatMainLoanRow,
       back_to_back:             formatBackToBackRow,
       trade_finance:            formatTradeFinanceRow,
     };
@@ -394,7 +394,7 @@ export default async function handler(req, res) {
 
     // ── Telegram broker alert ──────────────────────────────────────────
     const TELE_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-    const isMain = ['main_loan', 'development_finance', 'development_exit_finance'].includes(product);
+    const isMain = ['main_loan', 'bank_bridge', 'development_finance', 'development_exit_finance'].includes(product);
     const brokerName = data.assigned_broker === 'Chris' ? 'Chris' : 'Byron';
     // Main loans £250k+ → round-robin Byron/Chris; Speed loans → Byron
     const loanAmt = Number(String(data.loan_amount || data.loan_needed || data.full_loan_required || '0').replace(/[^\d]/g,''));
