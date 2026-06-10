@@ -354,6 +354,21 @@ export default async function handler(req, res) {
     };
     const formatter = formatters[product] || formatSpeedLoanRow;
     const row = formatter(data, ts);
+    const pipelineRow = formatPipelineRow(data, ts, product);
+
+    // Healthcheck-safe path: validate product mapping and row formatting without
+    // writing fake leads to Google Sheets. Used by Tom's scheduled page checks.
+    if (data.dry_run === true || data.dry_run === 'true') {
+      res.status(200).json({
+        ok: true,
+        dryRun: true,
+        product,
+        tab: tabName,
+        rowColumns: row.length,
+        pipeline: !!pipelineRow,
+        pipelineColumns: pipelineRow ? pipelineRow.length : 0,
+      }); return;
+    }
 
     // Auth via service account JSON stored in Vercel env
     const saB64 = process.env.GOOGLE_SA_B64;
@@ -370,7 +385,6 @@ export default async function handler(req, res) {
     const sheets = google.sheets({ version: 'v4', auth });
     const leadRowNumber = await appendRowAtFirstEmpty(sheets, tabName, row);
 
-    const pipelineRow = formatPipelineRow(data, ts, product);
     let pipelineRowNumber = null;
     if (pipelineRow) {
       pipelineRowNumber = await appendRowAtFirstEmpty(sheets, 'PIPELINE', pipelineRow);
