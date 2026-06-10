@@ -100,6 +100,7 @@ function formatSpeedLoanRow(d, ts) {
     d.email || '',
     d.urgency || '',
     d.property_address || '',
+    d.residential_address || d.home_address || d.property_address || '',
     d.postcode || '',
     d.property_value || '',
     d.first_charge_lender || '',
@@ -115,9 +116,6 @@ function formatSpeedLoanRow(d, ts) {
     d.arrears_amount || '',
     d.page_source || 'speed-loan',
     ts,
-    d.additional_security_properties_summary || '',
-    d.portfolio_spreadsheet_file_name || '',
-    d.additional_security_properties_json || '',
   ];
 }
 
@@ -303,16 +301,16 @@ function formatBackToBackRow(d, ts) {
   return [
     ts, d.deal_ref||'', 'NEW',
     d.first_name||'', d.last_name||'', d.mobile||'', d.email||'',
-    d.property_address||'', d.postcode||'', d.property_value||'',
+    d.property_address||'', d.residential_address || d.home_address || d.property_address || '', d.postcode||'', d.property_value||'',
     d.first_charge_lender||'', d.first_charge_balance||'',
     d.second_charges||'', d.tenure||'',
     d.cash_needed_now||'', d.full_loan_required||'',
-    d.speed_loan_ltv||'', d.main_loan_ltv||'', d.ltv_flag||'',
-    d.purpose_of_funds||'', d.exit_strategy||'', d.urgency||'', d.additional_info||'',
+    d.exit_strategy||'',
+    d.legal_buffer||'', d.overrun_buffer||'',
+    d.charge_request||'',
     d.page_source||'back-to-back', ts,
-    d.additional_security_properties_summary||'',
-    d.portfolio_spreadsheet_file_name||'',
-    d.additional_security_properties_json||'',
+    [d.purpose_of_funds, d.urgency, d.additional_info].filter(Boolean).join(' | '),
+    d.page_source||'back-to-back', ts,
   ];
 }
 
