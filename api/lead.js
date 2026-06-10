@@ -122,11 +122,15 @@ function formatSpeedLoanRow(d, ts) {
 }
 
 function formatMainLoanRow(d, ts) {
+  const additionalSecuritySummary = d.additional_security_properties_summary || '';
+  const additionalSecurityFlag = additionalSecuritySummary && !/^no additional security/i.test(additionalSecuritySummary)
+    ? 'Yes'
+    : 'No';
   return [
     ts, d.deal_ref||'', 'NEW',
     d.first_name||'', d.last_name||'', d.mobile||'', d.email||'',
     d.loan_purpose||'', d.regulated||'',
-    d.property_address||'', d.postcode||'',
+    d.property_address||'', d.residential_address || d.property_address || '', d.postcode||'',
     d.property_value||'', d.first_charge_lender||'', d.first_charge_balance||'',
     d.second_charges||'', d.tenure||'', d.arrears||'',
     d.loan_amount||'', d.net_or_gross||'', d.estimated_ltv||'', d.ltv_flag||'',
@@ -134,10 +138,9 @@ function formatMainLoanRow(d, ts) {
     d.legal_buffer||'', d.overrun_buffer||'',
     d.second_charge_provider||'', d.second_charge_balance||'', d.charge_request||'',
     d.page_source||'main-loan', d.submitted_at || ts,
-    d.additional_security_properties_summary||'',
-    d.portfolio_spreadsheet_file_name||'',
+    additionalSecuritySummary || 'No additional security offered',
+    additionalSecurityFlag,
     d.additional_security_properties_json||'',
-    d.additional_info||'',
   ];
 }
 
