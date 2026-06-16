@@ -645,7 +645,7 @@
   <div class="hero-inner">
     <div class="eyebrow">Refurbishment &amp; Development Finance</div>
     <h1>Schedule of Works</h1>
-    <p>To finalise your facility, we require a detailed schedule of the works planned at the security property. This document supports lender underwriting, drawdown sequencing, and surveyor instruction. All figures are treated in strict confidence.</p>
+    <p>To finalise your facility, we require a detailed schedule of the works planned at the security property. This document supports lender underwriting, drawdown sequencing, monitoring surveyor instruction, and MT Finance-style schedule output. All figures are treated in strict confidence.</p>
   </div>
 </section>
 
@@ -666,6 +666,12 @@
     <div class="field">
       <label for="borrowerName">Borrower full legal name <span class="req">*</span></label>
       <input type="text" id="borrowerName" name="borrowerName" required>
+    </div>
+
+    <div class="field">
+      <label for="applicantCompany">Applicant / company name for lender schedule <span class="opt">if different</span></label>
+      <input type="text" id="applicantCompany" name="applicantCompany" placeholder="Leave blank if same as borrower name">
+      <div class="hint">This appears on the lender schedule as “Applicant / Company name”.</div>
     </div>
 
     <div class="field-row">
@@ -750,7 +756,7 @@
         <div class="currency"><input type="text" id="currentValue" name="currentValue" inputmode="numeric" data-currency required></div>
       </div>
       <div class="field">
-        <label for="postWorksValue">Post-works value (GDV) <span class="req">*</span></label>
+        <label for="postWorksValue">Expected GDV / post-works value <span class="req">*</span></label>
         <div class="currency"><input type="text" id="postWorksValue" name="postWorksValue" inputmode="numeric" data-currency required></div>
       </div>
       <div class="field">
@@ -759,7 +765,7 @@
       </div>
     </div>
 
-    <div class="field-row">
+    <div class="field-row-3">
       <div class="field">
         <label for="startDate">Target start date <span class="req">*</span></label>
         <input type="date" id="startDate" name="startDate" required>
@@ -767,6 +773,10 @@
       <div class="field">
         <label for="completionDate">Target completion date <span class="req">*</span></label>
         <input type="date" id="completionDate" name="completionDate" required>
+      </div>
+      <div class="field">
+        <label for="totalTimeframe">Total timeframe <span class="req">*</span></label>
+        <input type="text" id="totalTimeframe" name="totalTimeframe" placeholder="e.g. 12 weeks / 4 months" required>
       </div>
     </div>
 
@@ -1021,7 +1031,7 @@
   <!-- ─── Submit ─────────────────────── -->
   <div class="submit-section">
     <h2>Submit Schedule of Works</h2>
-    <p>Aadi will acknowledge receipt within one business hour and confirm next steps.</p>
+    <p>Posfin will convert this into a lender-ready Schedule of Works and confirm next steps.</p>
     <button type="submit" class="submit-btn" id="submitBtn">Submit to Posfin</button>
     <div class="status error" id="statusError"></div>
     <div class="status success" id="statusSuccess"></div>
@@ -1041,7 +1051,7 @@
   <div class="ty-divider"></div>
 
   <p class="ty-meta">
-    A complete record has been saved to your file.<br>
+    A complete record has been saved to your file and formatted into a lender-ready Schedule of Works.<br>
     If you need to amend any detail, reply to your Posfin WhatsApp thread or email <strong>aadi@posfincapital.com</strong>.
   </p>
 </div>
@@ -1172,13 +1182,18 @@
             </select>
           </div>
         </div>
+        <div class="field">
+          <label>Timeframe for this work package <span class="req">*</span></label>
+          <input type="text" name="work_timeframe_${idx}" placeholder="e.g. Weeks 1–4 / Month 1 / 6 weeks" required>
+          <div class="hint">This maps directly to the lender schedule “Timeframe” field.</div>
+        </div>
         <div class="field-row">
           <div class="field">
-            <label>Phase start</label>
+            <label>Phase start <span class="opt">optional</span></label>
             <input type="date" name="work_start_${idx}">
           </div>
           <div class="field">
-            <label>Phase end</label>
+            <label>Phase end <span class="opt">optional</span></label>
             <input type="date" name="work_end_${idx}">
           </div>
         </div>
@@ -1333,6 +1348,48 @@
     if(e.dataTransfer && e.dataTransfer.files) await addFiles(e.dataTransfer.files);
   });
 
+
+  // ── MT Finance-style lender schedule output ──
+  function formatMoneyForSchedule(v){
+    const clean = String(v || '').replace(/[£,\s]/g,'');
+    const n = Number(clean);
+    if(!Number.isFinite(n) || clean === '') return v || '';
+    return '£' + n.toLocaleString('en-GB');
+  }
+  function buildMtFinanceSchedule(data){
+    const applicant = data.applicantCompany || data.borrowerName || '';
+    const property = [data.propAddress, data.postcode].filter(Boolean).join(', ');
+    const works = (data.workPackages || []).map(w => ({
+      description: w.description || '',
+      timeframe: w.timeframe || [w.start, w.end].filter(Boolean).join(' to ') || '',
+      costIncVat: formatMoneyForSchedule(w.cost || '')
+    }));
+    return {
+      title: 'Schedule of Works Form',
+      lenderFormat: 'MT Finance-style',
+      applicantCompany: applicant,
+      propertyAddress: property,
+      expectedGDV: formatMoneyForSchedule(data.postWorksValue || ''),
+      scheduleWorks: works,
+      totalTimeframe: data.totalTimeframe || [data.startDate, data.completionDate].filter(Boolean).join(' to '),
+      totalCost: formatMoneyForSchedule(data.totalBudget || ''),
+      declaration: 'I/We declare that this schedule of works statement is a true and correct description of the works intended to be carried out.',
+      printName: data.sigName || data.borrowerName || '',
+      date: data.sigDate || ''
+    };
+  }
+  function buildLenderScheduleHtml(schedule){
+    const rows = (schedule.scheduleWorks || []).map((w,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(w.description)}</td><td>${escapeHtml(w.timeframe)}</td><td>${escapeHtml(w.costIncVat)}</td></tr>`).join('');
+    return `<!doctype html><html><head><meta charset="utf-8"><title>Posfin Schedule of Works</title><style>
+      body{font-family:Arial,sans-serif;color:#15131F;margin:32px} h1{color:#1C184F} .brand{border-bottom:4px solid #00B5B0;padding-bottom:10px;margin-bottom:24px}.meta,.works{width:100%;border-collapse:collapse;margin:18px 0}.meta td,.works th,.works td{border:1px solid #C9C6BA;padding:9px;vertical-align:top}.meta td:first-child,.works th{background:#EAF7F7;font-weight:bold;color:#1C184F}.sig{margin-top:28px;border-top:1px solid #C9C6BA;padding-top:18px}.fine{font-size:12px;color:#666}</style></head><body>
+      <div class="brand"><h1>Schedule of Works Form</h1><div>Prepared by Posfin Capital Limited · FCA FRN 913022</div></div>
+      <table class="meta"><tr><td>Applicant / Company name</td><td>${escapeHtml(schedule.applicantCompany)}</td></tr><tr><td>Property address</td><td>${escapeHtml(schedule.propertyAddress)}</td></tr><tr><td>Expected GDV</td><td>${escapeHtml(schedule.expectedGDV)}</td></tr></table>
+      <h2>Schedule works</h2><table class="works"><thead><tr><th>#</th><th>Description of works</th><th>Timeframe</th><th>Cost (inc VAT)</th></tr></thead><tbody>${rows}</tbody></table>
+      <table class="meta"><tr><td>Total timeframe</td><td>${escapeHtml(schedule.totalTimeframe)}</td></tr><tr><td>Total cost</td><td>${escapeHtml(schedule.totalCost)}</td></tr></table>
+      <p>${escapeHtml(schedule.declaration)}</p><div class="sig"><p>Applicant/Director signature: ________________________________</p><p>Print name: ${escapeHtml(schedule.printName)}</p><p>Date: ${escapeHtml(schedule.date)}</p></div>
+      <p class="fine">Generated from the Posfin Schedule of Works borrower form. Supporting documents, quotes and images should be held on the case file.</p></body></html>`;
+  }
+
   // ── Submission ─────────────────────────
   const form = document.getElementById('sowForm');
   const statusError = document.getElementById('statusError');
@@ -1382,12 +1439,15 @@
         description: blk.querySelector(`[name="work_desc_${suffix}"]`)?.value || '',
         cost: blk.querySelector(`[name="work_cost_${suffix}"]`)?.value || '',
         basis: blk.querySelector(`[name="work_basis_${suffix}"]`)?.value || '',
+        timeframe: blk.querySelector(`[name="work_timeframe_${suffix}"]`)?.value || '',
         start: blk.querySelector(`[name="work_start_${suffix}"]`)?.value || '',
         end: blk.querySelector(`[name="work_end_${suffix}"]`)?.value || '',
         notes: blk.querySelector(`[name="work_notes_${suffix}"]`)?.value || ''
       });
     });
     data.workPackages = works;
+    data.mtFinanceSchedule = buildMtFinanceSchedule(data);
+    data.lenderScheduleHtml = buildLenderScheduleHtml(data.mtFinanceSchedule);
 
     // Attach uploaded files (base64) + check total size
     const totalSize = selectedFiles.reduce((s,e)=>s+e.file.size, 0);
@@ -1407,7 +1467,7 @@
 
     data.signatureImage = canvas.toDataURL('image/png');
     data.submittedAt = new Date().toISOString();
-    data.formVersion = 'schedule-of-works-v1.1';
+    data.formVersion = 'schedule-of-works-v1.2-mt-output';
 
     try{
       const res = await fetch(WEBHOOK_URL, {
