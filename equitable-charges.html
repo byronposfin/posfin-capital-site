@@ -542,7 +542,17 @@ section { padding:6rem 3rem; position:relative; }
     </div>
   </div>
 </section>
-<div class="divider"></div>
+
+
+<!-- ═══ FOOTER ═══ -->
+
+<!-- ════════════════════════════════════════════════════════════════
+  POSFIN PRODUCT STACK — reusable footer/navigation block
+  Self-contained (scoped styles, prefix pfs-). Paste this entire block
+  immediately BEFORE the site <footer> on any page.
+  To mark the current product on a given page, add class "is-current"
+  to that card's <a> (see Purchase & Refurb example below).
+═════════════════════════════════════════════════════════════════ -->
 <style>
 .pfs { padding:5rem 3rem; background:#F2EEDD; position:relative; }
 .pfs * { box-sizing:border-box; }
@@ -580,60 +590,65 @@ section { padding:6rem 3rem; position:relative; }
     <h2 class="pfs-title">Explore the Posfin Product Stack</h2>
     <p class="pfs-sub">One enquiry, the right route. Each product is matched to the deal &mdash; not the easiest option for us.</p>
     <div class="pfs-grid">
-      <a class="pfs-card" href="/speed-loan">
+
+      <a class="pfs-card is-current" href="/speed-loan">
         <span class="pfs-num">01</span>
         <h3 class="pfs-name">Speed Loan</h3>
         <p class="pfs-desc">Fast equitable-charge liquidity when timing is everything.</p>
         <span class="pfs-go">Explore &rarr;</span>
       </a>
-      <a class="pfs-card is-current" href="/equitable-charges"><span class="pfs-tag here">You&rsquo;re here</span>
-        <span class="pfs-num">02</span>
-        <h3 class="pfs-name">Equitable Charges</h3>
-        <p class="pfs-desc">£50k–£300k secured liquidity in ~48 hours &mdash; no lender consent, no undertakings. Business &amp; investment only.</p>
-        <span class="pfs-go">Explore &rarr;</span>
-      </a>
+
       <a class="pfs-card" href="/main-loan">
-        <span class="pfs-num">03</span>
+        <span class="pfs-num">02</span>
         <h3 class="pfs-name">Main Bridging Loan</h3>
         <p class="pfs-desc">Flexible specialist first or second charge bridge across our panel.</p>
         <span class="pfs-go">Explore &rarr;</span>
       </a>
-      <a class="pfs-card" href="/bank-bridge"><span class="pfs-tag inst">Institutional</span>
-        <span class="pfs-num">04</span>
+
+      <a class="pfs-card" href="/bank-bridge">
+        <span class="pfs-tag inst">Institutional</span>
+        <span class="pfs-num">03</span>
         <h3 class="pfs-name">Bank Bridge</h3>
         <p class="pfs-desc">Lower-rate institutional bridging for cleaner cases &mdash; strong security, clear exit, pricing potentially sharper than standard specialist bridging, subject to underwriting.</p>
         <span class="pfs-go">Explore &rarr;</span>
       </a>
+
       <a class="pfs-card" href="/purchase-refurb">
-        <span class="pfs-num">05</span>
+        <span class="pfs-tag here">You're here</span>
+        <span class="pfs-num">04</span>
         <h3 class="pfs-name">Purchase &amp; Refurb</h3>
         <p class="pfs-desc">Acquisition, works and exit in one facility.</p>
         <span class="pfs-go">Explore &rarr;</span>
       </a>
+
       <a class="pfs-card" href="/back-to-back">
-        <span class="pfs-num">06</span>
+        <span class="pfs-num">05</span>
         <h3 class="pfs-name">Back-to-Back Bridge</h3>
         <p class="pfs-desc">Speed liquidity now, main-loan refinance where appropriate.</p>
         <span class="pfs-go">Explore &rarr;</span>
       </a>
+
       <a class="pfs-card" href="/development-finance">
-        <span class="pfs-num">07</span>
+        <span class="pfs-num">06</span>
         <h3 class="pfs-name">Development Finance</h3>
         <p class="pfs-desc">Ground-up, structural and staged development funding.</p>
         <span class="pfs-go">Explore &rarr;</span>
       </a>
+
       <a class="pfs-card" href="/dev-exit">
-        <span class="pfs-num">08</span>
+        <span class="pfs-num">07</span>
         <h3 class="pfs-name">Development Exit</h3>
         <p class="pfs-desc">Refinance completed or near-complete schemes onto cheaper capital.</p>
         <span class="pfs-go">Explore &rarr;</span>
       </a>
+
       <a class="pfs-card" href="/acquisition-finance">
-        <span class="pfs-num">09</span>
+        <span class="pfs-num">08</span>
         <h3 class="pfs-name">Acquisition Finance</h3>
         <p class="pfs-desc">Business and property acquisition structures.</p>
         <span class="pfs-go">Explore &rarr;</span>
       </a>
+
       <a class="pfs-card pfs-card--senior" href="/senior-desk">
         <div class="pfs-senior-body">
           <span class="pfs-tag">Senior Desk</span>
@@ -642,11 +657,11 @@ section { padding:6rem 3rem; position:relative; }
         </div>
         <span class="pfs-go">Speak to the Senior Desk &rarr;</span>
       </a>
+
     </div>
   </div>
 </section>
 
-<!-- ═══ FOOTER ═══ -->
 <footer class="footer">
   <div class="footer-inner">
     <div class="footer-top">
