@@ -175,7 +175,7 @@ function formatPipelineRow(d, ts, product) {
     : product === 'development_finance' ? d.loan_size_gbp
     : d.gross_borrowing_gbp || d.loan_size_gbp;
   const term = product === 'speed_loan' ? '3 months'
-    : product === 'equitable_charges' ? 'Term TBC'
+    : product === 'equitable_charges' ? '12 months · 6-month minimum exit'
     : (product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb') ? (d.timescale || '12 months')
     : product === 'back_to_back' ? '3 + 12 months'
     : product === 'development_finance' ? 'Development term TBC'
