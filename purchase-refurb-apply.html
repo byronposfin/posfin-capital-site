@@ -347,6 +347,10 @@ section { padding:6rem 3rem; position:relative; }
 
         <div class="form-group"><label class="form-label">Full Security Property Address *</label><input class="form-input" type="text" id="propertyAddress" placeholder="House number + street name + postcode — e.g. 12 High Street, London SW1A 1AA"><div style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.45">Mandatory: house number, street name and postcode. Postcode alone is not enough for lender review.</div></div>
 
+        <div class="form-group"><label style="display:flex;gap:10px;align-items:flex-start;font-weight:600;color:#0f172a"><input type="checkbox" id="sameAsHome" onchange="toggleHomeAddress()" style="margin-top:3px;accent-color:#00B5B0"> The security property is also my home address</label><div style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.45">This helps us identify whether the case is owner-occupied and route it correctly.</div></div>
+
+        <div class="form-group" id="homeAddressGroup"><label class="form-label">Full Home / Residential Address *</label><input class="form-input" type="text" id="homeAddress" placeholder="House number + street name + postcode — e.g. 34 Test Avenue, London W1A 1AA"><div style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.45">Mandatory if different from the security property: house number, street name and postcode.</div></div>
+
         <div class="form-row">
           <div class="form-group" id="grpPrice"><label class="form-label">Purchase Price (&pound;) *</label><input class="form-input" type="text" id="fPrice" placeholder="e.g. 300,000" oninput="formatCurrency(this);syncCalc()"></div>
           <div class="form-group"><label class="form-label">Open Market Value Today (&pound;)</label><input class="form-input" type="text" id="fOmv" placeholder="If different to price" oninput="formatCurrency(this);syncCalc()"></div>
@@ -766,6 +770,15 @@ function showStep(step){
   document.getElementById('formContainer').scrollIntoView({behavior:'smooth', block:'start'});
 }
 function val(id){ const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+function toggleHomeAddress(){
+  const cb=document.getElementById('sameAsHome');
+  const group=document.getElementById('homeAddressGroup');
+  const home=document.getElementById('homeAddress');
+  const security=val('propertyAddress');
+  if(!cb || !group || !home) return;
+  if(cb.checked){ group.style.display='none'; if(security) home.value=security; }
+  else { group.style.display='block'; if(home.value===security) home.value=''; }
+}
 function hasFullAddress(v){
   const s = String(v || '').trim();
   const postcodeMatch = s.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i);
@@ -785,10 +798,13 @@ function nextStep(from){
   }
   if (from === 2){
     if (!hasFullAddress(val('propertyAddress'))){ alert('Please enter the full security property address: house number, street name and postcode are mandatory.'); return; }
+    const homeSame = !!(document.getElementById('sameAsHome') && document.getElementById('sameAsHome').checked);
+    if (homeSame) { const home=document.getElementById('homeAddress'); if(home) home.value = val('propertyAddress'); }
+    if (!homeSame && !hasFullAddress(val('homeAddress'))){ alert('Please enter the full home/residential address, or tick that the security property is also your home address. House number, street name and postcode are mandatory.'); return; }
     if ((parseCurrency(val('fPrice'))<=0)||(parseCurrency(val('fWorks'))<=0)){ alert('Please give the price and works budget.'); return; }
     if (!val('fOccupier')||!val('fPurpose')){ alert('Please answer the occupancy and purpose questions — they determine how we route your enquiry.'); return; }
     Object.assign(formData, {
-      ownMode, propertyAddress:val('propertyAddress'), price:val('fPrice'), omv:val('fOmv'),
+      ownMode, propertyAddress:val('propertyAddress'), residentialAddress:val('homeAddress'), securityIsHome: (document.getElementById('sameAsHome') && document.getElementById('sameAsHome').checked) ? 'Yes' : 'No', price:val('fPrice'), omv:val('fOmv'),
       works:val('fWorks'), gdv:val('fGdv'), currentDebt:val('fDebt'), worksType:val('fWorksType'),
       planning:val('fPlanning'), propType:val('fPropType'), tenure:val('fTenure'), scope:val('fScope'),
       occupier:val('fOccupier'), purpose:val('fPurpose')
@@ -852,7 +868,8 @@ function leadPayload(){
     borrowing_entity: formData.entity || '',
     contact_preference: formData.contactPref || '',
     property_address: formData.propertyAddress || '',
-    residential_address: '',
+    residential_address: formData.residentialAddress || formData.propertyAddress || '',
+    security_is_home_address: formData.securityIsHome || '',
     property_value: formData.omv || formData.price || '',
     purchase_price: formData.price || '',
     refurb_budget: formData.works || '',

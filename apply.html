@@ -373,6 +373,11 @@ fbq('track', 'PageView');
     <div class="field-error">Full security address required: house number, street name and postcode</div>
   </div>
 
+  <div class="field">
+    <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-weight:600"><input type="checkbox" id="securityIsHome" name="securityIsHome" value="Yes" style="accent-color:#00B5B0;margin-top:0.2rem"> Security property is also my home address</label>
+    <small style="display:block;margin-top:0.35rem;opacity:0.65;font-size:0.82rem;">Tick this if you live at the property being used as security.</small>
+  </div>
+
   <div class="field-row">
     <div class="field">
       <label for="propertyValue">Property Value <span class="req">*</span></label>
@@ -461,6 +466,15 @@ fbq('track', 'PageView');
   const formCard = document.getElementById('formCard');
   const success = document.getElementById('success');
   const submitBtn = document.getElementById('submitBtn');
+  const securityIsHome = document.getElementById('securityIsHome');
+  if (securityIsHome) {
+    securityIsHome.addEventListener('change', function() {
+      if (this.checked) form.homeAddress.value = form.propertyAddress.value.trim();
+    });
+    form.propertyAddress.addEventListener('input', function(){
+      if (securityIsHome.checked) form.homeAddress.value = form.propertyAddress.value.trim();
+    });
+  }
 
   // Auto-format currency fields
   function formatCurrency(input) {
@@ -529,6 +543,7 @@ fbq('track', 'PageView');
       email: form.email.value.trim(),
       homeAddress: form.homeAddress.value.trim(),
       propertyAddress: form.propertyAddress.value.trim(),
+      securityIsHome: form.securityIsHome && form.securityIsHome.checked ? 'Yes' : 'No',
       propertyValue: form.propertyValue.value.trim(),
       loanAmount: form.loanAmount.value.trim(),
       loanIntent: (form.querySelector('input[name="loanIntent"]:checked') || {}).value || '',
