@@ -356,6 +356,56 @@ function formatTradeFinanceRow(d, ts) {
   ];
 }
 
+function explicitBrokerOwner(d) {
+  const blob = [d.assigned_broker, d.owner, d.broker, d.broker_name, d.assigned_to].filter(Boolean).join(' ').toLowerCase();
+  if (/\bchris\b/.test(blob)) return { name: 'Chris', tab: 'CHRIS CALLS' };
+  return { name: 'Byron', tab: 'BYRON CALLS' };
+}
+
+function formatEquitableCallRow(d, ts, pipelineRowNumber, leadRowNumber) {
+  const owner = explicitBrokerOwner(d);
+  const first = d.first_name || '';
+  const last = d.last_name || '';
+  const name = `${first} ${last}`.trim() || 'New Equitable Charge Lead';
+  const sourceRow = pipelineRowNumber ? `PIPELINE:${pipelineRowNumber}` : `Speed Loan Leads:${leadRowNumber || ''}`;
+  const ref = d.deal_ref || '';
+  const property = d.property_address || d.site_address || 'TBC';
+  const loan = d.loan_amount || d.loan_needed || 'TBC';
+  const tomSummary = [
+    `NEW EQUITABLE CHARGE LEAD — ${name}`,
+    ref ? `Ref: ${ref}` : '',
+    `Source: website Equitable Charges form`,
+    `Security: ${property}`,
+    `Loan: ${formatCurrency(loan)}`,
+    `Purpose: ${d.purpose_of_funds || d.loan_purpose || 'TBC'}`,
+    `Exit: ${d.exit_strategy || 'TBC'}`,
+    `Consent issue: ${d.consent_issue || 'TBC'}`,
+    '',
+    'Call goal: confirm full address, value, first-charge balance/lender, business/unregulated purpose, consent issue, exit/refi route, and whether Cavendish equitable charge is suitable.'
+  ].filter(Boolean).join('\n');
+  return {
+    tab: owner.tab,
+    row: [
+      ts.slice(0,10),
+      'P1 — CALL NOW',
+      name,
+      d.mobile || '',
+      'Call',
+      d.email || '',
+      'Equitable Charges',
+      sourceRow,
+      tomSummary,
+      '',
+      '',
+      'Call now — qualify Cavendish equitable charge route',
+      '',
+      ref ? `OPEN LOR — ${name}` : '',
+      ref ? `Canonical LOR JSON — ${name}` : '',
+      '', '', '', '', '', '', '', '', '', 'FALSE', owner.name
+    ]
+  };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -451,6 +501,17 @@ export default async function handler(req, res) {
       } catch (e) { console.warn('[Lead API] Scorecard URL write failed:', e.message); }
     }
 
+    // ── Equitable Charges → owner CALLS queue ─────────────────────────
+    let callSheetRowNumber = null;
+    let callSheetTab = null;
+    if (product === 'equitable_charges') {
+      try {
+        const call = formatEquitableCallRow(data, ts, pipelineRowNumber, leadRowNumber);
+        callSheetTab = call.tab;
+        callSheetRowNumber = await appendRowAtFirstEmpty(sheets, callSheetTab, call.row);
+      } catch (e) { console.warn('[Lead API] Equitable call sheet write failed:', e.message); }
+    }
+
     // ── Telegram broker alert ──────────────────────────────────────────
     const TELE_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const isMain = ['main_loan', 'bank_bridge', 'purchase_refurb', 'equitable_charges', 'development_finance', 'development_exit_finance'].includes(product);
@@ -486,7 +547,7 @@ export default async function handler(req, res) {
     }
 
     console.log(`[Lead API] ${data.deal_ref} → ${tabName} | Scorecard: ${scorecardUrl}`);
-    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, scorecardUrl }); return;
+    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, callSheet: callSheetTab, callSheetRow: callSheetRowNumber, scorecardUrl }); return;
 
   } catch (err) {
     console.error('[Lead API Error]', err);
