@@ -345,7 +345,7 @@ section { padding:6rem 3rem; position:relative; }
           </div>
         </div>
 
-        <div class="form-group"><label class="form-label">Property Address (or Postcode) *</label><input class="form-input" type="text" id="propertyAddress" placeholder="e.g. 12 High Street, London SW1A 1AA"></div>
+        <div class="form-group"><label class="form-label">Full Security Property Address *</label><input class="form-input" type="text" id="propertyAddress" placeholder="House number + street name + postcode — e.g. 12 High Street, London SW1A 1AA"><div style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.45">Mandatory: house number, street name and postcode. Postcode alone is not enough for lender review.</div></div>
 
         <div class="form-row">
           <div class="form-group" id="grpPrice"><label class="form-label">Purchase Price (&pound;) *</label><input class="form-input" type="text" id="fPrice" placeholder="e.g. 300,000" oninput="formatCurrency(this);syncCalc()"></div>
@@ -766,6 +766,14 @@ function showStep(step){
   document.getElementById('formContainer').scrollIntoView({behavior:'smooth', block:'start'});
 }
 function val(id){ const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+function hasFullAddress(v){
+  const s = String(v || '').trim();
+  const postcodeMatch = s.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i);
+  const withoutPostcode = s.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/ig, '').trim();
+  const hasHouseNumber = /(^|\s)\d+[A-Za-z]?([\s,]|$)/.test(withoutPostcode);
+  const hasStreetName = /[A-Za-z]{3,}/.test(withoutPostcode);
+  return !!postcodeMatch && hasHouseNumber && hasStreetName;
+}
 
 function nextStep(from){
   if (from === 1){
@@ -776,7 +784,8 @@ function nextStep(from){
     });
   }
   if (from === 2){
-    if (!val('propertyAddress')||(parseCurrency(val('fPrice'))<=0)||(parseCurrency(val('fWorks'))<=0)){ alert('Please give the property address, price and works budget.'); return; }
+    if (!hasFullAddress(val('propertyAddress'))){ alert('Please enter the full security property address: house number, street name and postcode are mandatory.'); return; }
+    if ((parseCurrency(val('fPrice'))<=0)||(parseCurrency(val('fWorks'))<=0)){ alert('Please give the price and works budget.'); return; }
     if (!val('fOccupier')||!val('fPurpose')){ alert('Please answer the occupancy and purpose questions — they determine how we route your enquiry.'); return; }
     Object.assign(formData, {
       ownMode, propertyAddress:val('propertyAddress'), price:val('fPrice'), omv:val('fOmv'),

@@ -75,7 +75,7 @@
         <div class="field"><label>Last name</label><input name="last_name" required autocomplete="family-name"></div>
         <div class="field"><label>Mobile</label><input name="mobile" required type="tel" autocomplete="tel"></div>
         <div class="field"><label>Email</label><input name="email" required type="email" autocomplete="email"></div>
-        <div class="field full"><label>Security property address</label><textarea name="property_address" required></textarea></div>
+        <div class="field full"><label>Full security property address</label><textarea name="property_address" required placeholder="House number + street name + postcode — e.g. 12 High Street, London SW1A 1AA"></textarea><p class="small">Mandatory: house number, street name and postcode. Postcode alone is not enough.</p></div>
         <div class="field full"><label>Residential / home address</label><textarea name="residential_address" placeholder="Enter again if same as security — lenders need both addresses explicitly" required></textarea></div>
         <div class="field"><label>Estimated property value</label><input name="property_value" inputmode="numeric" placeholder="£"></div>
         <div class="field"><label>Amount required</label><input name="loan_needed" inputmode="numeric" placeholder="£"></div>
@@ -99,9 +99,18 @@
 (function(){
   const form=document.getElementById('eq-form'), msg=document.getElementById('submit-msg');
   function ref(){return 'POSFIN-EQ-'+Date.now().toString(36).toUpperCase().slice(-6)}
+  function hasFullAddress(v){
+    const s = String(v || '').trim();
+    const postcodeMatch = s.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i);
+    const withoutPostcode = s.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/ig, '').trim();
+    const hasHouseNumber = /(^|\s)\d+[A-Za-z]?([\s,]|$)/.test(withoutPostcode);
+    const hasStreetName = /[A-Za-z]{3,}/.test(withoutPostcode);
+    return !!postcodeMatch && hasHouseNumber && hasStreetName;
+  }
   form.addEventListener('submit', async function(e){
     e.preventDefault(); msg.className='submit-msg'; msg.textContent='Submitting…';
     const data=Object.fromEntries(new FormData(form).entries());
+    if(!hasFullAddress(data.property_address)){ msg.className='submit-msg err'; msg.textContent='Please enter the full security property address: house number, street name and postcode are mandatory.'; return; }
     data.product='equitable_charges'; data.page_source='equitable-charges'; data.deal_ref=ref(); data.urgency='48-hour Equitable Charge / consent blocked review';
     data.loan_amount=data.loan_needed; data.loan_purpose=data.purpose_of_funds; data.second_charges='Consent issue / equitable charge route'; data.tenure='Equitable charge / unilateral notice route TBC';
     try{

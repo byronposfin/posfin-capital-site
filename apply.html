@@ -361,15 +361,16 @@ fbq('track', 'PageView');
 
   <div class="field">
     <label for="homeAddress">Home / Residential Address <span class="req">*</span></label>
-    <input type="text" id="homeAddress" name="homeAddress" autocomplete="home street-address" required placeholder="Where you currently live">
-    <div class="field-error">Home address required</div>
+    <input type="text" id="homeAddress" name="homeAddress" autocomplete="home street-address" required placeholder="House number + street name + postcode">
+    <small style="display:block;margin-top:0.35rem;opacity:0.65;font-size:0.82rem;">Mandatory: house number, street name and postcode.</small>
+    <div class="field-error">Full home address required: house number, street name and postcode</div>
   </div>
 
   <div class="field">
     <label for="propertyAddress">Security Property Address <span class="req">*</span></label>
-    <small style="display:block;margin-bottom:0.4rem;opacity:0.65;font-size:0.82rem;">The property being used as security. Enter again even if same as home address.</small>
-    <input type="text" id="propertyAddress" name="propertyAddress" autocomplete="street-address" required placeholder="Postcode is fine to start">
-    <div class="field-error">Security property address required</div>
+    <small style="display:block;margin-bottom:0.4rem;opacity:0.65;font-size:0.82rem;">The property being used as security. Enter again even if same as home address. Mandatory: house number, street name and postcode.</small>
+    <input type="text" id="propertyAddress" name="propertyAddress" autocomplete="street-address" required placeholder="House number + street name + postcode">
+    <div class="field-error">Full security address required: house number, street name and postcode</div>
   </div>
 
   <div class="field-row">
@@ -472,6 +473,15 @@ fbq('track', 'PageView');
   formatCurrency(document.getElementById('propertyValue'));
   formatCurrency(document.getElementById('loanAmount'));
 
+  function hasFullAddress(v) {
+    const s = String(v || '').trim();
+    const postcodeMatch = s.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i);
+    const withoutPostcode = s.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/ig, '').trim();
+    const hasHouseNumber = /(^|\s)\d+[A-Za-z]?([\s,]|$)/.test(withoutPostcode);
+    const hasStreetName = /[A-Za-z]{3,}/.test(withoutPostcode);
+    return !!postcodeMatch && hasHouseNumber && hasStreetName;
+  }
+
   function validate() {
     let valid = true;
     const fields = form.querySelectorAll('input[required], select[required]');
@@ -484,6 +494,9 @@ fbq('track', 'PageView');
         wrap.classList.add('has-error'); valid = false;
       }
       if (f.type === 'tel' && val.replace(/[^\d]/g, '').length < 9) {
+        wrap.classList.add('has-error'); valid = false;
+      }
+      if ((f.id === 'homeAddress' || f.id === 'propertyAddress') && !hasFullAddress(val)) {
         wrap.classList.add('has-error'); valid = false;
       }
     });
