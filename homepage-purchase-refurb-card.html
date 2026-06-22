@@ -1,0 +1,32 @@
+<!-- ════════════════════════════════════════════════════════════════
+  HOMEPAGE CARD — Purchase & Refurb
+  Self-contained (scoped, prefix pfhc-). Drop this <a> block into the
+  homepage product grid alongside Speed Loan / Main Loan / Bank Bridge.
+  If the homepage grid already styles cards, you can strip the <style>
+  and reuse the existing card classes instead.
+═════════════════════════════════════════════════════════════════ -->
+<style>
+.pfhc { display:block; padding:2.4rem; background:#FFFFFF; border:1px solid rgba(28,24,79,.12); border-radius:12px; text-decoration:none; transition:all .35s; box-shadow:0 1px 2px rgba(28,24,79,.05); position:relative; overflow:hidden; font-family:'DM Sans',-apple-system,sans-serif; }
+.pfhc:hover { transform:translateY(-4px); border-color:rgba(232,178,41,.5); box-shadow:0 18px 44px rgba(28,24,79,.12); }
+.pfhc-tag { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:.58rem; letter-spacing:.14em; text-transform:uppercase; padding:.28rem .7rem; border-radius:3px; color:#C2911A; background:rgba(232,178,41,.12); border:1px solid rgba(232,178,41,.3); margin-bottom:1rem; }
+.pfhc-icon { width:52px; height:52px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:1.2rem; background:linear-gradient(135deg,rgba(232,178,41,.18),rgba(0,180,168,.1)); }
+.pfhc-name { font-family:'Playfair Display',Georgia,serif; font-size:1.6rem; font-weight:600; color:#1C184F; margin:0 0 .6rem; }
+.pfhc-desc { font-size:.9rem; color:#5B5E73; line-height:1.65; margin:0 0 1.4rem; }
+.pfhc-specs { display:flex; gap:1.6rem; flex-wrap:wrap; margin-bottom:1.4rem; }
+.pfhc-spec .l { font-family:'JetBrains Mono',monospace; font-size:.58rem; letter-spacing:.1em; text-transform:uppercase; color:#8A8DA0; }
+.pfhc-spec .v { font-size:1rem; font-weight:700; color:#C2911A; }
+.pfhc-go { font-size:.78rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#1C184F; }
+.pfhc:hover .pfhc-go { color:#00928A; }
+</style>
+
+<a class="pfhc" href="/purchase-refurb">
+  <span class="pfhc-tag">New</span>
+  <div class="pfhc-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C2911A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/><path d="M14.5 6.5l2 2"/></svg></div>
+  <h3 class="pfhc-name">Purchase &amp; Refurb</h3>
+  <p class="pfhc-desc">Buy it. Improve it. Fund both. One bridge funds the acquisition and the works &mdash; sized against purchase, total cost and after-works value &mdash; with the refurbishment budget released in stages.</p>
+  <div class="pfhc-specs">
+    <div class="pfhc-spec"><div class="l">Day-1 LTV</div><div class="v">Typically up to 75%</div></div>
+    <div class="pfhc-spec"><div class="l">Works Funded</div><div class="v">Up to 100%</div></div>
+  </div>
+  <span class="pfhc-go">View Purchase &amp; Refurb &rarr;</span>
+</a>
