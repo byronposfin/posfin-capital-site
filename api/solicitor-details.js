@@ -42,6 +42,7 @@ function detailsBlock(d, ts) {
     `Solicitor details submitted via Posfin link — ${ts}`,
     d.deal_ref ? `Deal ref: ${d.deal_ref}` : '',
     d.borrower_name ? `Borrower: ${d.borrower_name}` : '',
+    d.borrower_phone ? `Borrower mobile: ${d.borrower_phone}` : '',
     '',
     `Name of firm: ${d.firm_name || 'TBC'}`,
     `Address of firm: ${d.firm_address || 'TBC'}`,
@@ -161,6 +162,8 @@ export default async function handler(req, res) {
   try {
     const d = req.body || {};
     const required = [
+      'borrower_name',
+      'borrower_phone',
       'firm_name',
       'firm_address',
       'firm_phone',
@@ -193,6 +196,7 @@ export default async function handler(req, res) {
         '',
         d.deal_ref ? `*Ref:* ${d.deal_ref}` : '',
         d.borrower_name ? `*Borrower:* ${d.borrower_name}` : '',
+        d.borrower_phone ? `*Borrower mobile:* ${d.borrower_phone}` : '',
         `*Firm:* ${d.firm_name}`,
         `*Solicitor:* ${d.acting_solicitor_name}`,
         `*Email:* ${d.acting_solicitor_email}`,

@@ -21,7 +21,7 @@
     <div class="eyebrow">Solicitor Details</div>
     <h1 class="headline">A cleaner way to send <span class="accent">your solicitor details.</span></h1>
     <p class="lede">Please complete the short form below so our team can update your case file and move the legal process forward without delays. <strong>It takes less than one minute.</strong></p>
-    <div class="hero-meta"><div><div class="meta-label">Questions</div><div class="meta-value">6 fields</div></div><div><div class="meta-label">Submitted To</div><div class="meta-value">Posfin CRM</div></div><div><div class="meta-label">Next Step</div><div class="meta-value">Legal handover</div></div></div>
+    <div class="hero-meta"><div><div class="meta-label">Questions</div><div class="meta-value">8 fields</div></div><div><div class="meta-label">Submitted To</div><div class="meta-value">Posfin CRM</div></div><div><div class="meta-label">Next Step</div><div class="meta-value">Legal handover</div></div></div>
   </div>
 </section>
 <section class="form-section">
@@ -32,11 +32,13 @@
       <div class="notice">If you do not yet have a solicitor, please contact Posfin before submitting. If you are using Ackroyd Legal, we may already hold these details.</div>
 
       <input type="hidden" name="deal_ref" />
-      <input type="hidden" name="borrower_name" />
-      <input type="hidden" name="borrower_phone" />
       <input type="hidden" name="borrower_email" />
       <input type="hidden" name="page_source" value="solicitor-details" />
 
+      <div class="grid">
+        <div class="field"><label for="borrower_name">Name of Borrower: *</label><input id="borrower_name" name="borrower_name" autocomplete="name" required /></div>
+        <div class="field"><label for="borrower_phone">Borrower mobile to link to: *</label><input id="borrower_phone" name="borrower_phone" type="tel" autocomplete="tel" required /></div>
+      </div>
       <div class="field"><label for="firm_name">Name of firm: *</label><input id="firm_name" name="firm_name" autocomplete="organization" required /></div>
       <div class="field"><label for="firm_address">Address of firm: *<span class="hint">Please include postcode where available.</span></label><textarea id="firm_address" name="firm_address" autocomplete="street-address" required></textarea></div>
       <div class="field"><label for="firm_phone">Phone number: *</label><input id="firm_phone" name="firm_phone" type="tel" autocomplete="tel" required /></div>
