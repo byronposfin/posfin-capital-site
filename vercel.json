@@ -13,8 +13,8 @@
       "permanent": false
     },
     {
-      "source": "/apply",
-      "destination": "/apply-now",
+      "source": "/apply-now",
+      "destination": "/apply",
       "permanent": false
     },
     {
