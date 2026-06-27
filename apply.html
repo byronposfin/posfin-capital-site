@@ -5,10 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#0D1117">
-<title>Apply | Posfin Capital — Bridging Finance from £26k to £5m</title>
-<meta name="description" content="60-second application. Secured bridging loans £26k–£5m. Funds in 3–5 days. FCA authorised broker.">
+<title>Apply | Posfin Capital — Bridging Finance from £26k to £10m</title>
+<meta name="description" content="60-second application. Secured bridging, development and acquisition finance £26k–£10m. Senior broker-led. Terms fast.">
 <meta property="og:title" content="Apply for Bridging Finance | Posfin Capital">
-<meta property="og:description" content="60-second application. Funds in 3–5 days.">
+<meta property="og:description" content="60-second application. Senior broker-led terms.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,7 +52,7 @@ padding: 1.1rem 1.25rem;
 display: flex;
 justify-content: space-between;
 align-items: center;
-border-bottom: 1px solid var(–dark-border);
+border-bottom: 1px solid var(--dark-border);
 background: rgba(13,17,23,0.85);
 backdrop-filter: blur(12px);
 position: sticky;
@@ -60,15 +60,15 @@ top: 0;
 z-index: 100;
 }
 .nav-brand { display: flex; align-items: baseline; gap: 0.5rem; text-decoration: none; }
-.nav-brand-text { font-family: var(–display); font-size: 1.15rem; font-weight: 700; color: var(–teal); letter-spacing: -0.01em; }
-.nav-brand-sub { font-size: 0.6rem; color: var(–grey-500); letter-spacing: 0.12em; text-transform: uppercase; }
-.nav-fca { font-size: 0.6rem; color: var(–grey-500); letter-spacing: 0.06em; }
+.nav-brand-text { font-family: var(--display); font-size: 1.15rem; font-weight: 700; color: var(--teal); letter-spacing: -0.01em; }
+.nav-brand-sub { font-size: 0.6rem; color: var(--grey-500); letter-spacing: 0.12em; text-transform: uppercase; }
+.nav-fca { font-size: 0.6rem; color: var(--grey-500); letter-spacing: 0.06em; }
 
 /* ═══ HERO ═══ */
 .hero {
 text-align: center;
 padding: 2.5rem 1.25rem 1.5rem;
-background: radial-gradient(ellipse 70% 50% at 50% 0%, var(–teal-glow), transparent 70%);
+background: radial-gradient(ellipse 70% 50% at 50% 0%, var(--teal-glow), transparent 70%);
 }
 .hero-eyebrow {
 display: inline-block;
@@ -76,7 +76,7 @@ font-size: 0.7rem;
 font-weight: 600;
 letter-spacing: 0.14em;
 text-transform: uppercase;
-color: var(–teal);
+color: var(--teal);
 padding: 0.4rem 0.9rem;
 border: 1px solid rgba(44,181,172,0.3);
 border-radius: 999px;
@@ -84,20 +84,65 @@ margin-bottom: 1.25rem;
 background: rgba(44,181,172,0.05);
 }
 .hero h1 {
-font-family: var(–display);
+font-family: var(--display);
 font-size: clamp(1.75rem, 6vw, 2.6rem);
 font-weight: 700;
 line-height: 1.1;
 letter-spacing: -0.02em;
 margin-bottom: 0.85rem;
 }
-.hero h1 span { color: var(–teal); }
+.hero h1 span { color: var(--teal); }
 .hero p {
 font-size: 0.95rem;
-color: var(–grey-300);
+color: var(--grey-300);
 max-width: 480px;
 margin: 0 auto;
 line-height: 1.6;
+}
+
+
+/* ═══ DESKTOP APPLICATION SHELL ═══ */
+.apply-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2.2rem 1.4rem 3.2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 520px);
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: start;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(44,181,172,0.16), transparent 28%),
+    radial-gradient(circle at 82% 8%, rgba(28,24,79,0.30), transparent 34%);
+}
+.apply-copy {
+  position: sticky;
+  top: 96px;
+  padding-top: 2.2rem;
+}
+.apply-copy::after {
+  content: "Senior broker-led • FCA authorised • No call centre";
+  display: block;
+  margin-top: 1.4rem;
+  color: var(--grey-300);
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+}
+@media (min-width: 900px) {
+  .hero { text-align: left; padding: 0; background: none; }
+  .hero h1 { font-size: clamp(3.1rem, 5vw, 5.2rem); max-width: 620px; }
+  .hero p { margin: 0; max-width: 560px; font-size: 1.08rem; }
+  .trust { justify-content: flex-start; padding: 1.4rem 0 0; border-bottom: 0; gap: 1rem; }
+  .trust-item { padding: 0.55rem 0.75rem; border: 1px solid var(--dark-border); border-radius: 999px; background: rgba(255,255,255,0.025); }
+  .form-wrap { padding: 0; max-width: none; width: 100%; }
+  .form-card { padding: 1.65rem; box-shadow: 0 32px 80px -28px rgba(0,0,0,0.75); }
+}
+@media (max-width: 899px) {
+  .apply-shell { display: block; padding: 1.6rem 1.1rem 2.5rem; }
+  .apply-copy { position: static; padding-top: 0; }
+  .apply-copy::after { display: none; }
+  .hero { padding: 1.4rem 0 1rem; }
+  .trust { border-bottom: 0; padding: 0.75rem 0 1.25rem; }
+  .form-wrap { padding: 0; }
 }
 
 /* ═══ TRUST STRIP ═══ */
@@ -107,29 +152,29 @@ justify-content: center;
 gap: 1.5rem;
 padding: 1rem 1.25rem;
 flex-wrap: wrap;
-border-bottom: 1px solid var(–dark-border);
+border-bottom: 1px solid var(--dark-border);
 }
-.trust-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(–grey-300); }
-.trust-item svg { width: 14px; height: 14px; color: var(–teal); flex-shrink: 0; }
+.trust-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--grey-300); }
+.trust-item svg { width: 14px; height: 14px; color: var(--teal); flex-shrink: 0; }
 
 /* ═══ FORM ═══ */
 .form-wrap { padding: 2rem 1.25rem 3rem; max-width: 540px; margin: 0 auto; }
 .form-card {
-background: var(–dark-card);
-border: 1px solid var(–dark-border);
+background: var(--dark-card);
+border: 1px solid var(--dark-border);
 border-radius: 14px;
 padding: 1.75rem 1.5rem;
 box-shadow: 0 24px 48px -16px rgba(0,0,0,0.5);
 }
 .form-title {
-font-family: var(–display);
+font-family: var(--display);
 font-size: 1.15rem;
 font-weight: 600;
 margin-bottom: 0.35rem;
 }
 .form-sub {
 font-size: 0.82rem;
-color: var(–grey-300);
+color: var(--grey-300);
 margin-bottom: 1.5rem;
 }
 
@@ -138,42 +183,42 @@ margin-bottom: 1.5rem;
 display: block;
 font-size: 0.78rem;
 font-weight: 500;
-color: var(–grey-100);
+color: var(--grey-100);
 margin-bottom: 0.45rem;
 letter-spacing: 0.01em;
 }
-.field label .req { color: var(–teal); margin-left: 2px; }
+.field label .req { color: var(--teal); margin-left: 2px; }
 
 .field input,
 .field select,
 .field textarea {
 width: 100%;
 padding: 0.85rem 0.95rem;
-font-family: var(–sans);
+font-family: var(--sans);
 font-size: 1rem; /* 16px — prevents iOS zoom on focus */
 font-weight: 400;
-color: var(–white);
-background: var(–dark-mid);
-border: 1px solid var(–dark-border);
+color: var(--white);
+background: var(--dark-mid);
+border: 1px solid var(--dark-border);
 border-radius: 9px;
-transition: all 0.2s var(–ease);
+transition: all 0.2s var(--ease);
 -webkit-appearance: none;
 appearance: none;
 }
 .field input::placeholder,
-.field textarea::placeholder { color: var(–grey-500); }
+.field textarea::placeholder { color: var(--grey-500); }
 
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
 outline: none;
-border-color: var(–teal);
-background: var(–dark);
+border-color: var(--teal);
+background: var(--dark);
 box-shadow: 0 0 0 3px rgba(44,181,172,0.15);
 }
 
 .field select {
-background-image: url(“data:image/svg+xml;charset=UTF-8,%3csvg xmlns=‘http://www.w3.org/2000/svg’ viewBox=‘0 0 24 24’ fill=‘none’ stroke=’%238B949E’ stroke-width=‘2’ stroke-linecap=‘round’ stroke-linejoin=‘round’%3e%3cpolyline points=‘6 9 12 15 18 9’%3e%3c/polyline%3e%3c/svg%3e”);
+background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B949E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
 background-repeat: no-repeat;
 background-position: right 0.95rem center;
 background-size: 16px;
@@ -190,28 +235,28 @@ padding-right: 2.6rem;
 .field-error {
 display: none;
 font-size: 0.72rem;
-color: var(–red);
+color: var(--red);
 margin-top: 0.35rem;
 }
 .field.has-error input,
 .field.has-error select,
-.field.has-error textarea { border-color: var(–red); }
+.field.has-error textarea { border-color: var(--red); }
 .field.has-error .field-error { display: block; }
 
 /* ═══ BUTTON ═══ */
 .btn {
 width: 100%;
 padding: 1.05rem 1.25rem;
-font-family: var(–display);
+font-family: var(--display);
 font-size: 1rem;
 font-weight: 600;
 letter-spacing: 0.01em;
-color: var(–dark);
-background: var(–teal);
+color: var(--dark);
+background: var(--teal);
 border: none;
 border-radius: 10px;
 cursor: pointer;
-transition: all 0.2s var(–ease);
+transition: all 0.2s var(--ease);
 margin-top: 0.5rem;
 display: flex;
 align-items: center;
@@ -219,13 +264,13 @@ justify-content: center;
 gap: 0.5rem;
 -webkit-tap-highlight-color: transparent;
 }
-.btn:hover:not(:disabled) { background: var(–teal-dark); transform: translateY(-1px); box-shadow: 0 12px 24px -8px rgba(44,181,172,0.4); }
+.btn:hover:not(:disabled) { background: var(--teal-dark); transform: translateY(-1px); box-shadow: 0 12px 24px -8px rgba(44,181,172,0.4); }
 .btn:active:not(:disabled) { transform: translateY(0); }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn .spinner {
 width: 16px; height: 16px;
 border: 2px solid rgba(13,17,23,0.3);
-border-top-color: var(–dark);
+border-top-color: var(--dark);
 border-radius: 50%;
 animation: spin 0.7s linear infinite;
 display: none;
@@ -236,12 +281,12 @@ display: none;
 
 .consent {
 font-size: 0.7rem;
-color: var(–grey-500);
+color: var(--grey-500);
 text-align: center;
 margin-top: 1rem;
 line-height: 1.5;
 }
-.consent a { color: var(–grey-300); text-decoration: underline; }
+.consent a { color: var(--grey-300); text-decoration: underline; }
 
 /* ═══ SUCCESS ═══ */
 .success {
@@ -253,32 +298,32 @@ padding: 2rem 1rem;
 .success-icon {
 width: 64px; height: 64px;
 background: rgba(63,185,80,0.12);
-border: 2px solid var(–green);
+border: 2px solid var(--green);
 border-radius: 50%;
 display: flex;
 align-items: center;
 justify-content: center;
 margin: 0 auto 1.25rem;
 }
-.success-icon svg { width: 32px; height: 32px; color: var(–green); }
+.success-icon svg { width: 32px; height: 32px; color: var(--green); }
 .success h2 {
-font-family: var(–display);
+font-family: var(--display);
 font-size: 1.35rem;
 font-weight: 600;
 margin-bottom: 0.6rem;
 }
-.success p { color: var(–grey-300); font-size: 0.9rem; max-width: 360px; margin: 0 auto; }
+.success p { color: var(--grey-300); font-size: 0.9rem; max-width: 360px; margin: 0 auto; }
 
 /* ═══ FOOTER ═══ */
 .footer {
 text-align: center;
 padding: 1.5rem 1.25rem 2rem;
-border-top: 1px solid var(–dark-border);
+border-top: 1px solid var(--dark-border);
 font-size: 0.7rem;
-color: var(–grey-500);
+color: var(--grey-500);
 line-height: 1.6;
 }
-.footer a { color: var(–grey-300); text-decoration: none; }
+.footer a { color: var(--grey-300); text-decoration: none; }
 </style>
 
 <!-- Meta Pixel -->
@@ -311,10 +356,12 @@ fbq('track', 'PageView');
   <span class="nav-fca">FCA FRN 913022</span>
 </nav>
 
+<section class="apply-shell">
+<div class="apply-copy">
 <section class="hero">
   <span class="hero-eyebrow">60-Second Application</span>
-  <h1>Bridging Finance.<br><span>Funds in 3–5 days.</span></h1>
-  <p>£26k to £5m secured against UK property. No upfront fees, no obligation.</p>
+  <h1>Property finance.<br><span>Structured fast.</span></h1>
+  <p>£26k to £10m bridging, development exit and acquisition finance. Senior broker-led, matched to the deal — not a call centre.</p>
 </section>
 
 <div class="trust">
@@ -328,8 +375,9 @@ fbq('track', 'PageView');
   </div>
   <div class="trust-item">
     <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-    Decision in 24 hrs
+    3–30 day routes
   </div>
+</div>
 </div>
 
 <main class="form-wrap">
@@ -337,7 +385,6 @@ fbq('track', 'PageView');
     <h2 class="form-title">Tell us about your loan</h2>
     <p class="form-sub">A senior broker will reply on WhatsApp within the hour.</p>
 
-```
 <form id="applyForm" novalidate>
 
   <div class="field">
@@ -425,7 +472,6 @@ fbq('track', 'PageView');
     We treat your data per our <a href="/privacy">Privacy Policy</a>. No spam, ever.
   </p>
 </form>
-```
 
   </div>
 
@@ -437,6 +483,7 @@ fbq('track', 'PageView');
     <p>A senior broker will be in touch on WhatsApp within the hour. Check your phone — you'll see a message from Posfin Capital shortly.</p>
   </div>
 </main>
+</section>
 
 
 <!-- ════════════════════════════════════════════════════════════════
