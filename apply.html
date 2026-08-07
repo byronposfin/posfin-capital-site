@@ -382,8 +382,8 @@ fbq('track', 'PageView');
 
 <main class="form-wrap">
   <div class="form-card" id="formCard">
-    <h2 class="form-title">Tell us about your loan</h2>
-    <p class="form-sub">A senior broker will reply on WhatsApp within the hour.</p>
+    <h2 class="form-title">Bridging finance application</h2>
+    <p class="form-sub">Standard Posfin Capital secured bridging form. A senior broker will reply on WhatsApp.</p>
 
 <form id="applyForm" novalidate>
 
@@ -538,7 +538,8 @@ fbq('track', 'PageView');
         <span class="pfs-go">Explore &rarr;</span>
       </a>
 
-      <a class="pfs-card" href="/main-loan">
+      <a class="pfs-card is-current" href="/main-loan">
+        <span class="pfs-tag here">You're here</span>
         <span class="pfs-num">02</span>
         <h3 class="pfs-name">Main Bridging Loan</h3>
         <p class="pfs-desc">Flexible specialist first or second charge bridge across our panel.</p>
@@ -554,7 +555,6 @@ fbq('track', 'PageView');
       </a>
 
       <a class="pfs-card" href="/purchase-refurb">
-        <span class="pfs-tag here">You're here</span>
         <span class="pfs-num">04</span>
         <h3 class="pfs-name">Purchase &amp; Refurb</h3>
         <p class="pfs-desc">Acquisition, works and exit in one facility.</p>
@@ -707,6 +707,12 @@ fbq('track', 'PageView');
 
     const payload = {
       source: 'posfin-apply-form',
+      leadSource: 'posfincapital.com/apply',
+      productRoute: 'Standard Bridging Form',
+      formType: 'bridging',
+      sourceUrl: window.location.href,
+      pagePath: window.location.pathname,
+      referrer: document.referrer || '',
       submittedAt: new Date().toISOString(),
       name: form.name.value.trim(),
       phone: form.phone.value.trim(),
