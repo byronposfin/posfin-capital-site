@@ -328,6 +328,47 @@ async function appendRowAtFirstEmpty(sheets, tabName, row) {
   return nextRow;
 }
 
+
+function formatCaseTimelineRow(d, ts, product, tabName, leadRowNumber, pipelineRowNumber, scorecardUrl) {
+  const first = d.first_name || '';
+  const last = d.last_name || '';
+  const name = `${first} ${last}`.trim() || d.borrower_full_name || 'New lead';
+  const ref = d.deal_ref || '';
+  const productLabel = String(product || '').replace(/_/g, ' ') || 'secured enquiry';
+  const security = d.property_address || d.security_address_full || d.site_address || 'TBC';
+  const nextAction = product === 'equitable_charges'
+    ? 'Call now — qualify Cavendish/equitable charge route'
+    : 'Callback — qualify route, confirm missing facts, then open LOR/LAR base file';
+  const summary = [
+    `Tier 1/Get Your Options submission captured`,
+    `Borrower: ${name}`,
+    ref ? `Ref: ${ref}` : '',
+    `Product/source: ${productLabel}`,
+    `Security: ${security}`,
+    `Loan: ${d.loan_amount || d.loan_needed || d.loan_required_net || d.full_loan_required || 'TBC'}`,
+    `Purpose: ${d.loan_purpose || d.purpose_of_funds || d.purpose_category || 'TBC'}`,
+    `Exit: ${d.exit_strategy || d.exit_type || 'TBC'}`,
+    scorecardUrl ? `Scorecard: ${scorecardUrl}` : '',
+  ].filter(Boolean).join('\n');
+  return [
+    ts,                         // Timestamp
+    ref,                        // Case Ref
+    name,                       // Borrower / Entity
+    'Website Tier 1 Form',      // Channel
+    'INBOUND_CAPTURE',          // Event Type
+    'Website',                  // Actor
+    'System capture',           // Direction
+    summary,                    // Summary / Notes
+    nextAction,                 // Next Action
+    'OPEN',                     // Status
+    tabName,                    // Source Tab
+    leadRowNumber || '',        // Source Row
+    pipelineRowNumber || '',    // Pipeline Row
+    scorecardUrl || '',         // Link
+    JSON.stringify({ product, leadRowNumber, pipelineRowNumber }),
+  ];
+}
+
 function formatBackToBackRow(d, ts) {
   return [
     ts, d.deal_ref||'', 'NEW',
@@ -505,6 +546,14 @@ export default async function handler(req, res) {
       } catch (e) { console.warn('[Lead API] Scorecard URL write failed:', e.message); }
     }
 
+
+    // ── Case_Timeline row (mandatory touch log) ───────────────────────
+    let timelineRowNumber = null;
+    try {
+      const timelineRow = formatCaseTimelineRow(data, ts, product, tabName, leadRowNumber, pipelineRowNumber, scorecardUrl);
+      timelineRowNumber = await appendRowAtFirstEmpty(sheets, 'Case_Timeline', timelineRow);
+    } catch (e) { console.warn('[Lead API] Case_Timeline write failed:', e.message); }
+
     // ── Equitable Charges → owner CALLS queue ─────────────────────────
     let callSheetRowNumber = null;
     let callSheetTab = null;
@@ -551,7 +600,7 @@ export default async function handler(req, res) {
     }
 
     console.log(`[Lead API] ${data.deal_ref} → ${tabName} | Scorecard: ${scorecardUrl}`);
-    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, callSheet: callSheetTab, callSheetRow: callSheetRowNumber, scorecardUrl }); return;
+    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, callSheet: callSheetTab, callSheetRow: callSheetRowNumber, scorecardUrl, timelineRow: timelineRowNumber }); return;
 
   } catch (err) {
     console.error('[Lead API Error]', err);

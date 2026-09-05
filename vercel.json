@@ -3,6 +3,21 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/get-options",
+      "destination": "/get-your-options",
+      "permanent": false
+    },
+    {
+      "source": "/go/options",
+      "destination": "/get-your-options",
+      "permanent": false
+    },
+    {
+      "source": "/options",
+      "destination": "/get-your-options",
+      "permanent": false
+    },
+    {
       "source": "/development-exit",
       "destination": "/dev-exit",
       "permanent": false
