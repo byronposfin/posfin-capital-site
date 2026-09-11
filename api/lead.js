@@ -348,6 +348,9 @@ function formatCaseTimelineRow(d, ts, product, tabName, leadRowNumber, pipelineR
     `Loan: ${d.loan_amount || d.loan_needed || d.loan_required_net || d.full_loan_required || 'TBC'}`,
     `Purpose: ${d.loan_purpose || d.purpose_of_funds || d.purpose_category || 'TBC'}`,
     `Exit: ${d.exit_strategy || d.exit_type || 'TBC'}`,
+    d.prefill_case_ref ? `Click-roll case ref: ${d.prefill_case_ref}` : '',
+    d.source_channel ? `Attributed source: ${d.source_channel}` : '',
+    d.prefill_note ? `What borrower was shown: ${d.prefill_note}` : '',
     scorecardUrl ? `Scorecard: ${scorecardUrl}` : '',
   ].filter(Boolean).join('\n');
   return [
@@ -597,6 +600,22 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: recipientId, text: msg, parse_mode: 'Markdown', disable_web_page_preview: false }),
       }).catch(e => console.warn('[Lead API] Telegram failed:', e.message));
+    }
+
+    if (data.prefill_token) {
+      try {
+        const prefillRows = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'Prefill_Tokens'!A:M` });
+        const rows = prefillRows.data.values || [];
+        const idx = rows.findIndex((r, i) => i > 0 && r[0] === data.prefill_token);
+        if (idx > 0) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SHEET_ID,
+            range: `'Prefill_Tokens'!M${idx + 1}`,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: { values: [[new Date().toISOString()]] },
+          });
+        }
+      } catch (e) { console.warn('[Lead API] Prefill token submit stamp failed:', e.message); }
     }
 
     console.log(`[Lead API] ${data.deal_ref} → ${tabName} | Scorecard: ${scorecardUrl}`);

@@ -177,6 +177,19 @@ font-size: 0.82rem;
 color: var(--grey-300);
 margin-bottom: 1.5rem;
 }
+.prefill-note {
+  display: none;
+  margin: 0 0 1.25rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(44,181,172,0.35);
+  border-radius: 10px;
+  background: rgba(44,181,172,0.08);
+  color: var(--grey-100);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.prefill-note.active { display: block; }
+.prefill-note strong { display:block; color: var(--teal); margin-bottom: 0.25rem; }
 
 .field { margin-bottom: 1.1rem; }
 .field label {
@@ -384,6 +397,7 @@ fbq('track', 'PageView');
   <div class="form-card" id="formCard">
     <h2 class="form-title">Bridging finance application</h2>
     <p class="form-sub">Standard Posfin Capital secured bridging form. A senior broker will reply on WhatsApp.</p>
+    <div class="prefill-note" id="prefillNote" aria-live="polite"></div>
 
 <form id="applyForm" novalidate>
 
@@ -636,7 +650,40 @@ fbq('track', 'PageView');
   const formCard = document.getElementById('formCard');
   const success = document.getElementById('success');
   const submitBtn = document.getElementById('submitBtn');
+  const prefillNote = document.getElementById('prefillNote');
   const securityIsHome = document.getElementById('securityIsHome');
+  const token = new URLSearchParams(window.location.search).get('k') || '';
+  let prefillRecord = null;
+
+  function splitName(fullName) {
+    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+    return { first: parts.shift() || '', last: parts.join(' ') || '' };
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  async function loadPrefill() {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/prefill?k=' + encodeURIComponent(token), { headers: { 'Accept': 'application/json' } });
+      if (!res.ok) return;
+      const data = await res.json();
+      prefillRecord = data.prefill || null;
+      if (!prefillRecord) return;
+      if (prefillRecord.first_name) form.name.value = prefillRecord.first_name;
+      if (prefillRecord.mobile) form.phone.value = prefillRecord.mobile;
+      if (prefillRecord.email) form.email.value = prefillRecord.email;
+      if (prefillRecord.note && prefillNote) {
+        prefillNote.innerHTML = '<strong>What you’ve already told us</strong>' + escapeHtml(prefillRecord.note).replace(/\n/g, '<br>');
+        prefillNote.classList.add('active');
+      }
+    } catch (e) {}
+  }
+  loadPrefill();
   if (securityIsHome) {
     securityIsHome.addEventListener('change', function() {
       if (this.checked) form.homeAddress.value = form.propertyAddress.value.trim();
@@ -731,7 +778,48 @@ fbq('track', 'PageView');
       utm_campaign: utmParams.utm_campaign || '',
       utm_content: utmParams.utm_content || '',
       utm_term: utmParams.utm_term || '',
-      fbclid: utmParams.fbclid || ''
+      fbclid: utmParams.fbclid || '',
+      prefill_token: token,
+      prefill_note: prefillRecord ? (prefillRecord.note || '') : '',
+      prefill_case_ref: prefillRecord ? (prefillRecord.case_ref || '') : '',
+      source_channel: prefillRecord ? (prefillRecord.source_channel || '') : '',
+      route_hint: prefillRecord ? (prefillRecord.route_hint || '') : ''
+    };
+
+    const nameParts = splitName(payload.name);
+    const crmPayload = {
+      product: 'main_loan',
+      deal_ref: payload.prefill_case_ref || ('WEB-' + Date.now().toString(36).toUpperCase()),
+      first_name: nameParts.first,
+      last_name: nameParts.last,
+      mobile: payload.phone,
+      email: payload.email,
+      residential_address: payload.homeAddress,
+      home_address: payload.homeAddress,
+      property_address: payload.propertyAddress,
+      security_is_home_address: payload.securityIsHome,
+      property_value: payload.propertyValue,
+      loan_amount: payload.loanAmount,
+      loan_purpose: payload.purpose,
+      net_or_gross: payload.loanIntent === 'first_charge_refi' ? 'gross' : 'net',
+      page_source: 'apply-click-roll-router',
+      additional_info: [
+        payload.prefill_note ? 'Click-roll note shown to borrower: ' + payload.prefill_note : '',
+        payload.source_channel ? 'Source channel: ' + payload.source_channel : '',
+        payload.route_hint ? 'Route hint: ' + payload.route_hint : ''
+      ].filter(Boolean).join('\n'),
+      prefill_token: payload.prefill_token,
+      prefill_note: payload.prefill_note,
+      prefill_case_ref: payload.prefill_case_ref,
+      source_channel: payload.source_channel,
+      route_hint: payload.route_hint,
+      sourceUrl: payload.sourceUrl,
+      utm_source: payload.utm_source,
+      utm_medium: payload.utm_medium,
+      utm_campaign: payload.utm_campaign,
+      utm_content: payload.utm_content,
+      utm_term: payload.utm_term,
+      fbclid: payload.fbclid
     };
 
     try {
@@ -743,6 +831,11 @@ fbq('track', 'PageView');
         body: formData.toString(),
         mode: 'no-cors'
       });
+      await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(crmPayload)
+      }).catch(function(){});
       // Treat any non-network response as success — webhook may not return CORS headers
       formCard.style.display = 'none';
       success.classList.add('active');
@@ -752,6 +845,11 @@ fbq('track', 'PageView');
       if (typeof fbq === 'function') fbq('track', 'Lead');
     } catch (err) {
       // Network failure — store locally and still show success so lead isn't lost
+      await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(crmPayload)
+      }).catch(function(){});
       try {
         const queued = JSON.parse(localStorage.getItem('posfin_queued_leads') || '[]');
         queued.push(payload);
