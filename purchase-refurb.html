@@ -269,19 +269,19 @@ section { padding:6rem 3rem; position:relative; }
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="#how">How It Works</a>
-    <a href="#calculator">Calculator</a>
-    <a href="#enquiry">Enquire</a>
+    <a href="/get-your-options">Calculator</a>
+    <a href="/get-your-options">Enquire</a>
     <span class="nav-fca">FCA: 913022</span>
-    <button class="nav-cta" onclick="document.getElementById('enquiry').scrollIntoView({behavior:'smooth'})">Apply Now</button>
+    <button class="nav-cta" onclick="window.location.href='/get-your-options'">Apply Now</button>
   </div>
   <div class="hamburger" onclick="document.getElementById('mobileNav').classList.toggle('open')"><span></span><span></span><span></span></div>
 </nav>
 <div class="mobile-nav" id="mobileNav">
   <a href="/" onclick="this.parentElement.classList.remove('open')">Home</a>
   <a href="#how" onclick="this.parentElement.classList.remove('open')">How It Works</a>
-  <a href="#calculator" onclick="this.parentElement.classList.remove('open')">Calculator</a>
-  <a href="#enquiry" onclick="this.parentElement.classList.remove('open')">Enquire</a>
-  <button class="btn-primary" onclick="document.getElementById('mobileNav').classList.remove('open');document.getElementById('enquiry').scrollIntoView({behavior:'smooth'})">Apply Now</button>
+  <a href="/get-your-options" onclick="this.parentElement.classList.remove('open')">Calculator</a>
+  <a href="/get-your-options" onclick="this.parentElement.classList.remove('open')">Enquire</a>
+  <button class="btn-primary" onclick="window.location.href='/get-your-options'">Apply Now</button>
 </div>
 
 <!-- ═══ HERO ═══ -->
@@ -294,8 +294,8 @@ section { padding:6rem 3rem; position:relative; }
       <h1 class="hero-h1">Buy It. <em>Improve It.</em><br>Fund Both.</h1>
       <p class="hero-sub">One facility for the purchase <strong style="color:var(--ink)">and</strong> the works. We fund the acquisition on day one and release your refurbishment budget in stages — sized against purchase, total cost and end value simultaneously, so you deploy less of your own capital.</p>
       <div class="hero-actions">
-        <button class="btn-primary" onclick="document.getElementById('enquiry').scrollIntoView({behavior:'smooth'})">Start Your Enquiry</button>
-        <a class="btn-secondary" href="#calculator">Size My Facility</a>
+        <button class="btn-primary" onclick="window.location.href='/get-your-options'">Start Your Enquiry</button>
+        <a class="btn-secondary" href="/get-your-options">Size My Facility</a>
       </div>
     </div>
     <div class="hero-right">
