@@ -627,8 +627,8 @@ fbq('track', 'PageView');
     <div class="success-icon">
       <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
     </div>
-    <h2>Enquiry received — route being checked</h2>
-    <p>Thanks. We have the core property, loan and charge-stack details. A senior broker will review the route and contact you on WhatsApp.</p>
+    <h2>Application received — your route scorecard is ready</h2>
+    <p>Thanks. We have your property, loan and charge-stack details. Keep the reference below; if the selected route is not the strongest fit, Posfin will move it to the correct product before issuing terms.</p>
     <div class="confirmation-card" id="confirmationCard" aria-live="polite"></div>
   </div>
 </main>
@@ -874,6 +874,9 @@ fbq('track', 'PageView');
     if (option) option.checked = true;
   }
   function syncLoanIntentVisibility() {
+    // Router canon: the on-top-vs-clearing question is conditional.
+    // First charge implies refinance/clearing; second or equitable charge implies net amount on top.
+    // Only show the question for "Not sure" / blank charge-position cases.
     if (!chargeRequested || !loanIntentField) return;
     const v = chargeRequested.value;
     if (v === 'First charge') {
