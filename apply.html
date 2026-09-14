@@ -15,21 +15,21 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --teal: #2CB5AC;
-  --teal-dark: #239E96;
-  --teal-glow: rgba(44,181,172,0.12);
+  --teal: #C9A14A; /* institutional gold accent */
+  --teal-dark: #A98224;
+  --teal-glow: rgba(201,161,74,0.14);
   --navy: #1C184F;
-  --dark: #0D1117;
-  --dark-mid: #161B22;
-  --dark-card: #1C2128;
-  --dark-border: #30363D;
-  --dark-border-hover: #444C56;
+  --dark: #111026;
+  --dark-mid: #181633;
+  --dark-card: #F9F6E8;
+  --dark-border: rgba(28,24,79,0.16);
+  --dark-border-hover: rgba(201,161,74,0.48);
   --white: #FFFFFF;
-  --grey-100: #F0F0F0;
-  --grey-300: #8B949E;
-  --grey-500: #6E7681;
-  --red: #F85149;
-  --green: #3FB950;
+  --grey-100: #1C184F;
+  --grey-300: #5B5E73;
+  --grey-500: #7A7668;
+  --red: #B42318;
+  --green: #1F7A4D;
   --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --display: 'Space Grotesk', sans-serif;
   --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -38,8 +38,8 @@
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--sans);
-  background: var(--dark);
-  color: var(--white);
+  background: #F2EEDD;
+  color: var(--navy);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
@@ -53,7 +53,7 @@ display: flex;
 justify-content: space-between;
 align-items: center;
 border-bottom: 1px solid var(--dark-border);
-background: rgba(13,17,23,0.85);
+background: rgba(28,24,79,0.96);
 backdrop-filter: blur(12px);
 position: sticky;
 top: 0;
@@ -181,10 +181,10 @@ margin-bottom: 1.5rem;
   display: none;
   margin: 0 0 1.25rem;
   padding: 0.95rem 1rem;
-  border: 1px solid rgba(44,181,172,0.35);
+  border: 1px solid rgba(201,161,74,0.45);
   border-radius: 10px;
-  background: rgba(44,181,172,0.08);
-  color: var(--grey-100);
+  background: rgba(201,161,74,0.12);
+  color: var(--navy);
   font-size: 0.9rem;
   line-height: 1.45;
 }
@@ -210,8 +210,8 @@ padding: 0.85rem 0.95rem;
 font-family: var(--sans);
 font-size: 1rem; /* 16px — prevents iOS zoom on focus */
 font-weight: 400;
-color: var(--white);
-background: var(--dark-mid);
+color: var(--navy);
+background: #FFFFFF;
 border: 1px solid var(--dark-border);
 border-radius: 9px;
 transition: all 0.2s var(--ease);
@@ -226,7 +226,7 @@ appearance: none;
 .field textarea:focus {
 outline: none;
 border-color: var(--teal);
-background: var(--dark);
+background: #FFFFFF;
 box-shadow: 0 0 0 3px rgba(44,181,172,0.15);
 }
 
@@ -264,8 +264,8 @@ font-family: var(--display);
 font-size: 1rem;
 font-weight: 600;
 letter-spacing: 0.01em;
-color: var(--dark);
-background: var(--teal);
+color: var(--navy);
+background: linear-gradient(135deg,#E8C96A,#C9A14A);
 border: none;
 border-radius: 10px;
 cursor: pointer;
@@ -395,8 +395,8 @@ fbq('track', 'PageView');
 
 <main class="form-wrap">
   <div class="form-card" id="formCard">
-    <h2 class="form-title">Bridging finance application</h2>
-    <p class="form-sub">Standard Posfin Capital secured bridging form. A senior broker will reply on WhatsApp.</p>
+    <h2 class="form-title">Property finance router</h2>
+    <p class="form-sub">One enquiry, routed to the right Posfin product: bridge, speed loan, bank bridge, purchase/refurb, development finance, dev exit or senior desk.</p>
     <div class="prefill-note" id="prefillNote" aria-live="polite"></div>
 
 <form id="applyForm" novalidate>
@@ -421,22 +421,50 @@ fbq('track', 'PageView');
   </div>
 
   <div class="field">
+    <label for="productIntent">What best describes what you need? <span class="req">*</span></label>
+    <select id="productIntent" name="productIntent" required>
+      <option value="">Select route…</option>
+      <option value="speed_loan">Speed loan / urgent liquidity</option>
+      <option value="main_loan">Standard bridge / refinance</option>
+      <option value="bank_bridge">Bank bridge / lower-rate institutional route</option>
+      <option value="purchase_refurb">Auction purchase / purchase & refurb</option>
+      <option value="back_to_back">Back-to-back bridge</option>
+      <option value="development_finance">Development finance / build funding</option>
+      <option value="development_exit_finance">Development exit</option>
+      <option value="acquisition_finance">Acquisition finance</option>
+      <option value="senior_desk">Complex / larger case — senior desk</option>
+      <option value="not_sure">Not sure — route it for me</option>
+    </select>
+    <div class="field-error">Please select the likely route</div>
+  </div>
+
+  <div class="field">
     <label for="homeAddress">Home / Residential Address <span class="req">*</span></label>
-    <input type="text" id="homeAddress" name="homeAddress" autocomplete="home street-address" required placeholder="House number + street name + postcode">
-    <small style="display:block;margin-top:0.35rem;opacity:0.65;font-size:0.82rem;">Mandatory: house number, street name and postcode.</small>
-    <div class="field-error">Full home address required: house number, street name and postcode</div>
+    <input type="text" id="homeAddress" name="homeAddress" autocomplete="home street-address" required placeholder="House number + street name">
+    <div class="field-error">Home address required</div>
+  </div>
+
+  <div class="field">
+    <label for="homePostcode">Home Postcode <span class="req">*</span></label>
+    <input type="text" id="homePostcode" name="homePostcode" autocomplete="postal-code" required placeholder="SW1A 1AA" style="text-transform:uppercase">
+    <div class="field-error">Valid UK postcode required</div>
+  </div>
+
+  <div class="field">
+    <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-weight:600"><input type="checkbox" id="securityIsHome" name="securityIsHome" value="Yes" style="accent-color:#C9A14A;margin-top:0.2rem"> Security property is the same as my home address</label>
+    <small style="display:block;margin-top:0.35rem;opacity:0.68;font-size:0.82rem;">Tick once — we’ll copy the home address/postcode into the security fields.</small>
   </div>
 
   <div class="field">
     <label for="propertyAddress">Security Property Address <span class="req">*</span></label>
-    <small style="display:block;margin-bottom:0.4rem;opacity:0.65;font-size:0.82rem;">The property being used as security. Enter again even if same as home address. Mandatory: house number, street name and postcode.</small>
-    <input type="text" id="propertyAddress" name="propertyAddress" autocomplete="street-address" required placeholder="House number + street name + postcode">
-    <div class="field-error">Full security address required: house number, street name and postcode</div>
+    <input type="text" id="propertyAddress" name="propertyAddress" autocomplete="street-address" required placeholder="House number + street name">
+    <div class="field-error">Security address required</div>
   </div>
 
   <div class="field">
-    <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-weight:600"><input type="checkbox" id="securityIsHome" name="securityIsHome" value="Yes" style="accent-color:#00B5B0;margin-top:0.2rem"> Security property is also my home address</label>
-    <small style="display:block;margin-top:0.35rem;opacity:0.65;font-size:0.82rem;">Tick this if you live at the property being used as security.</small>
+    <label for="propertyPostcode">Security Postcode <span class="req">*</span></label>
+    <input type="text" id="propertyPostcode" name="propertyPostcode" autocomplete="postal-code" required placeholder="SW1A 1AA" style="text-transform:uppercase">
+    <div class="field-error">Valid UK postcode required</div>
   </div>
 
   <div class="field-row">
@@ -455,9 +483,9 @@ fbq('track', 'PageView');
   <div class="field" style="margin-bottom:1.4rem">
     <label style="display:block;font-weight:600;margin-bottom:0.5rem">Is this amount on top of your existing mortgage, or does it include clearing it?</label>
     <div style="display:flex;flex-direction:column;gap:0.5rem">
-      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="net_on_top" style="accent-color:#00B5B0"> On top of my existing mortgage &mdash; I want to keep it in place</label>
-      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="first_charge_refi" style="accent-color:#00B5B0"> Includes clearing my existing mortgage &mdash; I want to replace it</label>
-      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="not_sure" style="accent-color:#00B5B0"> Not sure &mdash; happy to discuss on the call</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="net_on_top" style="accent-color:#C9A14A"> On top of my existing mortgage &mdash; I want to keep it in place</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="first_charge_refi" style="accent-color:#C9A14A"> Includes clearing my existing mortgage &mdash; I want to replace it</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="not_sure" style="accent-color:#C9A14A"> Not sure &mdash; happy to discuss on the call</label>
     </div>
   </div>
 
@@ -465,13 +493,16 @@ fbq('track', 'PageView');
     <label for="purpose">Purpose of Loan <span class="req">*</span></label>
     <select id="purpose" name="purpose" required>
       <option value="">Select purpose…</option>
-      <option value="Auction Purchase">Auction Purchase</option>
-      <option value="Chain Break">Chain Break</option>
-      <option value="Refurbishment">Refurbishment</option>
-      <option value="Refinance">Refinance</option>
-      <option value="Development Exit">Development Exit</option>
-      <option value="Business Capital">Business / Working Capital</option>
-      <option value="Other">Other</option>
+      <option value="Auction Purchase">Auction purchase</option>
+      <option value="Chain Break">Chain break</option>
+      <option value="Refurbishment">Refurbishment / works</option>
+      <option value="Refinance">Refinance / repay existing lender</option>
+      <option value="Development Finance">Development finance / build costs</option>
+      <option value="Development Exit">Development exit</option>
+      <option value="Business Capital">Business / working capital</option>
+      <option value="Acquisition Finance">Acquisition finance</option>
+      <option value="HMRC / Tax">HMRC / tax pressure</option>
+      <option value="Other">Other / not sure</option>
     </select>
     <div class="field-error">Please select a purpose</div>
   </div>
@@ -677,6 +708,15 @@ fbq('track', 'PageView');
       if (prefillRecord.first_name) form.name.value = prefillRecord.first_name;
       if (prefillRecord.mobile) form.phone.value = prefillRecord.mobile;
       if (prefillRecord.email) form.email.value = prefillRecord.email;
+      if (prefillRecord.home_address) form.homeAddress.value = prefillRecord.home_address;
+      if (prefillRecord.home_postcode) form.homePostcode.value = String(prefillRecord.home_postcode).toUpperCase();
+      if (prefillRecord.security_address) form.propertyAddress.value = prefillRecord.security_address;
+      if (prefillRecord.security_postcode) form.propertyPostcode.value = String(prefillRecord.security_postcode).toUpperCase();
+      if (prefillRecord.property_value) form.propertyValue.value = prefillRecord.property_value;
+      if (prefillRecord.loan_amount) form.loanAmount.value = prefillRecord.loan_amount;
+      if (prefillRecord.purpose && form.purpose) form.purpose.value = prefillRecord.purpose;
+      if (prefillRecord.route_hint && form.productIntent) form.productIntent.value = prefillRecord.route_hint;
+      if (prefillRecord.same_as_home === true || prefillRecord.same_as_home === 'Yes') { form.securityIsHome.checked = true; copyHomeToSecurity(); }
       if (prefillRecord.note && prefillNote) {
         prefillNote.innerHTML = '<strong>What you’ve already told us</strong>' + escapeHtml(prefillRecord.note).replace(/\n/g, '<br>');
         prefillNote.classList.add('active');
@@ -684,12 +724,18 @@ fbq('track', 'PageView');
     } catch (e) {}
   }
   loadPrefill();
+  function copyHomeToSecurity() {
+    form.propertyAddress.value = form.homeAddress.value.trim();
+    form.propertyPostcode.value = form.homePostcode.value.trim().toUpperCase();
+  }
   if (securityIsHome) {
     securityIsHome.addEventListener('change', function() {
-      if (this.checked) form.homeAddress.value = form.propertyAddress.value.trim();
+      if (this.checked) copyHomeToSecurity();
     });
-    form.propertyAddress.addEventListener('input', function(){
-      if (securityIsHome.checked) form.homeAddress.value = form.propertyAddress.value.trim();
+    ['homeAddress','homePostcode'].forEach(function(id){
+      form[id].addEventListener('input', function(){
+        if (securityIsHome.checked) copyHomeToSecurity();
+      });
     });
   }
 
@@ -704,14 +750,13 @@ fbq('track', 'PageView');
   formatCurrency(document.getElementById('propertyValue'));
   formatCurrency(document.getElementById('loanAmount'));
 
-  function hasFullAddress(v) {
-    const s = String(v || '').trim();
-    const postcodeMatch = s.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i);
-    const withoutPostcode = s.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/ig, '').trim();
-    const hasHouseNumber = /(^|\s)\d+[A-Za-z]?([\s,]|$)/.test(withoutPostcode);
-    const hasStreetName = /[A-Za-z]{3,}/.test(withoutPostcode);
-    return !!postcodeMatch && hasHouseNumber && hasStreetName;
-  }
+  function hasAddressLine(v) { return String(v || '').trim().length >= 6 && /[A-Za-z]{3,}/.test(String(v || '')); }
+  function hasPostcode(v) { return /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(String(v || '').trim()); }
+  function canonicalPostcode(v) { return String(v || '').trim().toUpperCase().replace(/\s+/, ' '); }
+  ['homePostcode','propertyPostcode'].forEach(function(id){
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('blur', function(){ el.value = canonicalPostcode(el.value); });
+  });
 
   function validate() {
     let valid = true;
@@ -727,7 +772,10 @@ fbq('track', 'PageView');
       if (f.type === 'tel' && val.replace(/[^\d]/g, '').length < 9) {
         wrap.classList.add('has-error'); valid = false;
       }
-      if ((f.id === 'homeAddress' || f.id === 'propertyAddress') && !hasFullAddress(val)) {
+      if ((f.id === 'homeAddress' || f.id === 'propertyAddress') && !hasAddressLine(val)) {
+        wrap.classList.add('has-error'); valid = false;
+      }
+      if ((f.id === 'homePostcode' || f.id === 'propertyPostcode') && !hasPostcode(val)) {
         wrap.classList.add('has-error'); valid = false;
       }
     });
@@ -755,7 +803,7 @@ fbq('track', 'PageView');
     const payload = {
       source: 'posfin-apply-form',
       leadSource: 'posfincapital.com/apply',
-      productRoute: 'Standard Bridging Form',
+      productRoute: form.productIntent.value || 'not_sure',
       formType: 'bridging',
       sourceUrl: window.location.href,
       pagePath: window.location.pathname,
@@ -764,8 +812,10 @@ fbq('track', 'PageView');
       name: form.name.value.trim(),
       phone: form.phone.value.trim(),
       email: form.email.value.trim(),
-      homeAddress: form.homeAddress.value.trim(),
-      propertyAddress: form.propertyAddress.value.trim(),
+      homeAddress: (form.homeAddress.value.trim() + ', ' + canonicalPostcode(form.homePostcode.value)).trim(),
+      homePostcode: canonicalPostcode(form.homePostcode.value),
+      propertyAddress: (form.propertyAddress.value.trim() + ', ' + canonicalPostcode(form.propertyPostcode.value)).trim(),
+      propertyPostcode: canonicalPostcode(form.propertyPostcode.value),
       securityIsHome: form.securityIsHome && form.securityIsHome.checked ? 'Yes' : 'No',
       propertyValue: form.propertyValue.value.trim(),
       loanAmount: form.loanAmount.value.trim(),
@@ -788,7 +838,7 @@ fbq('track', 'PageView');
 
     const nameParts = splitName(payload.name);
     const crmPayload = {
-      product: 'main_loan',
+      product: payload.productRoute === 'not_sure' ? 'main_loan' : payload.productRoute,
       deal_ref: payload.prefill_case_ref || ('WEB-' + Date.now().toString(36).toUpperCase()),
       first_name: nameParts.first,
       last_name: nameParts.last,
@@ -797,16 +847,19 @@ fbq('track', 'PageView');
       residential_address: payload.homeAddress,
       home_address: payload.homeAddress,
       property_address: payload.propertyAddress,
+      home_postcode: payload.homePostcode,
+      security_postcode: payload.propertyPostcode,
       security_is_home_address: payload.securityIsHome,
       property_value: payload.propertyValue,
       loan_amount: payload.loanAmount,
       loan_purpose: payload.purpose,
       net_or_gross: payload.loanIntent === 'first_charge_refi' ? 'gross' : 'net',
-      page_source: 'apply-click-roll-router',
+      page_source: 'apply-intelligent-router',
       additional_info: [
         payload.prefill_note ? 'Click-roll note shown to borrower: ' + payload.prefill_note : '',
         payload.source_channel ? 'Source channel: ' + payload.source_channel : '',
-        payload.route_hint ? 'Route hint: ' + payload.route_hint : ''
+        payload.route_hint ? 'Route hint: ' + payload.route_hint : '',
+        payload.productRoute ? 'Borrower selected route: ' + payload.productRoute : ''
       ].filter(Boolean).join('\n'),
       prefill_token: payload.prefill_token,
       prefill_note: payload.prefill_note,
