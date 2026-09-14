@@ -623,3 +623,105 @@ document.getElementById('leadForm').addEventListener('submit', async (ev)=>{
 </script>
 </body>
 </html>
+
+<!-- POSFIN_SCORECARD_SHARED_HOTFIX_20260914: visual checked states, mobile radios, live LTV/headroom bar, conditional mortgage-top-up copy -->
+<style id="posfin-scorecard-shared-hotfix-css">
+  .posfin-choice-checked,
+  label:has(input[type="radio"]:checked),
+  label:has(input[type="checkbox"]:checked) {
+    border-color:#00B5B0 !important;
+    background:rgba(0,181,176,.075) !important;
+    box-shadow:0 0 0 2px rgba(0,181,176,.12) inset !important;
+  }
+  label:has(input[type="radio"]:checked) span[style*="border-radius:50%"],
+  label.posfin-choice-checked span[style*="border-radius:50%"] {
+    border-color:#00B5B0 !important;
+    background:radial-gradient(circle at center,#00B5B0 0 38%,#FFFFFF 42% 100%) !important;
+  }
+  label:has(input[type="checkbox"]:checked) span[style*="border"],
+  label.posfin-choice-checked[data-posfin-kind="checkbox"] span[style*="border"] {
+    border-color:#00B5B0 !important;
+    background:#00B5B0 !important;
+  }
+  @media (max-width:640px){
+    label:has(input[type="radio"]), label:has(input[type="checkbox"]) { width:100% !important; }
+    .grid:has(input[type="radio"]), .grid:has(input[type="checkbox"]) { grid-template-columns:1fr !important; }
+  }
+  .posfin-ltv-live-box{margin:14px 0 18px;padding:15px 16px;border:1px solid rgba(0,181,176,.35);background:linear-gradient(180deg,rgba(0,181,176,.08),rgba(0,181,176,.035));font-family:"DM Sans",-apple-system,sans-serif;color:#1C184F;}
+  .posfin-ltv-live-box .posfin-ltv-title{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#00928A;font-weight:800;margin-bottom:8px;}
+  .posfin-ltv-live-box .posfin-ltv-main{font-size:15px;line-height:1.55;font-weight:700;}
+  .posfin-ltv-track{height:10px;border-radius:999px;background:#E8E4DB;overflow:hidden;margin:10px 0 6px;}
+  .posfin-ltv-fill{height:100%;width:0;background:#00B5B0;border-radius:999px;transition:width .18s ease, background .18s ease;}
+  .posfin-ltv-meta{font-size:12px;line-height:1.45;color:#5A5770;}
+  .posfin-hide-invalid-topup{display:none !important;}
+</style>
+<script id="posfin-scorecard-shared-hotfix-js">
+(function(){
+  if (window.__posfinScorecardSharedHotfix) return; window.__posfinScorecardSharedHotfix = true;
+  function txt(el){ return (el && (el.textContent||'') || '').replace(/\s+/g,' ').trim(); }
+  function money(v){ var n=parseFloat(String(v||'').replace(/[^0-9.\-]/g,'')); return isFinite(n)?n:0; }
+  function gbp(n){ return n ? '£'+Math.round(n).toLocaleString('en-GB') : '—'; }
+  function markChoices(){
+    document.querySelectorAll('label').forEach(function(label){
+      var input = label.querySelector('input[type="radio"],input[type="checkbox"]'); if(!input) return;
+      label.classList.toggle('posfin-choice-checked', !!input.checked);
+      label.setAttribute('data-posfin-kind', input.type);
+    });
+  }
+  function labelledInputs(){
+    return Array.from(document.querySelectorAll('input:not([type="radio"]):not([type="checkbox"]), textarea')).map(function(input){
+      var wrap=input.closest('div,label,section')||input.parentElement;
+      var nearby='';
+      var p=input.parentElement; for(var i=0;p&&i<3;i++,p=p.parentElement){ nearby += ' '+txt(p).slice(0,220); }
+      return {input:input, text:nearby.toLowerCase()};
+    });
+  }
+  function findInput(patterns){
+    var items=labelledInputs();
+    for (var p=0;p<patterns.length;p++) {
+      var rx=patterns[p]; var hit=items.find(function(x){ return rx.test(x.text) || rx.test((x.input.placeholder||'').toLowerCase()) || rx.test((x.input.name||'').toLowerCase()); });
+      if(hit) return hit.input;
+    }
+    return null;
+  }
+  function ensureLtvBox(){
+    if (document.getElementById('posfin-ltv-live-box')) return document.getElementById('posfin-ltv-live-box');
+    var value=findInput([/property value/,/security value/,/estimated value/,/value/]);
+    var mortgage=findInput([/mortgage balance/,/1st charge/,/first charge/,/existing mortgage/]);
+    var loan=findInput([/loan amount/,/amount needed/,/net loan/,/facility required/]);
+    if(!value || !loan) return null;
+    var box=document.createElement('div'); box.id='posfin-ltv-live-box'; box.className='posfin-ltv-live-box';
+    box.innerHTML='<div class="posfin-ltv-title">Live LTV headroom</div><div class="posfin-ltv-main">Enter property value, existing mortgage and loan amount to see live LTV.</div><div class="posfin-ltv-track"><div class="posfin-ltv-fill"></div></div><div class="posfin-ltv-meta">Calculated instantly from borrower-entered figures. Indicative only — valuation and lender underwriting still apply.</div>';
+    var anchor=(loan.closest('div')||loan.parentElement); if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(box, anchor.nextSibling); else document.body.appendChild(box);
+    [value,mortgage,loan].forEach(function(i){ i && i.addEventListener('input', updateLtv); });
+    setTimeout(updateLtv,50); return box;
+  }
+  function updateLtv(){
+    var box=document.getElementById('posfin-ltv-live-box')||ensureLtvBox(); if(!box) return;
+    var value=money((findInput([/property value/,/security value/,/estimated value/,/value/])||{}).value);
+    var mortgage=money((findInput([/mortgage balance/,/1st charge/,/first charge/,/existing mortgage/])||{}).value);
+    var loan=money((findInput([/loan amount/,/amount needed/,/net loan/,/facility required/])||{}).value);
+    var main=box.querySelector('.posfin-ltv-main'), fill=box.querySelector('.posfin-ltv-fill'), meta=box.querySelector('.posfin-ltv-meta');
+    if(!value){ main.textContent='Enter property value to calculate LTV headroom.'; fill.style.width='0%'; return; }
+    var ltv=(mortgage+loan)/value*100, equity=value-mortgage, head70=Math.max(0,value*.70-mortgage), head60=Math.max(0,value*.60-mortgage);
+    var colour=ltv<=60?'#00B5B0':(ltv<=70?'#D4A853':'#B23A48');
+    main.textContent='Estimated LTV '+(isFinite(ltv)?ltv.toFixed(1):'0.0')+'% · Net equity '+gbp(equity)+' · 70% headroom '+gbp(head70);
+    fill.style.width=Math.max(0,Math.min(100,ltv||0))+'%'; fill.style.background=colour;
+    meta.textContent='60% speed-loan headroom: '+gbp(head60)+' · 70% main-bridge headroom: '+gbp(head70)+' · includes current mortgage + requested loan.';
+  }
+  function conditionalMortgageTopup(){
+    var checked=Array.from(document.querySelectorAll('input[type="radio"]:checked')).map(function(i){return (i.value+' '+txt(i.closest('label'))).toLowerCase();}).join(' | ');
+    var isReplacement=/replace|repay|redeem|first charge|1st charge/.test(checked) && !/second|2nd/.test(checked);
+    document.querySelectorAll('label').forEach(function(label){
+      var t=txt(label).toLowerCase();
+      if(/on top of.*existing mortgage|keep.*existing mortgage|behind.*existing mortgage/.test(t)){
+        label.classList.toggle('posfin-hide-invalid-topup', isReplacement);
+      }
+    });
+  }
+  function enhance(){ markChoices(); ensureLtvBox(); updateLtv(); conditionalMortgageTopup(); }
+  document.addEventListener('change', enhance, true); document.addEventListener('input', function(){ setTimeout(enhance,0); }, true);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', enhance); else enhance();
+  new MutationObserver(function(){ enhance(); }).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['checked','style','class']});
+})();
+</script>
