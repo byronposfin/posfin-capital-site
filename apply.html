@@ -202,7 +202,7 @@ letter-spacing: 0.01em;
 }
 .field label .req { color: var(--teal); margin-left: 2px; }
 
-.field input,
+.field input:not([type="checkbox"]):not([type="radio"]),
 .field select,
 .field textarea {
 width: 100%;
@@ -221,13 +221,32 @@ appearance: none;
 .field input::placeholder,
 .field textarea::placeholder { color: var(--grey-500); }
 
-.field input:focus,
+.field input:not([type="checkbox"]):not([type="radio"]):focus,
 .field select:focus,
 .field textarea:focus {
 outline: none;
 border-color: var(--teal);
 background: #FFFFFF;
 box-shadow: 0 0 0 3px rgba(44,181,172,0.15);
+}
+
+/* Tick options (radio/checkbox) must keep their native box — the rules above
+   are for text-style fields only. Without this, every radio/checkbox inside
+   a .field renders as a full-width blank box with no visible tick. */
+.field input[type="checkbox"],
+.field input[type="radio"] {
+width: 16px;
+height: 16px;
+min-width: 16px;
+flex-shrink: 0;
+-webkit-appearance: auto;
+appearance: auto;
+accent-color: #C9A14A;
+background: none;
+border: none;
+border-radius: 0;
+padding: 0;
+margin: 0;
 }
 
 .field select {
@@ -421,7 +440,7 @@ fbq('track', 'PageView');
   </div>
 
   <div class="field">
-    <label for="productIntent">What best describes what you need? <span class="req">*</span></label>
+    <label for="productIntent">Which Posfin product fits your deal? <span class="req">*</span></label>
     <select id="productIntent" name="productIntent" required>
       <option value="">Select route…</option>
       <option value="speed_loan">Speed loan / urgent liquidity</option>
@@ -562,6 +581,7 @@ fbq('track', 'PageView');
       <option value="HMRC / Tax">HMRC / tax pressure</option>
       <option value="Other">Other / not sure</option>
     </select>
+    <small style="display:block;margin-top:0.35rem;opacity:0.68;font-size:0.82rem;">What the funds will actually be used for — this can differ from the product above.</small>
     <div class="field-error">Please select a purpose</div>
   </div>
 
