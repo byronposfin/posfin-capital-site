@@ -480,6 +480,64 @@ fbq('track', 'PageView');
     </div>
   </div>
 
+  <div class="field">
+    <label for="chargeRequested">What charge position are you looking for? <span class="req">*</span></label>
+    <select id="chargeRequested" name="chargeRequested" required>
+      <option value="">Select charge position…</option>
+      <option value="First charge">First charge — replacing/clearing the current lender</option>
+      <option value="Second charge">Second charge — current mortgage stays in place</option>
+      <option value="Equitable charge">Equitable charge / speed-loan route</option>
+      <option value="Not sure">Not sure — please advise</option>
+    </select>
+    <div class="field-error">Please select the likely charge position</div>
+  </div>
+
+  <div class="field">
+    <label for="firstChargeLender">Current first-charge lender / mortgage provider <span class="req">*</span></label>
+    <input type="text" id="firstChargeLender" name="firstChargeLender" required placeholder="e.g. Barclays, NatWest, Somo, no mortgage">
+    <div class="field-error">Please enter the first-charge lender, or “No mortgage”</div>
+  </div>
+
+  <div class="field-row">
+    <div class="field">
+      <label for="firstChargeBalance">Approx. first-charge balance <span class="req">*</span></label>
+      <input type="text" id="firstChargeBalance" name="firstChargeBalance" required placeholder="£300,000 or £0" inputmode="numeric">
+      <div class="field-error">Please enter the approximate balance</div>
+    </div>
+    <div class="field">
+      <label for="firstChargeArrears">Any first-charge arrears? <span class="req">*</span></label>
+      <select id="firstChargeArrears" name="firstChargeArrears" required>
+        <option value="">Select…</option>
+        <option value="No">No</option>
+        <option value="Yes">Yes</option>
+        <option value="Not sure">Not sure</option>
+      </select>
+      <div class="field-error">Please confirm arrears status</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="hasSecondCharge">Are there any second charges, secured loans or restrictions? <span class="req">*</span></label>
+    <select id="hasSecondCharge" name="hasSecondCharge" required>
+      <option value="">Select…</option>
+      <option value="No">No</option>
+      <option value="Yes">Yes</option>
+      <option value="Not sure">Not sure</option>
+    </select>
+    <div class="field-error">Please confirm whether any second charges exist</div>
+  </div>
+
+  <div id="secondChargeDetails" style="display:none">
+    <div class="field">
+      <label for="secondChargeLender">Second-charge lender / restriction holder</label>
+      <input type="text" id="secondChargeLender" name="secondChargeLender" placeholder="e.g. Together, Shawbrook, HMRC, charging order">
+    </div>
+    <div class="field">
+      <label for="secondChargeBalance">Approx. second-charge balance</label>
+      <input type="text" id="secondChargeBalance" name="secondChargeBalance" placeholder="£50,000" inputmode="numeric">
+    </div>
+  </div>
+
   <div class="field" style="margin-bottom:1.4rem">
     <label style="display:block;font-weight:600;margin-bottom:0.5rem">Is this amount on top of your existing mortgage, or does it include clearing it?</label>
     <div style="display:flex;flex-direction:column;gap:0.5rem">
@@ -524,8 +582,8 @@ fbq('track', 'PageView');
     <div class="success-icon">
       <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
     </div>
-    <h2>Application Received</h2>
-    <p>A senior broker will be in touch on WhatsApp within the hour. Check your phone — you'll see a message from Posfin Capital shortly.</p>
+    <h2>Enquiry received — route being checked</h2>
+    <p>Thanks. We have the core property, loan and charge-stack details. A senior broker will review the route and contact you on WhatsApp.</p>
   </div>
 </main>
 </section>
@@ -714,6 +772,10 @@ fbq('track', 'PageView');
       if (prefillRecord.security_postcode) form.propertyPostcode.value = String(prefillRecord.security_postcode).toUpperCase();
       if (prefillRecord.property_value) form.propertyValue.value = prefillRecord.property_value;
       if (prefillRecord.loan_amount) form.loanAmount.value = prefillRecord.loan_amount;
+      if (prefillRecord.first_charge_lender) form.firstChargeLender.value = prefillRecord.first_charge_lender;
+      if (prefillRecord.first_charge_balance) form.firstChargeBalance.value = prefillRecord.first_charge_balance;
+      if (prefillRecord.second_charge_lender) form.secondChargeLender.value = prefillRecord.second_charge_lender;
+      if (prefillRecord.second_charge_balance) form.secondChargeBalance.value = prefillRecord.second_charge_balance;
       if (prefillRecord.purpose && form.purpose) form.purpose.value = prefillRecord.purpose;
       if (prefillRecord.route_hint && form.productIntent) form.productIntent.value = prefillRecord.route_hint;
       if (prefillRecord.same_as_home === true || prefillRecord.same_as_home === 'Yes') { form.securityIsHome.checked = true; copyHomeToSecurity(); }
@@ -749,6 +811,16 @@ fbq('track', 'PageView');
   }
   formatCurrency(document.getElementById('propertyValue'));
   formatCurrency(document.getElementById('loanAmount'));
+  formatCurrency(document.getElementById('firstChargeBalance'));
+  formatCurrency(document.getElementById('secondChargeBalance'));
+
+  const hasSecondCharge = document.getElementById('hasSecondCharge');
+  const secondChargeDetails = document.getElementById('secondChargeDetails');
+  if (hasSecondCharge && secondChargeDetails) {
+    hasSecondCharge.addEventListener('change', function(){
+      secondChargeDetails.style.display = this.value === 'Yes' ? 'block' : 'none';
+    });
+  }
 
   function hasAddressLine(v) { return String(v || '').trim().length >= 6 && /[A-Za-z]{3,}/.test(String(v || '')); }
   function hasPostcode(v) { return /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(String(v || '').trim()); }
@@ -819,6 +891,13 @@ fbq('track', 'PageView');
       securityIsHome: form.securityIsHome && form.securityIsHome.checked ? 'Yes' : 'No',
       propertyValue: form.propertyValue.value.trim(),
       loanAmount: form.loanAmount.value.trim(),
+      chargeRequested: form.chargeRequested.value,
+      firstChargeLender: form.firstChargeLender.value.trim(),
+      firstChargeBalance: form.firstChargeBalance.value.trim(),
+      firstChargeArrears: form.firstChargeArrears.value,
+      hasSecondCharge: form.hasSecondCharge.value,
+      secondChargeLender: form.secondChargeLender.value.trim(),
+      secondChargeBalance: form.secondChargeBalance.value.trim(),
       loanIntent: (form.querySelector('input[name="loanIntent"]:checked') || {}).value || '',
       purpose: form.purpose.value,
       userAgent: navigator.userAgent,
@@ -852,6 +931,13 @@ fbq('track', 'PageView');
       security_is_home_address: payload.securityIsHome,
       property_value: payload.propertyValue,
       loan_amount: payload.loanAmount,
+      charge_requested: payload.chargeRequested,
+      first_charge_lender: payload.firstChargeLender,
+      first_charge_balance: payload.firstChargeBalance,
+      first_charge_arrears: payload.firstChargeArrears,
+      second_charges: payload.hasSecondCharge,
+      second_charge_lender: payload.secondChargeLender,
+      second_charge_balance: payload.secondChargeBalance,
       loan_purpose: payload.purpose,
       net_or_gross: payload.loanIntent === 'first_charge_refi' ? 'gross' : 'net',
       page_source: 'apply-intelligent-router',
@@ -859,7 +945,14 @@ fbq('track', 'PageView');
         payload.prefill_note ? 'Click-roll note shown to borrower: ' + payload.prefill_note : '',
         payload.source_channel ? 'Source channel: ' + payload.source_channel : '',
         payload.route_hint ? 'Route hint: ' + payload.route_hint : '',
-        payload.productRoute ? 'Borrower selected route: ' + payload.productRoute : ''
+        payload.productRoute ? 'Borrower selected route: ' + payload.productRoute : '',
+        payload.chargeRequested ? 'Charge requested: ' + payload.chargeRequested : '',
+        payload.firstChargeLender ? 'First charge lender: ' + payload.firstChargeLender : '',
+        payload.firstChargeBalance ? 'First charge balance: ' + payload.firstChargeBalance : '',
+        payload.firstChargeArrears ? 'First charge arrears: ' + payload.firstChargeArrears : '',
+        payload.hasSecondCharge ? 'Second charges: ' + payload.hasSecondCharge : '',
+        payload.secondChargeLender ? 'Second charge lender: ' + payload.secondChargeLender : '',
+        payload.secondChargeBalance ? 'Second charge balance: ' + payload.secondChargeBalance : ''
       ].filter(Boolean).join('\n'),
       prefill_token: payload.prefill_token,
       prefill_note: payload.prefill_note,
