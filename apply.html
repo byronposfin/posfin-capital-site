@@ -838,7 +838,7 @@ fbq('track', 'PageView');
 
     const nameParts = splitName(payload.name);
     const crmPayload = {
-      product: payload.productRoute === 'not_sure' ? 'main_loan' : payload.productRoute,
+      product: ['speed_loan','main_loan','bank_bridge','purchase_refurb','back_to_back','development_finance','development_exit_finance'].includes(payload.productRoute) ? payload.productRoute : 'main_loan',
       deal_ref: payload.prefill_case_ref || ('WEB-' + Date.now().toString(36).toUpperCase()),
       first_name: nameParts.first,
       last_name: nameParts.last,
