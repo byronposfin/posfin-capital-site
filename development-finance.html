@@ -224,4 +224,78 @@
 })();
 </script>
 
+
+<script id="posfin-router-prefill-bridge">
+(function(){
+  if (window.__posfinRouterPrefillBridge) return; window.__posfinRouterPrefillBridge = true;
+  var params = new URLSearchParams(location.search || '');
+  var token = params.get('k') || params.get('token') || '';
+  var directKeys = ['first_name','last_name','full_name','mobile','phone','email','home_address','residential_address','security_address','property_address','property_value','loan_amount','note','case_ref','route'];
+  var hasDirect = directKeys.some(function(k){ return params.get(k); });
+  if (!token && !hasDirect) return;
+  function norm(s){ return String(s||'').replace(/\s+/g,' ').trim(); }
+  function splitName(full){ var parts=norm(full).split(/\s+/).filter(Boolean); return {first:parts.shift()||'', last:parts.join(' ')||''}; }
+  function dispatch(el){ try{ el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){} }
+  function setVal(el,val){ if(!el || !val || norm(el.value)) return false; el.value=val; dispatch(el); return true; }
+  function labelsForInputs(){
+    var out=[];
+    Array.from(document.querySelectorAll('input:not([type="radio"]):not([type="checkbox"]), textarea')).forEach(function(input, idx){
+      var texts=[]; var el=input;
+      for(var d=0; el && d<5; d++, el=el.parentElement){
+        var label=el.querySelector && el.querySelector('label'); if(label) texts.push(norm(label.textContent));
+        var prev=el.previousElementSibling; if(prev) texts.push(norm(prev.textContent));
+      }
+      texts.push(norm(input.placeholder)); texts.push(norm(input.getAttribute('aria-label'))); texts.push(norm(input.name)); texts.push(norm(input.id));
+      out.push({input:input, idx:idx, text:texts.join(' ').toLowerCase()});
+    });
+    return out;
+  }
+  function fillByText(items, patterns, value){
+    for(var i=0;i<items.length;i++){ if(patterns.some(function(rx){return rx.test(items[i].text)})){ if(setVal(items[i].input,value)) return true; } }
+    return false;
+  }
+  function fill(p){
+    p=p||{};
+    var full=p.full_name || p.name || [p.first_name,p.last_name].filter(Boolean).join(' ');
+    var parts=splitName(full);
+    var first=p.first_name || parts.first, last=p.last_name || parts.last;
+    var phone=p.mobile || p.phone || '';
+    var security=p.security_address || p.property_address || '';
+    var home=p.home_address || p.residential_address || '';
+    var items=labelsForInputs();
+    fillByText(items,[/first name|given name/],first);
+    fillByText(items,[/last name|surname|family name/],last);
+    fillByText(items,[/full name|your name/],full);
+    fillByText(items,[/mobile|phone|whatsapp|tel/],phone);
+    fillByText(items,[/email|e-mail/],p.email||'');
+    fillByText(items,[/security.*address|property.*address|address.*property/],security);
+    fillByText(items,[/home.*address|residential.*address/],home || security);
+    fillByText(items,[/property value|estimated value|value/],p.property_value||'');
+    fillByText(items,[/loan.*amount|loan required|loan needed|amount required|funds required/],p.loan_amount||p.loan_needed||'');
+    fillByText(items,[/anything else|notes|tell us|additional/],p.note||'');
+    var banner=document.createElement('div');
+    banner.id='posfin-router-prefill-banner';
+    banner.style.cssText='margin:0 auto 18px;max-width:760px;padding:12px 14px;border:1px solid rgba(212,168,83,.45);background:rgba(212,168,83,.10);color:#1C184F;font-family:DM Sans,-apple-system,sans-serif;font-size:13px;line-height:1.45;';
+    banner.innerHTML='<strong style="display:block;color:#B88A28;margin-bottom:3px;letter-spacing:.12em;text-transform:uppercase;font-size:10px;">Details carried forward</strong>We have prefilled the fields we already know. Please only complete the missing product-specific questions.';
+    var form=document.querySelector('form') || document.querySelector('#apply') || document.body;
+    if(form && !document.getElementById('posfin-router-prefill-banner')) form.parentNode.insertBefore(banner, form);
+  }
+  function fromParams(){
+    var p={}; directKeys.forEach(function(k){ if(params.get(k)) p[k]=params.get(k); });
+    if(p.phone && !p.mobile) p.mobile=p.phone;
+    if(p.property_address && !p.security_address) p.security_address=p.property_address;
+    return p;
+  }
+  async function init(){
+    var p=fromParams();
+    if(token){
+      try{ var res=await fetch('/api/prefill?k='+encodeURIComponent(token),{headers:{Accept:'application/json'}}); if(res.ok){ var data=await res.json(); Object.assign(p,data.prefill||data||{}); } }catch(e){}
+    }
+    setTimeout(function(){ fill(p); }, 350);
+    setTimeout(function(){ fill(p); }, 1200);
+  }
+  init();
+})();
+</script>
+
 </body></html>
