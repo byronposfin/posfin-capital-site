@@ -1356,10 +1356,10 @@
     .then(function (data) {
       hideEl(el('q5Loading'));
       var quotes = normaliseResponse(data, form);
-      /* If API returns no Main Loan products (loan < £100K minimum), show helpful message */
+      /* If API returns no Main Loan products (loan under the usual main-loan threshold), show helpful message */
       if (!quotes || quotes.length === 0) {
         hideEl(el('q5Loading'));
-        q5ShowError('Main Loan facilities start from £100,000. For smaller amounts (£26K-£100K), our Speed Loan is available in 3-5 days with no valuation required. Speak with Byron or Chris to discuss your options.');
+        q5ShowError('Main Loan facilities can be structured from £26,000 where the lender route fits. For smaller, urgent cases, our Speed Loan is available in 3-5 days with no valuation required. Speak with Byron or Chris to discuss your options.');
         return;
       }
       if (quotes.length === 1) {

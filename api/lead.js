@@ -572,7 +572,7 @@ export default async function handler(req, res) {
     const TELE_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const isMain = ['main_loan', 'bank_bridge', 'purchase_refurb', 'equitable_charges', 'development_finance', 'development_exit_finance'].includes(product);
     const brokerName = data.assigned_broker === 'Chris' ? 'Chris' : 'Byron';
-    // Main loans £250k+ → round-robin Byron/Chris; Speed loans → Byron
+    // Main loans £50k+ → round-robin Byron/Chris; Speed loans → Byron
     const loanAmt = Number(String(data.loan_amount || data.loan_needed || data.full_loan_required || '0').replace(/[^\d]/g,''));
     const CHAT_BYRON = '1750758657';
     const CHAT_CHRIS = '8634157536';
