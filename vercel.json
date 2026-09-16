@@ -105,5 +105,31 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/apply/bh",
+      "destination": "/apply?b=bh"
+    },
+    {
+      "source": "/apply/byron",
+      "destination": "/apply?b=bh"
+    },
+    {
+      "source": "/apply/chris",
+      "destination": "/apply?b=chris"
+    },
+    {
+      "source": "/a/bh",
+      "destination": "/apply?b=bh"
+    },
+    {
+      "source": "/a/chris",
+      "destination": "/apply?b=chris"
+    },
+    {
+      "source": "/apply1",
+      "destination": "/apply?b=chris"
+    }
   ]
 }
