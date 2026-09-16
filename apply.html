@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#0D1117">
+<meta name="theme-color" content="#FFFFFF">
 <title>Apply | Posfin Capital — Bridging Finance from £26k to £100m</title>
 <meta name="description" content="60-second application. Secured bridging, development and acquisition finance £26k–£100m. Senior broker-led. Terms fast.">
 <meta property="og:title" content="Apply for Bridging Finance | Posfin Capital">
@@ -15,15 +15,15 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --teal: #C9A14A; /* institutional gold accent */
-  --teal-dark: #A98224;
-  --teal-glow: rgba(201,161,74,0.14);
+  --teal: #00B5B0; /* Posfin teal */
+  --teal-dark: #078F8B;
+  --teal-glow: rgba(0,181,176,0.16);
   --navy: #1C184F;
   --dark: #111026;
   --dark-mid: #181633;
-  --dark-card: #F9F6E8;
+  --dark-card: #FFFFFF;
   --dark-border: rgba(28,24,79,0.16);
-  --dark-border-hover: rgba(201,161,74,0.48);
+  --dark-border-hover: rgba(0,181,176,0.48);
   --white: #FFFFFF;
   --grey-100: #1C184F;
   --grey-300: #5B5E73;
@@ -38,7 +38,7 @@
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
   font-family: var(--sans);
-  background: #F2EEDD;
+  background: #FFFFFF;
   color: var(--navy);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -68,7 +68,7 @@ z-index: 100;
 .hero {
 text-align: center;
 padding: 2.5rem 1.25rem 1.5rem;
-background: radial-gradient(ellipse 70% 50% at 50% 0%, var(--teal-glow), transparent 70%);
+background: #FFFFFF;
 }
 .hero-eyebrow {
 display: inline-block;
@@ -110,9 +110,7 @@ line-height: 1.6;
   grid-template-columns: minmax(0, 0.9fr) minmax(420px, 520px);
   gap: clamp(2rem, 5vw, 4.5rem);
   align-items: start;
-  background:
-    radial-gradient(circle at 18% 12%, rgba(44,181,172,0.16), transparent 28%),
-    radial-gradient(circle at 82% 8%, rgba(28,24,79,0.30), transparent 34%);
+  background: #FFFFFF;
 }
 .apply-copy {
   position: sticky;
@@ -157,6 +155,92 @@ border-bottom: 1px solid var(--dark-border);
 .trust-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--grey-300); }
 .trust-item svg { width: 14px; height: 14px; color: var(--teal); flex-shrink: 0; }
 
+/* ═══ VERIFICATION CARD ═══ */
+.proof-card {
+  margin: 0.2rem auto 1.3rem;
+  max-width: 920px;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  background: #FFFFFF;
+  border: 1px solid rgba(0,181,176,0.22);
+  border-radius: 16px;
+  box-shadow: 0 14px 34px -26px rgba(28,24,79,0.35);
+}
+.proof-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 86px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  border: 1px solid rgba(0,181,176,0.14);
+  padding: 0.75rem;
+}
+.proof-logo img { max-width: 88px; max-height: 68px; object-fit: contain; }
+.proof-kicker {
+  font-size: 0.68rem;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 0.25rem;
+}
+.proof-title {
+  font-family: var(--display);
+  font-size: 1.03rem;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 0.35rem;
+}
+.proof-body {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--grey-300);
+  margin-bottom: 0.75rem;
+}
+.proof-links { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.proof-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 38px;
+  padding: 0.55rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0,181,176,0.28);
+  color: var(--navy);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #FFFFFF;
+}
+.proof-link.primary { background: var(--teal); color: #FFFFFF; border-color: var(--teal); }
+.proof-tick {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(0,181,176,0.12);
+  color: var(--teal);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+.proof-link.primary .proof-tick { background: rgba(255,255,255,0.2); color: #FFFFFF; }
+@media (max-width: 599px) {
+  .proof-card { grid-template-columns: 1fr; gap: 0.75rem; margin-bottom: 1.15rem; padding: 0.9rem; }
+  .proof-logo { min-height: 70px; }
+  .proof-logo img { max-width: 116px; max-height: 54px; }
+  .proof-title { font-size: 1rem; }
+  .proof-links { display: grid; grid-template-columns: 1fr; }
+  .proof-link { justify-content: center; }
+}
+
 /* ═══ FORM ═══ */
 .form-wrap { padding: 2rem 1.25rem 3rem; max-width: 540px; margin: 0 auto; }
 .form-card {
@@ -164,7 +248,7 @@ background: var(--dark-card);
 border: 1px solid var(--dark-border);
 border-radius: 14px;
 padding: 1.75rem 1.5rem;
-box-shadow: 0 24px 48px -16px rgba(0,0,0,0.5);
+box-shadow: 0 18px 42px -28px rgba(28,24,79,0.34);
 }
 .form-title {
 font-family: var(--display);
@@ -181,9 +265,9 @@ margin-bottom: 1.5rem;
   display: none;
   margin: 0 0 1.25rem;
   padding: 0.95rem 1rem;
-  border: 1px solid rgba(201,161,74,0.45);
+  border: 1px solid rgba(0,181,176,0.36);
   border-radius: 10px;
-  background: rgba(201,161,74,0.12);
+  background: rgba(0,181,176,0.08);
   color: var(--navy);
   font-size: 0.9rem;
   line-height: 1.45;
@@ -241,7 +325,7 @@ min-width: 16px;
 flex-shrink: 0;
 -webkit-appearance: auto;
 appearance: auto;
-accent-color: #C9A14A;
+accent-color: #00B5B0;
 background: none;
 border: none;
 border-radius: 0;
@@ -362,7 +446,7 @@ margin-bottom: 0.6rem;
   color: var(--navy);
   margin-bottom: 0.75rem;
 }
-.confirmation-ref span { color: #A98224; }
+.confirmation-ref span { color: #00B5B0; }
 .confirmation-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.9rem; }
 .confirmation-item { border-top: 1px solid rgba(28,24,79,0.10); padding-top: 0.55rem; }
 .confirmation-label { display:block; font-size:0.62rem; letter-spacing:0.09em; text-transform:uppercase; color:#7A7668; margin-bottom:0.15rem; }
@@ -426,12 +510,29 @@ fbq('track', 'PageView');
     FCA Authorised
   </div>
   <div class="trust-item">
+    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    NACFB Member
+  </div>
+  <div class="trust-item">
     <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
     Secure & Confidential
   </div>
   <div class="trust-item">
     <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
     3–30 day routes
+  </div>
+</div>
+
+<div class="proof-card" aria-label="Posfin verification">
+  <div class="proof-logo"><img src="/assets/trust/nacfb-logo.png" alt="NACFB Member"></div>
+  <div>
+    <div class="proof-kicker">Verified trust markers</div>
+    <div class="proof-title">NACFB member and FCA-authorised credit broker.</div>
+    <p class="proof-body">Two tappable proofs: our NACFB borrower certificate and the FCA’s own register entry for Posfin Capital Limited, FRN 913022.</p>
+    <div class="proof-links">
+      <a class="proof-link primary" href="/assets/trust/posfin-nacfb-borrower-certificate.pdf" target="_blank" rel="noopener"><span class="proof-tick">✓</span> View borrower certificate</a>
+      <a class="proof-link" href="https://register.fca.org.uk/s/search?q=913022&type=Companies" target="_blank" rel="noopener"><span class="proof-tick">✓</span> Verify on FCA register</a>
+    </div>
   </div>
 </div>
 </div>
@@ -494,7 +595,7 @@ fbq('track', 'PageView');
   </div>
 
   <div class="field">
-    <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-weight:600"><input type="checkbox" id="securityIsHome" name="securityIsHome" value="Yes" style="accent-color:#C9A14A;margin-top:0.2rem"> Security property is the same as my home address</label>
+    <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-weight:600"><input type="checkbox" id="securityIsHome" name="securityIsHome" value="Yes" style="accent-color:#00B5B0;margin-top:0.2rem"> Security property is the same as my home address</label>
     <small style="display:block;margin-top:0.35rem;opacity:0.68;font-size:0.82rem;">Tick once — we’ll copy the home address/postcode into the security fields.</small>
   </div>
 
@@ -584,9 +685,9 @@ fbq('track', 'PageView');
   <div class="field" id="loanIntentField" style="margin-bottom:1.4rem">
     <label style="display:block;font-weight:600;margin-bottom:0.5rem">Is this amount on top of your existing mortgage, or does it include clearing it?</label>
     <div style="display:flex;flex-direction:column;gap:0.5rem">
-      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="net_on_top" style="accent-color:#C9A14A"> On top of my existing mortgage &mdash; I want to keep it in place</label>
-      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="first_charge_refi" style="accent-color:#C9A14A"> Includes clearing my existing mortgage &mdash; I want to replace it</label>
-      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="not_sure" style="accent-color:#C9A14A"> Not sure &mdash; happy to discuss on the call</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="net_on_top" style="accent-color:#00B5B0"> On top of my existing mortgage &mdash; I want to keep it in place</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="first_charge_refi" style="accent-color:#00B5B0"> Includes clearing my existing mortgage &mdash; I want to replace it</label>
+      <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer"><input type="radio" name="loanIntent" value="not_sure" style="accent-color:#00B5B0"> Not sure &mdash; happy to discuss on the call</label>
     </div>
     <small style="display:block;margin-top:0.45rem;opacity:0.68;font-size:0.82rem;">We only ask this where the charge position has not already answered it.</small>
   </div>
@@ -786,7 +887,16 @@ fbq('track', 'PageView');
   const submitBtn = document.getElementById('submitBtn');
   const prefillNote = document.getElementById('prefillNote');
   const securityIsHome = document.getElementById('securityIsHome');
-  const token = new URLSearchParams(window.location.search).get('k') || '';
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('k') || '';
+  function brokerFromUrl() {
+    const path = String(window.location.pathname || '').toLowerCase();
+    const blob = [path, urlParams.get('b'), urlParams.get('br'), urlParams.get('broker'), urlParams.get('owner')].filter(Boolean).join(' ').toLowerCase();
+    if (/\b(chris|cs)\b/.test(blob) || path.indexOf('/chris') !== -1) return { code: 'chris', name: 'Chris' };
+    if (/\b(bh|byron)\b/.test(blob) || path.indexOf('/bh') !== -1 || path.indexOf('/byron') !== -1) return { code: 'bh', name: 'Byron' };
+    return { code: '', name: '' };
+  }
+  const brokerTag = brokerFromUrl();
   let prefillRecord = null;
 
   function splitName(fullName) {
@@ -935,6 +1045,7 @@ fbq('track', 'PageView');
     const nameParts = splitName(payload.name);
     const q = new URLSearchParams();
     if (token) q.set('k', token);
+    if (brokerTag.code) q.set('b', brokerTag.code);
     q.set('from', 'apply_router');
     q.set('route', route);
     q.set('case_ref', (apiResult && (apiResult.leadRef || apiResult.case_ref)) || payload.reference || '');
@@ -1088,12 +1199,14 @@ fbq('track', 'PageView');
       prefill_note: prefillRecord ? (prefillRecord.note || '') : '',
       prefill_case_ref: prefillRecord ? (prefillRecord.case_ref || '') : '',
       source_channel: prefillRecord ? (prefillRecord.source_channel || '') : '',
-      route_hint: prefillRecord ? (prefillRecord.route_hint || '') : ''
+      route_hint: prefillRecord ? (prefillRecord.route_hint || '') : '',
+      assigned_broker: brokerTag.name,
+      broker_code: brokerTag.code
     };
 
     const nameParts = splitName(payload.name);
     const crmPayload = {
-      product: ['speed_loan','main_loan','bank_bridge','purchase_refurb','back_to_back','development_finance','development_exit_finance'].includes(payload.productRoute) ? payload.productRoute : 'main_loan',
+      product: ['speed_loan','main_loan','bank_bridge','purchase_refurb','back_to_back','development_finance','development_exit_finance','acquisition_finance'].includes(payload.productRoute) ? payload.productRoute : 'main_loan',
       deal_ref: payload.reference,
       first_name: nameParts.first,
       last_name: nameParts.last,
@@ -1135,6 +1248,9 @@ fbq('track', 'PageView');
       prefill_case_ref: payload.prefill_case_ref,
       source_channel: payload.source_channel,
       route_hint: payload.route_hint,
+      assigned_broker: payload.assigned_broker,
+      broker: payload.assigned_broker,
+      broker_code: payload.broker_code,
       sourceUrl: payload.sourceUrl,
       utm_source: payload.utm_source,
       utm_medium: payload.utm_medium,

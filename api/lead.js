@@ -23,6 +23,7 @@ const TAB_MAP = {
   bank_bridge:               'Main Loan Leads',
   back_to_back:              'Back to Back Leads',
   purchase_refurb:           'Main Loan Leads',
+  acquisition_finance:       'Main Loan Leads',
   trade_finance:             'Trade Finance Leads',
 };
 
@@ -150,6 +151,77 @@ function formatCurrency(v) {
   return `£${Math.round(n).toLocaleString('en-GB')}`;
 }
 
+function hasExplicitOwnerTag(d) {
+  const blob = [d.assigned_broker, d.owner, d.broker, d.broker_name, d.assigned_to, d.source_url]
+    .filter(Boolean).join(' ').toLowerCase();
+  return /\b(chris|byron|bh|cs)\b/.test(blob);
+}
+
+function ownerNameFromData(d) {
+  const blob = [d.assigned_broker, d.owner, d.broker, d.broker_name, d.assigned_to, d.source_url]
+    .filter(Boolean).join(' ').toLowerCase();
+  if (/\b(chris|cs)\b/.test(blob)) return 'Chris';
+  if (/\b(byron|bh)\b/.test(blob)) return 'Byron';
+  return 'Byron';
+}
+
+
+function normalisePhone(v) {
+  return String(v || '').replace(/[^0-9]/g, '').replace(/^44/, '0');
+}
+
+function sourceParam(d, key) {
+  try {
+    const u = new URL(d.source_url || '');
+    return u.searchParams.get(key) || '';
+  } catch { return ''; }
+}
+
+function rawLeadMatchTokens(d) {
+  return {
+    ref: String(d.raw_lead_ref || d.lead_ref || d.lead_token || d.k || d.token || sourceParam(d, 'k') || sourceParam(d, 'raw_lead_ref') || '').trim().toLowerCase(),
+    phone: normalisePhone(d.mobile || d.phone || d.telephone),
+    email: String(d.email || '').trim().toLowerCase(),
+    name: `${d.first_name || ''} ${d.last_name || ''}`.trim().toLowerCase(),
+  };
+}
+
+async function markRawLeadAssignedIfMatched(sheets, d, ownerName, dealRef, pipelineRowNumber) {
+  const tokens = rawLeadMatchTokens(d);
+  if (!tokens.ref && !tokens.phone && !tokens.email) return null;
+  const resp = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'Raw Leads'!A2:AD1200` });
+  const rows = resp.data.values || [];
+  let match = null;
+  rows.some((row, idx) => {
+    const rowNum = idx + 2;
+    const blob = row.map(x => String(x || '').toLowerCase()).join(' | ');
+    const rowPhone = normalisePhone(row[2] || blob);
+    const rowEmail = String(row[3] || '').trim().toLowerCase();
+    const rowLeadRef = String(row[13] || '').trim().toLowerCase();
+    const ok = (tokens.ref && (rowLeadRef === tokens.ref || blob.includes(tokens.ref)))
+      || (tokens.email && rowEmail === tokens.email)
+      || (tokens.phone && rowPhone && tokens.phone && rowPhone.includes(tokens.phone));
+    if (ok) { match = { rowNum, row }; return true; }
+    return false;
+  });
+  if (!match) return null;
+  const existingNotes = match.row[7] || '';
+  const stamp = new Date().toLocaleString('en-GB', { timeZone: 'Europe/London', hour12: false });
+  const note = `${stamp} — ${ownerName} ownership confirmed from completed online form${dealRef ? ` (${dealRef})` : ''}${pipelineRowNumber ? `; PIPELINE:${pipelineRowNumber}` : ''}. Do not cross-call without checking ${ownerName}.`;
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: SHEET_ID,
+    requestBody: {
+      valueInputOption: 'USER_ENTERED',
+      data: [
+        { range: `'Raw Leads'!F${match.rowNum}`, values: [[`ASSIGNED — ${ownerName.toUpperCase()}`]] },
+        { range: `'Raw Leads'!H${match.rowNum}`, values: [[existingNotes ? `${existingNotes}\n${note}` : note]] },
+        { range: `'Raw Leads'!AC${match.rowNum}`, values: [[ownerName]] },
+      ],
+    },
+  });
+  return match.rowNum;
+}
+
 function fmtDateShort(ts) {
   const d = new Date(ts.replace(' ', 'T'));
   if (Number.isNaN(d.getTime())) return ts.slice(0, 10);
@@ -157,7 +229,7 @@ function fmtDateShort(ts) {
 }
 
 function formatPipelineRow(d, ts, product) {
-  if (!['main_loan', 'bank_bridge', 'speed_loan', 'equitable_charges', 'back_to_back', 'purchase_refurb', 'development_finance', 'development_exit_finance'].includes(product)) return null;
+  if (!['main_loan', 'bank_bridge', 'speed_loan', 'equitable_charges', 'back_to_back', 'purchase_refurb', 'acquisition_finance', 'development_finance', 'development_exit_finance'].includes(product)) return null;
   const first = d.first_name || '';
   const last = d.last_name || '';
   const isSpeed = product === 'speed_loan' || product === 'equitable_charges';
@@ -170,18 +242,19 @@ function formatPipelineRow(d, ts, product) {
     : product === 'development_finance' ? 'Development Finance'
     : 'Dev Exit';
   const requestedAmount = (product === 'speed_loan' || product === 'equitable_charges') ? d.loan_needed
-    : (product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb') ? d.loan_amount
+    : (product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb' || product === 'acquisition_finance') ? d.loan_amount
     : product === 'back_to_back' ? d.full_loan_required
     : product === 'development_finance' ? d.loan_size_gbp
     : d.gross_borrowing_gbp || d.loan_size_gbp;
   const term = product === 'speed_loan' ? '3 months'
     : product === 'equitable_charges' ? '12 months · 6-month minimum exit'
-    : (product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb') ? (d.timescale || '12 months')
+    : (product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb' || product === 'acquisition_finance') ? (d.timescale || '12 months')
     : product === 'back_to_back' ? '3 + 12 months'
     : product === 'development_finance' ? 'Development term TBC'
     : (d.term || 'Dev exit term TBC');
-  const purpose = (product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb') ? d.loan_purpose : (d.purpose_of_funds || d.loan_purpose || d.use_of_funds || d.biggest_challenge || d.consent_issue);
+  const purpose = (product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb' || product === 'acquisition_finance') ? d.loan_purpose : (d.purpose_of_funds || d.loan_purpose || d.use_of_funds || d.biggest_challenge || d.consent_issue);
   const source = `${productLabel} form`;
+  const ownerName = ownerNameFromData(d);
   const securityAddress = d.property_address || d.site_address || 'TBC';
   const value = d.property_value || d.gdv_estimate_gbp || d.scheme_value || d.scheme_value_gbp;
   const name = `${first} ${last}`.trim() || `New ${productLabel} Lead`;
@@ -239,7 +312,7 @@ function formatPipelineRow(d, ts, product) {
     '🚪 EXIT',
     d.exit_strategy || 'TBC',
     '',
-    `⚡ Status: TRIAGE · Agent: Website · Source: ${source}`,
+    `⚡ Status: TRIAGE · Owner: ${ownerName} · Source: ${source}`,
   ].filter(Boolean).join('\n');
 
   return [
@@ -250,7 +323,7 @@ function formatPipelineRow(d, ts, product) {
     d.email || '',
     first,
     last,
-    'Website',
+    ownerName,
     'TRIAGE',
     'FALSE',
     productLabel,
@@ -403,9 +476,50 @@ function formatTradeFinanceRow(d, ts) {
 }
 
 function explicitBrokerOwner(d) {
-  const blob = [d.assigned_broker, d.owner, d.broker, d.broker_name, d.assigned_to].filter(Boolean).join(' ').toLowerCase();
-  if (/\bchris\b/.test(blob)) return { name: 'Chris', tab: 'CHRIS CALLS' };
-  return { name: 'Byron', tab: 'BYRON CALLS' };
+  if (ownerNameFromData(d) === 'Chris') return { name: 'Chris', tab: 'CHRIS CALLS', chatId: '8634157536' };
+  return { name: 'Byron', tab: 'BYRON CALLS', chatId: '1750758657' };
+}
+
+function genericProductLabel(product) {
+  return product === 'speed_loan' || product === 'equitable_charges' ? 'Speed Loan'
+    : product === 'acquisition_finance' ? 'Acquisition Finance'
+    : product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb' ? 'Main Loan'
+    : product === 'back_to_back' ? 'Back-to-Back'
+    : product === 'development_finance' ? 'Development Finance'
+    : product === 'development_exit_finance' ? 'Dev Exit'
+    : product === 'trade_finance' ? 'Trade Finance'
+    : String(product || 'Website Lead').replace(/_/g, ' ');
+}
+
+function formatBrokerCallRow(d, ts, product, pipelineRowNumber, leadRowNumber, tabName) {
+  const owner = explicitBrokerOwner(d);
+  const first = d.first_name || '';
+  const last = d.last_name || '';
+  const name = `${first} ${last}`.trim() || `New ${genericProductLabel(product)} Lead`;
+  const sourceRow = pipelineRowNumber ? `PIPELINE:${pipelineRowNumber}` : `${tabName}:${leadRowNumber || ''}`;
+  const ref = d.deal_ref || '';
+  const property = d.property_address || d.site_address || 'TBC';
+  const loan = d.loan_amount || d.loan_needed || d.full_loan_required || d.loan_size_gbp || 'TBC';
+  const summary = [
+    `NEW ${genericProductLabel(product).toUpperCase()} WEBSITE LEAD — ${name}`,
+    ref ? `Ref: ${ref}` : '',
+    `Owner: ${owner.name}`,
+    `Source: ${d.page_source || genericProductLabel(product) + ' form'}`,
+    `Security: ${property}`,
+    `Home: ${d.residential_address || d.home_address || 'TBC'}`,
+    `Loan: ${formatCurrency(loan)}`,
+    `Purpose: ${d.purpose_of_funds || d.loan_purpose || 'TBC'}`,
+    `Exit: ${d.exit_strategy || 'TBC'}`,
+    `LTV: ${d.estimated_ltv || 'TBC'} ${d.ltv_flag ? '(' + d.ltv_flag + ')' : ''}`,
+    '',
+    'Call goal: qualify borrower, confirm charge stack, address/value, purpose, exit, timescale and lender route.'
+  ].filter(Boolean).join('\n');
+  return { tab: owner.tab, row: [
+    ts.slice(0,10), 'P1 — CALL NOW', name, d.mobile || '', 'Call', d.email || '', genericProductLabel(product),
+    sourceRow, summary, '', '', 'Call now — qualify and confirm lender route', '',
+    ref ? `OPEN LOR — ${name}` : '', ref ? `Canonical LOR JSON — ${name}` : '',
+    '', '', '', '', '', '', '', '', '', 'FALSE', owner.name
+  ]};
 }
 
 function formatEquitableCallRow(d, ts, pipelineRowNumber, leadRowNumber) {
@@ -479,6 +593,7 @@ export default async function handler(req, res) {
       main_loan:                formatMainLoanRow,
       bank_bridge:              formatMainLoanRow,
       purchase_refurb:          formatMainLoanRow,
+      acquisition_finance:      formatMainLoanRow,
       back_to_back:             formatBackToBackRow,
       trade_finance:            formatTradeFinanceRow,
     };
@@ -557,26 +672,28 @@ export default async function handler(req, res) {
       timelineRowNumber = await appendRowAtFirstEmpty(sheets, 'Case_Timeline', timelineRow);
     } catch (e) { console.warn('[Lead API] Case_Timeline write failed:', e.message); }
 
-    // ── Equitable Charges → owner CALLS queue ─────────────────────────
+    // ── Owner CALLS queue ─────────────────────────────────────────────
     let callSheetRowNumber = null;
     let callSheetTab = null;
-    if (product === 'equitable_charges') {
+    const owner = explicitBrokerOwner(data);
+    let rawLeadRowNumber = null;
+    try {
+      rawLeadRowNumber = await markRawLeadAssignedIfMatched(sheets, data, owner.name, data.deal_ref, pipelineRowNumber);
+    } catch (e) { console.warn('[Lead API] Raw Leads owner stamp failed:', e.message); }
+    if (product === 'equitable_charges' || (hasExplicitOwnerTag(data) && (owner.name === 'Chris' || owner.name === 'Byron'))) {
       try {
-        const call = formatEquitableCallRow(data, ts, pipelineRowNumber, leadRowNumber);
+        const call = product === 'equitable_charges'
+          ? formatEquitableCallRow(data, ts, pipelineRowNumber, leadRowNumber)
+          : formatBrokerCallRow(data, ts, product, pipelineRowNumber, leadRowNumber, tabName);
         callSheetTab = call.tab;
         callSheetRowNumber = await appendRowAtFirstEmpty(sheets, callSheetTab, call.row);
-      } catch (e) { console.warn('[Lead API] Equitable call sheet write failed:', e.message); }
+      } catch (e) { console.warn('[Lead API] call sheet write failed:', e.message); }
     }
 
     // ── Telegram broker alert ──────────────────────────────────────────
     const TELE_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-    const isMain = ['main_loan', 'bank_bridge', 'purchase_refurb', 'equitable_charges', 'development_finance', 'development_exit_finance'].includes(product);
-    const brokerName = data.assigned_broker === 'Chris' ? 'Chris' : 'Byron';
-    // Main loans £50k+ → round-robin Byron/Chris; Speed loans → Byron
-    const loanAmt = Number(String(data.loan_amount || data.loan_needed || data.full_loan_required || '0').replace(/[^\d]/g,''));
-    const CHAT_BYRON = '1750758657';
-    const CHAT_CHRIS = '8634157536';
-    const recipientId = (isMain && loanAmt >= 250000) ? CHAT_BYRON : CHAT_BYRON; // default Byron; Chris gets separate notification if his deal
+    const isMain = ['main_loan', 'bank_bridge', 'purchase_refurb', 'acquisition_finance', 'equitable_charges', 'development_finance', 'development_exit_finance'].includes(product);
+    const brokerName = owner.name;
 
     if (TELE_TOKEN && data.deal_ref) {
       const productLabel = pipelineRow ? pipelineRow[11] : product.replace(/_/g,' ');
@@ -584,6 +701,7 @@ export default async function handler(req, res) {
       const msg = [
         `🦅 *New ${productLabel} Lead*`,
         ``,
+        `*Owner:* ${brokerName}`,
         `*Ref:* ${data.deal_ref}`,
         `*Name:* ${name}`,
         `*Mobile:* ${data.mobile || 'TBC'}`,
@@ -595,11 +713,12 @@ export default async function handler(req, res) {
         scorecardUrl ? `\n[📊 View Scorecard](${scorecardUrl})` : '',
       ].filter(Boolean).join('\n');
 
-      fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage`, {
+      const recipients = [...new Set([owner.chatId, '1750758657', '8634157536'])];
+      Promise.all(recipients.map((chatId) => fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: recipientId, text: msg, parse_mode: 'Markdown', disable_web_page_preview: false }),
-      }).catch(e => console.warn('[Lead API] Telegram failed:', e.message));
+        body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'Markdown', disable_web_page_preview: false }),
+      }))).catch(e => console.warn('[Lead API] Telegram failed:', e.message));
     }
 
     if (data.prefill_token) {
@@ -619,7 +738,7 @@ export default async function handler(req, res) {
     }
 
     console.log(`[Lead API] ${data.deal_ref} → ${tabName} | Scorecard: ${scorecardUrl}`);
-    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, callSheet: callSheetTab, callSheetRow: callSheetRowNumber, scorecardUrl, timelineRow: timelineRowNumber }); return;
+    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, callSheet: callSheetTab, callSheetRow: callSheetRowNumber, rawLeadRow: rawLeadRowNumber, scorecardUrl, timelineRow: timelineRowNumber }); return;
 
   } catch (err) {
     console.error('[Lead API Error]', err);
