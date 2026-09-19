@@ -861,5 +861,5 @@ window.addEventListener('scroll',function(){ var n=$('nav'); if(n) n.classList.t
 var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('visible'); }); },{threshold:.12});
 document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
 </script>
-</body>
+<script defer src="/router-product-hydrator.js"></script></body>
 </html>
