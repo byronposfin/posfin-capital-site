@@ -3,12 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Redirecting to Posfin application…</title>
-  <meta http-equiv="refresh" content="0; url=/apply?b=chris">
+  <title>Posfin Capital — Apply</title>
   <link rel="canonical" href="https://posfincapital.com/apply?b=chris">
-  <script>window.location.replace('/apply?b=chris');</script>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search || '');
+      params.set('b', 'chris');
+      window.location.replace('/apply?' + params.toString());
+    })();
+  </script>
 </head>
-<body>
-  <p>Redirecting to the Posfin application form… <a href="/apply?b=chris">Click here if you are not redirected.</a></p>
+<body style="font-family: Arial, sans-serif; color:#1C184F; padding:24px;">
+  <p>Taking you to the Posfin application form…</p>
+  <p><a id="fallback" href="/apply?b=chris">Continue to application</a></p>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search || '');
+      params.set('b', 'chris');
+      document.getElementById('fallback').href = '/apply?' + params.toString();
+    })();
+  </script>
 </body>
 </html>
