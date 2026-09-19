@@ -121,8 +121,28 @@
     if (document.getElementById(STYLE_ID)) return;
     var st = document.createElement('style');
     st.id = STYLE_ID;
-    st.textContent = '#'+BOX_ID+'{margin:0 0 22px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:"DM Sans",Arial,sans-serif;color:#1C184F;font-size:13px;line-height:1.45}#'+BOX_ID+' strong{color:#00B5B0}#'+BOX_ID+' ul{margin:8px 0 0 18px;padding:0;color:#5A5770}';
+    st.textContent = '#'+BOX_ID+'{margin:0 0 22px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:"DM Sans",Arial,sans-serif;color:#1C184F;font-size:13px;line-height:1.45}#'+BOX_ID+' strong{color:#00B5B0}#'+BOX_ID+' ul{margin:8px 0 0 18px;padding:0;color:#5A5770}.posfin-router-promoted-form{scroll-margin-top:0}.posfin-router-promoted-form>div{padding-top:28px!important;padding-bottom:44px!important}';
     document.head.appendChild(st);
+  }
+  function productFormHeading() {
+    return Array.prototype.slice.call(document.querySelectorAll('h2,h3')).find(function(h){ return /tell us about the loan|security property|loan requirements/i.test(textOf(h)); });
+  }
+  function productFormSection() {
+    var h = productFormHeading();
+    return h ? (h.closest('section') || h.closest('[class*="grid"]') || h.parentElement) : null;
+  }
+  function promoteProductForm() {
+    addStyle();
+    var section = productFormSection();
+    if (!section || section.getAttribute('data-router-promoted') === '1') return;
+    var root = section.parentElement;
+    if (!root) return;
+    var first = root.firstElementChild;
+    var afterTopBar = first && first !== section ? first.nextSibling : root.firstChild;
+    section.setAttribute('data-router-promoted','1');
+    section.classList.add('posfin-router-promoted-form');
+    section.id = section.id || 'apply';
+    root.insertBefore(section, afterTopBar);
   }
   function carriedItems() {
     var rows = [
@@ -140,8 +160,8 @@
   }
   function ensureCarriedBox() {
     addStyle();
-    var formCard = document.querySelector('section[id="apply"]') || document.querySelector('section[style*="FAF8F3"]');
-    var mount = document.querySelector('h3') && Array.prototype.slice.call(document.querySelectorAll('h3')).find(function(h){ return /tell us|security property|loan requirements/i.test(textOf(h)); });
+    var formCard = productFormSection() || document.querySelector('section[id="apply"]') || document.querySelector('section[style*="FAF8F3"]');
+    var mount = productFormHeading();
     if (!mount) return;
     var parent = mount.parentElement;
     if (!parent || parent.querySelector('#'+BOX_ID)) return;
@@ -169,9 +189,7 @@
     setByLabels(['loan amount required'], V.loanAmount);
   }
   function formTop() {
-    var headings = Array.prototype.slice.call(document.querySelectorAll('h2,h3,div'));
-    var apply = headings.find(function(el){ return /apply now|tell us about the loan|security property|loan requirements/i.test(textOf(el)); });
-    return apply ? (apply.closest('section') || apply) : document.querySelector('section[id="apply"]');
+    return productFormSection() || document.querySelector('section[id="apply"]');
   }
   function scrollToForm() {
     var target = formTop();
@@ -226,6 +244,7 @@
     });
   }
   function tick() {
+    promoteProductForm();
     hydrateVisibleFields();
     ensureCarriedBox();
     rewriteStepLabels();
