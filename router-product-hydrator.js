@@ -134,15 +134,24 @@
   function promoteProductForm() {
     addStyle();
     var section = productFormSection();
-    if (!section || section.getAttribute('data-router-promoted') === '1') return;
-    var root = section.parentElement;
-    if (!root) return;
-    var first = root.firstElementChild;
-    var afterTopBar = first && first !== section ? first.nextSibling : root.firstChild;
-    section.setAttribute('data-router-promoted','1');
-    section.classList.add('posfin-router-promoted-form');
-    section.id = section.id || 'apply';
-    root.insertBefore(section, afterTopBar);
+    if (!section) return;
+    if (!section.id) section.id = 'apply';
+    if (section.getAttribute('data-router-promoted') !== '1') {
+      var root = section.parentElement;
+      if (root) {
+        var first = root.firstElementChild;
+        var afterTopBar = first && first !== section ? first.nextSibling : root.firstChild;
+        section.setAttribute('data-router-promoted','1');
+        section.classList.add('posfin-router-promoted-form');
+        root.insertBefore(section, afterTopBar);
+      }
+    }
+    Array.prototype.slice.call(document.querySelectorAll('button,a')).forEach(function(el){
+      if (/get indicative terms|apply now/i.test(textOf(el))) {
+        if (el.tagName === 'A') el.setAttribute('href','#apply');
+        el.onclick = function(ev){ ev.preventDefault(); section.scrollIntoView({block:'start'}); };
+      }
+    });
   }
   function carriedItems() {
     var rows = [
