@@ -9,6 +9,7 @@
   var PARAMS = Object.fromEntries(qs.entries());
   var STYLE_ID = 'posfin-router-hydrator-style';
   var BOX_ID = 'posfin-router-carried-box';
+  var PROMOTED_ID = 'posfin-router-promoted-apply';
 
   function norm(s) { return String(s || '').trim(); }
   function lower(s) { return norm(s).toLowerCase(); }
@@ -121,7 +122,7 @@
     if (document.getElementById(STYLE_ID)) return;
     var st = document.createElement('style');
     st.id = STYLE_ID;
-    st.textContent = '#'+BOX_ID+'{margin:0 0 22px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:"DM Sans",Arial,sans-serif;color:#1C184F;font-size:13px;line-height:1.45}#'+BOX_ID+' strong{color:#00B5B0}#'+BOX_ID+' ul{margin:8px 0 0 18px;padding:0;color:#5A5770}.posfin-router-promoted-form{scroll-margin-top:0}.posfin-router-promoted-form>div{padding-top:28px!important;padding-bottom:44px!important}';
+    st.textContent = 'html.posfin-router-continuation,body.posfin-router-continuation{scroll-behavior:auto!important}#'+BOX_ID+'{margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:"DM Sans",Arial,sans-serif;color:#1C184F;font-size:13px;line-height:1.45}#'+BOX_ID+' strong{color:#00B5B0}#'+BOX_ID+' ul{margin:8px 0 0 18px;padding:0;color:#5A5770}.posfin-router-promoted-form{scroll-margin-top:0!important;margin-top:0!important}.posfin-router-promoted-form>div{padding-top:14px!important;padding-bottom:38px!important}.posfin-router-promoted-form [class*="mb-14"],.posfin-router-promoted-form [class*="md:mb-20"]{margin-bottom:18px!important}@media(max-width:767px){.posfin-router-promoted-form{padding-top:0!important}.posfin-router-promoted-form>div{padding-top:10px!important}.posfin-router-promoted-form .grid{gap:18px!important}.posfin-router-promoted-form [class*="md:col-span"]{min-width:0!important}.posfin-router-promoted-form [class*="space-y-6"]{margin-top:0!important}}';
     document.head.appendChild(st);
   }
   function productFormHeading() {
@@ -133,23 +134,22 @@
   }
   function promoteProductForm() {
     addStyle();
+    document.documentElement.classList.add('posfin-router-continuation');
+    document.body.classList.add('posfin-router-continuation');
     var section = productFormSection();
     if (!section) return;
-    if (!section.id) section.id = 'apply';
-    if (section.getAttribute('data-router-promoted') !== '1') {
-      var root = section.parentElement;
-      if (root) {
-        var first = root.firstElementChild;
-        var afterTopBar = first && first !== section ? first.nextSibling : root.firstChild;
-        section.setAttribute('data-router-promoted','1');
-        section.classList.add('posfin-router-promoted-form');
-        root.insertBefore(section, afterTopBar);
-      }
+    section.id = PROMOTED_ID;
+    section.setAttribute('data-router-promoted','1');
+    section.classList.add('posfin-router-promoted-form');
+    var topBar = document.querySelector('body > div > div:first-child');
+    var pageRoot = topBar && topBar.parentElement;
+    if (pageRoot && section.parentElement === pageRoot && topBar.nextSibling !== section) {
+      pageRoot.insertBefore(section, topBar.nextSibling);
     }
     Array.prototype.slice.call(document.querySelectorAll('button,a')).forEach(function(el){
       if (/get indicative terms|apply now/i.test(textOf(el))) {
-        if (el.tagName === 'A') el.setAttribute('href','#apply');
-        el.onclick = function(ev){ ev.preventDefault(); section.scrollIntoView({block:'start'}); };
+        if (el.tagName === 'A') el.setAttribute('href','#'+PROMOTED_ID);
+        el.onclick = function(ev){ ev.preventDefault(); scrollToForm(); };
       }
     });
   }
@@ -198,13 +198,14 @@
     setByLabels(['loan amount required'], V.loanAmount);
   }
   function formTop() {
-    return productFormSection() || document.querySelector('section[id="apply"]');
+    return productFormSection() || document.getElementById(PROMOTED_ID) || document.querySelector('section[id="apply"]');
   }
   function scrollToForm() {
     var target = formTop();
     if (!target) return;
-    var y = target.getBoundingClientRect().top + window.scrollY - 30;
-    window.scrollTo({ top: y, behavior: 'smooth' });
+    var y = target.getBoundingClientRect().top + window.pageYOffset - 4;
+    if (y < 0) y = 0;
+    window.scrollTo(0, y);
   }
   function rewriteStepLabels() {
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -264,7 +265,8 @@
   document.addEventListener('input', function(){ setTimeout(tick, 60); }, true);
   var obs = new MutationObserver(function(){ clearTimeout(obs._t); obs._t=setTimeout(tick, 60); });
   function start() {
-    tick(); setTimeout(tick, 400); setTimeout(scrollToForm, 450);
+    if (window.location.hash === '#apply') { try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {} }
+    tick(); scrollToForm(); setTimeout(tick, 120); setTimeout(scrollToForm, 180); setTimeout(function(){ tick(); scrollToForm(); }, 650);
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
