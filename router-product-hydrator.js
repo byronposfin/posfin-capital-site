@@ -416,8 +416,11 @@
     var ln = Number(moneyInputValue('loanAmount', V.loanAmount)) || 0;
     var sc = Number(moneyInputValue('secondChargeBalance', V.secondChargeBalance)) || 0;
     var arrearsAmount = moneyInputValue('firstChargeArrearsAmount', V.arrearsAmount);
-    var initialFacility = ln + sc + 10000;
-    var ltv = pv ? Math.round(((fc + initialFacility) / pv) * 100) : '';
+    var defaultFacility = ln + sc + 2000 + 10000;
+    var defaultLtv = pv ? Math.round(((fc + defaultFacility) / pv) * 100) : '';
+    var defaultSummary = '<strong>Indicative facility required:</strong> '+pounds(defaultFacility)+'<br>'+
+      '<span style="color:#5A5770;font-size:13px">Base requested '+pounds(ln)+' + arrears added £0 + second charge added '+pounds(sc)+' + legals £2,000 + buffer £10,000.</span><br>'+
+      '<strong>Net / gross LTV check:</strong> '+(defaultLtv ? defaultLtv+'%' : 'TBC')+' based on existing first charge + indicative facility.';
     card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Loan requirements.</h3>'+
       '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Loan requirements. Confirm what the borrower actually needs funded.</div>'+
       fieldHtml('Base loan amount requested', V.loanAmount ? pounds(V.loanAmount) : '', 'loanAmount')+
@@ -445,7 +448,7 @@
         choiceHtml('bufferAmount','0','No buffer', false)+
         choiceHtml('bufferAmount','5000','Add £5,000 buffer', false)+
         choiceHtml('bufferAmount','10000','Add £10,000 buffer', true)+'</div>')+
-      '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+
+      '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F">'+defaultSummary+'</div>'+
       '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Recommended solicitor route: <strong>LARK</strong>. We can also work with your own solicitor if preferred.</div>'+
       '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Submit enquiry →</button></div>';
     rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
