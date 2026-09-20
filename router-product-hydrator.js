@@ -288,16 +288,137 @@
       }
     });
   }
+
+  function ensureErrorBox() {
+    var card = productFormHeading() && productFormHeading().parentElement;
+    if (!card) return null;
+    var box = document.getElementById('posfin-router-validation-error');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'posfin-router-validation-error';
+      box.setAttribute('role', 'alert');
+      box.style.cssText = 'display:none;margin:0 0 16px;padding:12px 14px;border:1px solid #B23A48;background:rgba(178,58,72,.08);color:#7A1F2B;font-family:"DM Sans",Arial,sans-serif;font-size:13px;line-height:1.45';
+      card.insertBefore(box, card.firstChild);
+    }
+    return box;
+  }
+  function showError(message, el) {
+    var box = ensureErrorBox();
+    if (box) { box.textContent = message; box.style.display = 'block'; }
+    if (el) {
+      var label = el.closest && el.closest('label');
+      var target = label || el;
+      target.style.outline = '2px solid #B23A48';
+      target.style.outlineOffset = '2px';
+      setTimeout(function(){ try { target.scrollIntoView({ block:'center', behavior:'smooth' }); } catch(e) {} }, 20);
+    }
+  }
+  function clearError() {
+    var box = document.getElementById('posfin-router-validation-error');
+    if (box) { box.textContent = ''; box.style.display = 'none'; }
+    Array.prototype.slice.call(document.querySelectorAll('label,input,textarea,select')).forEach(function(el){ el.style.outline=''; el.style.outlineOffset=''; });
+  }
+  function checkedValue(name) {
+    var el = document.querySelector('input[name="'+CSS.escape(name)+'"]:checked');
+    return el ? el.value : '';
+  }
+  function consentInput() {
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"]'));
+    return boxes.find(function(b){ return /agree|contacted|privacy|data/i.test(textOf(b.closest('label'))); }) || boxes[0] || null;
+  }
+  function validateStepTwo() {
+    clearError();
+    var checks = [
+      ['first name', 'Please enter your first name.'],
+      ['last name', 'Please enter your last name.'],
+      ['mobile', 'Please enter your mobile number.'],
+      ['email', 'Please enter your email address.']
+    ];
+    for (var i=0;i<checks.length;i++) {
+      var el = byLabel(checks[i][0]);
+      if (!el || !norm(el.value)) { showError(checks[i][1], el); return false; }
+    }
+    if (!checkedValue('loanPurpose')) { showError('Please confirm the purpose of the loan.', document.querySelector('input[name="loanPurpose"]')); return false; }
+    if (!checkedValue('regulated')) { showError('Please confirm what the funds will primarily be used for.', document.querySelector('input[name="regulated"]')); return false; }
+    if (!checkedValue('creditProfile')) { showError('Please select your credit profile.', document.querySelector('input[name="creditProfile"]')); return false; }
+    var c = consentInput();
+    if (!c || !c.checked) { showError('Please tick the consent box so we can contact you about this enquiry.', c); return false; }
+    return true;
+  }
+  function fieldHtml(label, value, name) {
+    return '<div class="mb-5"><label style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><input name="'+name+'" value="'+String(value||'').replace(/"/g,'&quot;')+'" style="width:100%;height:54px;padding:0 18px;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none"/></div>';
+  }
+  function renderStepThree() {
+    var card = productFormHeading() && productFormHeading().parentElement;
+    if (!card) return;
+    var property = [V.propertyAddress, V.postcode].filter(Boolean).join(', ');
+    card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Security property.</h3>'+
+      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 3 of 4 — The property. We have carried your security address and postcode through — please check them.</div>'+
+      fieldHtml('Security property address', V.propertyAddress, 'securityAddress')+
+      fieldHtml('Security postcode', V.postcode, 'securityPostcode')+
+      fieldHtml('Estimated property value', V.propertyValue ? '£' + Number(V.propertyValue).toLocaleString('en-GB') : '', 'propertyValue')+
+      fieldHtml('First charge lender', V.firstChargeLender, 'firstChargeLender')+
+      fieldHtml('First charge balance', V.firstChargeBalance ? '£' + Number(V.firstChargeBalance).toLocaleString('en-GB') : '', 'firstChargeBalance')+
+      fieldHtml('Second charge / additional charge provider', V.secondChargeProvider, 'secondChargeProvider')+
+      fieldHtml('Second charge / additional charge balance', V.secondChargeBalance ? '£' + Number(V.secondChargeBalance).toLocaleString('en-GB') : '', 'secondChargeBalance')+
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Loan requirements →</button></div>';
+    rewriteSideStep('Step 3 of 4 — The property', 'The property');
+    window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
+  }
+  function renderStepFour() {
+    var card = productFormHeading() && productFormHeading().parentElement;
+    if (!card) return;
+    var pv = Number(V.propertyValue)||0, fc=Number(V.firstChargeBalance)||0, ln=Number(V.loanAmount)||0, sc=Number(V.secondChargeBalance)||0;
+    var netFacility = ln + sc + 10000;
+    var ltv = pv ? Math.round(((fc + netFacility) / pv) * 100) : '';
+    card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Loan requirements.</h3>'+
+      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Loan requirements.</div>'+
+      fieldHtml('Loan amount required', V.loanAmount ? '£' + Number(V.loanAmount).toLocaleString('en-GB') : '', 'loanAmount')+
+      fieldHtml('Charge requested', V.chargeRequested, 'chargeRequested')+
+      '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"><strong>Net LTV:</strong> '+(ltv?ltv+'%':'TBC')+'<br><span style="color:#5A5770;font-size:13px">Based on carried-forward property value, existing first charge, requested loan and known additional charges.</span></div>'+
+      '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Recommended solicitor route: <strong>LARK</strong>. We can also work with your own solicitor if preferred.</div>'+
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Submit enquiry →</button></div>';
+    rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
+    window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
+  }
+  function rewriteSideStep(stepText, subText) {
+    Array.prototype.slice.call(document.querySelectorAll('div,span,p')).forEach(function(el){
+      var t = textOf(el);
+      if (/^Step\s+\d\s+of\s+\d/i.test(t)) el.textContent = stepText;
+      if (t === 'About you' || t === 'The property' || t === 'Loan requirements') el.textContent = subText;
+    });
+  }
+  function labelFooterWhatsapp() {
+    Array.prototype.slice.call(document.querySelectorAll('a[href^="tel:+447446950389"]')).forEach(function(a){
+      if (!/WhatsApp/i.test(textOf(a))) a.textContent = 'WhatsApp: +44 7446 950 389';
+    });
+  }
+
   function tick() {
     promoteProductForm();
     hydrateVisibleFields();
     ensureCarriedBox();
     rewriteStepLabels();
     updateNetLtv();
+    labelFooterWhatsapp();
   }
   document.addEventListener('click', function(ev){
-    var input = ev.target && ev.target.closest && ev.target.closest('label input[type="radio"],label input[type="checkbox"]');
-    if (input) setTimeout(function(){ setOption(input, input.checked); }, 0);
+    var a = ev.target && ev.target.closest && ev.target.closest('a');
+    var label = ev.target && ev.target.closest && ev.target.closest('label');
+    var input = label && label.querySelector('input[type="radio"],input[type="checkbox"]');
+    if (input && !a) {
+      ev.preventDefault();
+      if (input.type === 'checkbox') setOption(input, !input.checked); else setOption(input, true);
+      clearError();
+    }
+    var btn = ev.target && ev.target.closest && ev.target.closest('button');
+    if (btn && /about the property/i.test(textOf(btn))) {
+      ev.preventDefault();
+      if (validateStepTwo()) renderStepThree();
+      return;
+    }
+    if (btn && btn.getAttribute('data-posfin-next') === 'step4') { ev.preventDefault(); renderStepFour(); return; }
+    if (btn && btn.getAttribute('data-posfin-next') === 'submit') { ev.preventDefault(); clearError(); showError('Thank you — your enquiry is ready to send. Final submission wiring is being verified before this goes live.', btn); return; }
     setTimeout(tick, 80);
   }, true);
   document.addEventListener('change', function(){ setTimeout(tick, 60); }, true);
