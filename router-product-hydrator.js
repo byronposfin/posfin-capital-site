@@ -10,6 +10,8 @@
   var STYLE_ID = 'posfin-router-hydrator-style';
   var BOX_ID = 'posfin-router-carried-box';
   var PROMOTED_ID = 'posfin-router-promoted-apply';
+  var didInitialHydrate = false;
+  var didInitialScroll = false;
 
   function norm(s) { return String(s || '').trim(); }
   function lower(s) { return norm(s).toLowerCase(); }
@@ -70,23 +72,48 @@
     }
     return false;
   }
+  function optionMatches(text, wanted) {
+    var txt = lower(text), w = lower(wanted);
+    if (!txt || !w) return false;
+    if (txt === w || txt.includes(w) || w.includes(txt)) return true;
+    if (w === 'yes' && (txt === 'yes' || txt.includes('yes —'))) return true;
+    if (w === 'no' && (txt === 'no' || txt.includes('no arrears'))) return true;
+    return false;
+  }
+  function paintOption(input, active) {
+    var label = input && input.closest('label');
+    var dot = label && label.querySelector('span');
+    if (!label) return;
+    label.style.borderColor = active ? '#00B5B0' : '#E5E1D6';
+    label.style.background = active ? 'rgba(0,181,176,0.06)' : '#FFFFFF';
+    if (dot) {
+      dot.style.borderColor = active ? '#00B5B0' : '#CFC9B8';
+      dot.style.background = active ? '#00B5B0' : '#FFFFFF';
+    }
+  }
+  function setOption(input, active) {
+    if (!input) return false;
+    var group = input.name;
+    if (group && (input.type === 'radio' || input.type === 'checkbox')) {
+      Array.prototype.slice.call(document.querySelectorAll('input[name="'+CSS.escape(group)+'"]')).forEach(function(peer){
+        if (peer !== input && peer.type === 'radio') { peer.checked = false; paintOption(peer, false); }
+      });
+    }
+    input.checked = !!active;
+    paintOption(input, !!active);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
   function clickOption(groupName, wanted) {
     if (!wanted) return false;
-    var w = lower(wanted);
-    var labels = Array.prototype.slice.call(document.querySelectorAll('label'));
-    for (var i = 0; i < labels.length; i++) {
-      var txt = lower(textOf(labels[i]));
-      if (!txt) continue;
-      var ok = txt === w || txt.includes(w) || w.includes(txt);
-      if (!ok && w === 'yes' && (txt === 'yes' || txt.includes('yes —'))) ok = true;
-      if (!ok && w === 'no' && (txt === 'no' || txt.includes('no arrears'))) ok = true;
-      if (!ok) continue;
-      var input = labels[i].querySelector('input[type="radio"], input[type="checkbox"]');
-      if (input) {
-        input.click();
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
-      }
+    var inputs = Array.prototype.slice.call(document.querySelectorAll('input[type="radio"], input[type="checkbox"]'));
+    for (var i = 0; i < inputs.length; i++) {
+      var input = inputs[i];
+      if (groupName && input.name && input.name !== groupName) continue;
+      var label = input.closest('label');
+      var txt = label ? textOf(label) : input.value;
+      if (optionMatches(input.value, wanted) || optionMatches(txt, wanted)) return setOption(input, true);
     }
     return false;
   }
@@ -181,6 +208,7 @@
     parent.insertBefore(box, mount.nextSibling);
   }
   function hydrateVisibleFields() {
+    if (didInitialHydrate || !productFormHeading() || !fields().length) return false;
     setByLabels(['first name'], V.firstName);
     setByLabels(['last name'], V.lastName);
     setByLabels(['mobile'], V.mobile);
@@ -196,26 +224,33 @@
     setByLabels(['2nd charge balance'], V.secondChargeBalance);
     if (V.arrears) clickOption('arrears', V.arrears === 'Yes' ? 'Yes — I have arrears' : 'No arrears');
     setByLabels(['loan amount required'], V.loanAmount);
+    didInitialHydrate = true;
+    return true;
   }
   function formTop() {
     return productFormSection() || document.getElementById(PROMOTED_ID) || document.querySelector('section[id="apply"]');
   }
-  function scrollToForm() {
+  function scrollToForm(force) {
+    if (didInitialScroll && !force) return;
     var target = formTop();
     if (!target) return;
     var y = target.getBoundingClientRect().top + window.pageYOffset - 4;
     if (y < 0) y = 0;
     window.scrollTo(0, y);
+    didInitialScroll = true;
   }
   function rewriteStepLabels() {
+    Array.prototype.slice.call(document.querySelectorAll('div,span,p')).forEach(function(el){
+      var t = textOf(el);
+      if (/^Step\s+1\s+of\s+3(?:\s*·\s*60 seconds)?$/i.test(t)) el.textContent = 'Step 2 of 4 — About you';
+      else if (/^Step\s+2\s+of\s+3$/i.test(t)) el.textContent = 'Step 3 of 4 — The property';
+      else if (/^Step\s+3\s+of\s+3(?:\s*·\s*Almost there)?$/i.test(t)) el.textContent = 'Step 4 of 4 — Loan requirements';
+    });
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     var nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(function(n){
       var s = n.nodeValue;
-      if (/Step\s+1\s+of\s+3/i.test(s)) n.nodeValue = s.replace(/Step\s+1\s+of\s+3(?:\s*·\s*60 seconds)?/i, 'Step 2 of 4 — About you');
-      if (/Step\s+2\s+of\s+3/i.test(s)) n.nodeValue = s.replace(/Step\s+2\s+of\s+3/i, 'Step 3 of 4 — The property');
-      if (/Step\s+3\s+of\s+3/i.test(s)) n.nodeValue = s.replace(/Step\s+3\s+of\s+3(?:\s*·\s*Almost there)?/i, 'Step 4 of 4 — Loan requirements');
       if (/Estimated LTV/i.test(s)) n.nodeValue = s.replace(/Estimated LTV/g, 'Net LTV');
       if (/combined LTV/i.test(s)) n.nodeValue = s.replace(/combined LTV/gi, 'Net LTV');
       if (/Ackroyds \(our recommended solicitor\)/i.test(s)) n.nodeValue = s.replace(/Ackroyds \(our recommended solicitor\)/g, 'LARK (our recommended solicitor)');
@@ -260,13 +295,17 @@
     rewriteStepLabels();
     updateNetLtv();
   }
-  document.addEventListener('click', function(){ setTimeout(function(){ tick(); scrollToForm(); }, 80); }, true);
+  document.addEventListener('click', function(ev){
+    var input = ev.target && ev.target.closest && ev.target.closest('label input[type="radio"],label input[type="checkbox"]');
+    if (input) setTimeout(function(){ setOption(input, input.checked); }, 0);
+    setTimeout(tick, 80);
+  }, true);
   document.addEventListener('change', function(){ setTimeout(tick, 60); }, true);
   document.addEventListener('input', function(){ setTimeout(tick, 60); }, true);
   var obs = new MutationObserver(function(){ clearTimeout(obs._t); obs._t=setTimeout(tick, 60); });
   function start() {
     if (window.location.hash === '#apply') { try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {} }
-    tick(); scrollToForm(); setTimeout(tick, 120); setTimeout(scrollToForm, 180); setTimeout(function(){ tick(); scrollToForm(); }, 650);
+    tick(); scrollToForm(true); setTimeout(tick, 120); setTimeout(function(){ scrollToForm(false); }, 180); setTimeout(tick, 650);
     obs.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
