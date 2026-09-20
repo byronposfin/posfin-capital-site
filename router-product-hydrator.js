@@ -146,6 +146,7 @@
       secondChargeProvider: PARAMS.second_charge_lender || PARAMS.second_charge_provider || '',
       secondChargeBalance: money(PARAMS.second_charge_balance),
       arrears: yesNo(PARAMS.first_charge_arrears),
+      arrearsAmount: money(PARAMS.first_charge_arrears_amount || PARAMS.mortgage_arrears_amount || PARAMS.arrears_amount),
       loanAmount: money(PARAMS.loan_amount),
       chargeRequested: PARAMS.charge_requested || ''
     };
@@ -366,26 +367,92 @@
       fieldHtml('Estimated property value', V.propertyValue ? '£' + Number(V.propertyValue).toLocaleString('en-GB') : '', 'propertyValue')+
       fieldHtml('First charge lender', V.firstChargeLender, 'firstChargeLender')+
       fieldHtml('First charge balance', V.firstChargeBalance ? '£' + Number(V.firstChargeBalance).toLocaleString('en-GB') : '', 'firstChargeBalance')+
+      fieldHtml('First charge arrears to clear, if any', V.arrearsAmount ? '£' + Number(V.arrearsAmount).toLocaleString('en-GB') : '', 'firstChargeArrearsAmount')+
       fieldHtml('Second charge / additional charge provider', V.secondChargeProvider, 'secondChargeProvider')+
       fieldHtml('Second charge / additional charge balance', V.secondChargeBalance ? '£' + Number(V.secondChargeBalance).toLocaleString('en-GB') : '', 'secondChargeBalance')+
       '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Loan requirements →</button></div>';
     rewriteSideStep('Step 3 of 4 — The property', 'The property');
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
   }
+  function moneyInputValue(name, fallback) {
+    var el = document.querySelector('[name="'+name+'"]');
+    return money(el && el.value ? el.value : fallback);
+  }
+  function pounds(n) {
+    var v = Number(n) || 0;
+    return '£' + v.toLocaleString('en-GB');
+  }
+  function choiceHtml(name, value, label, checked) {
+    return '<label class="flex items-center gap-3 cursor-pointer transition-colors" style="padding:12px 14px;border:1px solid #E5E1D6;background:#FFFFFF;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:50px"><input type="radio" class="sr-only" name="'+name+'" value="'+value+'"'+(checked?' checked':'')+'/><span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid #CFC9B8;background:#FFFFFF"></span>'+label+'</label>';
+  }
+  function loanCalcSection(title, body) {
+    return '<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #E5E1D6;background:#FFFFFF"><div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1C184F;margin-bottom:10px">'+title+'</div>'+body+'</div>';
+  }
+  function updateFacilitySummary() {
+    var base = Number(moneyInputValue('loanAmount', V.loanAmount)) || 0;
+    var arrears = Number(moneyInputValue('firstChargeArrearsAmount', V.arrearsAmount)) || 0;
+    var second = Number(moneyInputValue('secondChargeBalance', V.secondChargeBalance)) || 0;
+    var arrearsTreatment = checkedValue('arrearsTreatment');
+    var secondTreatment = checkedValue('secondChargeTreatment');
+    var legals = checkedValue('legalCosts') === 'add_2000' ? 2000 : 0;
+    var buffer = Number(checkedValue('bufferAmount')) || 0;
+    var addedArrears = arrearsTreatment === 'add_to_facility' ? arrears : 0;
+    var addedSecond = secondTreatment === 'add_to_facility' ? second : 0;
+    var facility = base + addedArrears + addedSecond + legals + buffer;
+    var pv = Number(moneyInputValue('propertyValue', V.propertyValue)) || 0;
+    var fc = Number(moneyInputValue('firstChargeBalance', V.firstChargeBalance)) || 0;
+    var grossLtv = pv ? Math.round(((fc + facility) / pv) * 100) : '';
+    var box = document.getElementById('posfin-facility-summary');
+    if (!box) return;
+    box.innerHTML = '<strong>Indicative facility required:</strong> '+pounds(facility)+'<br>'+
+      '<span style="color:#5A5770;font-size:13px">Base requested '+pounds(base)+' + arrears added '+pounds(addedArrears)+' + second charge added '+pounds(addedSecond)+' + legals '+pounds(legals)+' + buffer '+pounds(buffer)+'.</span><br>'+
+      '<strong>Net / gross LTV check:</strong> '+(grossLtv ? grossLtv+'%' : 'TBC')+' based on existing first charge + indicative facility.';
+  }
   function renderStepFour() {
     var card = productFormHeading() && productFormHeading().parentElement;
     if (!card) return;
-    var pv = Number(V.propertyValue)||0, fc=Number(V.firstChargeBalance)||0, ln=Number(V.loanAmount)||0, sc=Number(V.secondChargeBalance)||0;
-    var netFacility = ln + sc + 10000;
-    var ltv = pv ? Math.round(((fc + netFacility) / pv) * 100) : '';
+    var pv = Number(moneyInputValue('propertyValue', V.propertyValue)) || 0;
+    var fc = Number(moneyInputValue('firstChargeBalance', V.firstChargeBalance)) || 0;
+    var ln = Number(moneyInputValue('loanAmount', V.loanAmount)) || 0;
+    var sc = Number(moneyInputValue('secondChargeBalance', V.secondChargeBalance)) || 0;
+    var arrearsAmount = moneyInputValue('firstChargeArrearsAmount', V.arrearsAmount);
+    var initialFacility = ln + sc + 10000;
+    var ltv = pv ? Math.round(((fc + initialFacility) / pv) * 100) : '';
     card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Loan requirements.</h3>'+
-      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Loan requirements.</div>'+
-      fieldHtml('Loan amount required', V.loanAmount ? '£' + Number(V.loanAmount).toLocaleString('en-GB') : '', 'loanAmount')+
+      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Loan requirements. Confirm what the borrower actually needs funded.</div>'+
+      fieldHtml('Base loan amount requested', V.loanAmount ? pounds(V.loanAmount) : '', 'loanAmount')+
       fieldHtml('Charge requested', V.chargeRequested, 'chargeRequested')+
-      '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"><strong>Net LTV:</strong> '+(ltv?ltv+'%':'TBC')+'<br><span style="color:#5A5770;font-size:13px">Based on carried-forward property value, existing first charge, requested loan and known additional charges.</span></div>'+
+      loanCalcSection('First charge arrears',
+        fieldHtml('Arrears amount to clear, if any', arrearsAmount ? pounds(arrearsAmount) : '', 'firstChargeArrearsAmount')+
+        '<div class="grid sm:grid-cols-2 gap-2">'+
+        choiceHtml('arrearsTreatment','add_to_facility','Add arrears on top of the requested loan', false)+
+        choiceHtml('arrearsTreatment','paid_from_requested','Arrears are paid from the requested loan', true)+
+        choiceHtml('arrearsTreatment','not_applicable','No arrears / not applicable', false)+
+        choiceHtml('arrearsTreatment','discuss','Discuss on the call', false)+'</div>')+
+      loanCalcSection('Second charge / additional debt',
+        fieldHtml('Second charge / additional charge balance', sc ? pounds(sc) : '', 'secondChargeBalance')+
+        '<div class="grid sm:grid-cols-2 gap-2">'+
+        choiceHtml('secondChargeTreatment','add_to_facility','Add this on top of the requested loan', true)+
+        choiceHtml('secondChargeTreatment','paid_from_requested','This is paid from the requested loan', false)+
+        choiceHtml('secondChargeTreatment','leave_in_place','Leave this charge in place', false)+
+        choiceHtml('secondChargeTreatment','discuss','Discuss on the call', false)+'</div>')+
+      loanCalcSection('Costs and buffer',
+        '<div style="margin-bottom:12px;color:#5A5770;font-size:13px">Should we estimate legals and contingency in the facility request?</div>'+
+        '<div class="grid sm:grid-cols-2 gap-2" style="margin-bottom:12px">'+
+        choiceHtml('legalCosts','add_2000','Add £2,000 estimated legals', true)+
+        choiceHtml('legalCosts','do_not_add','Do not add legals', false)+'</div>'+
+        '<div class="grid sm:grid-cols-3 gap-2">'+
+        choiceHtml('bufferAmount','0','No buffer', false)+
+        choiceHtml('bufferAmount','5000','Add £5,000 buffer', false)+
+        choiceHtml('bufferAmount','10000','Add £10,000 buffer', true)+'</div>')+
+      '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+
       '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Recommended solicitor route: <strong>LARK</strong>. We can also work with your own solicitor if preferred.</div>'+
       '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Submit enquiry →</button></div>';
     rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
+    setTimeout(function(){
+      Array.prototype.slice.call(card.querySelectorAll('input')).forEach(function(input){ paintOption(input, input.checked); });
+      updateFacilitySummary();
+    }, 0);
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
   }
   function rewriteSideStep(stepText, subText) {
@@ -428,8 +495,8 @@
     if (btn && btn.getAttribute('data-posfin-next') === 'submit') { ev.preventDefault(); clearError(); showError('Thank you — your enquiry is ready to send. Final submission wiring is being verified before this goes live.', btn); return; }
     setTimeout(tick, 80);
   }, true);
-  document.addEventListener('change', function(){ setTimeout(tick, 60); }, true);
-  document.addEventListener('input', function(){ setTimeout(tick, 60); }, true);
+  document.addEventListener('change', function(){ setTimeout(function(){ tick(); updateFacilitySummary(); }, 60); }, true);
+  document.addEventListener('input', function(){ setTimeout(function(){ tick(); updateFacilitySummary(); }, 60); }, true);
   var obs = new MutationObserver(function(){ clearTimeout(obs._t); obs._t=setTimeout(tick, 60); });
   function start() {
     if (window.location.hash === '#apply') { try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {} }
