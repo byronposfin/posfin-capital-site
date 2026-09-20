@@ -1178,7 +1178,90 @@ async function submitForm(){
 })();
 </script>
 
-<script defer src="/router-product-hydrator.js"></script></body>
+<script defer src="/router-product-hydrator.js"></script>
+
+<!-- POSFIN_Q02_MOBILE_STATIC_FORM_GAP_FIX_20260920: Safari/Telegram static fallback for radio/checkbox choice grids -->
+<style id="posfin-q02-mobile-static-form-gap-fix-css">
+  label.posfin-q02-choice-checked {
+    border-color:#00B5B0 !important;
+    background:rgba(0,181,176,.075) !important;
+    box-shadow:0 0 0 2px rgba(0,181,176,.12) inset !important;
+  }
+  label.posfin-q02-choice-checked span[style*="border-radius:50%"] {
+    border-color:#00B5B0 !important;
+    background:radial-gradient(circle at center,#00B5B0 0 38%,#FFFFFF 42% 100%) !important;
+  }
+  label.posfin-q02-choice-checked[data-posfin-q02-kind="checkbox"] span[style*="border"] {
+    border-color:#00B5B0 !important;
+    background:#00B5B0 !important;
+  }
+  @media (max-width:640px){
+    .posfin-q02-choice-grid {
+      display:grid !important;
+      grid-template-columns:minmax(0,1fr) !important;
+      gap:8px !important;
+      align-items:stretch !important;
+      width:100% !important;
+      max-width:100% !important;
+    }
+    .posfin-q02-choice-grid > label,
+    label.posfin-q02-choice-label {
+      width:100% !important;
+      max-width:100% !important;
+      min-width:0 !important;
+      box-sizing:border-box !important;
+      display:flex !important;
+      align-items:flex-start !important;
+      height:auto !important;
+      min-height:54px !important;
+      margin-left:0 !important;
+      margin-right:0 !important;
+      white-space:normal !important;
+      overflow-wrap:anywhere !important;
+    }
+    label.posfin-q02-choice-label > span { flex-shrink:0 !important; }
+    .posfin-q02-choice-grid > br,
+    label.posfin-q02-choice-label:empty { display:none !important; }
+  }
+</style>
+<script id="posfin-q02-mobile-static-form-gap-fix-js">
+(function(){
+  if (window.__posfinQ02MobileStaticFormGapFix) return;
+  window.__posfinQ02MobileStaticFormGapFix = true;
+  var scheduled = false;
+  function mark(){
+    scheduled = false;
+    var labels = Array.prototype.slice.call(document.querySelectorAll('label'));
+    labels.forEach(function(label){
+      var input = label.querySelector('input[type="radio"],input[type="checkbox"]');
+      if (!input) return;
+      label.classList.add('posfin-q02-choice-label');
+      label.classList.toggle('posfin-q02-choice-checked', !!input.checked);
+      label.setAttribute('data-posfin-q02-kind', input.type);
+      var parent = label.parentElement;
+      for (var depth=0; parent && parent !== document.body && depth < 3; depth++, parent = parent.parentElement) {
+        if (!parent.querySelectorAll) continue;
+        var count = parent.querySelectorAll('label input[type="radio"],label input[type="checkbox"]').length;
+        var directLabels = Array.prototype.filter.call(parent.children || [], function(child){
+          return child.tagName === 'LABEL' && child.querySelector('input[type="radio"],input[type="checkbox"]');
+        }).length;
+        var tooBroad = parent.querySelectorAll('input,textarea,select,button').length > Math.max(14, count + 8);
+        if (count > 1 && !tooBroad && (directLabels > 1 || /(^|\s)(grid|flex|space-y-|gap-|options|choices)(\s|$)/.test(parent.className || ''))) {
+          parent.classList.add('posfin-q02-choice-grid');
+          break;
+        }
+      }
+    });
+  }
+  function schedule(){ if (!scheduled) { scheduled = true; requestAnimationFrame(mark); } }
+  document.addEventListener('change', schedule, true);
+  document.addEventListener('input', schedule, true);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mark); else mark();
+  new MutationObserver(schedule).observe(document.documentElement, {childList:true, subtree:true, attributes:true, attributeFilter:['checked','class','style']});
+})();
+</script>
+
+</body>
 </html>
 
 <!-- POSFIN_SCORECARD_SHARED_HOTFIX_20260914: visual checked states, mobile radios, live LTV/headroom bar, conditional mortgage-top-up copy -->
