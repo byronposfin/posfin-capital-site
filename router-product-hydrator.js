@@ -157,7 +157,7 @@
     if (document.getElementById(STYLE_ID)) return;
     var st = document.createElement('style');
     st.id = STYLE_ID;
-    st.textContent = 'html.posfin-router-continuation,body.posfin-router-continuation{scroll-behavior:auto!important}#'+BOX_ID+'{margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:"DM Sans",Arial,sans-serif;color:#1C184F;font-size:13px;line-height:1.45}#'+BOX_ID+' strong{color:#00B5B0}#'+BOX_ID+' ul{margin:8px 0 0 18px;padding:0;color:#5A5770}.posfin-router-promoted-form{scroll-margin-top:0!important;margin-top:0!important}.posfin-router-promoted-form>div{padding-top:14px!important;padding-bottom:38px!important}.posfin-router-promoted-form [class*="mb-14"],.posfin-router-promoted-form [class*="md:mb-20"]{margin-bottom:18px!important}@media(max-width:767px){.posfin-router-promoted-form{padding-top:0!important}.posfin-router-promoted-form>div{padding-top:10px!important}.posfin-router-promoted-form .grid{display:flex!important;flex-direction:column!important;gap:18px!important}.posfin-router-promoted-form .grid>div:nth-child(2){order:-1!important}.posfin-router-promoted-form [class*="md:col-span"]{min-width:0!important}.posfin-router-promoted-form [class*="space-y-6"]{margin-top:0!important}}';
+    st.textContent = 'html.posfin-router-continuation,body.posfin-router-continuation{scroll-behavior:auto!important}#'+BOX_ID+'{margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:"DM Sans",Arial,sans-serif;color:#1C184F;font-size:13px;line-height:1.45}#'+BOX_ID+' strong{color:#00B5B0}#'+BOX_ID+' ul{margin:8px 0 0 18px;padding:0;color:#5A5770}.posfin-router-promoted-form{scroll-margin-top:0!important;margin-top:0!important}.posfin-router-promoted-form [class~="h-1"]{height:10px!important;border-radius:0!important}.posfin-router-promoted-form>div{padding-top:14px!important;padding-bottom:38px!important}.posfin-router-promoted-form [class*="mb-14"],.posfin-router-promoted-form [class*="md:mb-20"]{margin-bottom:18px!important}@media(max-width:767px){.posfin-router-promoted-form{padding-top:0!important}.posfin-router-promoted-form>div{padding-top:10px!important}.posfin-router-promoted-form .grid{display:flex!important;flex-direction:column!important;gap:18px!important}.posfin-router-promoted-form .grid>div:nth-child(2){order:-1!important}.posfin-router-promoted-form [class*="md:col-span"]{min-width:0!important}.posfin-router-promoted-form [class*="space-y-6"]{margin-top:0!important}}';
     document.head.appendChild(st);
   }
   function productFormHeading() {
@@ -486,6 +486,55 @@
     });
   }
 
+  function collectFormValues() {
+    var out = {};
+    Array.prototype.slice.call(document.querySelectorAll('input,select,textarea')).forEach(function(el){
+      if (!el.name) return;
+      if (el.type === 'radio') { if (el.checked) out[el.name] = el.value; return; }
+      if (el.type === 'checkbox') { out[el.name] = !!el.checked; return; }
+      out[el.name] = el.value;
+    });
+    return out;
+  }
+  function renderSubmitted() {
+    var card = productFormHeading() && productFormHeading().parentElement;
+    if (!card) return;
+    var ref = PARAMS.deal_ref || PARAMS.case_ref || ('POSFIN-' + Date.now().toString().slice(-6));
+    card.innerHTML = '<div style="text-align:center;padding:18px 0 8px;border-bottom:2px solid #1C184F;margin-bottom:20px">'+
+      '<div style="font-size:38px;margin-bottom:10px">✅</div>'+
+      '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Enquiry received.</h3>'+
+      '<p style="color:#5A5770;font-size:14px;line-height:1.6;margin-top:8px">Byron or Chris will review the case and come back with indicative terms.</p></div>'+
+      '<div style="padding:16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:14px;line-height:1.6">'+
+      '<strong>Reference:</strong> '+ref+'<br><strong>Next step:</strong> We will contact you on WhatsApp using the mobile number provided.</div>';
+    rewriteSideStep('Submitted', 'Submitted');
+    window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
+  }
+  async function submitRouterLead(btn) {
+    clearError();
+    var original = btn && btn.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; btn.style.opacity = '.72'; }
+    var payload = collectFormValues();
+    payload.product = PARAMS.route || 'main_loan';
+    payload.source_url = window.location.href;
+    payload.page_source = 'router-continuation';
+    payload.case_ref = PARAMS.case_ref || '';
+    payload.deal_ref = PARAMS.deal_ref || PARAMS.case_ref || '';
+    payload.first_name = payload.firstName || V.firstName || PARAMS.first_name || '';
+    payload.last_name = payload.lastName || V.lastName || PARAMS.last_name || '';
+    payload.mobile = payload.mobile || V.mobile || PARAMS.mobile || PARAMS.phone || '';
+    payload.email = payload.email || V.email || PARAMS.email || '';
+    payload.submitted_at = new Date().toISOString();
+    try {
+      var res = await fetch('/api/lead', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if (!res.ok) throw new Error('Lead API failed: ' + res.status);
+      renderSubmitted();
+    } catch (err) {
+      console.warn('[router continuation] submit failed', err);
+      showError('Something went wrong submitting the enquiry. Please try again, or WhatsApp Posfin on +44 7446 950 389.', btn);
+      if (btn) { btn.disabled = false; btn.textContent = original || 'Submit enquiry →'; btn.style.opacity = '1'; }
+    }
+  }
+
   function tick() {
     promoteProductForm();
     hydrateVisibleFields();
@@ -510,7 +559,7 @@
       return;
     }
     if (btn && btn.getAttribute('data-posfin-next') === 'step4') { ev.preventDefault(); renderStepFour(); return; }
-    if (btn && btn.getAttribute('data-posfin-next') === 'submit') { ev.preventDefault(); clearError(); showError('Thank you — your enquiry is ready to send. Final submission wiring is being verified before this goes live.', btn); return; }
+    if (btn && btn.getAttribute('data-posfin-next') === 'submit') { ev.preventDefault(); submitRouterLead(btn); return; }
     setTimeout(tick, 80);
   }, true);
   document.addEventListener('change', function(){ setTimeout(function(){ tick(); updateFacilitySummary(); }, 60); }, true);
