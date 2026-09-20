@@ -82,8 +82,15 @@
   }
   function paintOption(input, active) {
     var label = input && input.closest('label');
-    var dot = label && label.querySelector('span');
     if (!label) return;
+    if (input.type === 'checkbox') {
+      label.style.borderColor = '';
+      label.style.background = '';
+      input.checked = !!active;
+      input.style.accentColor = '#00B5B0';
+      return;
+    }
+    var dot = label.querySelector('span');
     label.style.borderColor = active ? '#00B5B0' : '#E5E1D6';
     label.style.background = active ? 'rgba(0,181,176,0.06)' : '#FFFFFF';
     if (dot) {
