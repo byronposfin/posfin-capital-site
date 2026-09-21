@@ -482,6 +482,7 @@
     miss('Monthly serviced vs retained/rolled-up interest preference', d.repaymentPreference);
     miss('Exit strategy', d.exitStrategy);
     miss('Funds timescale', d.requiredTimescale);
+    miss('Solicitor preference', d.solicitorPreference);
     if (!norm(d.propertyNotes)) items.push('Property condition / works / title notes if relevant');
     return Array.from(new Set(items));
   }
@@ -608,7 +609,12 @@
         choiceHtml('bufferAmount','10000','Add £10,000 contingency', false)+'</div>')+
       textareaHtml('Anything else we should know?', '', 'borrowerNotes', 'Adverse credit, complex title, development history, deadlines, or anything else.')+
       '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+ 
-      '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Recommended solicitor route: <strong>LARK</strong>. We can also work with your own solicitor if preferred.</div>'+ 
+      greenSection('Solicitor preference',
+        '<div class="grid sm:grid-cols-1 gap-2">'+
+        cardChoiceHtml('solicitorPreference','panel','Yes — I would like to utilise a solicitor from the Posfin panel','Low-cost, highly proactive options including LARK, Taylor Rose, Ackroyds and others. UK-wide available. This can help speed completion because Posfin already works closely with these firms and many lenders know/prefer them.', false)+
+        cardChoiceHtml('solicitorPreference','own','No — I prefer to use my own solicitor','This is completely fine and optional. It may add some uncertainty where the solicitor is not familiar with bridging lenders or fast completions.', false)+
+        cardChoiceHtml('solicitorPreference','discuss','Not sure — discuss with Posfin','We can explain the difference on the call and help you choose the route that best suits the case.', false)+
+        '</div>', 'Optional — we are not forcing a solicitor on you. Panel solicitors can simply make the legal process faster and easier because we can work with them, for them, for you and with you.')+
       outstandingBox(collectFormValues())+
       '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Submit enquiry →</button></div>';
     rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
