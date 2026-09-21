@@ -523,23 +523,7 @@ fbq('track', 'PageView');
     </div>
   </div>
 
-  <div class="field">
-    <label for="productIntent">Which Posfin product fits your deal? <span class="req">*</span></label>
-    <select id="productIntent" name="productIntent" required>
-      <option value="">Select route…</option>
-      <option value="speed_loan">Speed loan / urgent liquidity</option>
-      <option value="main_loan">Standard bridge / refinance</option>
-      <option value="bank_bridge">Bank bridge / lower-rate institutional route</option>
-      <option value="purchase_refurb">Property purchase / purchase & refurb</option>
-      <option value="back_to_back">Back-to-back bridge</option>
-      <option value="development_finance">Development finance / build funding</option>
-      <option value="development_exit_finance">Development exit</option>
-      <option value="acquisition_finance">Acquisition finance — larger / corporate transaction</option>
-      <option value="senior_desk">Complex / larger case — senior desk</option>
-      <option value="not_sure">Not sure — route it for me</option>
-    </select>
-    <div class="field-error">Please select the likely route</div>
-  </div>
+  <input type="hidden" id="productIntent" name="productIntent" value="not_sure">
 
   <div class="field">
     <label for="homeAddress">Home / Residential Address <span class="req">*</span></label>
@@ -1104,7 +1088,7 @@ fbq('track', 'PageView');
     if (!card) return;
     const items = [
       ['Reference', ref],
-      ['Likely route', routeLabel(payload.productRoute)],
+      ['Likely route', routeLabel(payload.resolvedRoute || resolveProductRoute(payload))],
       ['Loan / Value', (payload.loanAmount || 'TBC') + ' / ' + (payload.propertyValue || 'TBC')],
       ['Indicative LTV', calcLtv(payload.loanAmount, payload.propertyValue)],
       ['Security', payload.propertyAddress || 'TBC'],
@@ -1216,9 +1200,11 @@ fbq('track', 'PageView');
       broker_code: brokerTag.code
     };
 
+    payload.resolvedRoute = resolveProductRoute(payload);
+
     const nameParts = splitName(payload.name);
     const crmPayload = {
-      product: ['speed_loan','main_loan','bank_bridge','purchase_refurb','back_to_back','development_finance','development_exit_finance','acquisition_finance'].includes(payload.productRoute) ? payload.productRoute : 'main_loan',
+      product: ['speed_loan','main_loan','bank_bridge','purchase_refurb','back_to_back','development_finance','development_exit_finance','acquisition_finance','senior_desk'].includes(payload.resolvedRoute) ? payload.resolvedRoute : 'main_loan',
       deal_ref: payload.reference,
       first_name: nameParts.first,
       last_name: nameParts.last,
@@ -1246,7 +1232,7 @@ fbq('track', 'PageView');
         payload.prefill_note ? 'Click-roll note shown to borrower: ' + payload.prefill_note : '',
         payload.source_channel ? 'Source channel: ' + payload.source_channel : '',
         payload.route_hint ? 'Route hint: ' + payload.route_hint : '',
-        payload.productRoute ? 'Borrower selected route: ' + payload.productRoute : '',
+        payload.resolvedRoute ? 'System inferred route: ' + payload.resolvedRoute : '',
         payload.chargeRequested ? 'Charge requested: ' + payload.chargeRequested : '',
         payload.firstChargeLender ? 'First charge lender: ' + payload.firstChargeLender : '',
         payload.firstChargeBalance ? 'First charge balance: ' + payload.firstChargeBalance : '',
