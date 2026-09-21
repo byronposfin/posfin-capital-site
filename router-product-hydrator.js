@@ -85,10 +85,22 @@
     var label = input && input.closest('label');
     if (!label) return;
     if (input.type === 'checkbox') {
-      label.style.borderColor = '';
-      label.style.background = '';
+      label.style.borderColor = active ? '#00B5B0' : '#E5E1D6';
+      label.style.background = active ? 'rgba(0,181,176,0.06)' : '#FFFFFF';
       input.checked = !!active;
       input.style.accentColor = '#00B5B0';
+      var box = Array.prototype.slice.call(label.querySelectorAll('span')).find(function(sp){
+        var st = sp.getAttribute('style') || '';
+        return /width:\s*18px|border.*CFC9B8|inline-flex/.test(st) && !/line-height|color:#6F6B7A/.test(st);
+      });
+      if (box) {
+        box.style.borderColor = active ? '#00B5B0' : '#CFC9B8';
+        box.style.background = active ? '#00B5B0' : '#FFFFFF';
+        box.style.color = '#FFFFFF';
+        box.style.fontSize = '12px';
+        box.style.fontWeight = '800';
+        box.textContent = active ? '✓' : '';
+      }
       return;
     }
     var dot = label.querySelector('span');
@@ -335,6 +347,25 @@
     var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"]'));
     return boxes.find(function(b){ return /agree|contacted|privacy|data/i.test(textOf(b.closest('label'))); }) || boxes[0] || null;
   }
+  function widenConsentTouchTargets() {
+    Array.prototype.slice.call(document.querySelectorAll('label')).forEach(function(label){
+      var input = label.querySelector('input[type="checkbox"]');
+      if (!input || !/agree|contacted|privacy|data/i.test(textOf(label))) return;
+      label.setAttribute('data-posfin-consent-touch', '1');
+      label.style.display = 'flex';
+      label.style.alignItems = 'flex-start';
+      label.style.gap = '12px';
+      label.style.width = '100%';
+      label.style.boxSizing = 'border-box';
+      label.style.padding = '14px 16px';
+      label.style.minHeight = '56px';
+      label.style.border = '1px solid ' + (input.checked ? '#00B5B0' : '#E5E1D6');
+      label.style.background = input.checked ? 'rgba(0,181,176,0.06)' : '#FFFFFF';
+      label.style.cursor = 'pointer';
+      label.style.webkitTapHighlightColor = 'transparent';
+      paintOption(input, input.checked);
+    });
+  }
   function validateStepTwo() {
     clearError();
     var checks = [
@@ -366,6 +397,58 @@
   function selectHtml(label, name, options, selected) {
     return '<div class="mb-5"><label style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><select name="'+name+'" style="width:100%;height:54px;padding:0 18px;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none">'+options.map(function(o){ return '<option value="'+escapeHtml(o[0])+'"'+(o[0]===selected?' selected':'')+'>'+escapeHtml(o[1])+'</option>'; }).join('')+'</select></div>';
   }
+  function smallNote(text) {
+    return '<div style="font-size:12px;line-height:1.55;color:#6F6B7A;margin:-6px 0 12px">'+escapeHtml(text)+'</div>';
+  }
+  function greenSection(title, body, note) {
+    return '<div style="margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.045)">'+
+      '<div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#008C88;margin-bottom:8px">'+escapeHtml(title)+'</div>'+
+      (note ? '<div style="font-size:12px;line-height:1.55;color:#5A5770;margin-bottom:12px">'+escapeHtml(note)+'</div>' : '') + body + '</div>';
+  }
+  function cardChoiceHtml(name, value, label, sub, checked) {
+    return '<label class="flex items-start gap-3 cursor-pointer transition-colors" style="padding:14px 16px;border:1px solid '+(checked?'#00B5B0':'#E5E1D6')+';background:'+(checked?'rgba(0,181,176,0.06)':'#FFFFFF')+';font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:58px">'+
+      '<input type="radio" class="sr-only" name="'+name+'" value="'+escapeHtml(value)+'"'+(checked?' checked':'')+'/>'+ 
+      '<span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid '+(checked?'#00B5B0':'#CFC9B8')+';background:'+(checked?'#00B5B0':'#FFFFFF')+';margin-top:2px"></span>'+ 
+      '<span><strong style="display:block;color:#1C184F;margin-bottom:2px">'+escapeHtml(label)+'</strong>'+(sub?'<span style="display:block;color:#6F6B7A;font-size:12px;line-height:1.45">'+escapeHtml(sub)+'</span>':'')+'</span></label>';
+  }
+  function buildMandatoryRedemptionsCard() {
+    var second = Number(moneyInputValue('secondChargeBalance', V.secondChargeBalance)) || 0;
+    var arrears = Number(moneyInputValue('firstChargeArrearsAmount', V.arrearsAmount)) || 0;
+    var total = second + arrears;
+    var rows = '';
+    if (arrears) rows += '<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0"><span>First-charge arrears to clear</span><strong>'+pounds(arrears)+'</strong></div>';
+    if (second) rows += '<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0"><span>Second charge / restriction to clear</span><strong>'+pounds(second)+'</strong></div>';
+    if (!rows) rows = '<div style="color:#6F6B7A;font-size:13px">No mandatory redemptions have been entered yet. If arrears or second charges are added, they will appear here automatically.</div>';
+    return greenSection('Mandatory redemptions at completion',
+      '<div style="font-size:13px;color:#1C184F;line-height:1.55">'+
+      '<p style="margin:0 0 10px;color:#5A5770">These items normally need to be repaid on completion so the new lender has the required clean charge position.</p>'+rows+
+      '<div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(28,24,79,.14);margin-top:6px;padding-top:8px"><strong>Total mandatory redemptions</strong><strong style="color:#D4A853">'+pounds(total)+'</strong></div>'+ 
+      '<div style="margin-top:14px" class="grid sm:grid-cols-2 gap-2">'+
+      cardChoiceHtml('redemptionStructure','add_to_facility','Add to requested loan amount','Example: £200k requested + £45k redemptions = £245k facility.', false)+
+      cardChoiceHtml('redemptionStructure','deduct_from_requested','Deduct from requested amount','Example: £200k requested - £45k redemptions = £155k net to borrower.', false)+
+      cardChoiceHtml('redemptionStructure','discuss','Not sure — discuss on call','We will structure this with you before lender submission.', false)+
+      '</div></div>', 'Second charges and mortgage arrears are not optional if the target lender requires a clean second/first charge position.');
+  }
+  function outstandingItems(d) {
+    d = d || collectFormValues();
+    var items = [];
+    function miss(label, val) { if (!norm(val) || /^(unknown|not sure|discuss|unsure)$/i.test(norm(val))) items.push(label); }
+    miss('Confirm whether first-charge balance is clean or includes arrears', d.firstChargeBalanceType);
+    if ((Number(money(d.firstChargeArrearsAmount)) || 0) > 0) miss('Confirm redemption treatment for mortgage arrears', d.redemptionStructure);
+    if ((Number(money(d.secondChargeBalance)) || 0) > 0) miss('Confirm redemption treatment for second charge / restriction', d.redemptionStructure);
+    miss('Tenure', d.tenure);
+    if (d.tenure === 'leasehold') miss('Lease years remaining', d.leaseYears);
+    miss('Net or gross request', d.netGrossRequest);
+    miss('Exit strategy', d.exitStrategy);
+    miss('Funds timescale', d.requiredTimescale);
+    if (!norm(d.propertyNotes)) items.push('Property condition / works / title notes if relevant');
+    return Array.from(new Set(items));
+  }
+  function outstandingBox(d) {
+    var items = outstandingItems(d);
+    if (!items.length) return '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px"><strong>Outstanding items:</strong> none flagged. Case is ready for LOR mapping subject to broker review.</div>';
+    return '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(212,168,83,.45);background:rgba(212,168,83,.08);color:#1C184F;font-size:13px"><strong>Outstanding items for follow-up / LOR mapping:</strong><ul style="margin:8px 0 0 18px;padding:0">'+items.map(function(i){return '<li>'+escapeHtml(i)+'</li>';}).join('')+'</ul></div>';
+  }
   function renderStepThree() {
     var card = productFormHeading() && productFormHeading().parentElement;
     if (!card) return;
@@ -374,31 +457,38 @@
       fieldHtml('Security property address', V.propertyAddress, 'securityAddress')+
       fieldHtml('Security postcode', V.postcode, 'securityPostcode')+
       fieldHtml('Estimated property value', V.propertyValue ? '£' + Number(V.propertyValue).toLocaleString('en-GB') : '', 'propertyValue')+
-      fieldHtml('First charge lender', V.firstChargeLender, 'firstChargeLender')+
-      fieldHtml('First charge balance', V.firstChargeBalance ? '£' + Number(V.firstChargeBalance).toLocaleString('en-GB') : '', 'firstChargeBalance')+
-      fieldHtml('Approximate arrears amount (£)', V.arrearsAmount ? '£' + Number(V.arrearsAmount).toLocaleString('en-GB') : '', 'firstChargeArrearsAmount')+
-      selectHtml('Does the balance above include the arrears, or is it the clean balance?', 'firstChargeBalanceType', [['','Please select'],['clean_balance','Clean balance only — arrears separate'],['inclusive_balance','Balance includes arrears'],['unknown','Not sure']], '')+
-      fieldHtml('Second charge / additional charge provider', V.secondChargeProvider, 'secondChargeProvider')+
-      fieldHtml('Second charge / additional charge balance', V.secondChargeBalance ? '£' + Number(V.secondChargeBalance).toLocaleString('en-GB') : '', 'secondChargeBalance')+
-      loanCalcSection('Mandatory redemptions at completion',
-        '<div class="grid sm:grid-cols-2 gap-2">'+
-        choiceHtml('redemptionStructure','add_to_facility','I need my requested amount on top of the redemptions', false)+
-        choiceHtml('redemptionStructure','deduct_from_requested','Redemptions come from within my requested amount', false)+
-        choiceHtml('redemptionStructure','discuss','Discuss on the call', false)+'</div>')+
-      selectHtml('Tenure', 'tenure', [['','Please select'],['freehold','Freehold'],['leasehold','Leasehold'],['commonhold','Commonhold'],['unknown','Not sure']], '')+
-      loanCalcSection('Property specification',
+      greenSection('Charge stack',
+        fieldHtml('First charge lender', V.firstChargeLender, 'firstChargeLender')+
+        fieldHtml('First charge balance', V.firstChargeBalance ? '£' + Number(V.firstChargeBalance).toLocaleString('en-GB') : '', 'firstChargeBalance')+
+        fieldHtml('Approximate arrears amount (£)', V.arrearsAmount ? '£' + Number(V.arrearsAmount).toLocaleString('en-GB') : '', 'firstChargeArrearsAmount')+
+        selectHtml('Does the balance above include the arrears, or is it the clean balance?', 'firstChargeBalanceType', [['','Please select'],['clean_balance','Clean balance only — arrears separate'],['inclusive_balance','Balance includes arrears'],['unknown','Not sure']], '')+
+        fieldHtml('Second charge / additional charge provider', V.secondChargeProvider, 'secondChargeProvider')+
+        fieldHtml('Second charge / additional charge balance', V.secondChargeBalance ? '£' + Number(V.secondChargeBalance).toLocaleString('en-GB') : '', 'secondChargeBalance'),
+        'Capture arrears and second charges separately so mandatory redemptions can be calculated cleanly.')+
+      buildMandatoryRedemptionsCard()+
+      greenSection('Tenure', '<div class="grid sm:grid-cols-2 gap-2">'+
+        cardChoiceHtml('tenure','freehold','Freehold','Most common — no lease term required.', false)+
+        cardChoiceHtml('tenure','leasehold','Leasehold','We will need years remaining.', false)+
+        cardChoiceHtml('tenure','commonhold','Commonhold','Less common — broker will review.', false)+
+        cardChoiceHtml('tenure','unknown','Not sure','Flag for follow-up.', false)+
+        '</div>'+fieldHtml('Lease years remaining (if leasehold)', '', 'leaseYears'), 'Tap the box — no typing unless leasehold years are known.')+
+      greenSection('Property specification',
         '<div class="grid sm:grid-cols-2 gap-3">'+
-        fieldHtml('Bedrooms', '', 'bedrooms')+
-        fieldHtml('Bathrooms', '', 'bathrooms')+
-        fieldHtml('Reception rooms', '', 'receptions')+
-        fieldHtml('Parking', '', 'parking')+
-        fieldHtml('Garden', '', 'garden')+
-        fieldHtml('Approx. year built', '', 'yearBuilt')+
+        selectHtml('Bedrooms', 'bedrooms', [['','Select'],['studio','Studio'],['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['6_plus','6+'],['unknown','Not sure']], '')+
+        selectHtml('Bathrooms', 'bathrooms', [['','Select'],['1','1'],['2','2'],['3','3'],['4_plus','4+'],['unknown','Not sure']], '')+
+        selectHtml('Reception rooms', 'receptions', [['','Select'],['0','0'],['1','1'],['2','2'],['3_plus','3+'],['unknown','Not sure']], '')+
+        selectHtml('Parking', 'parking', [['','Select'],['none','None'],['street','On-street'],['drive_1','Driveway — 1 car'],['drive_2','Driveway — 2 cars'],['drive_3_plus','Driveway — 3+ cars'],['garage','Garage'],['garage_drive','Garage + driveway'],['unknown','Not sure']], '')+
+        selectHtml('Garden', 'garden', [['','Select'],['none','No garden'],['front','Front garden only'],['rear','Rear garden only'],['front_rear','Front and rear garden'],['large','Large garden / land'],['communal','Communal garden'],['unknown','Not sure']], '')+
+        selectHtml('Approx. year built', 'yearBuilt', [['','Select'],['pre_1900','Pre-1900'],['1900_1930','1900–1930'],['1930_1950','1930–1950'],['1950_1980','1950–1980'],['1980_2000','1980–2000'],['2000_2010','2000–2010'],['2010_2020','2010–2020'],['2020_plus','2020+'],['unknown','Not sure']], '')+
         fieldHtml('Floor area', '', 'floorArea')+
-        selectHtml('Floor area unit', 'floorAreaUnit', [['sqft','sq ft'],['sqm','sq m']], 'sqft')+
-        '</div>')+
-      fieldHtml('Additional security / portfolio — how many additional properties can be offered?', '', 'additionalProperties')+
+        selectHtml('Floor area unit', 'floorAreaUnit', [['sqft','sq ft'],['sqm','sq m'],['unknown','Not sure']], 'sqft')+
+        '</div>', 'Dropdowns/tap boxes only where possible. Unknowns become follow-up items instead of blocking the borrower.')+
+      greenSection('Additional security / portfolio',
+        selectHtml('How many additional properties can be offered?', 'additionalProperties', [['0','0 — this property only'],['1','1 additional property'],['2','2 additional properties'],['3','3 additional properties'],['4','4 additional properties'],['5_plus','5+ / portfolio — send spreadsheet'],['unknown','Not sure']], '0')+
+        textareaHtml('Additional security notes', '', 'additionalSecurityNotes', 'Address/value/charge details if known. If not known, we will request after the call.'),
+        'If zero, select 0 and move on. If portfolio, we capture enough to trigger the right follow-up pack.')+
       textareaHtml('Property notes / condition / works', '', 'propertyNotes', 'E.g. vacant, tenanted, refurbishment needed, title issue, works completed.')+
+      outstandingBox(collectFormValues())+
       '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Loan requirements →</button></div>';
     rewriteSideStep('Step 3 of 4 — The property', 'The property');
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
@@ -466,6 +556,7 @@
       textareaHtml('Anything else we should know?', '', 'borrowerNotes', 'Adverse credit, complex title, development history, deadlines, or anything else.')+
       '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+ 
       '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Recommended solicitor route: <strong>LARK</strong>. We can also work with your own solicitor if preferred.</div>'+ 
+      outstandingBox(collectFormValues())+
       '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Submit enquiry →</button></div>';
     rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
     Array.prototype.slice.call(card.querySelectorAll('input')).forEach(function(input){ paintOption(input, input.checked); });
@@ -530,7 +621,8 @@
       '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>The security property</strong><br>'+escapeHtml(d.securityAddress||V.propertyAddress)+', '+escapeHtml(d.securityPostcode||V.postcode)+'<br>Tenure: '+escapeHtml(d.tenure||'TBC')+'<br>Spec: '+escapeHtml(d.bedrooms||'TBC')+' bed / '+escapeHtml(d.bathrooms||'TBC')+' bath / '+escapeHtml(d.receptions||'TBC')+' reception · '+escapeHtml(d.floorArea||'TBC')+' '+escapeHtml(d.floorAreaUnit||'')+'</div>'+ 
       '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>Additions to loan</strong><br>Redeem 2nd charge: '+pounds(c.addedSecond)+'<br>Redeem arrears: '+pounds(c.addedArrears)+'<br>Legal buffer: '+pounds(c.legals)+'<br>Contingency: '+pounds(c.buffer)+'<br><strong>Total additions: '+pounds(c.additions)+'</strong></div>'+ 
       '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Your loan</strong><br>Net cash day one: '+pounds(c.netDayOne)+'<br>Additions: '+pounds(c.additions)+'<br>Total facility: '+pounds(c.facility)+'<br>Net or gross: '+escapeHtml(d.netGrossRequest||'TBC')+'<br>Purpose: '+escapeHtml(V.loanPurpose||PARAMS.loan_purpose||'TBC')+'<br>Exit: '+escapeHtml(d.exitStrategy||'TBC')+'<br>Timescale: '+escapeHtml(d.requiredTimescale||'TBC')+'<br>Credit profile: '+escapeHtml(d.creditProfile||'TBC')+'<br><strong>Net LTV: '+(c.ltv?c.ltv+'%':'TBC')+'</strong></div>'+ 
-      '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Next step:</strong> WhatsApp dispatch line confirmed. No time-to-fund promise is made here.</div>'+ 
+      outstandingBox(d)+
+      '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Next step:</strong> WhatsApp/Email scorecard should carry the outstanding-items checklist into broker follow-up and LOR mapping. No time-to-fund promise is made here.</div>'+ 
       '</div>';
     rewriteSideStep('Submitted', 'Submitted');
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
@@ -551,6 +643,8 @@
     payload.mobile = payload.mobile || V.mobile || PARAMS.mobile || PARAMS.phone || '';
     payload.email = payload.email || V.email || PARAMS.email || '';
     payload.submitted_at = new Date().toISOString();
+    payload.outstanding_items = outstandingItems(payload).join(' | ');
+    payload.lor_mapping_status = payload.outstanding_items ? 'Outstanding borrower follow-up required before broker portal / LOR finalisation' : 'Ready for broker portal / LOR mapping subject to broker review';
     try {
       var res = await fetch('/api/lead', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error('Lead API failed: ' + res.status);
@@ -569,10 +663,13 @@
     rewriteStepLabels();
     updateNetLtv();
     labelFooterWhatsapp();
+    widenConsentTouchTargets();
   }
   document.addEventListener('click', function(ev){
     var a = ev.target && ev.target.closest && ev.target.closest('a');
     var label = ev.target && ev.target.closest && ev.target.closest('label');
+    var broadConsent = ev.target && ev.target.closest && ev.target.closest('[data-posfin-consent-touch]');
+    if (!label && broadConsent) label = broadConsent;
     var input = label && label.querySelector('input[type="radio"],input[type="checkbox"]');
     if (input && !a) {
       ev.preventDefault();
