@@ -1022,18 +1022,11 @@ fbq('track', 'PageView');
     return 'senior_desk';
   }
   function productPath(route) {
-    return ({
-      speed_loan: '/speed-loan',
-      equitable_charges: '/speed-loan',
-      main_loan: '/main-loan-router',
-      bank_bridge: '/bank-bridge',
-      purchase_refurb: '/purchase-refurb',
-      back_to_back: '/back-to-back',
-      development_finance: '/development-finance',
-      development_exit_finance: '/dev-exit',
-      acquisition_finance: '/acquisition-finance',
-      senior_desk: '/senior-desk'
-    })[route] || '/senior-desk';
+    // Router submissions must continue into the structured follow-up form.
+    // Product pages are marketing pages and do not all carry the continuation form.
+    // Preserve the route in the query string for CRM/LOR mapping, but keep the borrower
+    // in one consistent mobile continuation flow.
+    return '/main-loan-router';
   }
   function buildProductUrl(payload, apiResult) {
     const route = resolveProductRoute(payload);
