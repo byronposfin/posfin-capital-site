@@ -385,8 +385,20 @@
     if (!c || !c.checked) { showError('Please tick the consent box so we can contact you about this enquiry.', c); return false; }
     return true;
   }
+  function isMoneyName(name) {
+    return /amount|balance|value|loan|arrears|charge/i.test(String(name || '')) && !/years|yearBuilt|bedrooms|bathrooms|receptions|floorArea|additionalProperties/i.test(String(name || ''));
+  }
+  function formatMoneyDisplay(v) {
+    var raw = money(v);
+    if (!raw) return '';
+    var parts = raw.split('.');
+    var whole = parts[0] ? Number(parts[0]).toLocaleString('en-GB') : '0';
+    return '£' + whole + (parts.length > 1 ? '.' + parts[1].slice(0,2) : '');
+  }
   function fieldHtml(label, value, name) {
-    return '<div class="mb-5"><label style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><input name="'+name+'" value="'+String(value||'').replace(/"/g,'&quot;')+'" style="width:100%;height:54px;padding:0 18px;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none"/></div>';
+    var moneyField = isMoneyName(name);
+    var safeVal = moneyField ? formatMoneyDisplay(value) : String(value || '');
+    return '<div class="mb-5"><label style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><input name="'+name+'" value="'+safeVal.replace(/"/g,'&quot;')+'" '+(moneyField?'data-posfin-money="1" inputmode="numeric" autocomplete="off" ':'')+'style="width:100%;height:54px;padding:0 18px;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none"/></div>';
   }
   function escapeHtml(v) {
     return String(v || '').replace(/[&<>\"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]); });
@@ -411,23 +423,37 @@
       '<span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid '+(checked?'#00B5B0':'#CFC9B8')+';background:'+(checked?'#00B5B0':'#FFFFFF')+';margin-top:2px"></span>'+ 
       '<span><strong style="display:block;color:#1C184F;margin-bottom:2px">'+escapeHtml(label)+'</strong>'+(sub?'<span style="display:block;color:#6F6B7A;font-size:12px;line-height:1.45">'+escapeHtml(sub)+'</span>':'')+'</span></label>';
   }
-  function buildMandatoryRedemptionsCard() {
+  function mandatoryRedemptionsInner() {
     var second = Number(moneyInputValue('secondChargeBalance', V.secondChargeBalance)) || 0;
     var arrears = Number(moneyInputValue('firstChargeArrearsAmount', V.arrearsAmount)) || 0;
     var total = second + arrears;
+    var selected = checkedValue('redemptionStructure') || EXTRA.redemptionStructure || '';
     var rows = '';
     if (arrears) rows += '<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0"><span>First-charge arrears to clear</span><strong>'+pounds(arrears)+'</strong></div>';
     if (second) rows += '<div style="display:flex;justify-content:space-between;gap:12px;padding:5px 0"><span>Second charge / restriction to clear</span><strong>'+pounds(second)+'</strong></div>';
     if (!rows) rows = '<div style="color:#6F6B7A;font-size:13px">No mandatory redemptions have been entered yet. If arrears or second charges are added, they will appear here automatically.</div>';
-    return greenSection('Mandatory redemptions at completion',
-      '<div style="font-size:13px;color:#1C184F;line-height:1.55">'+
+    return '<div style="font-size:13px;color:#1C184F;line-height:1.55">'+
       '<p style="margin:0 0 10px;color:#5A5770">These items normally need to be repaid on completion so the new lender has the required clean charge position.</p>'+rows+
       '<div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(28,24,79,.14);margin-top:6px;padding-top:8px"><strong>Total mandatory redemptions</strong><strong style="color:#D4A853">'+pounds(total)+'</strong></div>'+ 
       '<div style="margin-top:14px" class="grid sm:grid-cols-2 gap-2">'+
-      cardChoiceHtml('redemptionStructure','add_to_facility','Add to requested loan amount','Example: £200k requested + £45k redemptions = £245k facility.', false)+
-      cardChoiceHtml('redemptionStructure','deduct_from_requested','Deduct from requested amount','Example: £200k requested - £45k redemptions = £155k net to borrower.', false)+
-      cardChoiceHtml('redemptionStructure','discuss','Not sure — discuss on call','We will structure this with you before lender submission.', false)+
-      '</div></div>', 'Second charges and mortgage arrears are not optional if the target lender requires a clean second/first charge position.');
+      cardChoiceHtml('redemptionStructure','add_to_facility','Add to requested loan amount','Example: £200k requested + £'+total.toLocaleString('en-GB')+' redemptions = £'+(200000+total).toLocaleString('en-GB')+' facility.', selected === 'add_to_facility')+
+      cardChoiceHtml('redemptionStructure','deduct_from_requested','Deduct from requested amount','Example: £200k requested - £'+total.toLocaleString('en-GB')+' redemptions = £'+Math.max(0,200000-total).toLocaleString('en-GB')+' net to borrower.', selected === 'deduct_from_requested')+
+      cardChoiceHtml('redemptionStructure','discuss','Not sure — discuss on call','We will structure this with you before lender submission.', selected === 'discuss')+
+      '</div></div>';
+  }
+  function buildMandatoryRedemptionsCard() {
+    return '<div id="posfin-mandatory-redemptions-wrap" style="margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.045)">'+
+      '<div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#008C88;margin-bottom:8px">Mandatory redemptions at completion</div>'+ 
+      '<div style="font-size:12px;line-height:1.55;color:#5A5770;margin-bottom:12px">Second charges and mortgage arrears are not optional if the target lender requires a clean second/first charge position.</div>'+ 
+      '<div id="posfin-mandatory-redemptions-live">'+mandatoryRedemptionsInner()+'</div></div>';
+  }
+  function updateMandatoryRedemptionsCard() {
+    var box = document.getElementById('posfin-mandatory-redemptions-live');
+    if (!box) return;
+    var selected = checkedValue('redemptionStructure');
+    if (selected) EXTRA.redemptionStructure = selected;
+    box.innerHTML = mandatoryRedemptionsInner();
+    Array.prototype.slice.call(box.querySelectorAll('input')).forEach(function(input){ paintOption(input, input.checked); });
   }
   function outstandingItems(d) {
     d = d || collectFormValues();
@@ -489,7 +515,7 @@
         'If zero, select 0 and move on. If portfolio, we capture enough to trigger the right follow-up pack.')+
       textareaHtml('Property notes / condition / works', '', 'propertyNotes', 'E.g. vacant, tenanted, refurbishment needed, title issue, works completed.')+
       outstandingBox(collectFormValues())+
-      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Loan requirements →</button></div>';
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:22px 28px;min-height:68px;border-radius:4px;cursor:pointer;margin-left:0;box-shadow:0 14px 28px -18px rgba(0,181,176,.75)">Loan requirements →</button></div>';
     rewriteSideStep('Step 3 of 4 — The property', 'The property');
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
   }
@@ -557,7 +583,7 @@
       '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+ 
       '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Recommended solicitor route: <strong>LARK</strong>. We can also work with your own solicitor if preferred.</div>'+ 
       outstandingBox(collectFormValues())+
-      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;padding:18px 32px;min-height:60px;cursor:pointer;margin-left:auto">Submit enquiry →</button></div>';
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:22px 28px;min-height:68px;border-radius:4px;cursor:pointer;margin-left:0;box-shadow:0 14px 28px -18px rgba(0,181,176,.75)">Submit enquiry →</button></div>';
     rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
     Array.prototype.slice.call(card.querySelectorAll('input')).forEach(function(input){ paintOption(input, input.checked); });
     updateFacilitySummary();
@@ -656,6 +682,13 @@
     }
   }
 
+  function formatMoneyInputs(root) {
+    Array.prototype.slice.call((root || document).querySelectorAll('input[data-posfin-money="1"]')).forEach(function(el){
+      var formatted = formatMoneyDisplay(el.value);
+      if (formatted && el.value !== formatted) el.value = formatted;
+    });
+  }
+
   function tick() {
     promoteProductForm();
     hydrateVisibleFields();
@@ -664,6 +697,7 @@
     updateNetLtv();
     labelFooterWhatsapp();
     widenConsentTouchTargets();
+    formatMoneyInputs();
   }
   document.addEventListener('click', function(ev){
     var a = ev.target && ev.target.closest && ev.target.closest('a');
@@ -686,8 +720,15 @@
     if (btn && btn.getAttribute('data-posfin-next') === 'submit') { ev.preventDefault(); submitRouterLead(btn); return; }
     setTimeout(tick, 80);
   }, true);
-  document.addEventListener('change', function(){ setTimeout(function(){ tick(); updateFacilitySummary(); }, 60); }, true);
-  document.addEventListener('input', function(){ setTimeout(function(){ tick(); updateFacilitySummary(); }, 60); }, true);
+  document.addEventListener('change', function(){ setTimeout(function(){ tick(); updateMandatoryRedemptionsCard(); updateFacilitySummary(); }, 60); }, true);
+  document.addEventListener('input', function(ev){
+    var target = ev.target;
+    if (target && target.matches && target.matches('input[data-posfin-money="1"]')) {
+      var formatted = formatMoneyDisplay(target.value);
+      if (formatted && target.value !== formatted) target.value = formatted;
+    }
+    setTimeout(function(){ updateMandatoryRedemptionsCard(); tick(); updateFacilitySummary(); }, 60);
+  }, true);
   var obs = new MutationObserver(function(){ clearTimeout(obs._t); obs._t=setTimeout(tick, 60); });
   function start() {
     if (window.location.hash === '#apply') { try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) {} }
