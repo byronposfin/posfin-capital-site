@@ -530,11 +530,11 @@ fbq('track', 'PageView');
       <option value="speed_loan">Speed loan / urgent liquidity</option>
       <option value="main_loan">Standard bridge / refinance</option>
       <option value="bank_bridge">Bank bridge / lower-rate institutional route</option>
-      <option value="purchase_refurb">Auction purchase / purchase & refurb</option>
+      <option value="purchase_refurb">Property purchase / purchase & refurb</option>
       <option value="back_to_back">Back-to-back bridge</option>
       <option value="development_finance">Development finance / build funding</option>
       <option value="development_exit_finance">Development exit</option>
-      <option value="acquisition_finance">Acquisition finance</option>
+      <option value="acquisition_finance">Acquisition finance — larger / corporate transaction</option>
       <option value="senior_desk">Complex / larger case — senior desk</option>
       <option value="not_sure">Not sure — route it for me</option>
     </select>
@@ -655,14 +655,16 @@ fbq('track', 'PageView');
     <label for="purpose">Purpose of Loan <span class="req">*</span></label>
     <select id="purpose" name="purpose" required>
       <option value="">Select purpose…</option>
+      <option value="Property Purchase">Property purchase</option>
+      <option value="Purchase and Refurb">Purchase and refurb</option>
       <option value="Auction Purchase">Auction purchase</option>
       <option value="Chain Break">Chain break</option>
-      <option value="Refurbishment">Refurbishment / works</option>
+      <option value="Refurbishment">Refurbishment / works only</option>
       <option value="Refinance">Refinance / repay existing lender</option>
       <option value="Development Finance">Development finance / build costs</option>
       <option value="Development Exit">Development exit</option>
       <option value="Business Capital">Business / working capital</option>
-      <option value="Acquisition Finance">Acquisition finance</option>
+      <option value="Acquisition Finance">Acquisition finance — larger / corporate transaction</option>
       <option value="HMRC / Tax">HMRC / tax pressure</option>
       <option value="Other">Other / not sure</option>
     </select>
@@ -1025,8 +1027,13 @@ fbq('track', 'PageView');
   }
   function resolveProductRoute(payload) {
     const selected = normalRoute(payload.productRoute || '');
+    const purpose = String(payload.purpose || '').toLowerCase();
     const charge = String(payload.chargeRequested || '').toLowerCase();
     if (selected && selected !== 'not_sure') return selected;
+    if (purpose.indexOf('purchase') !== -1 || purpose.indexOf('auction') !== -1 || purpose.indexOf('refurb') !== -1 || purpose.indexOf('chain break') !== -1) return 'purchase_refurb';
+    if (purpose.indexOf('development exit') !== -1) return 'development_exit_finance';
+    if (purpose.indexOf('development finance') !== -1 || purpose.indexOf('build') !== -1) return 'development_finance';
+    if (purpose.indexOf('acquisition') !== -1) return 'acquisition_finance';
     if (charge.indexOf('equitable') !== -1) return 'speed_loan';
     if (charge.indexOf('first') !== -1 || charge.indexOf('second') !== -1) return 'main_loan';
     return 'senior_desk';

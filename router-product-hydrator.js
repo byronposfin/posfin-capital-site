@@ -28,6 +28,7 @@
     var x = lower(v);
     if (!x) return '';
     if (x.includes('refinance') || x.includes('capital')) return 'Refinance / capital raise';
+    if (x.includes('purchase') && x.includes('refurb')) return 'Purchase and refurb';
     if (x.includes('purchase')) return x.includes('auction') ? 'Auction purchase' : 'Property purchase';
     if (x.includes('development exit')) return 'Development exit';
     if (x.includes('development finance')) return 'Development finance';
