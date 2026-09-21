@@ -478,6 +478,7 @@
     miss('Tenure', d.tenure);
     if (d.tenure === 'leasehold') miss('Lease years remaining', d.leaseYears);
     miss('Net or gross request', d.netGrossRequest);
+    miss('Monthly serviced vs retained/rolled-up interest preference', d.repaymentPreference);
     miss('Exit strategy', d.exitStrategy);
     miss('Funds timescale', d.requiredTimescale);
     if (!norm(d.propertyNotes)) items.push('Property condition / works / title notes if relevant');
@@ -580,8 +581,19 @@
     if (!card) return;
     card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Loan requirements.</h3>'+ 
       '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Loan requirements. No hidden defaults are applied.</div>'+ 
-      fieldHtml('Base loan amount requested', V.loanAmount ? pounds(V.loanAmount) : '', 'loanAmount')+
-      selectHtml('Net loan requested or gross facility required?', 'netGrossRequest', [['','Please select'],['net','Net loan requested'],['gross','Gross facility required'],['unsure','Not sure — discuss on call']], '')+
+      fieldHtml('Loan amount requested', V.loanAmount ? pounds(V.loanAmount) : '', 'loanAmount')+
+      greenSection('Loan amount type',
+        '<div class="grid sm:grid-cols-1 gap-2">'+
+        cardChoiceHtml('netGrossRequest','net','I need this amount released to me on day one','This is the cash you want after existing lender deductions/redemptions. The lender then works out the total gross facility.', false)+
+        cardChoiceHtml('netGrossRequest','gross','I am quoting the total facility / repayment figure','This is the full facility size, including retained interest/fees/redemptions where applicable.', false)+
+        cardChoiceHtml('netGrossRequest','unsure','Not sure — structure it with me on the call','Most borrowers choose this. Posfin will work out whether net or gross is the correct lender presentation.', false)+
+        '</div>', 'In plain English: net = day-one cash released to you. Gross = total bridge facility / amount the lender is underwriting before final repayment mechanics.')+
+      greenSection('Monthly payments or roll-up?',
+        '<div class="grid sm:grid-cols-1 gap-2">'+
+        cardChoiceHtml('repaymentPreference','retained','Prefer no monthly payments — retain/roll up interest','Typical bridging structure: interest is deducted/retained and repaid at the end, so there is no monthly payment pressure.', false)+
+        cardChoiceHtml('repaymentPreference','serviced','Can service interest monthly','You would make monthly interest payments if the lender/product supports it.', false)+
+        cardChoiceHtml('repaymentPreference','unsure','Not sure — lender/Posfin to advise','We will choose the most suitable structure for the lender route and your affordability.', false)+
+        '</div>', 'This is only a preference at this stage — final structure depends on lender, regulation and affordability.')+
       selectHtml('Preferred exit strategy', 'exitStrategy', [['','Please select'],['sell_property','Sell the property'],['refinance_mortgage','Refinance to mortgage'],['equity_release','Equity release'],['sell_other_asset','Sell another asset'],['business_income','Business income'],['ongoing_bridge','Ongoing bridging roll'],['other','Other / discuss']], '')+
       selectHtml('How soon do you need funds?', 'requiredTimescale', [['','Please select'],['within_2_weeks','Within 2 weeks'],['2_4_weeks','2–4 weeks'],['1_2_months','1–2 months'],['no_fixed_deadline','No fixed deadline']], '')+
       loanCalcSection('Costs and buffer',
@@ -659,7 +671,7 @@
       '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>Your details</strong><br>'+escapeHtml(d.first_name||d.firstName||V.firstName)+' '+escapeHtml(d.last_name||d.lastName||V.lastName)+'<br>'+escapeHtml(d.mobile||V.mobile)+'<br>'+escapeHtml(d.email||V.email)+'</div>'+ 
       '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>The security property</strong><br>'+escapeHtml(d.securityAddress||V.propertyAddress)+', '+escapeHtml(d.securityPostcode||V.postcode)+'<br>Tenure: '+escapeHtml(d.tenure||'TBC')+'<br>Spec: '+escapeHtml(d.bedrooms||'TBC')+' bed / '+escapeHtml(d.bathrooms||'TBC')+' bath / '+escapeHtml(d.receptions||'TBC')+' reception · '+escapeHtml(d.floorArea||'TBC')+' '+escapeHtml(d.floorAreaUnit||'')+'</div>'+ 
       '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>Additions to loan</strong><br>Redeem 2nd charge: '+pounds(c.addedSecond)+'<br>Redeem arrears: '+pounds(c.addedArrears)+'<br>Legal buffer: '+pounds(c.legals)+'<br>Contingency: '+pounds(c.buffer)+'<br><strong>Total additions: '+pounds(c.additions)+'</strong></div>'+ 
-      '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Your loan</strong><br>Net cash day one: '+pounds(c.netDayOne)+'<br>Additions: '+pounds(c.additions)+'<br>Total facility: '+pounds(c.facility)+'<br>Net or gross: '+escapeHtml(d.netGrossRequest||'TBC')+'<br>Purpose: '+escapeHtml(V.loanPurpose||PARAMS.loan_purpose||'TBC')+'<br>Exit: '+escapeHtml(d.exitStrategy||'TBC')+'<br>Timescale: '+escapeHtml(d.requiredTimescale||'TBC')+'<br>Credit profile: '+escapeHtml(d.creditProfile||'TBC')+'<br><strong>Net LTV: '+(c.ltv?c.ltv+'%':'TBC')+'</strong></div>'+ 
+      '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Your loan</strong><br>Net cash day one: '+pounds(c.netDayOne)+'<br>Additions: '+pounds(c.additions)+'<br>Total facility: '+pounds(c.facility)+'<br>Net or gross: '+escapeHtml(d.netGrossRequest||'TBC')+'<br>Repayment preference: '+escapeHtml(d.repaymentPreference||'TBC')+'<br>Purpose: '+escapeHtml(V.loanPurpose||PARAMS.loan_purpose||'TBC')+'<br>Exit: '+escapeHtml(d.exitStrategy||'TBC')+'<br>Timescale: '+escapeHtml(d.requiredTimescale||'TBC')+'<br>Credit profile: '+escapeHtml(d.creditProfile||'TBC')+'<br><strong>Net LTV: '+(c.ltv?c.ltv+'%':'TBC')+'</strong></div>'+ 
       outstandingBox(d)+
       '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Next step:</strong> WhatsApp/Email scorecard should carry the outstanding-items checklist into broker follow-up and LOR mapping. No time-to-fund promise is made here.</div>'+ 
       '</div>';
