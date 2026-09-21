@@ -593,6 +593,7 @@
         '<div class="grid sm:grid-cols-1 gap-2">'+
         cardChoiceHtml('repaymentPreference','retained','Prefer no monthly payments — retain/roll up interest','Typical bridging structure: interest is deducted/retained and repaid at the end, so there is no monthly payment pressure.', false)+
         cardChoiceHtml('repaymentPreference','serviced','Can service interest monthly','You would make monthly interest payments if the lender/product supports it.', false)+
+        cardChoiceHtml('repaymentPreference','either','Either is acceptable — choose the best lender structure','I understand both options and am open to whichever structure best qualifies the case.', false)+
         cardChoiceHtml('repaymentPreference','unsure','Not sure — lender/Posfin to advise','We will choose the most suitable structure for the lender route and your affordability.', false)+
         '</div>', 'This is only a preference at this stage — final structure depends on lender, regulation and affordability.')+
       selectHtml('Preferred exit strategy', 'exitStrategy', [['','Please select'],['sell_property','Sell the property'],['refinance_mortgage','Refinance to mortgage'],['equity_release','Equity release'],['sell_other_asset','Sell another asset'],['business_income','Business income'],['ongoing_bridge','Ongoing bridging roll'],['other','Other / discuss']], '')+
