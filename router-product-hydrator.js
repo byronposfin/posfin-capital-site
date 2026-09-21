@@ -539,6 +539,13 @@
     var el = document.querySelector('[name="'+name+'"]');
     return money(el && el.value ? el.value : (EXTRA[name] || fallback));
   }
+  function redemptionMode(v) {
+    var x = lower(v || EXTRA.redemptionStructure || checkedValue('redemptionStructure') || '');
+    if (x.includes('add') || x.includes('top') || x.includes('facility')) return 'add_to_facility';
+    if (x.includes('deduct') || x.includes('within') || x.includes('from_requested')) return 'deduct_from_requested';
+    if (x.includes('discuss') || x.includes('sure')) return 'discuss';
+    return x;
+  }
   function pounds(n) {
     var v = Number(n) || 0;
     return '£' + v.toLocaleString('en-GB');
@@ -555,7 +562,7 @@
     var first = Number(moneyInputValue('firstChargeBalance', V.firstChargeBalance)) || 0;
     var second = Number(moneyInputValue('secondChargeBalance', V.secondChargeBalance)) || 0;
     var arrears = Number(moneyInputValue('firstChargeArrearsAmount', V.arrearsAmount)) || 0;
-    var redemptionStructure = checkedValue('redemptionStructure') || EXTRA.redemptionStructure || '';
+    var redemptionStructure = redemptionMode(checkedValue('redemptionStructure') || EXTRA.redemptionStructure || '');
     var legalChoice = checkedValue('legalCosts');
     var bufferChoice = checkedValue('bufferAmount');
     var addRedemptions = redemptionStructure === 'add_to_facility';
@@ -651,8 +658,9 @@
     var arrears = Number(money(d.firstChargeArrearsAmount || V.arrearsAmount)) || 0;
     var base = Number(money(d.loanAmount || V.loanAmount)) || 0;
     var property = Number(money(d.propertyValue || V.propertyValue)) || 0;
-    var addRedemptions = d.redemptionStructure === 'add_to_facility';
-    var deductRedemptions = d.redemptionStructure === 'deduct_from_requested';
+    var mode = redemptionMode(d.redemptionStructure);
+    var addRedemptions = mode === 'add_to_facility';
+    var deductRedemptions = mode === 'deduct_from_requested';
     var addedArrears = addRedemptions ? arrears : 0;
     var addedSecond = addRedemptions ? second : 0;
     var legals = d.legalCosts === 'add_2000' ? 2000 : 0;
@@ -678,8 +686,8 @@
       '<div style="display:grid;gap:14px;color:#1C184F;font-size:14px;line-height:1.6">'+
       '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>Your details</strong><br>'+escapeHtml(d.first_name||d.firstName||V.firstName)+' '+escapeHtml(d.last_name||d.lastName||V.lastName)+'<br>'+escapeHtml(d.mobile||V.mobile)+'<br>'+escapeHtml(d.email||V.email)+'</div>'+ 
       '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>The security property</strong><br>'+escapeHtml(d.securityAddress||V.propertyAddress)+', '+escapeHtml(d.securityPostcode||V.postcode)+'<br>Tenure: '+escapeHtml(d.tenure||'TBC')+'<br>Spec: '+escapeHtml(d.bedrooms||'TBC')+' bed / '+escapeHtml(d.bathrooms||'TBC')+' bath / '+escapeHtml(d.receptions||'TBC')+' reception · '+escapeHtml(d.floorArea||'TBC')+' '+escapeHtml(d.floorAreaUnit||'')+'</div>'+ 
-      '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>Additions to loan</strong><br>Redeem 2nd charge: '+pounds(c.addedSecond)+'<br>Redeem arrears: '+pounds(c.addedArrears)+'<br>Legal buffer: '+pounds(c.legals)+'<br>Contingency: '+pounds(c.buffer)+'<br><strong>Total additions: '+pounds(c.additions)+'</strong></div>'+ 
-      '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Your loan</strong><br>Net cash day one: '+pounds(c.netDayOne)+'<br>Additions: '+pounds(c.additions)+'<br>Total facility: '+pounds(c.facility)+'<br>Net or gross: '+escapeHtml(d.netGrossRequest||'TBC')+'<br>Repayment preference: '+escapeHtml(d.repaymentPreference||'TBC')+'<br>Purpose: '+escapeHtml(V.loanPurpose||PARAMS.loan_purpose||'TBC')+'<br>Exit: '+escapeHtml(d.exitStrategy||'TBC')+'<br>Timescale: '+escapeHtml(d.requiredTimescale||'TBC')+'<br>Credit profile: '+escapeHtml(d.creditProfile||'TBC')+'<br><strong>Net LTV: '+(c.ltv?c.ltv+'%':'TBC')+'</strong></div>'+ 
+      '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>Additions to loan</strong><br>Mandatory redemptions: '+pounds(c.addedSecond + c.addedArrears)+'<br>— Second charge / HMRC / restriction: '+pounds(c.addedSecond)+'<br>— Arrears: '+pounds(c.addedArrears)+'<br>Legal buffer: '+pounds(c.legals)+'<br>Contingency: '+pounds(c.buffer)+'<br><strong>Total additions: '+pounds(c.additions)+'</strong></div>'+ 
+      '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Your loan</strong><br>Net cash day one: '+pounds(c.netDayOne)+'<br>Facility before legal/buffer: '+pounds(c.base + c.addedSecond + c.addedArrears)+'<br>Additions incl. legal/buffer: '+pounds(c.additions)+'<br>Total facility: '+pounds(c.facility)+'<br>Net or gross: '+escapeHtml(d.netGrossRequest||'TBC')+'<br>Repayment preference: '+escapeHtml(d.repaymentPreference||'TBC')+'<br>Purpose: '+escapeHtml(V.loanPurpose||PARAMS.loan_purpose||'TBC')+'<br>Exit: '+escapeHtml(d.exitStrategy||'TBC')+'<br>Timescale: '+escapeHtml(d.requiredTimescale||'TBC')+'<br>Credit profile: '+escapeHtml(d.creditProfile||'TBC')+'<br><strong>Net LTV: '+(c.ltv?c.ltv+'%':'TBC')+'</strong></div>'+ 
       outstandingBox(d)+
       '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Next step:</strong> WhatsApp/Email scorecard should carry the outstanding-items checklist into broker follow-up and LOR mapping. No time-to-fund promise is made here.</div>'+ 
       '</div>';
@@ -692,6 +700,7 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; btn.style.opacity = '.72'; }
     Object.assign(EXTRA, collectFormValues());
     var payload = collectFormValues();
+    payload.redemptionStructure = redemptionMode(payload.redemptionStructure);
     payload.product = PARAMS.route || 'main_loan';
     payload.source_url = window.location.href;
     payload.page_source = 'router-continuation';
