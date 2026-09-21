@@ -139,6 +139,13 @@
   }
   function firstName(full) { return norm(PARAMS.first_name) || norm(full).split(/\s+/)[0] || ''; }
   function lastName(full) { var explicit = norm(PARAMS.last_name); if (explicit) return explicit; var p = norm(full).split(/\s+/); return p.length > 1 ? p.slice(1).join(' ') : ''; }
+  function paramAny(names) {
+    for (var i = 0; i < names.length; i++) {
+      var k = names[i];
+      if (PARAMS[k] !== undefined && norm(PARAMS[k])) return PARAMS[k];
+    }
+    return '';
+  }
 
   function sourceValues() {
     var full = PARAMS.full_name || PARAMS.name || '';
@@ -152,15 +159,15 @@
       loanPurpose: purpose(PARAMS.loan_purpose || PARAMS.purpose || ''),
       propertyAddress: stripPostcode(addr, postcode),
       postcode: postcode,
-      propertyValue: money(PARAMS.property_value),
-      firstChargeLender: PARAMS.first_charge_lender || '',
-      firstChargeBalance: money(PARAMS.first_charge_balance),
-      secondCharges: yesNo(PARAMS.second_charges),
-      secondChargeProvider: PARAMS.second_charge_lender || PARAMS.second_charge_provider || '',
-      secondChargeBalance: money(PARAMS.second_charge_balance),
-      arrears: yesNo(PARAMS.first_charge_arrears),
-      arrearsAmount: money(PARAMS.first_charge_arrears_amount || PARAMS.mortgage_arrears_amount || PARAMS.arrears_amount),
-      loanAmount: money(PARAMS.loan_amount),
+      propertyValue: money(paramAny(['property_value','propertyValue','security_value','estimated_property_value','estimatedPropertyValue'])),
+      firstChargeLender: paramAny(['first_charge_lender','firstChargeLender','first_charge_provider','firstChargeProvider','current_mortgage_lender','currentMortgageLender','mortgage_lender','mortgageLender','existing_lender','existingLender','first_lender','firstLender']),
+      firstChargeBalance: money(paramAny(['first_charge_balance','firstChargeBalance','first_mortgage_balance','firstMortgageBalance','mortgage_balance','mortgageBalance','existing_mortgage_balance','existingMortgageBalance'])),
+      secondCharges: yesNo(paramAny(['second_charges','secondCharges','has_second_charge','hasSecondCharge','additional_charges','additionalCharges'])),
+      secondChargeProvider: paramAny(['second_charge_lender','secondChargeLender','second_charge_provider','secondChargeProvider','second_charge_holder','secondChargeHolder','restriction_holder','restrictionHolder','additional_charge_provider','additionalChargeProvider','secured_loan_lender','securedLoanLender','second_lender','secondLender']),
+      secondChargeBalance: money(paramAny(['second_charge_balance','secondChargeBalance','second_mortgage_balance','secondMortgageBalance','additional_charge_balance','additionalChargeBalance','secured_loan_balance','securedLoanBalance','restriction_balance','restrictionBalance'])),
+      arrears: yesNo(paramAny(['first_charge_arrears','firstChargeArrears','mortgage_arrears','mortgageArrears','arrears'])),
+      arrearsAmount: money(paramAny(['first_charge_arrears_amount','firstChargeArrearsAmount','mortgage_arrears_amount','mortgageArrearsAmount','arrears_amount','arrearsAmount'])),
+      loanAmount: money(paramAny(['loan_amount','loanAmount','requested_loan_amount','requestedLoanAmount'])),
       chargeRequested: PARAMS.charge_requested || ''
     };
   }
@@ -409,6 +416,12 @@
   function selectHtml(label, name, options, selected) {
     return '<div class="mb-5"><label style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><select name="'+name+'" style="width:100%;height:54px;padding:0 18px;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none">'+options.map(function(o){ return '<option value="'+escapeHtml(o[0])+'"'+(o[0]===selected?' selected':'')+'>'+escapeHtml(o[1])+'</option>'; }).join('')+'</select></div>';
   }
+  function carriedValueHtml(label, value, name, fallbackInput) {
+    if (!norm(value)) return fallbackInput;
+    return '<div class="mb-5"><div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px">'+escapeHtml(label)+'</div>'+ 
+      '<div style="min-height:54px;padding:15px 18px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E">'+escapeHtml(value)+'</div>'+ 
+      '<input type="hidden" name="'+escapeHtml(name)+'" value="'+escapeHtml(value)+'"></div>';
+  }
   function smallNote(text) {
     return '<div style="font-size:12px;line-height:1.55;color:#6F6B7A;margin:-6px 0 12px">'+escapeHtml(text)+'</div>';
   }
@@ -484,11 +497,11 @@
       fieldHtml('Security postcode', V.postcode, 'securityPostcode')+
       fieldHtml('Estimated property value', V.propertyValue ? '£' + Number(V.propertyValue).toLocaleString('en-GB') : '', 'propertyValue')+
       greenSection('Charge stack',
-        fieldHtml('First charge lender', V.firstChargeLender, 'firstChargeLender')+
+        carriedValueHtml('First charge lender', V.firstChargeLender, 'firstChargeLender', fieldHtml('First charge lender', '', 'firstChargeLender'))+
         fieldHtml('First charge balance', V.firstChargeBalance ? '£' + Number(V.firstChargeBalance).toLocaleString('en-GB') : '', 'firstChargeBalance')+
         fieldHtml('Approximate arrears amount (£)', V.arrearsAmount ? '£' + Number(V.arrearsAmount).toLocaleString('en-GB') : '', 'firstChargeArrearsAmount')+
         selectHtml('Does the balance above include the arrears, or is it the clean balance?', 'firstChargeBalanceType', [['','Please select'],['clean_balance','Clean balance only — arrears separate'],['inclusive_balance','Balance includes arrears'],['unknown','Not sure']], '')+
-        fieldHtml('Second charge / additional charge provider', V.secondChargeProvider, 'secondChargeProvider')+
+        carriedValueHtml('Second charge / additional charge provider', V.secondChargeProvider, 'secondChargeProvider', fieldHtml('Second charge / additional charge provider', '', 'secondChargeProvider'))+
         fieldHtml('Second charge / additional charge balance', V.secondChargeBalance ? '£' + Number(V.secondChargeBalance).toLocaleString('en-GB') : '', 'secondChargeBalance'),
         'Capture arrears and second charges separately so mandatory redemptions can be calculated cleanly.')+
       buildMandatoryRedemptionsCard()+
@@ -515,7 +528,7 @@
         'If zero, select 0 and move on. If portfolio, we capture enough to trigger the right follow-up pack.')+
       textareaHtml('Property notes / condition / works', '', 'propertyNotes', 'E.g. vacant, tenanted, refurbishment needed, title issue, works completed.')+
       outstandingBox(collectFormValues())+
-      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:22px 28px;min-height:68px;border-radius:4px;cursor:pointer;margin-left:0;box-shadow:0 14px 28px -18px rgba(0,181,176,.75)">Loan requirements →</button></div>';
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Continue to loan structure →</button></div>';
     rewriteSideStep('Step 3 of 4 — The property', 'The property');
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
   }
@@ -583,7 +596,7 @@
       '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+ 
       '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Recommended solicitor route: <strong>LARK</strong>. We can also work with your own solicitor if preferred.</div>'+ 
       outstandingBox(collectFormValues())+
-      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:15px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:22px 28px;min-height:68px;border-radius:4px;cursor:pointer;margin-left:0;box-shadow:0 14px 28px -18px rgba(0,181,176,.75)">Submit enquiry →</button></div>';
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Submit enquiry →</button></div>';
     rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
     Array.prototype.slice.call(card.querySelectorAll('input')).forEach(function(input){ paintOption(input, input.checked); });
     updateFacilitySummary();
