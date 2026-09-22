@@ -1290,5 +1290,50 @@ fbq('track', 'PageView');
 })();
 </script>
 
+
+<script id="posfin-consent-wide-click-target">
+(function () {
+  function isConsentLabel(label) {
+    if (!label || label.dataset.posfinConsentWide === '1') return false;
+    var checkbox = label.querySelector('input[type="checkbox"]');
+    if (!checkbox) return false;
+    var text = (label.textContent || '').replace(/\s+/g, ' ').toLowerCase();
+    return text.includes('agree to be contacted') || text.includes('consent to posfin capital') || text.includes('contacted by posfin capital');
+  }
+  function enhanceConsentLabels(root) {
+    (root || document).querySelectorAll('label').forEach(function (label) {
+      if (!isConsentLabel(label)) return;
+      label.dataset.posfinConsentWide = '1';
+      label.style.cursor = 'pointer';
+      label.style.padding = label.style.padding || '0.85rem 0.9rem';
+      label.style.margin = label.style.margin || '0';
+      label.style.borderRadius = label.style.borderRadius || '6px';
+      label.style.minHeight = label.style.minHeight || '48px';
+      label.style.alignItems = label.style.alignItems || 'flex-start';
+      label.style.webkitTapHighlightColor = 'rgba(0,181,176,0.12)';
+      label.addEventListener('click', function (event) {
+        if (event.target.closest('a') || event.target.matches('input[type="checkbox"]')) return;
+        var checkbox = label.querySelector('input[type="checkbox"]');
+        if (!checkbox || checkbox.disabled) return;
+        event.preventDefault();
+        checkbox.click();
+      });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { enhanceConsentLabels(document); });
+  } else {
+    enhanceConsentLabels(document);
+  }
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+      mutation.addedNodes.forEach(function (node) {
+        if (node.nodeType === 1) enhanceConsentLabels(node);
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>
+
 </body>
 </html>
