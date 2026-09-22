@@ -680,7 +680,11 @@ export default async function handler(req, res) {
     try {
       rawLeadRowNumber = await markRawLeadAssignedIfMatched(sheets, data, owner.name, data.deal_ref, pipelineRowNumber);
     } catch (e) { console.warn('[Lead API] Raw Leads owner stamp failed:', e.message); }
-    if (product === 'equitable_charges' || (hasExplicitOwnerTag(data) && (owner.name === 'Chris' || owner.name === 'Byron'))) {
+    const suppressCalls = data.suppress_calls === true || data.suppress_calls === 'true'
+      || data.partial_route_check === true || data.partial_route_check === 'true'
+      || data.route_check_stage === 'router_initial'
+      || data.page_source === 'apply-intelligent-router';
+    if (!suppressCalls && (product === 'equitable_charges' || (hasExplicitOwnerTag(data) && (owner.name === 'Chris' || owner.name === 'Byron')))) {
       try {
         const call = product === 'equitable_charges'
           ? formatEquitableCallRow(data, ts, pipelineRowNumber, leadRowNumber)

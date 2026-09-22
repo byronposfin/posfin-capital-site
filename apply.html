@@ -1220,6 +1220,9 @@ fbq('track', 'PageView');
       loan_purpose: payload.purpose,
       net_or_gross: payload.loanIntent === 'first_charge_refi' ? 'gross' : 'net',
       page_source: 'apply-intelligent-router',
+      route_check_stage: 'router_initial',
+      partial_route_check: true,
+      suppress_calls: true,
       additional_info: [
         payload.prefill_note ? 'Click-roll note shown to borrower: ' + payload.prefill_note : '',
         payload.source_channel ? 'Source channel: ' + payload.source_channel : '',
