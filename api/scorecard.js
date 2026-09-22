@@ -18,16 +18,16 @@ function fmtCurrency(v) {
 }
 
 function row(label, value, opts = {}) {
-  const color = opts.teal ? '#00B5B0' : opts.amber ? '#D4A853' : '#1C184F';
+  const color = opts.teal ? '#008F8A' : opts.amber ? '#1C184F' : '#1C184F';
   const weight = opts.bold ? '700' : '500';
-  return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:0.4rem 0;border-bottom:1px solid rgba(28,24,79,0.07)">
-    <span style="font-size:0.82rem;color:#6F6B7A">${label}</span>
-    <span style="font-size:0.85rem;font-weight:${weight};color:${color}">${value || '—'}</span>
+  return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:0.62rem 0;border-bottom:1px solid #E8EEF0">
+    <span style="font-size:0.9rem;color:#425466;line-height:1.35">${label}</span>
+    <span style="font-size:0.94rem;font-weight:${weight};color:${color};text-align:right;line-height:1.35;max-width:58%">${value || '—'}</span>
   </div>`;
 }
 
 function section(label) {
-  return `<p style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:#D4A853;font-family:monospace;margin:1.2rem 0 0.5rem">${label}</p>`;
+  return `<p style="font-size:11px;text-transform:uppercase;letter-spacing:0.16em;color:#008F8A;font-family:'DM Sans',-apple-system,sans-serif;font-weight:800;margin:1.35rem 0 0.55rem">${label}</p>`;
 }
 
 function scorecard(d) {
@@ -50,12 +50,12 @@ function scorecard(d) {
   }
 
   const additionsSection = additionsRows.length > 0 ? `
-    <div style="margin-bottom:1.2rem;padding:0.8rem;border-radius:5px;background:rgba(212,168,83,0.05);border:1px solid rgba(212,168,83,0.2)">
+    <div style="margin-bottom:1.2rem;padding:0.8rem;border-radius:5px;background:#FFFFFF;border:1px solid #DCEAEC">
       ${section('Additions to Loan')}
       ${additionsRows.join('')}
-      <div style="display:flex;justify-content:space-between;padding-top:0.4rem;margin-top:0.2rem;border-top:1px solid rgba(212,168,83,0.3)">
+      <div style="display:flex;justify-content:space-between;padding-top:0.4rem;margin-top:0.2rem;border-top:1px solid #DCEAEC">
         <span style="font-size:0.82rem;font-weight:700;color:#1C184F">Total additions</span>
-        <span style="font-size:0.85rem;font-weight:700;color:#D4A853">${fmtCurrency(totalAdditions)}</span>
+        <span style="font-size:0.85rem;font-weight:700;color:#008F8A">${fmtCurrency(totalAdditions)}</span>
       </div>
     </div>` : '';
 
@@ -68,20 +68,20 @@ function scorecard(d) {
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#FAF8F3;font-family:'DM Sans',-apple-system,sans-serif;color:#1A1A2E;min-height:100vh;-webkit-font-smoothing:antialiased}
-.wrap{max-width:560px;margin:0 auto;padding:2rem 1.25rem 4rem}
-.header{text-align:center;padding-bottom:1.5rem;border-bottom:2px solid #1C184F;margin-bottom:0.5rem}
+body{background:#FFFFFF;font-family:'DM Sans',-apple-system,sans-serif;color:#1A1A2E;min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:600px;margin:0 auto;padding:2rem 1.1rem 4rem;background:#FFFFFF}
+.header{text-align:center;padding:1.25rem 0 1.5rem;border-bottom:3px solid #1C184F;margin-bottom:0.75rem;background:#FFFFFF}
 .icon{font-size:2.5rem;margin-bottom:0.75rem}
 .headline{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;color:#1C184F;margin:0 0 0.4rem}
 .subline{font-size:0.82rem;color:#5A5770}
-.scorecard-label{font-size:10px;text-transform:uppercase;letter-spacing:0.18em;color:#9E9AAA;font-family:monospace;margin:1rem 0 0.75rem}
+.scorecard-label{font-size:11px;text-transform:uppercase;letter-spacing:0.20em;color:#1C184F;font-weight:800;margin:1.15rem 0 0.9rem}
 .ref-box{margin-top:1.5rem;padding:1rem;border-radius:5px;background:#1C184F;text-align:center}
 .ref-label{color:rgba(255,255,255,0.7);font-size:0.78rem;margin-bottom:0.3rem}
 .ref-value{color:#00B5B0;font-family:monospace;font-size:0.9rem;font-weight:600}
 .ref-sub{color:rgba(255,255,255,0.6);font-size:0.75rem;margin-top:0.6rem}
-.top-bar{background:#13113A;color:rgba(255,255,255,0.78);padding:10px 24px;font-size:11px;letter-spacing:0.12em;display:flex;justify-content:space-between;align-items:center}
+.top-bar{background:#13113A;color:#FFFFFF;padding:11px 24px;font-size:11px;font-weight:700;letter-spacing:0.12em;display:flex;justify-content:space-between;align-items:center}
 .generated{font-size:11px;color:#9E9AAA;text-align:center;margin-top:2rem}
-@media(max-width:600px){.wrap{padding:1.5rem 1rem 3rem}.top-bar{flex-direction:column;gap:4px;text-align:center}}
+@media(max-width:600px){.wrap{padding:1.35rem 1rem 3rem}.top-bar{flex-direction:column;gap:4px;text-align:center;font-size:10px}.headline{font-size:1.55rem}.subline{font-size:.88rem}.icon{font-size:2.35rem}}
 </style>
 </head>
 <body>
