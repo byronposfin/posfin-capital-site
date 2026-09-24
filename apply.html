@@ -526,15 +526,63 @@ fbq('track', 'PageView');
   <input type="hidden" id="productIntent" name="productIntent" value="not_sure">
 
   <div class="field">
-    <label for="homeAddress">Home / Residential Address <span class="req">*</span></label>
-    <input type="text" id="homeAddress" name="homeAddress" autocomplete="home street-address" required placeholder="House number + street name">
-    <div class="field-error">Home address required</div>
+    <label for="dob">Date of Birth <span class="req">*</span></label>
+    <input type="date" id="dob" name="dob" autocomplete="bday" required>
+    <div class="field-error">Date of birth required for BROKA/KYC</div>
   </div>
 
   <div class="field">
-    <label for="homePostcode">Home Postcode <span class="req">*</span></label>
+    <label for="homeAddress">Current Home / Residential Address <span class="req">*</span></label>
+    <input type="text" id="homeAddress" name="homeAddress" autocomplete="home street-address" required placeholder="House number + street name">
+    <div class="field-error">Current home address required</div>
+  </div>
+
+  <div class="field">
+    <label for="homePostcode">Current Home Postcode <span class="req">*</span></label>
     <input type="text" id="homePostcode" name="homePostcode" autocomplete="postal-code" required placeholder="SW1A 1AA" style="text-transform:uppercase">
     <div class="field-error">Valid UK postcode required</div>
+  </div>
+
+  <div class="field-row">
+    <div class="field">
+      <label for="currentAddressMoveInMonth">Moved into current address — month <span class="req">*</span></label>
+      <select id="currentAddressMoveInMonth" name="currentAddressMoveInMonth" required>
+        <option value="">Month…</option>
+        <option value="01">January</option>
+        <option value="02">February</option>
+        <option value="03">March</option>
+        <option value="04">April</option>
+        <option value="05">May</option>
+        <option value="06">June</option>
+        <option value="07">July</option>
+        <option value="08">August</option>
+        <option value="09">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+      <div class="field-error">Move-in month required</div>
+    </div>
+    <div class="field">
+      <label for="currentAddressMoveInYear">Moved into current address — year <span class="req">*</span></label>
+      <input type="number" id="currentAddressMoveInYear" name="currentAddressMoveInYear" required placeholder="2022" min="1940" max="2030" inputmode="numeric">
+      <div class="field-error">Valid move-in year required</div>
+    </div>
+  </div>
+
+  <div id="previousAddressBlock" style="display:none;border:1px solid rgba(0,181,176,0.22);background:rgba(0,181,176,0.06);border-radius:10px;padding:1rem;margin:0 0 1rem;">
+    <div style="font-size:0.78rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#1C184F;margin-bottom:0.45rem;">Previous residential address required</div>
+    <small style="display:block;color:#5B5E73;line-height:1.45;margin-bottom:0.85rem;">Because you have lived at your current address for less than 3 years, BROKA/KYC requires your previous residential address.</small>
+    <div class="field">
+      <label for="previousAddress">Previous Residential Address <span class="req">*</span></label>
+      <input type="text" id="previousAddress" name="previousAddress" autocomplete="street-address" placeholder="Previous house number + street name">
+      <div class="field-error">Previous address required if current address is under 3 years</div>
+    </div>
+    <div class="field">
+      <label for="previousPostcode">Previous Postcode <span class="req">*</span></label>
+      <input type="text" id="previousPostcode" name="previousPostcode" autocomplete="postal-code" placeholder="SW1A 1AA" style="text-transform:uppercase">
+      <div class="field-error">Valid previous postcode required</div>
+    </div>
   </div>
 
   <div class="field">
@@ -967,6 +1015,49 @@ fbq('track', 'PageView');
     });
   }
 
+  const previousAddressBlock = document.getElementById('previousAddressBlock');
+  const currentAddressMoveInMonth = document.getElementById('currentAddressMoveInMonth');
+  const currentAddressMoveInYear = document.getElementById('currentAddressMoveInYear');
+  const previousAddress = document.getElementById('previousAddress');
+  const previousPostcode = document.getElementById('previousPostcode');
+  function currentAddressMoveInDateValue() {
+    if (!currentAddressMoveInMonth || !currentAddressMoveInYear) return '';
+    const y = String(currentAddressMoveInYear.value || '').trim();
+    const m = String(currentAddressMoveInMonth.value || '').trim();
+    return y && m ? y + '-' + m + '-01' : '';
+  }
+  function monthsAtCurrentAddress() {
+    const move = currentAddressMoveInDateValue();
+    if (!move) return '';
+    const d = new Date(move + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return '';
+    const now = new Date();
+    let months = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+    if (now.getDate() < d.getDate()) months -= 1;
+    return Math.max(0, months);
+  }
+  function hasThreeYearResidentialHistory() {
+    const months = monthsAtCurrentAddress();
+    return months !== '' && Number(months) >= 36;
+  }
+  function syncPreviousAddressRequirement() {
+    if (!previousAddressBlock || !previousAddress || !previousPostcode) return;
+    const move = currentAddressMoveInDateValue();
+    const needsPrevious = !!move && !hasThreeYearResidentialHistory();
+    previousAddressBlock.style.display = needsPrevious ? 'block' : 'none';
+    previousAddress.required = needsPrevious;
+    previousPostcode.required = needsPrevious;
+    if (!needsPrevious) {
+      previousAddress.closest('.field').classList.remove('has-error');
+      previousPostcode.closest('.field').classList.remove('has-error');
+    }
+  }
+  [currentAddressMoveInMonth, currentAddressMoveInYear].forEach(function(el){
+    if (el) el.addEventListener('input', syncPreviousAddressRequirement);
+    if (el) el.addEventListener('change', syncPreviousAddressRequirement);
+  });
+  syncPreviousAddressRequirement();
+
   const chargeRequested = document.getElementById('chargeRequested');
   const loanIntentField = document.getElementById('loanIntentField');
   function setLoanIntent(value) {
@@ -1045,8 +1136,18 @@ fbq('track', 'PageView');
       mobile: payload.phone,
       phone: payload.phone,
       email: payload.email,
+      dob: payload.dateOfBirth,
+      date_of_birth: payload.dateOfBirth,
       home_address: payload.homeAddress,
       residential_address: payload.homeAddress,
+      current_address_move_in_month: payload.currentAddressMoveInMonth,
+      current_address_move_in_year: payload.currentAddressMoveInYear,
+      current_address_move_in_date: payload.currentAddressMoveInDate,
+      current_address_months_at_address: payload.currentAddressMonthsAtAddress,
+      current_address_three_year_met: payload.currentAddressThreeYearMet,
+      previous_address: payload.previousAddress,
+      previous_residential_address: payload.previousAddress,
+      previous_postcode: payload.previousPostcode,
       security_address: payload.propertyAddress,
       property_address: payload.propertyAddress,
       home_postcode: payload.homePostcode,
@@ -1098,7 +1199,7 @@ fbq('track', 'PageView');
   function hasAddressLine(v) { return String(v || '').trim().length >= 6 && /[A-Za-z]{3,}/.test(String(v || '')); }
   function hasPostcode(v) { return /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(String(v || '').trim()); }
   function canonicalPostcode(v) { return String(v || '').trim().toUpperCase().replace(/\s+/, ' '); }
-  ['homePostcode','propertyPostcode'].forEach(function(id){
+  ['homePostcode','propertyPostcode','previousPostcode'].forEach(function(id){
     const el = document.getElementById(id);
     if (el) el.addEventListener('blur', function(){ el.value = canonicalPostcode(el.value); });
   });
@@ -1117,11 +1218,18 @@ fbq('track', 'PageView');
       if (f.type === 'tel' && val.replace(/[^\d]/g, '').length < 9) {
         wrap.classList.add('has-error'); valid = false;
       }
-      if ((f.id === 'homeAddress' || f.id === 'propertyAddress') && !hasAddressLine(val)) {
+      if ((f.id === 'homeAddress' || f.id === 'propertyAddress' || f.id === 'previousAddress') && !hasAddressLine(val)) {
         wrap.classList.add('has-error'); valid = false;
       }
-      if ((f.id === 'homePostcode' || f.id === 'propertyPostcode') && !hasPostcode(val)) {
+      if ((f.id === 'homePostcode' || f.id === 'propertyPostcode' || f.id === 'previousPostcode') && !hasPostcode(val)) {
         wrap.classList.add('has-error'); valid = false;
+      }
+      if (f.id === 'dob' && !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        wrap.classList.add('has-error'); valid = false;
+      }
+      if (f.id === 'currentAddressMoveInYear') {
+        const y = parseInt(val, 10), nowY = new Date().getFullYear();
+        if (!y || y < 1940 || y > nowY) { wrap.classList.add('has-error'); valid = false; }
       }
     });
     return valid;
@@ -1159,8 +1267,17 @@ fbq('track', 'PageView');
       name: form.name.value.trim(),
       phone: form.phone.value.trim(),
       email: form.email.value.trim(),
+      dob: form.dob.value.trim(),
+      dateOfBirth: form.dob.value.trim(),
       homeAddress: (form.homeAddress.value.trim() + ', ' + canonicalPostcode(form.homePostcode.value)).trim(),
       homePostcode: canonicalPostcode(form.homePostcode.value),
+      currentAddressMoveInMonth: form.currentAddressMoveInMonth.value,
+      currentAddressMoveInYear: form.currentAddressMoveInYear.value.trim(),
+      currentAddressMoveInDate: currentAddressMoveInDateValue(),
+      currentAddressMonthsAtAddress: monthsAtCurrentAddress(),
+      currentAddressThreeYearMet: hasThreeYearResidentialHistory() ? 'Yes' : 'No',
+      previousAddress: (form.previousAddress && form.previousAddress.value.trim()) ? (form.previousAddress.value.trim() + ', ' + canonicalPostcode(form.previousPostcode.value)).trim() : '',
+      previousPostcode: form.previousPostcode ? canonicalPostcode(form.previousPostcode.value) : '',
       propertyAddress: (form.propertyAddress.value.trim() + ', ' + canonicalPostcode(form.propertyPostcode.value)).trim(),
       propertyPostcode: canonicalPostcode(form.propertyPostcode.value),
       securityIsHome: form.securityIsHome && form.securityIsHome.checked ? 'Yes' : 'No',
@@ -1202,8 +1319,19 @@ fbq('track', 'PageView');
       last_name: nameParts.last,
       mobile: payload.phone,
       email: payload.email,
+      dob: payload.dob,
+      date_of_birth: payload.dateOfBirth,
+      borrower_dob: payload.dateOfBirth,
       residential_address: payload.homeAddress,
       home_address: payload.homeAddress,
+      current_address_move_in_month: payload.currentAddressMoveInMonth,
+      current_address_move_in_year: payload.currentAddressMoveInYear,
+      current_address_move_in_date: payload.currentAddressMoveInDate,
+      current_address_months_at_address: payload.currentAddressMonthsAtAddress,
+      current_address_three_year_met: payload.currentAddressThreeYearMet,
+      previous_residential_address: payload.previousAddress,
+      previous_address: payload.previousAddress,
+      previous_postcode: payload.previousPostcode,
       property_address: payload.propertyAddress,
       home_postcode: payload.homePostcode,
       security_postcode: payload.propertyPostcode,
@@ -1228,6 +1356,10 @@ fbq('track', 'PageView');
         payload.source_channel ? 'Source channel: ' + payload.source_channel : '',
         payload.route_hint ? 'Route hint: ' + payload.route_hint : '',
         payload.resolvedRoute ? 'System inferred route: ' + payload.resolvedRoute : '',
+        payload.dateOfBirth ? 'DOB: ' + payload.dateOfBirth : '',
+        payload.currentAddressMoveInDate ? 'Current address move-in: ' + payload.currentAddressMoveInDate + ' (' + payload.currentAddressMonthsAtAddress + ' months)' : '',
+        payload.currentAddressThreeYearMet ? '3-year residential history met at current address: ' + payload.currentAddressThreeYearMet : '',
+        payload.previousAddress ? 'Previous residential address: ' + payload.previousAddress : '',
         payload.chargeRequested ? 'Charge requested: ' + payload.chargeRequested : '',
         payload.firstChargeLender ? 'First charge lender: ' + payload.firstChargeLender : '',
         payload.firstChargeBalance ? 'First charge balance: ' + payload.firstChargeBalance : '',
