@@ -701,7 +701,11 @@
     Object.assign(EXTRA, collectFormValues());
     var payload = collectFormValues();
     payload.redemptionStructure = redemptionMode(payload.redemptionStructure);
-    payload.product = PARAMS.route || 'main_loan';
+    var crmProduct = String(PARAMS.route || 'main_loan').toLowerCase().trim().replace(/[\s-]+/g, '_');
+    if (crmProduct === 'senior_desk' || crmProduct === 'not_sure' || crmProduct === 'standard_bridge') crmProduct = 'main_loan';
+    var allowedProducts = ['main_loan','bank_bridge','speed_loan','equitable_charges','back_to_back','purchase_refurb','acquisition_finance','development_finance','development_exit_finance','trade_finance'];
+    if (allowedProducts.indexOf(crmProduct) === -1) crmProduct = 'main_loan';
+    payload.product = crmProduct;
     payload.source_url = window.location.href;
     payload.page_source = 'router-continuation';
     payload.case_ref = PARAMS.case_ref || '';
