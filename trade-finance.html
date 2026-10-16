@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Trade Finance — Posfin Capital</title>
+  <meta name="description" content="Post-shipment trade finance for exporters. LC discounting, SBLC facilities, insured receivables — structured and brokered by Posfin Capital. FCA Authorised FRN 913022."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #FAF8F3; font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1A1A2E; min-height: 100vh; }
+    a { text-decoration: none; }
+    input, select, textarea, button { font-family: inherit; }
+    .max-w-7xl { max-width: 80rem; margin-left: auto; margin-right: auto; }
+    .px-container { padding-left: 1.5rem; padding-right: 1.5rem; }
+    @media (min-width: 768px) { .px-container { padding-left: 2.5rem; padding-right: 2.5rem; } }
+    @media (min-width: 1024px) { .px-container { padding-left: 4rem; padding-right: 4rem; } }
+
+    /* Nav sticky */
+    .site-nav { position: sticky; top: 0; z-index: 100; background: #1C184F; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding-top: 0.875rem; padding-bottom: 0.875rem; }
+    .nav-logo { display: flex; align-items: center; gap: 0.875rem; }
+    .nav-logo img { height: 34px; width: auto; }
+    .nav-links { display: none; gap: 2rem; align-items: center; }
+    @media (min-width: 768px) { .nav-links { display: flex; } }
+    .nav-links a { font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; color: rgba(255,255,255,0.72); font-weight: 500; transition: color 0.15s; }
+    .nav-links a:hover { color: #fff; }
+    .nav-cta { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; background: #00B5B0; color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; }
+
+    /* Grid helpers */
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem 1.5rem; }
+    @media (min-width: 768px) { .grid-2 { grid-template-columns: repeat(2, 1fr); } .grid-3 { grid-template-columns: repeat(3, 1fr); } .grid-4 { grid-template-columns: repeat(4, 1fr); } }
+
+    /* Buttons */
+    .btn-navy { display: inline-flex; align-items: center; gap: 0.75rem; padding: 1.1rem 2rem; background: #1C184F; color: #fff; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; cursor: pointer; border: none; min-height: 56px; transition: background 0.15s; }
+    .btn-navy:hover { background: #2a2570; }
+    .btn-outline { display: inline-flex; align-items: center; gap: 0.75rem; padding: 1.1rem 2rem; background: transparent; color: rgba(255,255,255,0.85); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; cursor: pointer; border: 1px solid rgba(255,255,255,0.35); min-height: 56px; transition: border-color 0.15s, color 0.15s; }
+    .btn-outline:hover { border-color: #fff; color: #fff; }
+    .btn-teal { display: inline-flex; align-items: center; gap: 0.75rem; padding: 1.1rem 2rem; background: #00B5B0; color: #fff; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; cursor: pointer; border: none; min-height: 56px; transition: background 0.15s; }
+    .btn-teal:hover { background: #009a96; }
+
+    /* Form */
+    .form-label { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #1C184F; margin-bottom: 8px; display: block; }
+    .form-input { width: 100%; height: 54px; padding: 0 18px; font-size: 16px; color: #1A1A2E; background: #FFFFFF; border: 1px solid #E5E1D6; outline: none; transition: border-color 0.15s ease; appearance: none; }
+    .form-input:focus { border-color: #00B5B0; }
+    .form-select { width: 100%; height: 54px; padding: 0 18px; font-size: 15px; color: #1A1A2E; background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231A1A2E' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 16px center; border: 1px solid #E5E1D6; outline: none; cursor: pointer; }
+    .form-select:focus { border-color: #00B5B0; }
+    .form-textarea { width: 100%; padding: 14px 18px; font-size: 15px; color: #1A1A2E; background: #FFFFFF; border: 1px solid #E5E1D6; outline: none; transition: border-color 0.15s ease; resize: vertical; min-height: 100px; }
+    .form-textarea:focus { border-color: #00B5B0; }
+    .form-group { margin-bottom: 1.25rem; }
+
+    /* Steps */
+    .steps-container { display: grid; grid-template-columns: 1fr; gap: 2rem; position: relative; }
+    @media (min-width: 768px) { .steps-container { grid-template-columns: repeat(5, 1fr); } }
+
+    /* WA float */
+    .wa-float { position: fixed; bottom: 24px; right: 24px; z-index: 999; width: 56px; height: 56px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(37,211,102,0.4); }
+
+    /* Section label */
+    .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.28em; color: #00B5B0; margin-bottom: 1.25rem; font-weight: 600; }
+    .section-label-muted { font-size: 11px; text-transform: uppercase; letter-spacing: 0.28em; color: #6F6B7A; margin-bottom: 1.25rem; font-weight: 600; }
+    .section-label-gold { font-size: 11px; text-transform: uppercase; letter-spacing: 0.28em; color: #D4A853; margin-bottom: 1.25rem; font-weight: 600; }
+
+    .playfair { font-family: "Playfair Display", Georgia, "Times New Roman", serif; }
+
+    /* Divider */
+    .hero-divider { border: none; border-top: 1px solid rgba(255,255,255,0.18); margin: 0; }
+
+    /* Check / Cross list */
+    .check-list { list-style: none; }
+    .check-list li { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.5rem 0; font-size: 15px; }
+    .check-icon { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+    .check-yes { background: rgba(0,181,176,0.12); border: 1px solid #00B5B0; }
+    .check-no { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.4); }
+  </style>
+</head>
+<body>
+
+<!-- TOP UTILITY BAR -->
+<div style="background:#13113A;color:rgba(255,255,255,0.78);font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div class="max-w-7xl px-container" style="padding-top:0.75rem;padding-bottom:0.75rem;display:flex;align-items:center;justify-content:space-between;font-size:11px;letter-spacing:0.12em;">
+    <span style="text-transform:uppercase;font-weight:500;">Posfin Capital · Bridging Finance Specialists</span>
+    <span style="text-transform:uppercase;display:none;" class="sm-show">FCA Authorised · FRN 913022</span>
+  </div>
+</div>
+<style>.sm-show{display:none}@media(min-width:640px){.sm-show{display:inline}}</style>
+
+<!-- STICKY NAV -->
+<nav class="site-nav">
+  <div class="max-w-7xl px-container nav-inner">
+    <div class="nav-logo">
+      <a href="/"><img src="/logo.png" alt="Posfin Capital"/></a>
+    </div>
+    <div class="nav-links">
+      <a href="#solutions">Solutions</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#markets">Markets</a>
+      <a href="#eligibility">Eligibility</a>
+    </div>
+    <a href="/get-your-options" class="nav-cta">Apply Now →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section style="background:linear-gradient(180deg,#1C184F 0%,#13113A 100%);color:#FFFFFF;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div class="max-w-7xl px-container" style="padding-top:4rem;padding-bottom:3rem;">
+    <div style="max-width:52rem;">
+      <!-- Gold badge -->
+      <div style="display:inline-flex;align-items:center;gap:0.75rem;margin-bottom:1.75rem;">
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.28em;color:#D4A853;font-weight:600;">International Trade Finance</span>
+        <span style="color:rgba(255,255,255,0.3);">·</span>
+        <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.28em;color:rgba(255,255,255,0.55);">Posfin Capital</span>
+      </div>
+
+      <h1 class="playfair" style="font-size:clamp(40px,7vw,84px);line-height:0.98;font-weight:500;letter-spacing:-0.02em;">
+        Get Paid On Shipment,<br/>
+        <span style="font-style:italic;color:#D4A853;">Not In 90 Days.</span>
+      </h1>
+
+      <p style="margin-top:2rem;max-width:42rem;font-size:1.1rem;line-height:1.7;color:rgba(255,255,255,0.82);font-weight:400;">
+        We structure and broker post-shipment trade finance for exporters globally. Letter of Credit discounting, SBLC facilities, and insured receivables programmes — presented to tier-1 banks and specialist funders within days.
+      </p>
+
+      <div style="margin-top:2.5rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;">
+        <a href="/get-your-options" class="btn-navy">Check Eligibility — 2 Minutes →</a>
+        <a href="#solutions" class="btn-outline">Explore Solutions</a>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <hr class="hero-divider" style="margin-top:3.5rem;margin-bottom:2.5rem;"/>
+    <div class="grid-4" style="max-width:56rem;">
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#D4A853;margin-bottom:0.5rem;">Countries Screened</div>
+        <div class="playfair" style="font-size:1.75rem;font-weight:500;letter-spacing:-0.01em;">176 Countries</div>
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#D4A853;margin-bottom:0.5rem;">Funding Partners</div>
+        <div class="playfair" style="font-size:1.75rem;font-weight:500;letter-spacing:-0.01em;">11+ Partners</div>
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#D4A853;margin-bottom:0.5rem;">Response Time</div>
+        <div class="playfair" style="font-size:1.75rem;font-weight:500;letter-spacing:-0.01em;">72hr Response</div>
+      </div>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#D4A853;margin-bottom:0.5rem;">Minimum Facility</div>
+        <div class="playfair" style="font-size:1.75rem;font-weight:500;letter-spacing:-0.01em;">£300K+</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div style="background:#FAF8F3;border-bottom:1px solid #E8E4DB;padding:1rem 0;">
+  <div class="max-w-7xl px-container">
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem 2rem;align-items:center;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#00B5B0;">
+      <span>◆ FCA Authorised FRN 913022</span>
+      <span>◆ UKEF Aligned</span>
+      <span>◆ Fineon Exchange Partner</span>
+      <span>◆ Post-Shipment Only</span>
+      <span>◆ 176 Country Risk Matrix</span>
+    </div>
+  </div>
+</div>
+
+<!-- SOLUTIONS -->
+<section id="solutions" style="background:#FAF8F3;color:#1A1A2E;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div class="max-w-7xl px-container" style="padding-top:5rem;padding-bottom:5rem;">
+    <div style="max-width:44rem;margin-bottom:3.5rem;">
+      <div class="section-label">Trade Finance Solutions</div>
+      <h2 class="playfair" style="font-size:clamp(28px,4vw,48px);line-height:1.1;color:#1C184F;font-weight:500;letter-spacing:-0.01em;">Every instrument your export business needs</h2>
+      <p style="margin-top:1.25rem;font-size:1rem;line-height:1.7;color:#6F6B7A;">We structure, package, and broker post-shipment trade finance. Goods must be shipped. LCs must be confirmed. We handle the complexity — you get paid.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem;">
+
+      <!-- Card 1 -->
+      <div style="background:#fff;border:1px solid #E8E4DB;border-top:3px solid #1C184F;padding:2rem;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:#00B5B0;margin-bottom:0.75rem;font-weight:600;">Most Popular</div>
+        <h3 class="playfair" style="font-size:1.25rem;color:#1C184F;font-weight:600;margin-bottom:0.75rem;">LC Discounting</h3>
+        <p style="font-size:14px;line-height:1.7;color:#6F6B7A;">Convert confirmed, irrevocable Letters of Credit into immediate cash. Present shipping documents, receive funds within days — not 90-120 days.</p>
+      </div>
+
+      <!-- Card 2 -->
+      <div style="background:#fff;border:1px solid #E8E4DB;border-top:3px solid #00B5B0;padding:2rem;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:#D4A853;margin-bottom:0.75rem;font-weight:600;">High Value</div>
+        <h3 class="playfair" style="font-size:1.25rem;color:#1C184F;font-weight:600;margin-bottom:0.75rem;">SBLC Finance</h3>
+        <p style="font-size:14px;line-height:1.7;color:#6F6B7A;">Standby Letters of Credit backing existing trade obligations. We structure SBLC-backed facilities that give banks the comfort to advance funds.</p>
+      </div>
+
+      <!-- Card 3 -->
+      <div style="background:#fff;border:1px solid #E8E4DB;border-top:3px solid #1C184F;padding:2rem;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:#00B5B0;margin-bottom:0.75rem;font-weight:600;">Recurring</div>
+        <h3 class="playfair" style="font-size:1.25rem;color:#1C184F;font-weight:600;margin-bottom:0.75rem;">Insured Receivables</h3>
+        <p style="font-size:14px;line-height:1.7;color:#6F6B7A;">Credit insurance wraps that transform your buyer portfolio into bankable assets. Atradius, Euler Hermes, Coface — we structure the policy.</p>
+      </div>
+
+      <!-- Card 4 -->
+      <div style="background:#fff;border:1px solid #E8E4DB;border-top:3px solid #00B5B0;padding:2rem;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:#D4A853;margin-bottom:0.75rem;font-weight:600;">UK Exporters</div>
+        <h3 class="playfair" style="font-size:1.25rem;color:#1C184F;font-weight:600;margin-bottom:0.75rem;">UKEF Buyer Programme</h3>
+        <p style="font-size:14px;line-height:1.7;color:#6F6B7A;">Access the UK Government's export credit guarantee. Your buyer pays just 15% deposit — the bank finances 85%. Grow your order book 6-7x.</p>
+      </div>
+
+      <!-- Card 5 -->
+      <div style="background:#fff;border:1px solid #E8E4DB;border-top:3px solid #1C184F;padding:2rem;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:#00B5B0;margin-bottom:0.75rem;font-weight:600;">Non-Recourse</div>
+        <h3 class="playfair" style="font-size:1.25rem;color:#1C184F;font-weight:600;margin-bottom:0.75rem;">Forfaiting</h3>
+        <p style="font-size:14px;line-height:1.7;color:#6F6B7A;">Sell your trade receivables on a non-recourse basis. Remove the buyer's credit risk entirely from your balance sheet. Multi-currency, multi-jurisdiction.</p>
+      </div>
+
+      <!-- Card 6 -->
+      <div style="background:#fff;border:1px solid #E8E4DB;border-top:3px solid #00B5B0;padding:2rem;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:#D4A853;margin-bottom:0.75rem;font-weight:600;">£5M+</div>
+        <h3 class="playfair" style="font-size:1.25rem;color:#1C184F;font-weight:600;margin-bottom:0.75rem;">Receivables Securitisation</h3>
+        <p style="font-size:14px;line-height:1.7;color:#6F6B7A;">Structure your receivables into a programme that attracts institutional funding at wholesale rates. Multi-obligor, revolving facilities from £5M upward.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works" style="background:#1C184F;color:#FFFFFF;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div class="max-w-7xl px-container" style="padding-top:5rem;padding-bottom:5rem;">
+    <div style="max-width:44rem;margin-bottom:3.5rem;">
+      <div class="section-label-gold">Your Journey</div>
+      <h2 class="playfair" style="font-size:clamp(28px,4vw,48px);line-height:1.1;color:#FFFFFF;font-weight:500;letter-spacing:-0.01em;">From application to funded in as little as 5 days</h2>
+      <p style="margin-top:1.25rem;font-size:1rem;line-height:1.7;color:rgba(255,255,255,0.78);">Our AI-powered qualification engine screens your application instantly. If you qualify, a senior trade finance specialist calls within 24 hours.</p>
+    </div>
+
+    <div class="steps-container">
+
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#00B5B0;margin-bottom:0.75rem;font-weight:600;">2 minutes</div>
+        <div class="playfair" style="font-size:2.5rem;color:#D4A853;font-weight:500;margin-bottom:1rem;">01</div>
+        <h3 class="playfair" style="font-size:1.05rem;color:#FFFFFF;font-weight:600;margin-bottom:0.6rem;">Apply Online</h3>
+        <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.65);">2-minute form: company details, export countries, goods, transaction value, payment terms.</p>
+      </div>
+
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#00B5B0;margin-bottom:0.75rem;font-weight:600;">Under 5 min</div>
+        <div class="playfair" style="font-size:2.5rem;color:#D4A853;font-weight:500;margin-bottom:1rem;">02</div>
+        <h3 class="playfair" style="font-size:1.05rem;color:#FFFFFF;font-weight:600;margin-bottom:0.6rem;">AI Qualification</h3>
+        <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.65);">Instant screening: Companies House, country risk, sanctions, AML checks. Green/Amber/Red classification.</p>
+      </div>
+
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#00B5B0;margin-bottom:0.75rem;font-weight:600;">Within 24 hrs</div>
+        <div class="playfair" style="font-size:2.5rem;color:#D4A853;font-weight:500;margin-bottom:1rem;">03</div>
+        <h3 class="playfair" style="font-size:1.05rem;color:#FFFFFF;font-weight:600;margin-bottom:0.6rem;">Discovery Call</h3>
+        <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.65);">15-minute call with Byron Hill, CEO. Verify shipment, confirm LC/SBLC, discuss facility structure and pricing.</p>
+      </div>
+
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#00B5B0;margin-bottom:0.75rem;font-weight:600;">48 hours</div>
+        <div class="playfair" style="font-size:2.5rem;color:#D4A853;font-weight:500;margin-bottom:1rem;">04</div>
+        <h3 class="playfair" style="font-size:1.05rem;color:#FFFFFF;font-weight:600;margin-bottom:0.6rem;">Deal Packaging</h3>
+        <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.65);">We build your Green Light Memo: company profile, financials, buyer analysis, country risk, pricing. Bank-ready presentation.</p>
+      </div>
+
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#00B5B0;margin-bottom:0.75rem;font-weight:600;">3-5 days</div>
+        <div class="playfair" style="font-size:2.5rem;color:#D4A853;font-weight:500;margin-bottom:1rem;">05</div>
+        <h3 class="playfair" style="font-size:1.05rem;color:#FFFFFF;font-weight:600;margin-bottom:0.6rem;">Funder Matching</h3>
+        <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.65);">Submitted to 11+ specialist funders via our platform. Term sheets returned. We negotiate best execution.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- GLOBAL MARKETS -->
+<section id="markets" style="background:#FAF8F3;color:#1A1A2E;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div class="max-w-7xl px-container" style="padding-top:5rem;padding-bottom:5rem;">
+    <div style="max-width:44rem;margin-bottom:3.5rem;">
+      <div class="section-label-muted">Global Reach</div>
+      <h2 class="playfair" style="font-size:clamp(28px,4vw,48px);line-height:1.1;color:#1C184F;font-weight:500;letter-spacing:-0.01em;">We serve exporters worldwide. Your buyers can be anywhere.</h2>
+    </div>
+
+    <div class="grid-2" style="gap:1.5rem;">
+
+      <!-- UK Exporters -->
+      <div style="background:#fff;border:1px solid #E8E4DB;border-top:3px solid #1C184F;padding:2.25rem;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:#D4A853;margin-bottom:0.75rem;font-weight:600;">For UK Exporters</div>
+        <h3 class="playfair" style="font-size:1.35rem;color:#1C184F;font-weight:600;margin-bottom:1rem;">Access the full UKEF Buyer Programme. Government-backed guarantees.</h3>
+        <ul class="check-list" style="margin-top:1rem;">
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">UKEF Direct Lending Facility</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">Buyer credit guarantees 60+ countries</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">Working capital £300K–£75M</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">Insured receivables via Atradius/Coface</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">Full Green Light Memo for bank committees</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Global Exporters -->
+      <div style="background:#fff;border:1px solid #E8E4DB;border-top:3px solid #00B5B0;padding:2.25rem;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.2em;color:#D4A853;margin-bottom:0.75rem;font-weight:600;">For Global Exporters</div>
+        <h3 class="playfair" style="font-size:1.35rem;color:#1C184F;font-weight:600;margin-bottom:1rem;">Not UK-based? We structure and broker trade finance for exporters in 50+ jurisdictions.</h3>
+        <ul class="check-list" style="margin-top:1rem;">
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">LC discounting from any major issuing bank</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">SBLC-backed facilities multi-currency</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">Fineon Exchange platform 11+ funders</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">Credit insurance structuring globally</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span style="color:#1A1A2E;font-size:14px;">Multi-jurisdictional receivables programmes</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ELIGIBILITY -->
+<section id="eligibility" style="background:#1C184F;color:#FFFFFF;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div class="max-w-7xl px-container" style="padding-top:5rem;padding-bottom:5rem;">
+    <div style="max-width:44rem;margin-bottom:3.5rem;">
+      <div class="section-label-gold">Eligibility</div>
+      <h2 class="playfair" style="font-size:clamp(28px,4vw,48px);line-height:1.1;color:#FFFFFF;font-weight:500;letter-spacing:-0.01em;">Do you qualify?</h2>
+      <p style="margin-top:1.25rem;font-size:1rem;line-height:1.7;color:rgba(255,255,255,0.78);">We are selective. Post-shipment finance only. No exceptions.</p>
+    </div>
+
+    <div class="grid-2" style="gap:2rem;">
+
+      <!-- Can Help -->
+      <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.22em;color:#00B5B0;font-weight:700;margin-bottom:1.25rem;">✓ We Can Help</div>
+        <ul class="check-list">
+          <li>
+            <span class="check-icon check-yes"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">Goods shipped with Bill of Lading</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">Confirmed irrevocable LC or SBLC</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">Registered company 2+ years</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">Minimum £300,000 transaction</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">Filed accounts 2 years minimum</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">Buyers in non-sanctioned countries</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">Clear source of funds</span>
+          </li>
+          <li>
+            <span class="check-icon check-yes"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="#00B5B0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.9);font-size:14px;">Insurable buyer portfolio</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Cannot Help -->
+      <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.22em;color:#DC2626;font-weight:700;margin-bottom:1.25rem;">✗ We Cannot Help</div>
+        <ul class="check-list">
+          <li>
+            <span class="check-icon check-no"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;">Pre-shipment finance</span>
+          </li>
+          <li>
+            <span class="check-icon check-no"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;">Companies under 12 months</span>
+          </li>
+          <li>
+            <span class="check-icon check-no"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;">Buyer/seller same group</span>
+          </li>
+          <li>
+            <span class="check-icon check-no"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;">Sanctioned countries (Iran, Syria, North Korea, Lebanon)</span>
+          </li>
+          <li>
+            <span class="check-icon check-no"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;">No verifiable buyer contracts</span>
+          </li>
+          <li>
+            <span class="check-icon check-no"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;">Transactions below £300,000</span>
+          </li>
+          <li>
+            <span class="check-icon check-no"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;">Commodities with mismatched pricing</span>
+          </li>
+          <li>
+            <span class="check-icon check-no"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <span style="color:rgba(255,255,255,0.7);font-size:14px;">Advance fee fraud or phantom shipments</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- APPLICATION FORM -->
+<section id="apply" style="background:#FAF8F3;color:#1A1A2E;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div class="max-w-7xl px-container" style="padding-top:5rem;padding-bottom:5rem;">
+
+    <div style="max-width:44rem;margin-bottom:2.5rem;">
+      <h2 class="playfair" style="font-size:clamp(26px,4vw,42px);line-height:1.1;color:#1C184F;font-weight:500;letter-spacing:-0.01em;">Check your eligibility in 2 minutes</h2>
+      <p style="margin-top:1rem;font-size:1rem;line-height:1.7;color:#6F6B7A;">Complete this form and our AI qualification engine will assess your application instantly. Qualified applicants receive a call from our CEO within 24 hours.</p>
+    </div>
+
+    <div style="background:#fff;border:1px solid #E8E4DB;padding:2.5rem 2rem;max-width:720px;">
+
+      <div class="grid-2" style="gap:1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Company Name *</label>
+          <input class="form-input" type="text" placeholder="Your company name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Country of Registration *</label>
+          <select class="form-select">
+            <option value="">Select country</option>
+            <option>UK</option>
+            <option>US</option>
+            <option>Germany</option>
+            <option>France</option>
+            <option>India</option>
+            <option>UAE</option>
+            <option>Nigeria</option>
+            <option>South Africa</option>
+            <option>Turkey</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Your Name *</label>
+          <input class="form-input" type="text" placeholder="Full name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input class="form-input" type="email" placeholder="you@company.com"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Phone (with country code) *</label>
+        <input class="form-input" type="tel" placeholder="+44 7000 000000"/>
+      </div>
+
+      <div class="grid-2" style="gap:1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Annual Turnover *</label>
+          <select class="form-select">
+            <option value="">Select range</option>
+            <option>Under £500K</option>
+            <option>£500K–£2M</option>
+            <option>£2M–£10M</option>
+            <option>£10M–£50M</option>
+            <option>£50M+</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Facility Size Required *</label>
+          <select class="form-select">
+            <option value="">Select range</option>
+            <option>£300K–£1M</option>
+            <option>£1M–£5M</option>
+            <option>£5M–£15M</option>
+            <option>£15M–£50M</option>
+            <option>£50M+</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Finance Type Needed *</label>
+        <select class="form-select">
+          <option value="">Select type</option>
+          <option>LC Discounting</option>
+          <option>SBLC Finance</option>
+          <option>Insured Receivables</option>
+          <option>UKEF Buyer Programme</option>
+          <option>Forfaiting</option>
+          <option>Not Sure</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Key Export Countries *</label>
+        <input class="form-input" type="text" placeholder="e.g. Germany, UAE, India, Nigeria"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Goods / Services Exported *</label>
+        <input class="form-input" type="text" placeholder="e.g. Agricultural commodities, machinery, textiles"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Terms</label>
+        <select class="form-select">
+          <option value="">Select terms</option>
+          <option>LC</option>
+          <option>SBLC</option>
+          <option>Open Account 30-120 days</option>
+          <option>Bill of Exchange</option>
+          <option>Mixed</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Have goods been shipped? *</label>
+        <select class="form-select">
+          <option value="">Select status</option>
+          <option>Yes — shipped, docs available</option>
+          <option>Yes — recurring shipments</option>
+          <option>Not yet — confirmed orders</option>
+          <option>Planning future shipments</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tell us about your trade finance needs</label>
+        <textarea class="form-textarea" placeholder="Brief overview of your export business, buyers, and what you're looking to achieve..."></textarea>
+      </div>
+
+      <div style="margin-top:1rem;margin-bottom:1.5rem;">
+        <label style="display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer;">
+          <input type="checkbox" style="margin-top:3px;flex-shrink:0;accent-color:#00B5B0;width:15px;height:15px;"/>
+          <span style="font-size:13px;line-height:1.6;color:#6F6B7A;">I agree to be contacted by Posfin Capital regarding my enquiry. Data processed per our <a href="/privacy-policy" style="color:#00B5B0;">privacy policy</a>.</span>
+        </label>
+      </div>
+
+      <button class="btn-teal" style="width:100%;justify-content:center;">Submit Application →</button>
+
+      <p style="margin-top:1rem;font-size:12px;color:#6F6B7A;line-height:1.6;">By submitting, you agree to our Standard Terms of Business. Posfin Capital Ltd is authorised and regulated by the FCA (FRN 913022).</p>
+
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+
+<!-- ════════════════════════════════════════════════════════════════
+  POSFIN PRODUCT STACK — reusable footer/navigation block
+  Self-contained (scoped styles, prefix pfs-). Paste this entire block
+  immediately BEFORE the site <footer> on any page.
+  To mark the current product on a given page, add class "is-current"
+  to that card's <a> (see Purchase & Refurb example below).
+═════════════════════════════════════════════════════════════════ -->
+<style>
+.pfs { padding:5rem 3rem; background:#F2EEDD; position:relative; }
+.pfs * { box-sizing:border-box; }
+.pfs-inner { max-width:1400px; margin:0 auto; }
+.pfs-eyebrow { font-family:'JetBrains Mono',monospace; font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:#00928A; margin-bottom:.6rem; }
+.pfs-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(1.7rem,3vw,2.3rem); font-weight:600; color:#1C184F; margin-bottom:.5rem; }
+.pfs-sub { font-family:'DM Sans',-apple-system,sans-serif; font-size:.95rem; color:#5B5E73; max-width:620px; line-height:1.6; margin-bottom:2.4rem; }
+.pfs-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+.pfs-card { display:flex; flex-direction:column; gap:.4rem; padding:1.4rem 1.5rem; background:#FFFFFF; border:1px solid rgba(28,24,79,.12); border-radius:10px; text-decoration:none; transition:all .28s; position:relative; box-shadow:0 1px 2px rgba(28,24,79,.04); }
+.pfs-card:hover { transform:translateY(-3px); border-color:rgba(232,178,41,.5); box-shadow:0 14px 34px rgba(28,24,79,.1); }
+.pfs-num { font-family:'JetBrains Mono',monospace; font-size:.66rem; letter-spacing:.12em; color:#00928A; }
+.pfs-name { font-family:'Playfair Display',Georgia,serif; font-size:1.15rem; font-weight:600; color:#1C184F; margin:0; }
+.pfs-desc { font-family:'DM Sans',-apple-system,sans-serif; font-size:.84rem; color:#5B5E73; line-height:1.5; margin:0; flex:1; }
+.pfs-go { font-family:'DM Sans',-apple-system,sans-serif; font-size:.74rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#C2911A; margin-top:.5rem; }
+.pfs-tag { position:absolute; top:1.1rem; right:1.2rem; font-family:'JetBrains Mono',monospace; font-size:.54rem; letter-spacing:.1em; text-transform:uppercase; padding:.22rem .5rem; border-radius:3px; }
+.pfs-tag.inst { color:#00928A; background:rgba(0,180,168,.1); border:1px solid rgba(0,180,168,.3); }
+.pfs-tag.here { color:#C2911A; background:rgba(232,178,41,.12); border:1px solid rgba(232,178,41,.35); }
+.pfs-card.is-current { border-color:#E8B229; background:#FFFBF0; }
+/* Senior Desk — distinct navy handling-route card, spans full width */
+.pfs-card--senior { grid-column:1 / -1; flex-direction:row; align-items:center; gap:1.5rem; background:#1C184F; border-color:#1C184F; }
+.pfs-card--senior:hover { border-color:#E8B229; }
+.pfs-card--senior .pfs-num { color:#E8B229; }
+.pfs-card--senior .pfs-name { color:#F9F6E8; }
+.pfs-card--senior .pfs-desc { color:rgba(249,246,232,.7); }
+.pfs-card--senior .pfs-go { color:#E8B229; margin-top:0; white-space:nowrap; }
+.pfs-card--senior .pfs-senior-body { flex:1; }
+.pfs-card--senior .pfs-tag { position:static; display:inline-block; margin-bottom:.5rem; color:#E8B229; background:rgba(232,178,41,.12); border:1px solid rgba(232,178,41,.35); }
+@media (max-width:980px){ .pfs-grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:640px){ .pfs{ padding:3.5rem 1.5rem; } .pfs-grid{ grid-template-columns:1fr; } .pfs-card--senior{ flex-direction:column; align-items:flex-start; } }
+</style>
+
+<section class="pfs">
+  <div class="pfs-inner">
+    <div class="pfs-eyebrow">Product Stack</div>
+    <h2 class="pfs-title">Explore the Posfin Product Stack</h2>
+    <p class="pfs-sub">One enquiry, the right route. Each product is matched to the deal &mdash; not the easiest option for us.</p>
+    <div class="pfs-grid">
+
+      <a class="pfs-card" href="/speed-loan">
+        <span class="pfs-num">01</span>
+        <h3 class="pfs-name">Speed Loan</h3>
+        <p class="pfs-desc">Fast equitable-charge liquidity when timing is everything.</p>
+        <span class="pfs-go">Explore &rarr;</span>
+      </a>
+
+      <a class="pfs-card" href="/main-loan">
+        <span class="pfs-num">02</span>
+        <h3 class="pfs-name">Main Bridging Loan</h3>
+        <p class="pfs-desc">Flexible specialist first or second charge bridge across our panel.</p>
+        <span class="pfs-go">Explore &rarr;</span>
+      </a>
+
+      <a class="pfs-card" href="/bank-bridge">
+        <span class="pfs-tag inst">Institutional</span>
+        <span class="pfs-num">03</span>
+        <h3 class="pfs-name">Bank Bridge</h3>
+        <p class="pfs-desc">Lower-rate institutional bridging for cleaner cases &mdash; strong security, clear exit, pricing potentially sharper than standard specialist bridging, subject to underwriting.</p>
+        <span class="pfs-go">Explore &rarr;</span>
+      </a>
+
+      <a class="pfs-card" href="/purchase-refurb">
+        <span class="pfs-tag here">You're here</span>
+        <span class="pfs-num">04</span>
+        <h3 class="pfs-name">Purchase &amp; Refurb</h3>
+        <p class="pfs-desc">Acquisition, works and exit in one facility.</p>
+        <span class="pfs-go">Explore &rarr;</span>
+      </a>
+
+      <a class="pfs-card" href="/back-to-back">
+        <span class="pfs-num">05</span>
+        <h3 class="pfs-name">Back-to-Back Bridge</h3>
+        <p class="pfs-desc">Speed liquidity now, main-loan refinance where appropriate.</p>
+        <span class="pfs-go">Explore &rarr;</span>
+      </a>
+
+      <a class="pfs-card" href="/development-finance">
+        <span class="pfs-num">06</span>
+        <h3 class="pfs-name">Development Finance</h3>
+        <p class="pfs-desc">Ground-up, structural and staged development funding.</p>
+        <span class="pfs-go">Explore &rarr;</span>
+      </a>
+
+      <a class="pfs-card" href="/dev-exit">
+        <span class="pfs-num">07</span>
+        <h3 class="pfs-name">Development Exit</h3>
+        <p class="pfs-desc">Refinance completed or near-complete schemes onto cheaper capital.</p>
+        <span class="pfs-go">Explore &rarr;</span>
+      </a>
+
+      <a class="pfs-card" href="/acquisition-finance">
+        <span class="pfs-num">08</span>
+        <h3 class="pfs-name">Acquisition Finance</h3>
+        <p class="pfs-desc">Business and property acquisition structures.</p>
+        <span class="pfs-go">Explore &rarr;</span>
+      </a>
+
+      <a class="pfs-card pfs-card--senior" href="/senior-desk">
+        <div class="pfs-senior-body">
+          <span class="pfs-tag">Senior Desk</span>
+          <h3 class="pfs-name">Senior Desk &mdash; Complex &amp; Large Cases</h3>
+          <p class="pfs-desc">A senior handling route, not a standard product. Larger, bespoke, multi-security, time-sensitive or awkward legal/title cases that need senior broker structuring.</p>
+        </div>
+        <span class="pfs-go">Speak to the Senior Desk &rarr;</span>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<footer style="background:#13113A;color:rgba(255,255,255,0.78);font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div class="max-w-7xl px-container" style="padding-top:3.5rem;padding-bottom:3.5rem;">
+    <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;">
+
+      <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;" class="footer-grid">
+        <!-- Logo + description -->
+        <div>
+          <img src="/logo.png" alt="Posfin Capital" style="height:36px;width:auto;margin-bottom:12px;"/>
+          <p style="font-size:13px;line-height:1.7;color:rgba(255,255,255,0.7);max-width:320px;">An institutional finance brokerage authorised and regulated by the Financial Conduct Authority. Specialist in trade finance, bridging, and structured credit.</p>
+        </div>
+
+        <!-- Solutions -->
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#D4A853;margin-bottom:0.875rem;font-weight:600;">Solutions</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:0.5rem;">
+            <li><a href="#solutions" style="font-size:13px;color:rgba(255,255,255,0.65);">LC Discounting</a></li>
+            <li><a href="#solutions" style="font-size:13px;color:rgba(255,255,255,0.65);">SBLC Finance</a></li>
+            <li><a href="#solutions" style="font-size:13px;color:rgba(255,255,255,0.65);">Insured Receivables</a></li>
+            <li><a href="#solutions" style="font-size:13px;color:rgba(255,255,255,0.65);">UKEF Programme</a></li>
+            <li><a href="#solutions" style="font-size:13px;color:rgba(255,255,255,0.65);">Forfaiting</a></li>
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#D4A853;margin-bottom:0.875rem;font-weight:600;">Company</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:0.5rem;">
+            <li><a href="/" style="font-size:13px;color:rgba(255,255,255,0.65);">About Us</a></li>
+            <li><a href="#how-it-works" style="font-size:13px;color:rgba(255,255,255,0.65);">How It Works</a></li>
+            <li><a href="#eligibility" style="font-size:13px;color:rgba(255,255,255,0.65);">Eligibility</a></li>
+            <li><a href="/privacy-policy" style="font-size:13px;color:rgba(255,255,255,0.65);">Privacy Policy</a></li>
+            <li><a href="/terms" style="font-size:13px;color:rgba(255,255,255,0.65);">Terms of Business</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact -->
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.22em;color:#D4A853;margin-bottom:0.875rem;font-weight:600;">Contact</div>
+          <p style="font-size:13px;line-height:1.8;color:rgba(255,255,255,0.7);">
+            <a href="mailto:trade@posfincapital.com" style="color:rgba(255,255,255,0.7);">trade@posfincapital.com</a><br/>
+            <a href="tel:+447773339444" style="color:rgba(255,255,255,0.7);">+44 7773 339 444</a><br/>
+            London, United Kingdom
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.12);">
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;margin-bottom:1rem;">
+        <a href="/privacy-policy" style="color:rgba(255,255,255,0.45);font-size:11px;letter-spacing:0.08em;">Privacy Policy</a>
+        <a href="/cookie-policy" style="color:rgba(255,255,255,0.45);font-size:11px;letter-spacing:0.08em;">Cookie Policy</a>
+        <a href="/complaints" style="color:rgba(255,255,255,0.45);font-size:11px;letter-spacing:0.08em;">Complaints</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.55);">© 2026 Posfin Capital Ltd | FCA Authorised &amp; Regulated | FRN 913022 | Co. 12148846 | ICO ZA542657</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.45);">Trade finance brokerage services. Capital at risk. Past performance is not a reliable indicator of future results.</div>
+      </div>
+    </div>
+  </div>
+
+<div class="posfin-nacfb-disclosure" style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.14);font-size:12px;line-height:1.65;color:rgba(255,255,255,0.68)">
+  <p style="margin:0 0 8px"><strong style="color:rgba(255,255,255,0.92)">Posfin Capital Limited is an authorised credit broker and not a lender.</strong> We work with a panel of lenders whose particulars will be supplied upon request to find a potentially suitable option.</p>
+  <p style="margin:0 0 8px">We will receive commission from lenders. Different lenders pay different amounts depending on different commission models. For transparency, we work with the following commission models where applicable: fixed fee, fixed rate of commission, percentage of the amount you borrow and rate for risk, based on the risk profile of the business. Further details of the commission model, calculation and amount will be disclosed to you throughout your customer journey.</p>
+  <p style="margin:0">Our Complaints Policy and Procedure is available <a href="/complaints.html" style="color:#00B5B0">here</a>. Our Privacy Policy is available <a href="/privacy-policy.html" style="color:#00B5B0">here</a>.</p>
+</div>
+</footer>
+
+<style>
+  @media (min-width: 640px) {
+    .footer-grid {
+      grid-template-columns: 2fr 1fr 1fr 1fr !important;
+    }
+  }
+</style>
+
+<!-- WhatsApp float -->
+<a href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I'm%20interested%20in%20trade%20finance.%20Can%20you%20help%3F" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp" class="wa-float">
+  <svg width="28" height="28" viewBox="0 0 32 32" fill="white">
+    <path d="M16 0C7.16 0 0 7.16 0 16c0 2.83.74 5.58 2.14 8.01L0 32l8.19-2.15A15.89 15.89 0 0016 32c8.84 0 16-7.16 16-16S24.84 0 16 0zm7.27 19.32c-.4-.2-2.36-1.16-2.72-1.3-.37-.13-.63-.2-.9.2s-1.03 1.3-1.27 1.56c-.23.27-.47.3-.87.1-.4-.2-1.68-.62-3.2-1.98-1.18-1.05-1.98-2.35-2.21-2.75-.23-.4-.02-.61.18-.81.18-.18.4-.47.6-.7.2-.23.27-.4.4-.67.13-.27.07-.5-.03-.7-.1-.2-.9-2.17-1.23-2.97-.33-.78-.66-.67-.9-.69-.23-.01-.5-.01-.77-.01-.27 0-.7.1-1.07.5-.37.4-1.4 1.37-1.4 3.33s1.43 3.87 1.63 4.13c.2.27 2.82 4.3 6.83 6.03.96.41 1.7.66 2.28.84.96.3 1.83.26 2.52.16.77-.12 2.36-.96 2.69-1.89.33-.93.33-1.73.23-1.89-.1-.17-.37-.27-.77-.47z"/>
+  </svg>
+</a>
+
+<script id="posfin-consent-hard-fix-20260922">
+(function () {
+  // HARD FIX: make Posfin consent reliable on desktop/mobile/autofill.
+  // Some pages use a React sr-only checkbox plus decorative square. On desktop,
+  // the visual square/text can fail to update React state until repeated clicks or repaint.
+  // This inserts a real visible proxy checkbox and one-way syncs it to the real input.
+  var CONSENT_RE = /(i\s+agree\s+to\s+be\s+contacted\s+by\s+posfin\s+capital|agree\s+to\s+be\s+contacted\s+by\s+posfin\s+capital|consent\s+to\s+posfin\s+capital)/i;
+  function textOf(el) { return (el && el.textContent || '').replace(/\s+/g, ' ').trim(); }
+  function emit(el) {
+    if (!el) return;
+    try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+    try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+  }
+  function setNativeChecked(input, checked) {
+    if (!input) return;
+    var proto = window.HTMLInputElement && window.HTMLInputElement.prototype;
+    var desc = proto && Object.getOwnPropertyDescriptor(proto, 'checked');
+    if (desc && desc.set) desc.set.call(input, checked);
+    else input.checked = checked;
+    emit(input);
+  }
+  function findRealInput(label) {
+    return label && label.querySelector && label.querySelector('input[type="checkbox"]');
+  }
+  function styleProxy(proxy) {
+    proxy.type = 'checkbox';
+    proxy.setAttribute('aria-label', 'I agree to be contacted by Posfin Capital');
+    proxy.style.width = '22px';
+    proxy.style.height = '22px';
+    proxy.style.minWidth = '22px';
+    proxy.style.flexShrink = '0';
+    proxy.style.margin = '1px 0 0 0';
+    proxy.style.accentColor = '#00B5B0';
+    proxy.style.cursor = 'pointer';
+    proxy.style.appearance = 'auto';
+    proxy.style.webkitAppearance = 'checkbox';
+  }
+  function enhanceLabel(label) {
+    if (!label || label.dataset.posfinConsentHardFix === '1') return;
+    if (!CONSENT_RE.test(textOf(label))) return;
+    var real = findRealInput(label);
+    if (!real) return;
+
+    label.dataset.posfinConsentHardFix = '1';
+    label.style.cursor = 'pointer';
+    label.style.userSelect = 'none';
+    label.style.webkitUserSelect = 'none';
+    label.style.alignItems = 'flex-start';
+    label.style.position = label.style.position || 'relative';
+
+    // Keep real input in DOM for React/state, but remove it from the visual/click battle.
+    real.setAttribute('data-posfin-real-consent', '1');
+    real.setAttribute('aria-label', 'I agree to be contacted by Posfin Capital');
+    real.style.position = 'absolute';
+    real.style.left = '-9999px';
+    real.style.width = '1px';
+    real.style.height = '1px';
+    real.style.opacity = '0';
+    real.style.pointerEvents = 'none';
+
+    // Hide decorative fake checkbox span if present.
+    var n = real.nextElementSibling;
+    if (n && !n.matches('span,svg')) n = null;
+    if (n && (n.textContent || '').trim() === '') {
+      n.style.display = 'none';
+      n.setAttribute('aria-hidden', 'true');
+    }
+
+    var proxy = document.createElement('input');
+    proxy.setAttribute('data-posfin-consent-proxy', '1');
+    styleProxy(proxy);
+    proxy.checked = !!real.checked;
+    label.insertBefore(proxy, label.firstChild);
+
+    function syncFromProxy() {
+      setNativeChecked(real, proxy.checked);
+      // Extra delayed emissions help React-controlled state and browser autofill races.
+      setTimeout(function () { setNativeChecked(real, proxy.checked); }, 0);
+      setTimeout(function () { setNativeChecked(real, proxy.checked); }, 60);
+    }
+    function tickTrue() {
+      proxy.checked = true;
+      syncFromProxy();
+    }
+
+    proxy.addEventListener('click', function (e) {
+      e.stopPropagation();
+      syncFromProxy();
+    }, true);
+    proxy.addEventListener('change', syncFromProxy, true);
+
+    // Any click on the consent sentence means the user is consenting: tick it once.
+    label.addEventListener('pointerdown', function (e) {
+      if (e.target && e.target.closest && e.target.closest('a')) return;
+      if (e.target === proxy) return;
+      e.preventDefault();
+      tickTrue();
+    }, true);
+    label.addEventListener('click', function (e) {
+      if (e.target && e.target.closest && e.target.closest('a')) return;
+      if (e.target === proxy) return;
+      e.preventDefault();
+      tickTrue();
+    }, true);
+  }
+  function enhance(root) {
+    Array.prototype.forEach.call((root || document).querySelectorAll('label'), enhanceLabel);
+  }
+  function autofillSync(root) {
+    Array.prototype.forEach.call((root || document).querySelectorAll('input, textarea, select'), function (el) {
+      if (!el || el.disabled || el.type === 'hidden') return;
+      if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked) emit(el); return; }
+      if (String(el.value || '').trim() !== '') emit(el);
+    });
+  }
+  function schedule() {
+    enhance(document); autofillSync(document);
+    [80, 200, 500, 1000, 1800].forEach(function (ms) {
+      setTimeout(function () { enhance(document); autofillSync(document); }, ms);
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedule);
+  else schedule();
+  window.addEventListener('pageshow', schedule);
+  window.addEventListener('focus', function () { setTimeout(schedule, 80); });
+  document.addEventListener('click', function () { setTimeout(function () { autofillSync(document); }, 30); }, true);
+  try {
+    new MutationObserver(function (mutations) {
+      mutations.forEach(function (m) {
+        Array.prototype.forEach.call(m.addedNodes || [], function (node) {
+          if (node && node.nodeType === 1) { enhance(node); autofillSync(node); }
+        });
+      });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  } catch (e) {}
+})();
+</script>
+
+<script id="posfin-scorecard-contrast-hotfix-20260923">
+(function(){
+  function text(el){return (el&&el.textContent||'').replace(/\s+/g,' ').trim();}
+  function isScorecardRoot(el){
+    var t=text(el);
+    return /(Application received\.|You look like a strong fit\.)/.test(t) && /Your scorecard/i.test(t);
+  }
+  function findRoot(){
+    var candidates=Array.prototype.slice.call(document.querySelectorAll('div'));
+    for(var i=0;i<candidates.length;i++){
+      if(isScorecardRoot(candidates[i])){
+        var el=candidates[i];
+        while(el.parentElement && isScorecardRoot(el.parentElement) && text(el.parentElement).length < 6000) el=el.parentElement;
+        return el;
+      }
+    }
+    return null;
+  }
+  function apply(){
+    var root=findRoot();
+    if(!root || root.dataset.posfinScorecardContrast==='1') return;
+    root.dataset.posfinScorecardContrast='1';
+    root.style.background='#FFFFFF';
+    root.style.color='#1A1A2E';
+    root.style.paddingBottom='8px';
+
+    Array.prototype.slice.call(root.querySelectorAll('*')).forEach(function(el){
+      var st=(el.getAttribute('style')||'');
+      var t=text(el);
+      if(st.indexOf('#D4A853')!==-1 || st.indexOf('212,168,83')!==-1 || st.indexOf('212, 168, 83')!==-1){
+        st=st.replace(/#D4A853/gi,'#008F8A')
+             .replace(/rgba\(212,\s*168,\s*83,\s*0\.0?5\)/gi,'#FFFFFF')
+             .replace(/rgba\(212,\s*168,\s*83,\s*0\.08\)/gi,'#F7FEFD')
+             .replace(/rgba\(212,\s*168,\s*83,\s*0\.12\)/gi,'#F7FEFD')
+             .replace(/rgba\(212,\s*168,\s*83,\s*0\.2\)/gi,'#BFE9E7')
+             .replace(/rgba\(212,\s*168,\s*83,\s*0\.3\)/gi,'#BFE9E7');
+        el.setAttribute('style',st);
+      }
+      if(/^(Your Details|The Security Property|Your Loan|Additions to Loan)$/i.test(t)){
+        el.style.color='#008F8A';
+        el.style.fontFamily='DM Sans, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+        el.style.fontWeight='800';
+        el.style.fontSize='11px';
+        el.style.letterSpacing='0.16em';
+      }
+      if(/^Your scorecard$/i.test(t)){
+        el.style.color='#1C184F';
+        el.style.fontFamily='DM Sans, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+        el.style.fontWeight='800';
+        el.style.fontSize='11px';
+        el.style.letterSpacing='0.20em';
+      }
+      if(el.tagName==='SPAN' && st.indexOf('fontSize')!==-1){
+        // Slightly stronger mobile readability for row labels/values.
+        if(st.indexOf('0.82rem')!==-1 || st.indexOf('0.85rem')!==-1){
+          el.style.fontSize = el.style.fontWeight && Number(el.style.fontWeight)>=600 ? '0.94rem' : '0.9rem';
+          el.style.lineHeight='1.35';
+        }
+        if(el.style.color==='rgb(111, 107, 122)' || st.indexOf('#6F6B7A')!==-1) el.style.color='#425466';
+      }
+      if(st.indexOf('borderBottom:"1px solid rgba(28,24,79,0.07)"')!==-1 || st.indexOf('rgba(28,24,79,0.07)')!==-1){
+        el.style.borderBottom='1px solid #E8EEF0';
+        el.style.padding='0.62rem 0';
+      }
+      if(st.indexOf('#FAF8F3')!==-1) el.style.background='#FFFFFF';
+    });
+  }
+  function schedule(){ apply(); setTimeout(apply,80); setTimeout(apply,250); setTimeout(apply,700); }
+  document.addEventListener('click', function(){ setTimeout(schedule,80); }, true);
+  document.addEventListener('submit', function(){ setTimeout(schedule,250); }, true);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', schedule); else schedule();
+  try{ new MutationObserver(function(){ clearTimeout(window.__posfinScorecardContrastTimer); window.__posfinScorecardContrastTimer=setTimeout(schedule,60); }).observe(document.documentElement,{childList:true,subtree:true}); }catch(e){}
+})();
+</script>
+
+</body>
+</html>

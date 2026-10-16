@@ -15,7 +15,13 @@
   ║     into .form-container, immediately after the step-4 div   ║
   ║     and before <div class="form-success">                    ║
   ║                                                              ║
-  ║  3. Copy the JS script block before </body>                  ║
+  ║  3. Copy the JS script block before <footer>
+<div class="posfin-nacfb-disclosure" style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.14);font-size:12px;line-height:1.65;color:rgba(255,255,255,0.68)">
+  <p style="margin:0 0 8px"><strong style="color:rgba(255,255,255,0.92)">Posfin Capital Limited is an authorised credit broker and not a lender.</strong> We work with a panel of lenders whose particulars will be supplied upon request to find a potentially suitable option.</p>
+  <p style="margin:0 0 8px">We will receive commission from lenders. Different lenders pay different amounts depending on different commission models. For transparency, we work with the following commission models where applicable: fixed fee, fixed rate of commission, percentage of the amount you borrow and rate for risk, based on the risk profile of the business. Further details of the commission model, calculation and amount will be disclosed to you throughout your customer journey.</p>
+  <p style="margin:0">Our Complaints Policy and Procedure is available <a href="/complaints.html" style="color:#00B5B0">here</a>. Our Privacy Policy is available <a href="/privacy-policy.html" style="color:#00B5B0">here</a>.</p>
+</div></footer>
+</body>                  ║
   ║                                                              ║
   ║  4. In the .form-progress bar, add:                          ║
   ║     <div class="form-progress-step" data-step="5">           ║
@@ -1350,10 +1356,10 @@
     .then(function (data) {
       hideEl(el('q5Loading'));
       var quotes = normaliseResponse(data, form);
-      /* If API returns no Main Loan products (loan < £100K minimum), show helpful message */
+      /* If API returns no Main Loan products (loan under the usual main-loan threshold), show helpful message */
       if (!quotes || quotes.length === 0) {
         hideEl(el('q5Loading'));
-        q5ShowError('Main Loan facilities start from £100,000. For smaller amounts (£26K-£100K), our Speed Loan is available in 3-5 days with no valuation required. Speak with Byron or Chris to discuss your options.');
+        q5ShowError('Main Loan facilities can be structured from £26,000 where the lender route fits. For smaller, urgent cases, our Speed Loan is available in 3-5 days with no valuation required. Speak with Byron or Chris to discuss your options.');
         return;
       }
       if (quotes.length === 1) {

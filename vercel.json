@@ -1,31 +1,135 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
-
+  "redirects": [
+    {
+      "source": "/get-options",
+      "destination": "/get-your-options",
+      "permanent": false
+    },
+    {
+      "source": "/go/options",
+      "destination": "/get-your-options",
+      "permanent": false
+    },
+    {
+      "source": "/options",
+      "destination": "/get-your-options",
+      "permanent": false
+    },
+    {
+      "source": "/development-exit",
+      "destination": "/dev-exit",
+      "permanent": false
+    },
+    {
+      "source": "/development-exit-finance",
+      "destination": "/dev-exit",
+      "permanent": false
+    },
+    {
+      "source": "/apply-now",
+      "destination": "/apply",
+      "permanent": false
+    },
+    {
+      "source": "/go/speed",
+      "destination": "/apply/speed",
+      "permanent": false
+    },
+    {
+      "source": "/go/bridge",
+      "destination": "/apply/bridge",
+      "permanent": false
+    },
+    {
+      "source": "/go/dev",
+      "destination": "/dev-exit",
+      "permanent": false
+    },
+    {
+      "source": "/go/senior",
+      "destination": "/senior-desk",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Cache-Control", "value": "no-store" }
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
       ]
     },
     {
       "source": "/engine/(.*)",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Cache-Control", "value": "no-store" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, must-revalidate"
+        }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/apply/bh",
+      "destination": "/apply?b=bh"
+    },
+    {
+      "source": "/apply/byron",
+      "destination": "/apply?b=bh"
+    },
+    {
+      "source": "/apply/chris",
+      "destination": "/apply?b=chris"
+    },
+    {
+      "source": "/a/bh",
+      "destination": "/apply?b=bh"
+    },
+    {
+      "source": "/a/chris",
+      "destination": "/apply?b=chris"
+    },
+    {
+      "source": "/apply1",
+      "destination": "/apply?b=chris"
     }
   ]
 }
