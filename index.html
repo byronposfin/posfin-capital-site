@@ -2824,7 +2824,7 @@ function buildSummary() {
 //   TOM_URL     = Tom dev server via tunnel (JSON). Triggers Pre-LOR.
 // ════════════════════════════════════════════════════════════
 const ZAPIER_URL = 'https://hooks.zapier.com/hooks/catch/7678566/ueq1ecb/';
-const TOM_URL = 'https://shemika-charl-t.ngrok-free.dev';
+const TOM_URL = ''; // Cleared: ngrok tunnel expired. Set to live URL when Tom webhook is reinstated.
   
 
 function submitForm() {
@@ -2918,7 +2918,7 @@ function submitForm() {
   // ── POST 2: Tom endpoint (JSON, FULL payload — Pre-LOR needs mortgage, arrears, LTV, NFC)
   // TOM_URL is set when Tom's public webhook is live. Until then, skip silently.
   var tomPost;
-  if (typeof TOM_URL !== 'https://skirt-reel-quantitative-bathroom.trycloudflare.com' && TOM_URL) {
+  if (TOM_URL && TOM_URL !== 'https://skirt-reel-quantitative-bathroom.trycloudflare.com') {
     tomPost = fetch(TOM_URL, {
       method: 'POST',
       headers: {

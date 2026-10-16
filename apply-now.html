@@ -2170,14 +2170,17 @@ fbq('track', 'PageView');
 
   <!-- ── Error ── -->
   <div class="q5-error" id="q5Error">
-    <div class="q5-error-title">Unable to generate quote</div>
+    <div class="q5-error-title">Something went wrong</div>
     <div class="q5-error-text" id="q5ErrorText">
-      We couldn't connect to our pricing engine right now. Please try again, or speak with Byron or Chris directly for your terms.
+      We couldn't generate your indicative terms right now. Please try again, or message us directly and we'll turn around figures manually.
     </div>
-    <a href="https://wa.me/447773339444?text=Hi%20Posfin%2C%20I%27d%20like%20to%20discuss%20my%20loan%20quote."
-       target="_blank" class="q5-btn-speak-primary" style="display:inline-block;width:auto;padding:0.7rem 1.5rem;border-radius:4px;">
-      💬 Consult Origination (Byron / Chris)
-    </a>
+    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-top:0.5rem;">
+      <button onclick="q5Fetch()" style="padding:0.65rem 1.2rem;background:var(--teal);color:var(--navy);border:none;border-radius:4px;font-family:var(--sans);font-weight:700;font-size:0.82rem;cursor:pointer;">↺ Try Again</button>
+      <a href="https://wa.me/447446950389?text=Hi%20Posfin%2C%20I%27ve%20just%20submitted%20an%20enquiry%20and%20need%20my%20indicative%20terms."
+         target="_blank" class="q5-btn-speak-primary" style="display:inline-block;width:auto;padding:0.65rem 1.2rem;border-radius:4px;font-size:0.82rem;">
+        💬 WhatsApp Us
+      </a>
+    </div>
   </div>
 
   <!-- ── Quote cards: 2 or 3 depending on tier (val_only shows Option C) ── -->
@@ -3630,7 +3633,7 @@ function buildSummary() {
 //   TOM_URL     = Tom dev server via tunnel (JSON). Triggers Pre-LOR.
 // ════════════════════════════════════════════════════════════
 const ZAPIER_URL = 'https://hooks.zapier.com/hooks/catch/7678566/ueq1ecb/';
-const TOM_URL = 'https://shemika-charl-t.ngrok-free.dev';
+const TOM_URL = ''; // Cleared: ngrok tunnel expired. Set to live URL when Tom webhook is reinstated.
   
 
 /* ── P0 FIX: sendLeadToCRM — fires webhooks without touching UI ── */
@@ -4254,6 +4257,9 @@ function showAVMMessage(data, borrowerEstimate) {
       isReg = !!formData.regulated;
     }
 
+    /* Determine charge position: 2nd if borrower has any existing charges (mortgage2 > 0) */
+    var chargePos = (mort2 > 0 || (typeof formData !== 'undefined' && formData.chargeHolders && formData.chargeHolders.length > 0)) ? '2nd' : '1st';
+
     return {
       property_value:          propVal,
       first_mortgage_clean:    mort1,
@@ -4262,7 +4268,7 @@ function showAVMMessage(data, borrowerEstimate) {
       loan_amount_requested:   loanAmt,
       gross_ltv:               grossLTV,
       loan_amount_basis:       'net',
-      charge_position:         '1st',
+      charge_position:         chargePos,
       regulated:               isReg,
       credit_tier:             q5Tier,
       back_to_back:            isB2B,
