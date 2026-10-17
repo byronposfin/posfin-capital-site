@@ -714,6 +714,35 @@
     payload.last_name = payload.lastName || V.lastName || PARAMS.last_name || '';
     payload.mobile = payload.mobile || V.mobile || PARAMS.mobile || PARAMS.phone || '';
     payload.email = payload.email || V.email || PARAMS.email || '';
+    // ── Normalise camelCase → snake_case for CRM + scorecard compatibility ──
+    payload.property_address      = payload.securityAddress || payload.property_address || PARAMS.property_address || '';
+    payload.postcode              = payload.securityPostcode || payload.postcode || PARAMS.postcode || '';
+    payload.property_value        = payload.propertyValue || payload.property_value || PARAMS.property_value || '';
+    payload.first_charge_lender   = payload.firstChargeLender || payload.first_charge_lender || PARAMS.first_charge_lender || '';
+    payload.first_charge_balance  = payload.firstChargeBalance || payload.first_charge_balance || PARAMS.first_charge_balance || '';
+    payload.arrears               = payload.firstChargeArrears || payload.arrears || '';
+    payload.arrears_amount        = payload.firstChargeArrearsAmount || payload.arrears_amount || '';
+    payload.second_charges        = payload.secondCharges || payload.second_charges || '';
+    payload.second_charge_provider = payload.secondChargeProvider || payload.second_charge_provider || '';
+    payload.second_charge_balance = payload.secondChargeBalance || payload.second_charge_balance || '';
+    payload.loan_amount           = payload.loanAmount || payload.loan_amount || PARAMS.loan_amount || '';
+    payload.loan_purpose          = payload.loanPurpose || V.loanPurpose || payload.loan_purpose || PARAMS.loan_purpose || '';
+    payload.exit_strategy         = payload.exitStrategy || payload.exit_strategy || '';
+    payload.timescale             = payload.requiredTimescale || payload.timescale || '';
+    payload.net_or_gross          = payload.netGrossRequest || payload.net_or_gross || '';
+    payload.regulated             = payload.regulated || V.regulated || '';
+    payload.tenure                = payload.tenure || '';
+    payload.charge_request        = payload.chargeRequested || PARAMS.charge_requested || payload.charge_request || '';
+    payload.residential_address   = payload.residentialAddress || payload.homeAddress || payload.residential_address || '';
+    // Buffer / legal / solicitor normalised
+    payload.legal_buffer          = payload.legalCosts === 'add_2000' ? 'Yes' : payload.legalCosts === 'do_not_add' ? 'No' : payload.legal_buffer || '';
+    payload.overrun_buffer        = Number(payload.bufferAmount || 0) > 0 ? 'Yes' : payload.bufferAmount === '0' ? 'No' : payload.overrun_buffer || '';
+    payload.contingency_buffer_amount = payload.bufferAmount || payload.contingency_buffer_amount || '0';
+    payload.panel_solicitor_opt_in = payload.solicitorPreference === 'panel' ? 'Yes'
+      : payload.solicitorPreference === 'own' ? 'No'
+      : payload.solicitorPreference === 'discuss' ? 'TBC'
+      : payload.panel_solicitor_opt_in || '';
+    payload.estimated_legal_cost  = payload.legalCosts === 'add_2000' ? '2000' : payload.legalCosts === 'do_not_add' ? '0' : payload.estimated_legal_cost || '';
     payload.submitted_at = new Date().toISOString();
     payload.outstanding_items = outstandingItems(payload).join(' | ');
     payload.lor_mapping_status = payload.outstanding_items ? 'Outstanding borrower follow-up required before broker portal / LOR finalisation' : 'Ready for broker portal / LOR mapping subject to broker review';

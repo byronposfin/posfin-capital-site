@@ -136,12 +136,16 @@ function formatMainLoanRow(d, ts) {
     d.second_charges||'', d.tenure||'', d.arrears||'',
     d.loan_amount||'', d.net_or_gross||'', d.estimated_ltv||'', d.ltv_flag||'',
     d.exit_strategy||'', d.timescale||'',
-    d.legal_buffer||'', d.overrun_buffer||'',
-    d.second_charge_provider||'', d.second_charge_balance||'', d.charge_request||'',
+    d.legal_buffer || (d.legalCosts === 'add_2000' ? 'Yes' : d.legalCosts === 'do_not_add' ? 'No' : '')||'',
+    d.overrun_buffer || (Number(d.bufferAmount||0) > 0 ? 'Yes' : d.bufferAmount === '0' ? 'No' : '')||'',
+    d.second_charge_provider||'', d.second_charge_balance||'', d.charge_request||d.chargeRequested||'',
     d.page_source||'main-loan', d.submitted_at || ts,
     additionalSecuritySummary || 'No additional security offered',
     additionalSecurityFlag,
     d.additional_security_properties_json||'',
+    d.panel_solicitor_opt_in || (d.solicitorPreference === 'panel' ? 'Yes' : d.solicitorPreference === 'own' ? 'No' : d.solicitorPreference === 'discuss' ? 'TBC' : '') || '',
+    d.estimated_legal_cost || (d.legalCosts === 'add_2000' ? '2000' : d.legalCosts === 'do_not_add' ? '0' : '') || '',
+    d.contingency_buffer_amount || d.bufferAmount || '',
   ];
 }
 
@@ -311,6 +315,13 @@ function formatPipelineRow(d, ts, product) {
     '',
     '🚪 EXIT',
     d.exit_strategy || 'TBC',
+    '',
+    '',
+    '⚖️ LOAN STRUCTURE',
+    `Charge position: ${d.charge_request || d.chargeRequested || 'TBC'}`,
+    `Legal buffer: ${d.legal_buffer || (d.legalCosts === 'add_2000' ? 'Yes' : 'No') || 'TBC'} · Contingency: ${d.overrun_buffer || (Number(d.bufferAmount||0) > 0 ? 'Yes' : 'No') || 'TBC'}${Number(d.contingency_buffer_amount || d.bufferAmount || 0) > 0 ? ` (£${Number(d.contingency_buffer_amount || d.bufferAmount).toLocaleString('en-GB')})` : ''}`,
+    `Panel solicitor opt-in: ${d.panel_solicitor_opt_in || (d.solicitorPreference === 'panel' ? 'Yes' : d.solicitorPreference === 'own' ? 'No' : d.solicitorPreference === 'discuss' ? 'TBC' : 'TBC')}`,
+    `Estimated legal cost: ${d.estimated_legal_cost ? `£${Number(d.estimated_legal_cost).toLocaleString('en-GB')}` : d.legalCosts === 'add_2000' ? '£2,000' : 'TBC'}`,
     '',
     `⚡ Status: TRIAGE · Owner: ${ownerName} · Source: ${source}`,
   ].filter(Boolean).join('\n');

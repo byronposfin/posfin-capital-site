@@ -33,30 +33,57 @@ function section(label) {
 function scorecard(d) {
   const now = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const additionsRows = [];
-  let totalAdditions = 0;
+  // Mandatory redemptions
+  const redemptionRows = [];
+  let totalRedemptions = 0;
+  if (d.arrearsAmount && Number(String(d.arrearsAmount).replace(/[^`\d]/g,'')) > 0) {
+    const v = Number(String(d.arrearsAmount).replace(/[^\d]/g,''));
+    totalRedemptions += v;
+    redemptionRows.push(row('Arrears to clear', fmtCurrency(v), { amber: true }));
+  }
   if (d.secondChargeBalance && Number(String(d.secondChargeBalance).replace(/[^\d]/g,'')) > 0) {
     const v = Number(String(d.secondChargeBalance).replace(/[^\d]/g,''));
-    totalAdditions += v;
-    additionsRows.push(row(`Redeem 2nd charge — ${d.secondChargeProvider || 'TBC'}`, fmtCurrency(v), { amber: true }));
-  }
-  if (d.legalBuffer) {
-    totalAdditions += 3000;
-    additionsRows.push(row('Legal cost buffer', '£3,000', { amber: true }));
-  }
-  if (d.overrunBuffer) {
-    totalAdditions += 10000;
-    additionsRows.push(row('Contingency buffer', '£10,000', { amber: true }));
+    totalRedemptions += v;
+    redemptionRows.push(row(`Redeem 2nd charge — ${d.secondChargeProvider || 'TBC'}`, fmtCurrency(v), { amber: true }));
   }
 
-  const additionsSection = additionsRows.length > 0 ? `
-    <div style="margin-bottom:1.2rem;padding:0.8rem;border-radius:5px;background:#FFFFFF;border:1px solid #DCEAEC">
-      ${section('Additions to Loan')}
-      ${additionsRows.join('')}
-      <div style="display:flex;justify-content:space-between;padding-top:0.4rem;margin-top:0.2rem;border-top:1px solid #DCEAEC">
-        <span style="font-size:0.82rem;font-weight:700;color:#1C184F">Total additions</span>
-        <span style="font-size:0.85rem;font-weight:700;color:#008F8A">${fmtCurrency(totalAdditions)}</span>
-      </div>
+  // Legal / buffer additions
+  let legalCost = 0;
+  let bufferCost = 0;
+  const bufferRows = [];
+  if (d.legalBuffer) {
+    legalCost = Number(String(d.estimatedLegalCost || '2000').replace(/[^\d]/g,'')) || 2000;
+    bufferRows.push(row('Legal cost buffer', fmtCurrency(legalCost), { amber: true }));
+  }
+  if (d.overrunBuffer) {
+    bufferCost = Number(String(d.contingencyAmount || '5000').replace(/[^\d]/g,'')) || 5000;
+    bufferRows.push(row('Contingency buffer', fmtCurrency(bufferCost), { amber: true }));
+  }
+
+  const totalAdditions = totalRedemptions + legalCost + bufferCost;
+
+  const chargePositionBadge = d.chargePosition
+    ? `<span style="display:inline-block;padding:3px 10px;border-radius:3px;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;background:${/2nd|second/i.test(d.chargePosition) ? '#FFF3CD;color:#856404' : '#D1F5F3;color:#006B67'}">${d.chargePosition}</span>`
+    : '';
+
+  const solicitorBadge = d.panelSolicitorOptIn
+    ? `<span style="display:inline-block;padding:3px 10px;border-radius:3px;font-size:11px;font-weight:800;letter-spacing:0.10em;text-transform:uppercase;background:${d.panelSolicitorOptIn === 'Yes' ? '#D1F5F3;color:#006B67' : d.panelSolicitorOptIn === 'No' ? '#F5F5F5;color:#555' : '#FFF3E0;color:#856404'}">${d.panelSolicitorOptIn === 'Yes' ? '✓ Panel solicitor' : d.panelSolicitorOptIn === 'No' ? 'Own solicitor' : 'Solicitor TBC'}</span>`
+    : '';
+
+  const additionsSection = (redemptionRows.length > 0 || bufferRows.length > 0) ? `
+    <div style="margin-bottom:1.2rem;padding:0.8rem;border-radius:5px;background:#FFFBF0;border:2px solid #F0C040">
+      ${section('Mandatory Redemptions & Additions')}
+      ${redemptionRows.join('')}
+      ${redemptionRows.length > 0 ? `<div style="display:flex;justify-content:space-between;padding:0.35rem 0 0.55rem;border-bottom:1px dashed #E0C060"><span style="font-size:0.82rem;font-weight:700;color:#856404">Total mandatory redemptions</span><span style="font-size:0.85rem;font-weight:700;color:#856404">${fmtCurrency(totalRedemptions)}</span></div>` : ''}
+      ${bufferRows.join('')}
+      ${totalAdditions > 0 ? `<div style="display:flex;justify-content:space-between;padding-top:0.4rem;margin-top:0.2rem;border-top:1px solid #E0C060"><span style="font-size:0.82rem;font-weight:700;color:#1C184F">Total added to facility</span><span style="font-size:0.85rem;font-weight:700;color:#008F8A">${fmtCurrency(totalAdditions)}</span></div>` : ''}
+    </div>` : '';
+
+  const solicitorSection = (d.panelSolicitorOptIn || d.estimatedLegalCost) ? `
+    <div style="margin-bottom:1.2rem">
+      ${section('Legal & Solicitor')}
+      ${d.panelSolicitorOptIn ? row('Panel solicitor', d.panelSolicitorOptIn === 'Yes' ? '✓ Yes — LARK / Ackroyds / Taylor Rose' : d.panelSolicitorOptIn === 'No' ? 'No — own solicitor' : 'TBC — discuss on call') : ''}
+      ${d.estimatedLegalCost && d.estimatedLegalCost !== '0' ? row('Estimated legal cost', fmtCurrency(d.estimatedLegalCost), { teal: true }) : ''}
     </div>` : '';
 
   return `<!DOCTYPE html>
@@ -94,6 +121,7 @@ body{background:#FFFFFF;font-family:'DM Sans',-apple-system,sans-serif;color:#1A
     <div class="icon">${d.product === 'Speed Loan' ? '⚡' : d.product?.includes('Dev') ? '🏗' : '✅'}</div>
     <h2 class="headline">Application received.</h2>
     <p class="subline">Byron or Chris will call you within 30 minutes during business hours with your indicative terms.</p>
+    ${chargePositionBadge ? `<div style="margin-top:0.75rem">${chargePositionBadge}</div>` : ''}
   </div>
 
   <p class="scorecard-label">Your scorecard</p>
@@ -113,8 +141,9 @@ body{background:#FFFFFF;font-family:'DM Sans',-apple-system,sans-serif;color:#1A
     ${d.tenure ? row('Tenure', fmt(d.tenure)) : ''}
     ${row('1st Charge Lender', fmt(d.firstChargeLender) || 'None')}
     ${row('Mortgage Balance', fmtCurrency(d.firstChargeBalance))}
-    ${d.arrearsAmount && d.arrearsAmount !== '0' ? row('Arrears', fmtCurrency(d.arrearsAmount), { amber: true }) : ''}
-    ${d.secondCharges === 'Yes' ? row(`2nd Charge (${d.secondChargeProvider || 'TBC'})`, fmtCurrency(d.secondChargeBalance), { amber: true }) : ''}
+    ${d.arrearsAmount && d.arrearsAmount !== '0' ? row('Arrears (to clear)', fmtCurrency(d.arrearsAmount), { amber: true }) : ''}
+    ${d.secondCharges === 'Yes' ? row(`2nd Charge — ${d.secondChargeProvider || 'TBC'}`, fmtCurrency(d.secondChargeBalance), { amber: true }) : ''}
+    ${d.chargePosition ? row('Charge position requested', fmt(d.chargePosition), { bold: true }) : ''}
   </div>
 
   ${additionsSection}
@@ -122,7 +151,7 @@ body{background:#FFFFFF;font-family:'DM Sans',-apple-system,sans-serif;color:#1A
   <div style="margin-bottom:1.2rem">
     ${section('Your Loan')}
     ${row('Net cash to you on day 1', fmtCurrency(d.netCash), { teal: true, bold: true })}
-    ${totalAdditions > 0 ? row('Additions (redemptions + buffers)', fmtCurrency(totalAdditions), { amber: true }) : ''}
+    ${totalAdditions > 0 ? row('Total additions to facility', fmtCurrency(totalAdditions), { amber: true }) : ''}
     ${row('Total facility required', (fmtCurrency(d.totalFacility) || '—') + ' (approx, before lender fees)', { bold: true })}
     ${row('Net or gross', fmt(d.netOrGross))}
     ${row('Purpose', fmt(d.purpose))}
@@ -131,9 +160,12 @@ body{background:#FFFFFF;font-family:'DM Sans',-apple-system,sans-serif;color:#1A
     ${d.ltv ? row('Estimated LTV', fmt(d.ltv)) : ''}
   </div>
 
+  ${solicitorSection}
+
   <div class="ref-box">
     <p class="ref-label">Reference</p>
     <p class="ref-value">${d.ref}</p>
+    ${solicitorBadge ? `<p style="margin-top:0.5rem">${solicitorBadge}</p>` : ''}
     <p class="ref-sub">Check your WhatsApp — your scorecard is on its way to ${fmt(d.mobile)}</p>
   </div>
 
@@ -162,7 +194,7 @@ export default async function handler(req, res) {
 
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: `'PIPELINE'!A:BO`,
+      range: `'Pipeline'!A:BO`,
     });
     const rows = result.data.values || [];
     const headers = rows[0] || [];
@@ -220,8 +252,12 @@ export default async function handler(req, res) {
       secondCharges: sc > 0 ? 'Yes' : 'No',
       secondChargeProvider,
       secondChargeBalance,
-      legalBuffer:  summary.includes('Legal cost buffer') || summary.includes('legalBuffer: Yes'),
-      overrunBuffer: summary.includes('Contingency buffer') || summary.includes('overrunBuffer: Yes'),
+      legalBuffer:  summary.includes('Legal buffer: Yes') || summary.includes('Legal cost buffer') || summary.includes('legalBuffer: Yes'),
+      overrunBuffer: summary.includes('Contingency: Yes') || summary.includes('Contingency buffer') || summary.includes('overrunBuffer: Yes'),
+      chargePosition: get(/Charge position: ([^\n]+)/) || val(dataRow, ['Charge Request', 'charge_request']),
+      panelSolicitorOptIn: get(/Panel solicitor opt-in: ([^\n]+)/),
+      contingencyAmount: (() => { const m = summary.match(/Contingency: (?:Yes|No)[^(]*\(£([\d,]+)\)/); return m ? m[1].replace(/,/g,'') : null; })(),
+      estimatedLegalCost: get(/Estimated legal cost: £([\d,]+)/)?.replace(/,/g,'') || (summary.includes('Legal buffer: Yes') || summary.includes('Legal cost buffer') ? '2000' : null),
       loanAmount,
       netCash,
       totalFacility: loan,
