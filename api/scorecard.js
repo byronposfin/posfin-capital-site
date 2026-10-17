@@ -223,12 +223,13 @@ export default async function handler(req, res) {
     const get = (pattern) => summary.match(pattern)?.[1]?.trim() || '';
 
     // Read using actual Pipeline schema column headers
-    const loanAmount = val(dataRow, ['requested_amount_net', '💷 Net', 'FNR — Final Net Request', 'Net (£)']);
-    const propertyValue = val(dataRow, ['property_value_stated', '📊 Property Value (Stated)', 'Property Value (Stated)']);
-    const firstChargeBalance = val(dataRow, ['charge1_balance', '1st Charge Clean', '1st Charge Gross']);
-    const arrearsAmount = val(dataRow, ['arrears_amount', 'Arrears']);
-    const secondChargeBalance = val(dataRow, ['second_charge_balance', '2nd Charge Balance']);
-    const secondChargeProvider = val(dataRow, ['second_charge_lender', '2nd Charge Provider', 'AR']);
+    // Use exact column names only — no partial fallbacks that could hit adjacent columns
+    const loanAmount         = val(dataRow, ['requested_amount_net'])  || val(dataRow, ['FNR — Final Net Request', 'Net (£)']);
+    const propertyValue      = val(dataRow, ['property_value_stated']) || val(dataRow, ['Property Value (Stated)']);
+    const firstChargeBalance = val(dataRow, ['charge1_balance'])       || val(dataRow, ['1st Charge Clean', '1st Charge Gross']);
+    const arrearsAmount      = val(dataRow, ['arrears_amount']);        // exact only — 'arrears' also matches charge1_balance_includes_arrears
+    const secondChargeBalance = val(dataRow, ['second_charge_balance']) || val(dataRow, ['2nd Charge Balance']);
+    const secondChargeProvider = val(dataRow, ['second_charge_lender']) || val(dataRow, ['2nd Charge Provider']);
     const legalBufferRaw    = val(dataRow, ['legal_buffer']);
     const contingencyRaw    = val(dataRow, ['contingency_buffer']);
     const manualNotes      = val(dataRow, ['manual_notes']) || '';
