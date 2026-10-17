@@ -207,7 +207,7 @@ export default async function handler(req, res) {
       return i >= 0 ? (row[i] || '') : '';
     };
 
-    const refIdx = idx(['🔖 Ref', 'Ref']);
+    const refIdx = idx(['case_id', '🔖 Ref', 'Ref']);
     const dataRow = rows.slice(1).find(r => String(r[refIdx] || '').trim() === ref);
     if (!dataRow) {
       res.status(404).send(`<html><body style="font-family:sans-serif;text-align:center;padding:4rem">
@@ -222,12 +222,15 @@ export default async function handler(req, res) {
     const summary = dataRow[0] || '';
     const get = (pattern) => summary.match(pattern)?.[1]?.trim() || '';
 
-    const loanAmount = val(dataRow, ['💷 Net', 'FNR — Final Net Request', 'Net (£)']);
-    const propertyValue = val(dataRow, ['📊 Property Value (Stated)', 'Property Value (Stated)']);
-    const firstChargeBalance = val(dataRow, ['1st Charge Clean', '1st Charge Gross']);
-    const arrearsAmount = val(dataRow, ['Arrears']);
-    const secondChargeBalance = val(dataRow, ['2nd Charge Balance']);
-    const secondChargeProvider = val(dataRow, ['2nd Charge Provider']);
+    // Read using actual Pipeline schema column headers
+    const loanAmount = val(dataRow, ['requested_amount_net', '💷 Net', 'FNR — Final Net Request', 'Net (£)']);
+    const propertyValue = val(dataRow, ['property_value_stated', '📊 Property Value (Stated)', 'Property Value (Stated)']);
+    const firstChargeBalance = val(dataRow, ['charge1_balance', '1st Charge Clean', '1st Charge Gross']);
+    const arrearsAmount = val(dataRow, ['arrears_amount', 'Arrears']);
+    const secondChargeBalance = val(dataRow, ['second_charge_balance', '2nd Charge Balance']);
+    const secondChargeProvider = val(dataRow, ['second_charge_lender', '2nd Charge Provider', 'AR']);
+    const legalBufferRaw = val(dataRow, ['legal_buffer', 'AZ']);
+    const contingencyRaw = val(dataRow, ['contingency_buffer', 'BA']);
 
     // Calculate net cash
     const loan = Number(String(loanAmount).replace(/[^\d]/g, '')) || 0;
@@ -238,34 +241,34 @@ export default async function handler(req, res) {
 
     const d = {
       ref,
-      borrowerName: `${val(dataRow, ['👤 First Name', 'First Name'])} ${val(dataRow, ['👤 Last Name', 'Last Name'])}`.trim() || get(/Name: ([^\n]+)/),
-      mobile:       val(dataRow, ['📱 Mobile', 'Mobile']),
-      email:        val(dataRow, ['📧 Email', 'Email']),
-      product:      val(dataRow, ['⚡ Product', 'Product']),
-      securityAddress: val(dataRow, ['Security Address']) || get(/Address of Security Property: ([^\n]+)/) || get(/Address: ([^\n]+)/),
-      postcode:     val(dataRow, ['Postcode']) || get(/Postcode: ([^\n]+)/),
+      borrowerName: val(dataRow, ['borrower_name', '👤 First Name', 'First Name']) || get(/Name: ([^\n]+)/),
+      mobile:       val(dataRow, ['mobile_e164', '📱 Mobile', 'Mobile']),
+      email:        val(dataRow, ['email', '📧 Email', 'Email']),
+      product:      val(dataRow, ['product_route', '⚡ Product', 'Product']),
+      securityAddress: val(dataRow, ['security_address', 'Security Address']) || get(/Address: ([^\n]+)/),
+      postcode:     val(dataRow, ['postcode', 'Postcode']) || get(/Postcode: ([^\n]+)/),
       propertyValue,
-      tenure:       val(dataRow, ['Tenure']) || get(/Tenure: ([^\n]+)/),
-      firstChargeLender: val(dataRow, ['1st Charge Provider']),
+      tenure:       val(dataRow, ['tenure', 'Tenure']) || get(/Tenure: ([^\n]+)/),
+      firstChargeLender: val(dataRow, ['charge1_lender', '1st Charge Provider']),
       firstChargeBalance,
       arrearsAmount,
       secondCharges: sc > 0 ? 'Yes' : 'No',
       secondChargeProvider,
       secondChargeBalance,
-      legalBuffer:  summary.includes('Legal buffer: Yes') || summary.includes('Legal cost buffer') || summary.includes('legalBuffer: Yes'),
-      overrunBuffer: summary.includes('Contingency: Yes') || summary.includes('Contingency buffer') || summary.includes('overrunBuffer: Yes'),
-      chargePosition: get(/Charge position: ([^\n]+)/) || val(dataRow, ['Charge Request', 'charge_request']),
+      legalBuffer:  legalBufferRaw === 'Yes' || legalBufferRaw === 'Yes',
+      overrunBuffer: contingencyRaw === 'Yes',
+      chargePosition: val(dataRow, ['charge_position_sought', 'AI']) || get(/Charge position: ([^\n]+)/),
       panelSolicitorOptIn: get(/Panel solicitor opt-in: ([^\n]+)/),
-      contingencyAmount: (() => { const m = summary.match(/Contingency: (?:Yes|No)[^(]*\(£([\d,]+)\)/); return m ? m[1].replace(/,/g,'') : null; })(),
-      estimatedLegalCost: get(/Estimated legal cost: £([\d,]+)/)?.replace(/,/g,'') || (summary.includes('Legal buffer: Yes') || summary.includes('Legal cost buffer') ? '2000' : null),
+      contingencyAmount: (() => { const m = String(contingencyRaw || '').match(/[\d,]+/); return m ? m[0].replace(/,/g,'') : null; })(),
+      estimatedLegalCost: legalBufferRaw === 'Yes' ? '2000' : null,
       loanAmount,
       netCash,
       totalFacility: loan,
-      netOrGross:   val(dataRow, ['Net or Gross']) || get(/Net or gross: ([^\n]+)/),
-      purpose:      val(dataRow, ['Purpose of Funds']) || get(/\n\n([^\n]+)\n\nExit via/),
-      exitStrategy: val(dataRow, ['Exit Strategy']) || get(/Exit via ([^\n]+)/),
-      timescale:    val(dataRow, ['ETA Completion Days', 'Legal ETA Days']) || get(/Completion Date ETA: ([^\n]+)/) || get(/Timescale: ([^\n]+)/),
-      ltv:          val(dataRow, ['Combined LTV%', 'Current LTV']) || get(/LTV: ([^\n]+)/),
+      netOrGross:   val(dataRow, ['loan_request_type', 'Net or Gross']) || get(/Net or gross: ([^\n]+)/),
+      purpose:      val(dataRow, ['purpose_of_funds', 'Purpose of Funds']) || get(/Purpose: ([^\n]+)/),
+      exitStrategy: val(dataRow, ['exit_strategy', 'Exit Strategy']) || get(/Exit: ([^\n]+)/),
+      timescale:    val(dataRow, ['term_months', 'ETA Completion Days']) || get(/Timescale: ([^\n]+)/),
+      ltv:          val(dataRow, ['net_ltv_stated', 'Combined LTV%', 'Current LTV']) || get(/LTV: ([^\n]+)/),
     };
 
     const html = scorecard(d);

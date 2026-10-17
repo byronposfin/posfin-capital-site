@@ -326,34 +326,86 @@ function formatPipelineRow(d, ts, product) {
     `⚡ Status: TRIAGE · Owner: ${ownerName} · Source: ${source}`,
   ].filter(Boolean).join('\n');
 
+  // Pipeline tab schema (69 columns A–BQ) — must match exactly
+  // A case_id, B borrower_name, C manual_notes, D mobile_e164, E email,
+  // F owner_sales, G owner_processing, H status, I next_step, J open_items,
+  // K last_contact, L source, M product_route, N loan_request_type, O requested_amount_net,
+  // P funds_needed_by, Q scorecard_url (set post-write), R engine, S borrower_type,
+  // T residential_address, U is_home_address, V occupancy, W regulated_flag,
+  // X security_address, Y asset_class, Z property_spec_short, AA tenure,
+  // AB property_value_stated, AC avm_value, AD avm_variance_pct, AE avm_evidence_url,
+  // AF cash_to_borrower_est, AG total_facility_quoted, AH net_ltv_stated,
+  // AI charge_position_sought, AJ term_months, AK use_of_funds_class,
+  // AL purpose_of_funds, AM exit_strategy,
+  // AN charge1_lender, AO charge1_balance, AP charge1_balance_includes_arrears,
+  // AQ arrears_amount, AR second_charge_lender, AS second_charge_balance,
+  // AT redemption_treatment, AU lor_status, AV el_status, AW ccl_url, AX ccl_active_section,
+  // AY fees_summary, AZ legal_buffer, BA contingency_buffer, BB scorecard_json,
+  // BC lender_routes, BD missing_questions, BE disqualifiers, BF confidence,
+  // BG additional_security_summary, BH captured_to_v2_at
+  const regulatedClass = /business|investment/i.test(d.regulated || '') ? 'Business / investment'
+    : /personal/i.test(d.regulated || '') ? 'Personal / consumer' : 'TBC';
   return [
-    summary,
-    d.additional_info || `Source: ${source}`,
-    '',
-    d.mobile || '',
-    d.email || '',
-    first,
-    last,
-    ownerName,
-    'TRIAGE',
-    'FALSE',
-    productLabel,
-    'Callback — qualify and confirm lender route',
-    '', '', '', '',
-    '',
-    requestedAmount || '',
-    '',
-    ref,
-    value || '',
-    d.first_charge_lender || '',
-    d.first_charge_balance || '',
-    d.clean_first_charge_balance || '',
-    d.arrears_amount || '',
-    d.second_charge_provider || '',
-    d.second_charge_balance || '',
-    d.additional_security_properties_summary || '',
-    '',
-    d.additional_info || '',
+    ref,                                                             // A: case_id
+    `${first} ${last}`.trim(),                                       // B: borrower_name
+    '',                                                              // C: manual_notes
+    d.mobile || '',                                                  // D: mobile_e164
+    d.email || '',                                                   // E: email
+    ownerName,                                                       // F: owner_sales
+    'Tom',                                                           // G: owner_processing
+    'TRIAGE',                                                        // H: status
+    'Callback — qualify and confirm lender route',                   // I: next_step
+    d.outstanding_items || '',                                       // J: open_items
+    ts,                                                              // K: last_contact
+    source,                                                          // L: source
+    product,                                                         // M: product_route
+    'NET_REQUESTED',                                                 // N: loan_request_type
+    requestedAmount || '',                                           // O: requested_amount_net
+    '',                                                              // P: funds_needed_by
+    '',                                                              // Q: scorecard_url (set post-write)
+    'ROUTER',                                                        // R: engine
+    regulatedClass.split(' ')[0],                                    // S: borrower_type
+    d.residential_address || d.property_address || '',              // T: residential_address
+    d.security_is_home_address || d.securityIsHome || 'TBC',        // U: is_home_address
+    'TBC',                                                           // V: occupancy
+    d.regulated || '',                                               // W: regulated_flag
+    d.property_address || d.site_address || '',                     // X: security_address
+    '',                                                              // Y: asset_class
+    '',                                                              // Z: property_spec_short
+    d.tenure || '',                                                  // AA: tenure
+    value || '',                                                     // AB: property_value_stated
+    '',                                                              // AC: avm_value
+    '',                                                              // AD: avm_variance_pct
+    '',                                                              // AE: avm_evidence_url
+    '',                                                              // AF: cash_to_borrower_est
+    '',                                                              // AG: total_facility_quoted
+    d.estimated_ltv || '',                                           // AH: net_ltv_stated
+    d.charge_request || d.chargeRequested || '',                     // AI: charge_position_sought
+    d.timescale || '',                                               // AJ: term_months
+    regulatedClass,                                                  // AK: use_of_funds_class
+    purpose || '',                                                   // AL: purpose_of_funds
+    d.exit_strategy || '',                                           // AM: exit_strategy
+    d.first_charge_lender || '',                                     // AN: charge1_lender
+    d.first_charge_balance || '',                                    // AO: charge1_balance
+    d.arrears === 'Yes' ? 'No — arrears separate' : 'Yes — clean balance', // AP: charge1_balance_includes_arrears
+    d.arrears_amount || '',                                          // AQ: arrears_amount
+    d.second_charge_provider || '',                                  // AR: second_charge_lender
+    d.second_charge_balance || '',                                   // AS: second_charge_balance
+    '',                                                              // AT: redemption_treatment
+    '',                                                              // AU: lor_status
+    '',                                                              // AV: el_status
+    '',                                                              // AW: ccl_url
+    '',                                                              // AX: ccl_active_section
+    '',                                                              // AY: fees_summary
+    d.legal_buffer || (d.legalCosts === 'add_2000' ? 'Yes' : 'No') || '', // AZ: legal_buffer
+    d.overrun_buffer || (Number(d.bufferAmount||0) > 0 ? 'Yes' : 'No') || '', // BA: contingency_buffer
+    '',                                                              // BB: scorecard_json
+    '',                                                              // BC: lender_routes
+    d.outstanding_items || '',                                       // BD: missing_questions
+    '',                                                              // BE: disqualifiers
+    '',                                                              // BF: confidence
+    d.additional_security_properties_summary || '',                  // BG: additional_security_summary
+    ts,                                                              // BH: captured_to_v2_at
   ];
 }
 
@@ -644,19 +696,7 @@ export default async function handler(req, res) {
     let pipelineRowNumber = null;
     if (pipelineRow) {
       pipelineRowNumber = await appendRowAtFirstEmpty(sheets, 'Pipeline', pipelineRow);
-      try {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: SHEET_ID,
-          range: `'Pipeline'!BH${pipelineRowNumber}:BI${pipelineRowNumber}`,
-          valueInputOption: 'USER_ENTERED',
-          requestBody: {
-            values: [[
-              data.property_address || data.site_address || '',
-              data.residential_address || data.home_address || data.property_address || data.site_address || '',
-            ]],
-          },
-        });
-      } catch (e) { console.warn('[Lead API] Pipeline address detail write failed:', e.message); }
+    // address fields already in main row (cols T + X) — no extra write needed
     }
 
     // ── Scorecard URL ──────────────────────────────────────────────────
@@ -664,11 +704,12 @@ export default async function handler(req, res) {
     const scorecardUrl = data.deal_ref ? `${BASE_URL}/api/scorecard?ref=${encodeURIComponent(data.deal_ref)}` : null;
 
     // ── Save scorecard URL back to PIPELINE row (col AQ = 43) ─────────
+    // Write scorecard URL into Pipeline col Q (scorecard_url, index 16)
     if (scorecardUrl && pipelineRowNumber) {
       try {
         await sheets.spreadsheets.values.update({
           spreadsheetId: SHEET_ID,
-          range: `'Pipeline'!AQ${pipelineRowNumber}`,
+          range: `'Pipeline'!Q${pipelineRowNumber}`,
           valueInputOption: 'USER_ENTERED',
           requestBody: { values: [[`=HYPERLINK("${scorecardUrl}","View Scorecard")`]] },
         });
