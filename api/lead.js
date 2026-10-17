@@ -348,7 +348,11 @@ function formatPipelineRow(d, ts, product) {
   return [
     ref,                                                             // A: case_id
     `${first} ${last}`.trim(),                                       // B: borrower_name
-    '',                                                              // C: manual_notes
+    [                                                                // C: manual_notes (structured quick-ref)
+      `Panel solicitor opt-in: ${d.panel_solicitor_opt_in || (d.solicitorPreference==='panel'?'Yes':d.solicitorPreference==='own'?'No':d.solicitorPreference==='discuss'?'TBC':'TBC')}`,
+      `Est. legal cost: ${d.estimated_legal_cost?'\u00a3'+Number(d.estimated_legal_cost).toLocaleString('en-GB'):'TBC'}`,
+      `Source: ${d.page_source||''}`,
+    ].filter(Boolean).join(' | '),                                   // C: manual_notes
     d.mobile || '',                                                  // D: mobile_e164
     d.email || '',                                                   // E: email
     ownerName,                                                       // F: owner_sales

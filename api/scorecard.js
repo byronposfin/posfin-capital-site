@@ -229,8 +229,11 @@ export default async function handler(req, res) {
     const arrearsAmount = val(dataRow, ['arrears_amount', 'Arrears']);
     const secondChargeBalance = val(dataRow, ['second_charge_balance', '2nd Charge Balance']);
     const secondChargeProvider = val(dataRow, ['second_charge_lender', '2nd Charge Provider', 'AR']);
-    const legalBufferRaw = val(dataRow, ['legal_buffer', 'AZ']);
-    const contingencyRaw = val(dataRow, ['contingency_buffer', 'BA']);
+    const legalBufferRaw    = val(dataRow, ['legal_buffer']);
+    const contingencyRaw    = val(dataRow, ['contingency_buffer']);
+    const manualNotes      = val(dataRow, ['manual_notes']) || '';
+    const getNote = (pat) => { const m = manualNotes.match(pat); return m ? m[1].trim() : ''; };
+    const panelSolicitorRaw = val(dataRow, ['panel_solicitor_opt_in']) || getNote(/Panel solicitor opt-in: ([^|\n]+)/);
 
     // Calculate net cash
     const loan = Number(String(loanAmount).replace(/[^\d]/g, '')) || 0;
@@ -241,10 +244,10 @@ export default async function handler(req, res) {
 
     const d = {
       ref,
-      borrowerName: val(dataRow, ['borrower_name', '👤 First Name', 'First Name']) || get(/Name: ([^\n]+)/),
-      mobile:       val(dataRow, ['mobile_e164', '📱 Mobile', 'Mobile']),
-      email:        val(dataRow, ['email', '📧 Email', 'Email']),
-      product:      val(dataRow, ['product_route', '⚡ Product', 'Product']),
+      borrowerName: val(dataRow, ['borrower_name', '\ud83d\udc64 First Name', 'First Name']) || get(/Name: ([^\n]+)/),
+      mobile:       val(dataRow, ['mobile_e164', '\ud83d\udcf1 Mobile', 'Mobile']),
+      email:        val(dataRow, ['email', '\ud83d\udce7 Email', 'Email']),
+      product:      val(dataRow, ['product_route', '\u26a1 Product', 'Product']),
       securityAddress: val(dataRow, ['security_address', 'Security Address']) || get(/Address: ([^\n]+)/),
       postcode:     val(dataRow, ['postcode', 'Postcode']) || get(/Postcode: ([^\n]+)/),
       propertyValue,
@@ -255,11 +258,11 @@ export default async function handler(req, res) {
       secondCharges: sc > 0 ? 'Yes' : 'No',
       secondChargeProvider,
       secondChargeBalance,
-      legalBuffer:  legalBufferRaw === 'Yes' || legalBufferRaw === 'Yes',
+      legalBuffer:  legalBufferRaw === 'Yes',
       overrunBuffer: contingencyRaw === 'Yes',
-      chargePosition: val(dataRow, ['charge_position_sought', 'AI']) || get(/Charge position: ([^\n]+)/),
-      panelSolicitorOptIn: get(/Panel solicitor opt-in: ([^\n]+)/),
-      contingencyAmount: (() => { const m = String(contingencyRaw || '').match(/[\d,]+/); return m ? m[0].replace(/,/g,'') : null; })(),
+      chargePosition: val(dataRow, ['charge_position_sought']) || get(/Charge position: ([^\n]+)/),
+      panelSolicitorOptIn: panelSolicitorRaw || get(/Panel solicitor opt-in: ([^\n]+)/),
+      contingencyAmount: null,
       estimatedLegalCost: legalBufferRaw === 'Yes' ? '2000' : null,
       loanAmount,
       netCash,
