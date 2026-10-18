@@ -1253,9 +1253,9 @@ fbq('track', 'PageView');
   function confirmationRef(payload) {
     if (payload.prefill_case_ref) return payload.prefill_case_ref;
     const saved=sessionStorage.getItem('posfin_intake_ref'); if(saved)return saved;
-    const digits = crypto.randomUUID();
+    const digits = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
     const last = (payload.name || 'WEB').trim().split(/\s+/).pop().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'WEB';
-    const ref='POSFIN-WEB-' + digits; sessionStorage.setItem('posfin_intake_ref',ref); return ref;
+    const ref='POSFIN-WEB-' + last + '-' + digits; sessionStorage.setItem('posfin_intake_ref',ref); return ref;
   }
   function populateConfirmation(payload, ref) {
     const card = document.getElementById('confirmationCard');
@@ -1309,8 +1309,8 @@ fbq('track', 'PageView');
         wrap.classList.add('has-error'); valid = false;
       }
       if (f.id === 'currentAddressMoveInYear') {
-        const y = parseInt(val, 10), nowY = new Date().getFullYear();
-        if (!y || y < 1940 || y > nowY) { wrap.classList.add('has-error'); valid = false; }
+        const y = /^\d{4}$/.test(val) ? Number(val) : NaN, nowY = new Date().getFullYear();
+        if (!y || y < 1940 || y > nowY || (y === nowY && Number(currentAddressMoveInMonth.value) > new Date().getMonth()+1)) { wrap.classList.add('has-error'); valid = false; }
       }
     });
     return valid;
