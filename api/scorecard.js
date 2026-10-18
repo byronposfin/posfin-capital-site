@@ -1,175 +1,201 @@
 /**
  * Posfin Capital — Deal Scorecard (Permanent URL)
- * GET /api/scorecard?ref=POSFIN-ML-SMITH
+ * GET /api/scorecard?ref=POSFIN-WEB-...
  *
- * Reads from PIPELINE tab, renders the same format as the on-screen
- * Step 5 confirmation. Shareable with broker (Telegram) and borrower (WATI).
+ * Borrower-facing scorecard. Source of truth is PIPELINE_v2.scorecard_json
+ * where present; flat PIPELINE_v2 columns are fallback only.
  */
 
+import { validToken, scorecardLink } from '../lib/scorecard-access.js';
 import { google } from 'googleapis';
+import { render as renderCanonical } from '../lib/factfind-contract.js';
 
-const SHEET_ID = '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
+const SHEET_ID = process.env.FACTFIND_SHEET_ID || '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
 
-function fmt(v) { return v && v !== 'TBC' && v !== '' ? v : '—'; }
-function fmtCurrency(v) {
-  if (!v || v === 'TBC' || v === '') return '—';
-  const n = Number(String(v).replace(/[^\d.]/g, ''));
-  return isNaN(n) || n === 0 ? '—' : '£' + n.toLocaleString('en-GB');
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
-
+function raw(v) { return v === undefined || v === null ? '' : String(v).trim(); }
+function num(v) {
+  const n = Number(raw(v).replace(/[^0-9.-]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+function money(n) {
+  const v = typeof n === 'number' ? n : num(n);
+  return v > 0 ? `£${Math.round(v).toLocaleString('en-GB')}` : '—';
+}
+function title(v) {
+  const s = raw(v);
+  if (!s) return '—';
+  const map = {
+    net: 'Net cash requested',
+    gross: 'Total facility requested',
+    sell_property: 'Sale of property',
+    refinance: 'Refinance',
+    retained: 'Interest retained',
+    add_to_facility: 'Add redemptions to facility',
+    deduct_from_advance: 'Deduct redemptions from advance',
+    freehold: 'Freehold',
+    leasehold: 'Leasehold',
+  };
+  return map[s] || s.replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase());
+}
+function safeDisplay(v) {
+  const s = raw(v);
+  if (!s || s === 'TBC') return '—';
+  const internal = new Set(['website/router submission', 'raw Meta/router response']);
+  return internal.has(s.toLowerCase()) ? '—' : s;
+}
+function first(...vals) { return vals.find(v => raw(v)) || ''; }
 function row(label, value, opts = {}) {
-  const color = opts.teal ? '#008F8A' : opts.amber ? '#1C184F' : '#1C184F';
-  const weight = opts.bold ? '700' : '500';
-  return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:0.62rem 0;border-bottom:1px solid #E8EEF0">
-    <span style="font-size:0.9rem;color:#425466;line-height:1.35">${label}</span>
-    <span style="font-size:0.94rem;font-weight:${weight};color:${color};text-align:right;line-height:1.35;max-width:58%">${value || '—'}</span>
-  </div>`;
+  const strong = opts.strong ? 'font-weight:800;color:#008F8A' : 'font-weight:650;color:#1C184F';
+  return `<div class="row"><span>${esc(label)}</span><b style="${strong}">${esc(value || '—')}</b></div>`;
+}
+function calcLine(label, value, note = '') {
+  return `<div class="calc-line"><div><b>${esc(label)}</b>${note ? `<small>${esc(note)}</small>` : ''}</div><strong>${esc(value)}</strong></div>`;
+}
+function pct(n) { return Number.isFinite(n) && n > 0 ? `${n.toFixed(1)}%` : '—'; }
+
+function extractModel(ref, flat, scorecardJson) {
+  const answers = scorecardJson?.answers || {};
+  const lead = scorecardJson?.lead_data || {};
+
+  const borrowerName = first(flat.borrower_name, `${lead.first_name || ''} ${lead.last_name || ''}`.trim(), lead.full_name);
+  const mobile = first(flat.mobile_e164, lead.mobile, lead.phone);
+  const email = first(flat.email, lead.email);
+  const securityAddress = first(answers.securityAddress, flat.security_address, lead.security_address, lead.property_address);
+  const postcode = first(answers.securityPostcode, lead.security_postcode, lead.postcode);
+  const propertyValue = num(first(answers.propertyValue, flat.property_value_stated, lead.property_value));
+  const firstLender = first(answers.firstChargeLender, flat.charge1_lender, lead.first_charge_lender);
+  const firstBalance = num(first(answers.firstChargeBalance, flat.charge1_balance, lead.first_charge_balance));
+  const firstArrears = num(first(answers.firstChargeArrearsAmount, flat.arrears_amount, lead.arrears_amount));
+  const secondProvider = first(answers.secondChargeProvider, flat.second_charge_lender, lead.second_charge_provider);
+  const secondBalance = num(first(answers.secondChargeBalance, flat.second_charge_balance, lead.second_charge_balance));
+  const requested = num(first(answers.loanAmount, flat.requested_amount_net, flat.cash_to_borrower_est, lead.loan_amount));
+  const redemptionStructure = first(answers.redemptionStructure, lead.redemption_structure);
+  const legal = raw(answers.legalCosts).includes('2000') || raw(flat.legal_buffer).toLowerCase() === 'yes' ? 2000 : num(answers.legalCosts);
+  const buffer = num(first(answers.bufferAmount, flat.contingency_buffer === 'Yes' ? '5000' : '', lead.buffer_amount));
+  const mandatoryRedemptions = firstArrears + secondBalance;
+  const redemptionsAdded = redemptionStructure !== 'deduct_from_advance';
+  const totalFacility = requested + (redemptionsAdded ? mandatoryRedemptions : 0) + legal + buffer;
+  const netCash = redemptionsAdded ? requested : Math.max(0, requested - mandatoryRedemptions - legal - buffer);
+  const ltv = propertyValue > 0 ? (totalFacility / propertyValue) * 100 : 0;
+
+  return {
+    ref,
+    borrowerName,
+    mobile,
+    email,
+    product: safeDisplay(first(flat.product_route, lead.product, scorecardJson?.product)),
+    securityAddress,
+    postcode,
+    propertyValue,
+    tenure: title(first(answers.tenure, flat.tenure, lead.tenure)),
+    bedrooms: first(answers.bedrooms, lead.spec_beds),
+    bathrooms: first(answers.bathrooms, lead.spec_baths),
+    firstLender,
+    firstBalance,
+    firstArrears,
+    firstBalanceType: title(answers.firstChargeBalanceType),
+    secondProvider,
+    secondBalance,
+    requested,
+    netGross: title(first(answers.netGrossRequest, flat.loan_request_type)),
+    redemptionStructure: title(redemptionStructure),
+    legal,
+    buffer,
+    mandatoryRedemptions,
+    totalFacility,
+    netCash,
+    ltv,
+    purpose: title(first(lead.loan_purpose, answers.purpose, flat.purpose_of_funds, flat.use_of_funds_class)),
+    exitStrategy: title(first(answers.exitStrategy, flat.exit_strategy, lead.exit_strategy)),
+    repaymentPreference: title(first(answers.repaymentPreference, lead.repayment_preference)),
+    timescale: title(first(answers.requiredTimescale, flat.funds_needed_by, lead.required_timescale)),
+    solicitorPreference: title(first(answers.solicitorPreference, lead.solicitor_preference)),
+  };
 }
 
-function section(label) {
-  return `<p style="font-size:11px;text-transform:uppercase;letter-spacing:0.16em;color:#008F8A;font-family:'DM Sans',-apple-system,sans-serif;font-weight:800;margin:1.35rem 0 0.55rem">${label}</p>`;
-}
+function renderScorecard(d) {
+  const generated = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const propertyValue = money(d.propertyValue);
+  const ltvFormula = d.propertyValue > 0 ? `${money(d.totalFacility)} / ${propertyValue} = ${pct(d.ltv)}` : '—';
+  const propertySpec = [d.tenure !== '—' ? d.tenure : '', d.bedrooms ? `${d.bedrooms} beds` : '', d.bathrooms ? `${d.bathrooms} baths` : ''].filter(Boolean).join(' · ') || '—';
 
-function scorecard(d) {
-  const now = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-
-  // Mandatory redemptions
-  const redemptionRows = [];
-  let totalRedemptions = 0;
-  if (d.arrearsAmount && Number(String(d.arrearsAmount).replace(/[^`\d]/g,'')) > 0) {
-    const v = Number(String(d.arrearsAmount).replace(/[^\d]/g,''));
-    totalRedemptions += v;
-    redemptionRows.push(row('Arrears to clear', fmtCurrency(v), { amber: true }));
-  }
-  if (d.secondChargeBalance && Number(String(d.secondChargeBalance).replace(/[^\d]/g,'')) > 0) {
-    const v = Number(String(d.secondChargeBalance).replace(/[^\d]/g,''));
-    totalRedemptions += v;
-    redemptionRows.push(row(`Redeem 2nd charge — ${d.secondChargeProvider || 'TBC'}`, fmtCurrency(v), { amber: true }));
-  }
-
-  // Legal / buffer additions
-  let legalCost = 0;
-  let bufferCost = 0;
-  const bufferRows = [];
-  if (d.legalBuffer) {
-    legalCost = Number(String(d.estimatedLegalCost || '2000').replace(/[^\d]/g,'')) || 2000;
-    bufferRows.push(row('Legal cost buffer', fmtCurrency(legalCost), { amber: true }));
-  }
-  if (d.overrunBuffer) {
-    bufferCost = Number(String(d.contingencyAmount || '5000').replace(/[^\d]/g,'')) || 5000;
-    bufferRows.push(row('Contingency buffer', fmtCurrency(bufferCost), { amber: true }));
-  }
-
-  const totalAdditions = totalRedemptions + legalCost + bufferCost;
-
-  const chargePositionBadge = d.chargePosition
-    ? `<span style="display:inline-block;padding:3px 10px;border-radius:3px;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;background:${/2nd|second/i.test(d.chargePosition) ? '#FFF3CD;color:#856404' : '#D1F5F3;color:#006B67'}">${d.chargePosition}</span>`
-    : '';
-
-  const solicitorBadge = d.panelSolicitorOptIn
-    ? `<span style="display:inline-block;padding:3px 10px;border-radius:3px;font-size:11px;font-weight:800;letter-spacing:0.10em;text-transform:uppercase;background:${d.panelSolicitorOptIn === 'Yes' ? '#D1F5F3;color:#006B67' : d.panelSolicitorOptIn === 'No' ? '#F5F5F5;color:#555' : '#FFF3E0;color:#856404'}">${d.panelSolicitorOptIn === 'Yes' ? '✓ Panel solicitor' : d.panelSolicitorOptIn === 'No' ? 'Own solicitor' : 'Solicitor TBC'}</span>`
-    : '';
-
-  const additionsSection = (redemptionRows.length > 0 || bufferRows.length > 0) ? `
-    <div style="margin-bottom:1.2rem;padding:0.8rem;border-radius:5px;background:#FFFBF0;border:2px solid #F0C040">
-      ${section('Mandatory Redemptions & Additions')}
-      ${redemptionRows.join('')}
-      ${redemptionRows.length > 0 ? `<div style="display:flex;justify-content:space-between;padding:0.35rem 0 0.55rem;border-bottom:1px dashed #E0C060"><span style="font-size:0.82rem;font-weight:700;color:#856404">Total mandatory redemptions</span><span style="font-size:0.85rem;font-weight:700;color:#856404">${fmtCurrency(totalRedemptions)}</span></div>` : ''}
-      ${bufferRows.join('')}
-      ${totalAdditions > 0 ? `<div style="display:flex;justify-content:space-between;padding-top:0.4rem;margin-top:0.2rem;border-top:1px solid #E0C060"><span style="font-size:0.82rem;font-weight:700;color:#1C184F">Total added to facility</span><span style="font-size:0.85rem;font-weight:700;color:#008F8A">${fmtCurrency(totalAdditions)}</span></div>` : ''}
-    </div>` : '';
-
-  const solicitorSection = (d.panelSolicitorOptIn || d.estimatedLegalCost) ? `
-    <div style="margin-bottom:1.2rem">
-      ${section('Legal & Solicitor')}
-      ${d.panelSolicitorOptIn ? row('Panel solicitor', d.panelSolicitorOptIn === 'Yes' ? '✓ Yes — LARK / Ackroyds / Taylor Rose' : d.panelSolicitorOptIn === 'No' ? 'No — own solicitor' : 'TBC — discuss on call') : ''}
-      ${d.estimatedLegalCost && d.estimatedLegalCost !== '0' ? row('Estimated legal cost', fmtCurrency(d.estimatedLegalCost), { teal: true }) : ''}
-    </div>` : '';
+  const redemptionRows = [
+    d.firstArrears > 0 ? calcLine('Clear first-charge arrears', money(d.firstArrears), d.firstLender ? `${d.firstLender}` : '') : '',
+    d.secondBalance > 0 ? calcLine(`Redeem second charge${d.secondProvider ? ` — ${d.secondProvider}` : ''}`, money(d.secondBalance)) : '',
+  ].filter(Boolean).join('');
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Posfin Capital · ${d.ref}</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<title>Posfin Capital · ${esc(d.ref)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#FFFFFF;font-family:'DM Sans',-apple-system,sans-serif;color:#1A1A2E;min-height:100vh;-webkit-font-smoothing:antialiased}
-.wrap{max-width:600px;margin:0 auto;padding:2rem 1.1rem 4rem;background:#FFFFFF}
-.header{text-align:center;padding:1.25rem 0 1.5rem;border-bottom:3px solid #1C184F;margin-bottom:0.75rem;background:#FFFFFF}
-.icon{font-size:2.5rem;margin-bottom:0.75rem}
-.headline{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;color:#1C184F;margin:0 0 0.4rem}
-.subline{font-size:0.82rem;color:#5A5770}
-.scorecard-label{font-size:11px;text-transform:uppercase;letter-spacing:0.20em;color:#1C184F;font-weight:800;margin:1.15rem 0 0.9rem}
-.ref-box{margin-top:1.5rem;padding:1rem;border-radius:5px;background:#1C184F;text-align:center}
-.ref-label{color:rgba(255,255,255,0.7);font-size:0.78rem;margin-bottom:0.3rem}
-.ref-value{color:#00B5B0;font-family:monospace;font-size:0.9rem;font-weight:600}
-.ref-sub{color:rgba(255,255,255,0.6);font-size:0.75rem;margin-top:0.6rem}
-.top-bar{background:#13113A;color:#FFFFFF;padding:11px 24px;font-size:11px;font-weight:700;letter-spacing:0.12em;display:flex;justify-content:space-between;align-items:center}
-.generated{font-size:11px;color:#9E9AAA;text-align:center;margin-top:2rem}
-@media(max-width:600px){.wrap{padding:1.35rem 1rem 3rem}.top-bar{flex-direction:column;gap:4px;text-align:center;font-size:10px}.headline{font-size:1.55rem}.subline{font-size:.88rem}.icon{font-size:2.35rem}}
+*{box-sizing:border-box} body{margin:0;background:#f7f4ed;color:#1A1A2E;font-family:'DM Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}.top{background:#13113A;color:white;padding:12px 20px;font-size:11px;font-weight:800;letter-spacing:.13em;display:flex;justify-content:space-between;gap:14px}.wrap{max-width:760px;margin:0 auto;padding:24px 14px 44px}.hero{background:white;border:1px solid #e8e4db;padding:24px 22px;text-align:center;border-top:4px solid #00B5B0}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.22em;color:#008F8A;font-weight:800}.hero h1{font-family:'Playfair Display',serif;color:#1C184F;margin:10px 0 8px;font-size:30px}.sub{color:#5A5770;line-height:1.45}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}.metric{background:#1C184F;color:white;padding:16px;border-radius:6px}.metric small{display:block;color:rgba(255,255,255,.68);font-size:11px;text-transform:uppercase;letter-spacing:.13em;margin-bottom:8px}.metric b{font-size:22px;color:#00D1C8}.card{background:white;border:1px solid #e8e4db;border-radius:6px;padding:18px;margin-top:14px}.card h2{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:#008F8A}.row{display:flex;justify-content:space-between;gap:18px;padding:10px 0;border-bottom:1px solid #edf0ef;align-items:baseline}.row span{color:#53616a}.row b{text-align:right}.calc{border:1px solid #dcebea;background:#fbfefd;border-radius:6px;overflow:hidden}.calc-line{display:flex;justify-content:space-between;gap:14px;padding:13px 14px;border-bottom:1px solid #dcebea;align-items:baseline}.calc-line b{color:#1C184F}.calc-line small{display:block;color:#6F6B7A;font-size:12px;margin-top:3px}.calc-line strong{color:#1C184F;white-space:nowrap}.total{background:#1C184F;color:white}.total b,.total strong{color:#00D1C8!important}.note{font-size:12px;color:#6F6B7A;line-height:1.45;margin-top:10px}.ref{background:#1C184F;color:white;text-align:center;border-radius:6px;padding:16px;margin-top:16px}.ref code{color:#00D1C8;font-weight:800}.footer{text-align:center;color:#858091;font-size:11px;margin-top:18px;line-height:1.45}@media(max-width:680px){.top{display:block;text-align:center}.grid{grid-template-columns:1fr}.hero h1{font-size:25px}.row{display:block}.row b{display:block;text-align:left;margin-top:4px}.calc-line{font-size:14px}.wrap{padding-left:10px;padding-right:10px}}
 </style>
 </head>
 <body>
-<div class="top-bar">
-  <span>POSFIN CAPITAL · BRIDGING FINANCE SPECIALISTS</span>
-  <span>FCA AUTHORISED · FRN 913022</span>
-</div>
+<div class="top"><span>POSFIN CAPITAL · BRIDGING FINANCE SPECIALISTS</span><span>FCA AUTHORISED · FRN 913022</span></div>
 <div class="wrap">
-  <div class="header">
-    <div class="icon">${d.product === 'Speed Loan' ? '⚡' : d.product?.includes('Dev') ? '🏗' : '✅'}</div>
-    <h2 class="headline">Application received.</h2>
-    <p class="subline">Byron or Chris will call you within 30 minutes during business hours with your indicative terms.</p>
-    ${chargePositionBadge ? `<div style="margin-top:0.75rem">${chargePositionBadge}</div>` : ''}
-  </div>
+  <section class="hero">
+    <div class="eyebrow">Application scorecard</div>
+    <h1>Application received.</h1>
+    <p class="sub">Byron or Chris will call you within 30 minutes during business hours with your indicative terms.</p>
+  </section>
 
-  <p class="scorecard-label">Your scorecard</p>
+  <section class="grid">
+    <div class="metric"><small>Cash to borrower</small><b>${esc(money(d.netCash))}</b></div>
+    <div class="metric"><small>Total facility</small><b>${esc(money(d.totalFacility))}</b></div>
+    <div class="metric"><small>Estimated net LTV</small><b>${esc(pct(d.ltv))}</b></div>
+  </section>
 
-  <div style="margin-bottom:1.2rem">
-    ${section('Your Details')}
-    ${row('Name', fmt(d.borrowerName))}
-    ${row('Mobile', fmt(d.mobile))}
-    ${row('Email', fmt(d.email))}
-  </div>
+  <section class="card">
+    <h2>Your details</h2>
+    ${row('Name', safeDisplay(d.borrowerName))}
+    ${row('Mobile', safeDisplay(d.mobile))}
+    ${row('Email', safeDisplay(d.email))}
+  </section>
 
-  <div style="margin-bottom:1.2rem">
-    ${section('The Security Property')}
-    ${row('Address', fmt(d.securityAddress))}
-    ${row('Postcode', fmt(d.postcode))}
-    ${row('Estimated Value', fmtCurrency(d.propertyValue))}
-    ${d.tenure ? row('Tenure', fmt(d.tenure)) : ''}
-    ${row('1st Charge Lender', fmt(d.firstChargeLender) || 'None')}
-    ${row('Mortgage Balance', fmtCurrency(d.firstChargeBalance))}
-    ${d.arrearsAmount && d.arrearsAmount !== '0' ? row('Arrears (to clear)', fmtCurrency(d.arrearsAmount), { amber: true }) : ''}
-    ${d.secondCharges === 'Yes' ? row(`2nd Charge — ${d.secondChargeProvider || 'TBC'}`, fmtCurrency(d.secondChargeBalance), { amber: true }) : ''}
-    ${d.chargePosition ? row('Charge position requested', fmt(d.chargePosition), { bold: true }) : ''}
-  </div>
+  <section class="card">
+    <h2>The security property</h2>
+    ${row('Address', safeDisplay(d.securityAddress))}
+    ${row('Postcode', safeDisplay(d.postcode))}
+    ${row('Estimated value', propertyValue, {strong:true})}
+    ${row('Property', propertySpec)}
+    ${row('1st charge lender', safeDisplay(d.firstLender))}
+    ${row('1st charge balance', money(d.firstBalance))}
+    ${d.firstArrears > 0 ? row('Arrears to clear', money(d.firstArrears)) : ''}
+    ${d.secondBalance > 0 ? row(`2nd charge${d.secondProvider ? ` — ${d.secondProvider}` : ''}`, money(d.secondBalance)) : ''}
+  </section>
 
-  ${additionsSection}
+  <section class="card">
+    <h2>Loan build-up</h2>
+    <div class="calc">
+      ${calcLine('Net cash requested', money(d.requested), d.netGross !== '—' ? d.netGross : '')}
+      ${redemptionRows || ''}
+      ${d.mandatoryRedemptions > 0 ? calcLine('Mandatory redemptions subtotal', money(d.mandatoryRedemptions), d.redemptionStructure) : ''}
+      ${d.legal > 0 ? calcLine('Legal cost allowance', money(d.legal)) : ''}
+      ${d.buffer > 0 ? calcLine('Contingency buffer', money(d.buffer)) : ''}
+      <div class="calc-line total"><div><b>Total facility required</b><small>Approximate, before lender fees</small></div><strong>${esc(money(d.totalFacility))}</strong></div>
+    </div>
+    <p class="note">Estimated net LTV: ${esc(ltvFormula)}</p>
+  </section>
 
-  <div style="margin-bottom:1.2rem">
-    ${section('Your Loan')}
-    ${row('Net cash to you on day 1', fmtCurrency(d.netCash), { teal: true, bold: true })}
-    ${totalAdditions > 0 ? row('Total additions to facility', fmtCurrency(totalAdditions), { amber: true }) : ''}
-    ${row('Total facility required', (fmtCurrency(d.totalFacility) || '—') + ' (approx, before lender fees)', { bold: true })}
-    ${row('Net or gross', fmt(d.netOrGross))}
-    ${row('Purpose', fmt(d.purpose))}
-    ${row('Exit strategy', fmt(d.exitStrategy))}
-    ${d.timescale ? row('Timescale', fmt(d.timescale)) : ''}
-    ${d.ltv ? row('Estimated LTV', fmt(d.ltv)) : ''}
-  </div>
+  <section class="card">
+    <h2>Purpose and exit</h2>
+    ${row('Purpose', safeDisplay(d.purpose))}
+    ${row('Exit strategy', safeDisplay(d.exitStrategy))}
+    ${row('Interest preference', safeDisplay(d.repaymentPreference))}
+    ${row('Timescale', safeDisplay(d.timescale))}
+    ${row('Solicitor preference', safeDisplay(d.solicitorPreference))}
+  </section>
 
-  ${solicitorSection}
-
-  <div class="ref-box">
-    <p class="ref-label">Reference</p>
-    <p class="ref-value">${d.ref}</p>
-    ${solicitorBadge ? `<p style="margin-top:0.5rem">${solicitorBadge}</p>` : ''}
-    <p class="ref-sub">Check your WhatsApp — your scorecard is on its way to ${fmt(d.mobile)}</p>
-  </div>
-
-  <p class="generated">Generated ${now} · Posfin Capital Ltd · FCA FRN 913022 · 96 Kensington High Street, London W8 4SG</p>
+  <div class="ref"><div style="font-size:12px;color:rgba(255,255,255,.7);margin-bottom:6px">Reference</div><code>${esc(d.ref)}</code></div>
+  <p class="footer">Generated ${esc(generated)} · Posfin Capital Ltd · FCA FRN 913022 · 96 Kensington High Street, London W8 4SG</p>
 </div>
 </body>
 </html>`;
@@ -179,10 +205,11 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') { res.status(405).end(); return; }
 
-  const ref = req.query.ref;
+  const ref = raw(req.query.ref);
   if (!ref) { res.status(400).send('Missing ref parameter'); return; }
 
   try {
+    if (!validToken(ref, req.query.token)) return res.status(403).send('This scorecard link is not valid. Please contact Posfin for a new link.');
     const saB64 = process.env.GOOGLE_SA_B64;
     if (!saB64) { res.status(500).send('Server misconfiguration'); return; }
     const credentials = JSON.parse(Buffer.from(saB64, 'base64').toString('utf8'));
@@ -192,96 +219,28 @@ export default async function handler(req, res) {
     });
     const sheets = google.sheets({ version: 'v4', auth });
 
-    const result = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: `'Pipeline'!A:BO`,
-    });
+    const result = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'Pipeline V1.0'!A:ZZ` });
     const rows = result.data.values || [];
     const headers = rows[0] || [];
-    const idx = (names) => {
-      const list = Array.isArray(names) ? names : [names];
-      return headers.findIndex(h => list.some(name => String(h || '').toLowerCase().includes(String(name).toLowerCase())));
-    };
-    const val = (row, names) => {
-      const i = idx(names);
-      return i >= 0 ? (row[i] || '') : '';
-    };
-
-    const refIdx = idx(['case_id', '🔖 Ref', 'Ref']);
+    const refIdx = headers.findIndex(h => String(h || '').trim() === '🔖 Ref');
     const dataRow = rows.slice(1).find(r => String(r[refIdx] || '').trim() === ref);
     if (!dataRow) {
-      res.status(404).send(`<html><body style="font-family:sans-serif;text-align:center;padding:4rem">
-        <h2 style="color:#1C184F">Scorecard not found</h2>
-        <p style="color:#6F6B7A">Reference: ${ref}</p>
-        <p style="color:#6F6B7A;margin-top:1rem">This deal may not have been submitted via the website form.</p>
-      </body></html>`);
+      res.status(404).send(`<html><body style="font-family:sans-serif;text-align:center;padding:4rem"><h2 style="color:#1C184F">Scorecard not found</h2><p style="color:#6F6B7A">Reference: ${esc(ref)}</p></body></html>`);
       return;
     }
 
-    // Parse summary text from col A as fallback only; current data should come from headers.
-    const summary = dataRow[0] || '';
-    const get = (pattern) => summary.match(pattern)?.[1]?.trim() || '';
+    const flat = {};
+    headers.forEach((h, i) => { flat[String(h || '').trim()] = dataRow[i] || ''; });
+    let scorecardJson = {};
+    try { scorecardJson = flat.scorecard_json ? JSON.parse(flat.scorecard_json) : {}; } catch (_) { scorecardJson = {}; }
 
-    // Read using actual Pipeline schema column headers
-    // Use exact column names only — no partial fallbacks that could hit adjacent columns
-    const loanAmount         = val(dataRow, ['requested_amount_net'])  || val(dataRow, ['FNR — Final Net Request', 'Net (£)']);
-    const propertyValue      = val(dataRow, ['property_value_stated']) || val(dataRow, ['Property Value (Stated)']);
-    const firstChargeBalance = val(dataRow, ['charge1_balance'])       || val(dataRow, ['1st Charge Clean', '1st Charge Gross']);
-    const arrearsAmount      = val(dataRow, ['arrears_amount']);        // exact only — 'arrears' also matches charge1_balance_includes_arrears
-    const secondChargeBalance = val(dataRow, ['second_charge_balance']) || val(dataRow, ['2nd Charge Balance']);
-    const secondChargeProvider = val(dataRow, ['second_charge_lender']) || val(dataRow, ['2nd Charge Provider']);
-    const legalBufferRaw    = val(dataRow, ['legal_buffer']);
-    const contingencyRaw    = val(dataRow, ['contingency_buffer']);
-    const manualNotes      = val(dataRow, ['manual_notes']) || '';
-    const getNote = (pat) => { const m = manualNotes.match(pat); return m ? m[1].trim() : ''; };
-    const panelSolicitorRaw = val(dataRow, ['panel_solicitor_opt_in']) || getNote(/Panel solicitor opt-in: ([^|\n]+)/);
-
-    // Calculate net cash
-    const loan = Number(String(loanAmount).replace(/[^\d]/g, '')) || 0;
-    const arrears = Number(String(arrearsAmount).replace(/[^\d]/g, '')) || 0;
-    const sc = Number(String(secondChargeBalance).replace(/[^\d]/g, '')) || 0;
-    const hasAdditions = arrears > 0 || sc > 0;
-    const netCash = hasAdditions ? Math.max(0, loan - arrears - sc) : loan;
-
-    const d = {
-      ref,
-      borrowerName: val(dataRow, ['borrower_name', '\ud83d\udc64 First Name', 'First Name']) || get(/Name: ([^\n]+)/),
-      mobile:       val(dataRow, ['mobile_e164', '\ud83d\udcf1 Mobile', 'Mobile']),
-      email:        val(dataRow, ['email', '\ud83d\udce7 Email', 'Email']),
-      product:      val(dataRow, ['product_route', '\u26a1 Product', 'Product']),
-      securityAddress: val(dataRow, ['security_address', 'Security Address']) || get(/Address: ([^\n]+)/),
-      postcode:     val(dataRow, ['postcode', 'Postcode']) || get(/Postcode: ([^\n]+)/),
-      propertyValue,
-      tenure:       val(dataRow, ['tenure', 'Tenure']) || get(/Tenure: ([^\n]+)/),
-      firstChargeLender: val(dataRow, ['charge1_lender', '1st Charge Provider']),
-      firstChargeBalance,
-      arrearsAmount,
-      secondCharges: sc > 0 ? 'Yes' : 'No',
-      secondChargeProvider,
-      secondChargeBalance,
-      legalBuffer:  legalBufferRaw === 'Yes',
-      overrunBuffer: contingencyRaw === 'Yes',
-      chargePosition: val(dataRow, ['charge_position_sought']) || get(/Charge position: ([^\n]+)/),
-      panelSolicitorOptIn: panelSolicitorRaw || get(/Panel solicitor opt-in: ([^\n]+)/),
-      contingencyAmount: null,
-      estimatedLegalCost: legalBufferRaw === 'Yes' ? '2000' : null,
-      loanAmount,
-      netCash,
-      totalFacility: loan,
-      netOrGross:   val(dataRow, ['loan_request_type', 'Net or Gross']) || get(/Net or gross: ([^\n]+)/),
-      purpose:      val(dataRow, ['purpose_of_funds', 'Purpose of Funds']) || get(/Purpose: ([^\n]+)/),
-      exitStrategy: val(dataRow, ['exit_strategy', 'Exit Strategy']) || get(/Exit: ([^\n]+)/),
-      timescale:    val(dataRow, ['term_months', 'ETA Completion Days']) || get(/Timescale: ([^\n]+)/),
-      ltv:          val(dataRow, ['net_ltv_stated', 'Combined LTV%', 'Current LTV']) || get(/LTV: ([^\n]+)/),
-    };
-
-    const html = scorecard(d);
+    const model = extractModel(ref, flat, scorecardJson);
+    const html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your Fact Find — Posfin Capital</title></head><body>'+renderCanonical({...scorecardJson.answers,scorecard_url:scorecardLink('',ref)}, ref)+'<script src="/factfind-events.js"></script></body></html>';
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('Cache-Control', 'private, no-store');
     res.status(200).send(html);
-
   } catch (err) {
     console.error('[Scorecard API Error]', err);
-    res.status(500).send('Error generating scorecard: ' + err.message);
+    res.status(500).send('Error generating scorecard');
   }
 }

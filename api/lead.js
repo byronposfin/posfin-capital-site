@@ -10,9 +10,11 @@
  *   development_exit_finance    → Dev Exit Leads
  */
 
+import { scorecardLink } from '../lib/scorecard-access.js';
 import { google } from 'googleapis';
+import { normalise, pipelineRecord, mapPipelineHeaders, REQUIRED_KEYS } from '../lib/factfind-contract.js';
 
-const SHEET_ID = '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
+const SHEET_ID = process.env.FACTFIND_SHEET_ID || '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
 
 const TAB_MAP = {
   development_finance:       'Dev Finance Leads',
@@ -136,16 +138,12 @@ function formatMainLoanRow(d, ts) {
     d.second_charges||'', d.tenure||'', d.arrears||'',
     d.loan_amount||'', d.net_or_gross||'', d.estimated_ltv||'', d.ltv_flag||'',
     d.exit_strategy||'', d.timescale||'',
-    d.legal_buffer || (d.legalCosts === 'add_2000' ? 'Yes' : d.legalCosts === 'do_not_add' ? 'No' : '')||'',
-    d.overrun_buffer || (Number(d.bufferAmount||0) > 0 ? 'Yes' : d.bufferAmount === '0' ? 'No' : '')||'',
-    d.second_charge_provider||'', d.second_charge_balance||'', d.charge_request||d.chargeRequested||'',
+    d.legal_buffer||'', d.overrun_buffer||'',
+    d.second_charge_provider||'', d.second_charge_balance||'', d.charge_request||'',
     d.page_source||'main-loan', d.submitted_at || ts,
     additionalSecuritySummary || 'No additional security offered',
     additionalSecurityFlag,
     d.additional_security_properties_json||'',
-    d.panel_solicitor_opt_in || (d.solicitorPreference === 'panel' ? 'Yes' : d.solicitorPreference === 'own' ? 'No' : d.solicitorPreference === 'discuss' ? 'TBC' : '') || '',
-    d.estimated_legal_cost || (d.legalCosts === 'add_2000' ? '2000' : d.legalCosts === 'do_not_add' ? '0' : '') || '',
-    d.contingency_buffer_amount || d.bufferAmount || '',
   ];
 }
 
@@ -316,101 +314,153 @@ function formatPipelineRow(d, ts, product) {
     '🚪 EXIT',
     d.exit_strategy || 'TBC',
     '',
-    '',
-    '⚖️ LOAN STRUCTURE',
-    `Charge position: ${d.charge_request || d.chargeRequested || 'TBC'}`,
-    `Legal buffer: ${d.legal_buffer || (d.legalCosts === 'add_2000' ? 'Yes' : 'No') || 'TBC'} · Contingency: ${d.overrun_buffer || (Number(d.bufferAmount||0) > 0 ? 'Yes' : 'No') || 'TBC'}${Number(d.contingency_buffer_amount || d.bufferAmount || 0) > 0 ? ` (£${Number(d.contingency_buffer_amount || d.bufferAmount).toLocaleString('en-GB')})` : ''}`,
-    `Panel solicitor opt-in: ${d.panel_solicitor_opt_in || (d.solicitorPreference === 'panel' ? 'Yes' : d.solicitorPreference === 'own' ? 'No' : d.solicitorPreference === 'discuss' ? 'TBC' : 'TBC')}`,
-    `Estimated legal cost: ${d.estimated_legal_cost ? `£${Number(d.estimated_legal_cost).toLocaleString('en-GB')}` : d.legalCosts === 'add_2000' ? '£2,000' : 'TBC'}`,
-    '',
     `⚡ Status: TRIAGE · Owner: ${ownerName} · Source: ${source}`,
   ].filter(Boolean).join('\n');
 
-  // Pipeline tab schema (69 columns A–BQ) — must match exactly
-  // A case_id, B borrower_name, C manual_notes, D mobile_e164, E email,
-  // F owner_sales, G owner_processing, H status, I next_step, J open_items,
-  // K last_contact, L source, M product_route, N loan_request_type, O requested_amount_net,
-  // P funds_needed_by, Q scorecard_url (set post-write), R engine, S borrower_type,
-  // T residential_address, U is_home_address, V occupancy, W regulated_flag,
-  // X security_address, Y asset_class, Z property_spec_short, AA tenure,
-  // AB property_value_stated, AC avm_value, AD avm_variance_pct, AE avm_evidence_url,
-  // AF cash_to_borrower_est, AG total_facility_quoted, AH net_ltv_stated,
-  // AI charge_position_sought, AJ term_months, AK use_of_funds_class,
-  // AL purpose_of_funds, AM exit_strategy,
-  // AN charge1_lender, AO charge1_balance, AP charge1_balance_includes_arrears,
-  // AQ arrears_amount, AR second_charge_lender, AS second_charge_balance,
-  // AT redemption_treatment, AU lor_status, AV el_status, AW ccl_url, AX ccl_active_section,
-  // AY fees_summary, AZ legal_buffer, BA contingency_buffer, BB scorecard_json,
-  // BC lender_routes, BD missing_questions, BE disqualifiers, BF confidence,
-  // BG additional_security_summary, BH captured_to_v2_at
-  const regulatedClass = /business|investment/i.test(d.regulated || '') ? 'Business / investment'
-    : /personal/i.test(d.regulated || '') ? 'Personal / consumer' : 'TBC';
   return [
-    ref,                                                             // A: case_id
-    `${first} ${last}`.trim(),                                       // B: borrower_name
-    [                                                                // C: manual_notes (structured quick-ref)
-      `Panel solicitor opt-in: ${d.panel_solicitor_opt_in || (d.solicitorPreference==='panel'?'Yes':d.solicitorPreference==='own'?'No':d.solicitorPreference==='discuss'?'TBC':'TBC')}`,
-      `Est. legal cost: ${d.estimated_legal_cost?'\u00a3'+Number(d.estimated_legal_cost).toLocaleString('en-GB'):'TBC'}`,
-      `Source: ${d.page_source||''}`,
-    ].filter(Boolean).join(' | '),                                   // C: manual_notes
-    d.mobile || '',                                                  // D: mobile_e164
-    d.email || '',                                                   // E: email
-    ownerName,                                                       // F: owner_sales
-    'Tom',                                                           // G: owner_processing
-    'TRIAGE',                                                        // H: status
-    'Callback — qualify and confirm lender route',                   // I: next_step
-    d.outstanding_items || '',                                       // J: open_items
-    ts,                                                              // K: last_contact
-    source,                                                          // L: source
-    product,                                                         // M: product_route
-    'NET_REQUESTED',                                                 // N: loan_request_type
-    requestedAmount || '',                                           // O: requested_amount_net
-    '',                                                              // P: funds_needed_by
-    '',                                                              // Q: scorecard_url (set post-write)
-    'ROUTER',                                                        // R: engine
-    regulatedClass.split(' ')[0],                                    // S: borrower_type
-    d.residential_address || d.property_address || '',              // T: residential_address
-    d.security_is_home_address || d.securityIsHome || 'TBC',        // U: is_home_address
-    'TBC',                                                           // V: occupancy
-    d.regulated || '',                                               // W: regulated_flag
-    d.property_address || d.site_address || '',                     // X: security_address
-    '',                                                              // Y: asset_class
-    '',                                                              // Z: property_spec_short
-    d.tenure || '',                                                  // AA: tenure
-    value || '',                                                     // AB: property_value_stated
-    '',                                                              // AC: avm_value
-    '',                                                              // AD: avm_variance_pct
-    '',                                                              // AE: avm_evidence_url
-    '',                                                              // AF: cash_to_borrower_est
-    '',                                                              // AG: total_facility_quoted
-    d.estimated_ltv || '',                                           // AH: net_ltv_stated
-    d.charge_request || d.chargeRequested || '',                     // AI: charge_position_sought
-    d.timescale || '',                                               // AJ: term_months
-    regulatedClass,                                                  // AK: use_of_funds_class
-    purpose || '',                                                   // AL: purpose_of_funds
-    d.exit_strategy || '',                                           // AM: exit_strategy
-    d.first_charge_lender || '',                                     // AN: charge1_lender
-    d.first_charge_balance || '',                                    // AO: charge1_balance
-    d.arrears === 'Yes' ? 'No — arrears separate' : 'Yes — clean balance', // AP: charge1_balance_includes_arrears
-    d.arrears_amount || '',                                          // AQ: arrears_amount
-    d.second_charge_provider || '',                                  // AR: second_charge_lender
-    d.second_charge_balance || '',                                   // AS: second_charge_balance
-    '',                                                              // AT: redemption_treatment
-    '',                                                              // AU: lor_status
-    '',                                                              // AV: el_status
-    '',                                                              // AW: ccl_url
-    '',                                                              // AX: ccl_active_section
-    '',                                                              // AY: fees_summary
-    d.legal_buffer || (d.legalCosts === 'add_2000' ? 'Yes' : 'No') || '', // AZ: legal_buffer
-    d.overrun_buffer || (Number(d.bufferAmount||0) > 0 ? 'Yes' : 'No') || '', // BA: contingency_buffer
-    '',                                                              // BB: scorecard_json
-    '',                                                              // BC: lender_routes
-    d.outstanding_items || '',                                       // BD: missing_questions
-    '',                                                              // BE: disqualifiers
-    '',                                                              // BF: confidence
-    d.additional_security_properties_summary || '',                  // BG: additional_security_summary
-    ts,                                                              // BH: captured_to_v2_at
+    summary,
+    d.additional_info || `Source: ${source}`,
+    '',
+    d.mobile || '',
+    d.email || '',
+    first,
+    last,
+    ownerName,
+    'TRIAGE',
+    'FALSE',
+    productLabel,
+    'Callback — qualify and confirm lender route',
+    '', '', '', '',
+    '',
+    requestedAmount || '',
+    '',
+    ref,
+    value || '',
+    d.first_charge_lender || '',
+    d.first_charge_balance || '',
+    d.clean_first_charge_balance || '',
+    d.arrears_amount || '',
+    d.second_charge_provider || '',
+    d.second_charge_balance || '',
+    d.additional_security_properties_summary || '',
+    '',
+    d.additional_info || '',
   ];
+}
+
+function cleanPhone(phone) {
+  const raw = String(phone || '').trim().replace(/\s+/g, '');
+  if (!raw) return '';
+  if (raw.startsWith('+')) return raw;
+  if (raw.startsWith('44')) return `+${raw}`;
+  if (raw.startsWith('0')) return `+44${raw.slice(1)}`;
+  return raw;
+}
+
+function sheetsText(value) {
+  const s = value === undefined || value === null ? '' : String(value);
+  // Google Sheets USER_ENTERED treats leading + as a formula/operator.
+  // Prefix an apostrophe so UK mobiles remain literal text, displayed as +44...
+  return s.startsWith('+') ? `'${s}` : s;
+}
+
+function moneyNumber(value) {
+  if (value === undefined || value === null) return '';
+  return String(value).replace(/[^0-9.]/g, '');
+}
+
+function sourceUrlParam(d, name) {
+  try {
+    const url = d.source_url || d.sourceUrl || '';
+    if (!url) return '';
+    return new URL(url).searchParams.get(name) || '';
+  } catch (_) { return ''; }
+}
+
+function normaliseLoanRequestType(value) {
+  const s = String(value || '').trim().toLowerCase();
+  if (!s) return '';
+  if (['net', 'net_amount', 'cash_to_borrower', 'cash'].includes(s)) return 'NET_AMOUNT';
+  if (['gross', 'total', 'total_facility', 'total_facility_quoted', 'facility'].includes(s)) return 'TOTAL_FACILITY_QUOTED';
+  return String(value).trim();
+}
+
+function buildScorecardPayload(d, product, ts) {
+  return {
+    source: 'posfin-capital-site/api/lead.js',
+    captured_at: ts,
+    product,
+    lead_data: d,
+    answers: { ...d },
+    legal_buffer: d.legal_buffer === true || d.legal_buffer === 'true' || d.legal_buffer === 'Yes' || d.legal_buffer === 'yes',
+    contingency_buffer: d.contingency_buffer === true || d.contingency_buffer === 'true' || d.contingency_buffer === 'Yes' || d.contingency_buffer === 'yes' || d.overrun_buffer === true || d.overrun_buffer === 'true' || d.overrun_buffer === 'Yes' || d.overrun_buffer === 'yes',
+  };
+}
+
+function formatPipelineV2Row(d, ts, product) {
+  if (!['main_loan', 'bank_bridge', 'speed_loan', 'equitable_charges', 'back_to_back', 'purchase_refurb', 'acquisition_finance', 'development_finance', 'development_exit_finance'].includes(product)) return null;
+  const first = d.first_name || '';
+  const last = d.last_name || '';
+  const name = `${first} ${last}`.trim() || d.borrower_full_name || 'New Website Lead';
+  const productLabel = genericProductLabel(product);
+  const caseId = d.deal_ref || d.case_ref || d.deal_id || `POSFIN-WEB-${String(name).toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) || 'UNKNOWN'}-${Date.now()}`;
+  const requestedAmount = (product === 'speed_loan' || product === 'equitable_charges') ? d.loan_needed
+    : (product === 'main_loan' || product === 'bank_bridge' || product === 'purchase_refurb' || product === 'acquisition_finance') ? d.loan_amount
+    : product === 'back_to_back' ? (d.full_loan_required || d.cash_needed_now)
+    : product === 'development_finance' ? d.loan_size_gbp
+    : d.gross_borrowing_gbp || d.loan_size_gbp;
+  const scorecardPayload = buildScorecardPayload(d, product, ts);
+  return {
+    case_id: caseId,
+    borrower_name: name,
+    mobile_e164: sheetsText(cleanPhone(d.mobile || d.phone)),
+    email: d.email || '',
+    owner_sales: ownerNameFromData(d),
+    owner_processing: 'Tom',
+    status: 'BORROWER ENGAGED — NEEDS QUALIFICATION',
+    next_step: 'Qualify gaps, confirm charge stack/net-vs-gross/purpose/exit, then route to lender/LOR gate.',
+    open_items: 'confirm charge position; net/gross request; exit; purpose; term; occupancy/regulation; title/charges',
+    last_contact: `Website/router submission ${ts}`,
+    source: d.page_source || 'website_router',
+    product_route: productLabel,
+    loan_request_type: normaliseLoanRequestType(d.netGrossRequest || d.net_or_gross || d.loan_request_type || d.request_type || sourceUrlParam(d, 'netGrossRequest')),
+    requested_amount_net: moneyNumber(requestedAmount),
+    cash_to_borrower_est: moneyNumber(d.cash_needed_now || requestedAmount),
+    total_facility_quoted: moneyNumber(d.full_loan_required || requestedAmount),
+    scorecard_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://posfincapital.com'}/api/scorecard?ref=${encodeURIComponent(caseId)}`,
+    engine: 'BROKER',
+    borrower_type: d.borrower_type || 'TBC',
+    residential_address: d.residential_address || d.home_address || '',
+    is_home_address: d.security_is_home_address || d.securityIsHome || 'TBC',
+    occupancy: d.occupancy || '',
+    regulated_flag: d.regulated || 'TBC',
+    security_address: d.property_address || d.security_address || d.site_address || '',
+    asset_class: d.property_type || d.asset_class || '',
+    property_spec_short: [d.spec_beds && `${d.spec_beds} bed`, d.spec_baths && `${d.spec_baths} bath`, d.spec_parking, d.spec_garden === 'Yes' && 'garden'].filter(Boolean).join(' · '),
+    tenure: d.tenure || '',
+    property_value_stated: moneyNumber(d.property_value || d.gdv_estimate_gbp || d.scheme_value || d.scheme_value_gbp),
+    term_months: d.term_months || d.timescale || '',
+    funds_needed_by: d.funds_needed_by || d.urgency || '',
+    use_of_funds_class: d.loan_purpose || d.purpose_of_funds || d.use_of_funds || d.purpose || sourceUrlParam(d, 'loan_purpose') || '',
+    purpose_of_funds: d.loan_purpose || d.purpose_of_funds || d.use_of_funds || d.purpose || sourceUrlParam(d, 'loan_purpose') || '',
+    exit_strategy: d.exitStrategy || d.exit_strategy || d.exit_type || sourceUrlParam(d, 'exitStrategy') || '',
+    charge1_lender: d.first_charge_lender || '',
+    charge1_balance: moneyNumber(d.first_charge_balance),
+    charge1_balance_includes_arrears: d.arrears ? String(d.arrears) : '',
+    arrears_amount: moneyNumber(d.arrears_amount),
+    second_charge_lender: d.second_charge_provider || '',
+    second_charge_balance: moneyNumber(d.second_charge_balance),
+    additional_security_summary: d.additional_security_properties_summary || '',
+    legal_buffer: scorecardPayload.legal_buffer ? 'Yes' : '',
+    contingency_buffer: scorecardPayload.contingency_buffer ? 'Yes' : '',
+    lor_status: 'none',
+    el_status: 'none',
+    scorecard_json: JSON.stringify(scorecardPayload),
+    missing_questions: 'confirm charge position; net/gross request; exit; purpose; term; occupancy/regulation; title/charges',
+    disqualifiers: 'None known yet; insufficient information',
+    confidence: 'LOW/MEDIUM — router submission, needs qualification',
+    captured_to_v2_at: ts,
+  };
 }
 
 function columnName(n) {
@@ -462,10 +512,39 @@ async function appendRowAtFirstEmpty(sheets, tabName, row) {
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
     range: `'${tabName}'!A${nextRow}:${endCol}${nextRow}`,
-    valueInputOption: 'USER_ENTERED',
+    valueInputOption: 'RAW',
     requestBody: { values: [row] },
   });
   return nextRow;
+}
+
+async function upsertPipelineV2Row(sheets, rowValues, key = 'case_id') {
+  if (!rowValues) return null;
+  const range = `'PIPELINE_v2'!A:ZZ`;
+  const result = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
+  const rows = result.data.values || [];
+  const headers = rows[0] || [];
+  const keyIndex = headers.findIndex(h => String(h || '').trim() === key);
+  if (keyIndex < 0) throw new Error(`PIPELINE_v2 missing ${key} header`);
+  const caseId = String(rowValues[key] || '').trim();
+  if (!caseId) throw new Error('PIPELINE_v2 upsert missing case_id');
+  const existingIndex = rows.slice(1).findIndex(r => String(r[keyIndex] || '').trim() === caseId);
+  const rowNumber = existingIndex >= 0 ? existingIndex + 2 : Math.max(rows.length + 1, 2);
+  await ensureSheetHasRow(sheets, 'PIPELINE_v2', rowNumber);
+  const cell = (v) => {
+    if (v === undefined || v === null) return '';
+    if (typeof v === 'object') return JSON.stringify(v);
+    return sheetsText(v);
+  };
+  const row = headers.map(h => cell(rowValues[h]));
+  const endCol = columnName(headers.length);
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SHEET_ID,
+    range: `'PIPELINE_v2'!A${rowNumber}:${endCol}${rowNumber}`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [row] },
+  });
+  return { rowNumber, caseId, action: existingIndex >= 0 ? 'updated' : 'appended' };
 }
 
 
@@ -643,7 +722,8 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
   try {
     const body = req.body;
-    const { product, ...data } = body;
+    const { product, ...submitted } = body;
+    const data = normalise(submitted);
 
     const tabName = TAB_MAP[product];
     if (!tabName) {
@@ -667,10 +747,11 @@ export default async function handler(req, res) {
     const formatter = formatters[product] || formatSpeedLoanRow;
     const row = formatter(data, ts);
     const pipelineRow = formatPipelineRow(data, ts, product);
+    const pipelineV2Row = formatPipelineV2Row(data, ts, product);
 
     // Healthcheck-safe path: validate product mapping and row formatting without
     // writing fake leads to Google Sheets. Used by Tom's scheduled page checks.
-    if (data.dry_run === true || data.dry_run === 'true') {
+    if (data.dry_run === true || data.dry_run === 'true' || (process.env.VERCEL_ENV === 'preview' && process.env.FACTFIND_STAGING_WRITES !== 'true')) {
       res.status(200).json({
         ok: true,
         dryRun: true,
@@ -679,8 +760,23 @@ export default async function handler(req, res) {
         rowColumns: row.length,
         pipeline: !!pipelineRow,
         pipelineColumns: pipelineRow ? pipelineRow.length : 0,
+        pipelineV2: !!pipelineV2Row,
+        pipelineV2CaseId: pipelineV2Row?.case_id || null,
+        pipelineV2ScorecardJson: Boolean(pipelineV2Row?.scorecard_json),
+        canonicalFields: data,
+        leadRef: data.deal_ref,
+        pipelineV2DryRunFields: pipelineV2Row ? {
+          loan_request_type: pipelineV2Row.loan_request_type,
+          engine: pipelineV2Row.engine,
+          exit_strategy: pipelineV2Row.exit_strategy,
+          legal_buffer: pipelineV2Row.legal_buffer,
+          contingency_buffer: pipelineV2Row.contingency_buffer,
+        } : null,
       }); return;
     }
+
+    // Routing is not a completed Fact Find. Avoid duplicate/incomplete case writes and premature alerts.
+    if (data.route_check_stage === 'router_initial') return res.status(200).json({ok:true,leadRef:data.deal_ref,partial:true});
 
     // Auth via service account JSON stored in Vercel env
     const saB64 = process.env.GOOGLE_SA_B64;
@@ -695,31 +791,25 @@ export default async function handler(req, res) {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
+    // Validate the canonical schema before making ANY lead writes. Never overwrite Q (live: Lender).
+    const headerResult = await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'Pipeline V1.0'!1:1"});
+    const pipelineHeaders = headerResult.data.values?.[0] || [];
+    const missingHeaders = REQUIRED_KEYS.filter(k => !pipelineHeaders.includes(k));
+    if (missingHeaders.length) throw new Error('Fact Find schema migration required: '+missingHeaders.join(', '));
+    const BASE_URL = process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL ? 'https://'+process.env.VERCEL_URL : (process.env.NEXT_PUBLIC_BASE_URL || 'https://posfincapital.com');
+    const scorecardUrl = scorecardLink(BASE_URL, data.deal_ref);
     const leadRowNumber = await appendRowAtFirstEmpty(sheets, tabName, row);
-
     let pipelineRowNumber = null;
+    let pipelineV2Result = null;
     if (pipelineRow) {
-      pipelineRowNumber = await appendRowAtFirstEmpty(sheets, 'Pipeline', pipelineRow);
-    // address fields already in main row (cols T + X) — no extra write needed
+      const record = pipelineRecord(data, pipelineRow[0], scorecardUrl);
+      pipelineRowNumber = await appendRowAtFirstEmpty(sheets, 'Pipeline V1.0', mapPipelineHeaders(pipelineHeaders,record));
     }
-
-    // ── Scorecard URL ──────────────────────────────────────────────────
-    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://posfincapital.com';
-    const scorecardUrl = data.deal_ref ? `${BASE_URL}/api/scorecard?ref=${encodeURIComponent(data.deal_ref)}` : null;
-
-    // ── Save scorecard URL back to PIPELINE row (col AQ = 43) ─────────
-    // Write scorecard URL into Pipeline col Q (scorecard_url, index 16)
-    if (scorecardUrl && pipelineRowNumber) {
-      try {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: SHEET_ID,
-          range: `'Pipeline'!Q${pipelineRowNumber}`,
-          valueInputOption: 'USER_ENTERED',
-          requestBody: { values: [[`=HYPERLINK("${scorecardUrl}","View Scorecard")`]] },
-        });
-      } catch (e) { console.warn('[Lead API] Scorecard URL write failed:', e.message); }
+    // Existing v2 mirror retained, but it is not the Fact Find source of truth.
+    if (pipelineV2Row) {
+      try { pipelineV2Result = await upsertPipelineV2Row(sheets, pipelineV2Row); }
+      catch (e) { console.warn('[Lead API] v2 mirror failed:', e.message); }
     }
-
 
     // ── Case_Timeline row (mandatory touch log) ───────────────────────
     let timelineRowNumber = null;
@@ -774,7 +864,7 @@ export default async function handler(req, res) {
       ].filter(Boolean).join('\n');
 
       const recipients = [...new Set([owner.chatId, '1750758657', '8634157536'])];
-      Promise.all(recipients.map((chatId) => fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage`, {
+      await Promise.all(recipients.map((chatId) => fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'Markdown', disable_web_page_preview: false }),
@@ -797,8 +887,8 @@ export default async function handler(req, res) {
       } catch (e) { console.warn('[Lead API] Prefill token submit stamp failed:', e.message); }
     }
 
-    console.log(`[Lead API] ${data.deal_ref} → ${tabName} | Scorecard: ${scorecardUrl}`);
-    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, callSheet: callSheetTab, callSheetRow: callSheetRowNumber, rawLeadRow: rawLeadRowNumber, scorecardUrl, timelineRow: timelineRowNumber }); return;
+    console.log(`[Lead API] ${data.deal_ref} → ${tabName} | PIPELINE_v2: ${pipelineV2Result?.caseId || 'n/a'} | Scorecard: ${scorecardUrl}`);
+    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, pipelineV2: pipelineV2Result, callSheet: callSheetTab, callSheetRow: callSheetRowNumber, rawLeadRow: rawLeadRowNumber, scorecardUrl, timelineRow: timelineRowNumber }); return;
 
   } catch (err) {
     console.error('[Lead API Error]', err);

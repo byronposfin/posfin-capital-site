@@ -706,57 +706,7 @@ fbq('track', 'PageView');
     <div class="field-error">Please select a purpose</div>
   </div>
 
-  <!-- F3: Timescale + urgency flag -->
-  <div class="field">
-    <label for="fundsTimescale">How soon do you need the funds? <span class="req">*</span></label>
-    <select id="fundsTimescale" name="fundsTimescale" required>
-      <option value="">Select timescale…</option>
-      <option value="asap">As soon as possible</option>
-      <option value="within_2_weeks">Within 2 weeks</option>
-      <option value="within_month">Within a month</option>
-      <option value="flexible">Flexible — no immediate pressure</option>
-    </select>
-    <div id="urgencyNote" style="display:none;margin-top:0.5rem;padding:0.65rem 0.85rem;border-radius:8px;background:rgba(0,181,176,0.10);border:1px solid rgba(0,181,176,0.32);font-size:0.84rem;color:#1C184F;line-height:1.45;">⏱ <strong>Fast-track noted.</strong> Getting funds out quickly depends on fast document return — the call will cover what’s needed.</div>
-    <div class="field-error">Please select a timescale</div>
-  </div>
-  <!-- F5: Title ownership -->
-  <div class="field">
-    <label for="titleOwnership">Who owns the security property? <span class="req">*</span></label>
-    <select id="titleOwnership" name="titleOwnership" required>
-      <option value="">Select…</option>
-      <option value="personal_sole">In my name alone</option>
-      <option value="personal_joint">Jointly — with spouse or partner</option>
-      <option value="company">Company-owned</option>
-      <option value="other">Other / not sure</option>
-    </select>
-    <div class="field-error">Please select ownership</div>
-  </div>
-  <div id="coOwnerBlock" style="display:none" class="field"><label for="coOwnerName">Co-owner full name</label><input type="text" id="coOwnerName" name="coOwnerName" placeholder="e.g. Jane Smith"></div>
-  <div id="companyNameBlock" style="display:none" class="field"><label for="owningCompanyName">Company name</label><input type="text" id="owningCompanyName" name="owningCompanyName" placeholder="e.g. Smith Properties Ltd"></div>
-  <!-- F6: First charge status -->
-  <div class="field">
-    <label for="firstChargeStatus">What is the status of your current mortgage / first charge? <span class="req">*</span></label>
-    <select id="firstChargeStatus" name="firstChargeStatus" required>
-      <option value="">Select…</option>
-      <option value="ongoing">Running normally — payments up to date</option>
-      <option value="term_ending">Term ending or ended within 6 months</option>
-      <option value="in_arrears">In arrears</option>
-      <option value="not_sure">Not sure</option>
-    </select>
-    <div class="field-error">Please confirm mortgage status</div>
-  </div>
-  <!-- F7: Restrictions present (separate from second charge) -->
-  <div class="field">
-    <label for="restrictionsPresent">Any restrictions, notices or charging orders on the title? <span class="req">*</span></label>
-    <select id="restrictionsPresent" name="restrictionsPresent" required>
-      <option value="">Select…</option>
-      <option value="no">No</option>
-      <option value="yes">Yes</option>
-      <option value="not_sure">Not sure</option>
-    </select>
-    <div class="field-error">Please confirm restriction status</div>
-  </div>
-  <!-- Credit profile — was dropping; now wired end to end -->
+  <!-- New fields: credit_profile, urgency, first_charge_status, restrictions, contact_preference, AI consent -->
   <div class="field">
     <label for="creditProfile">Credit profile <span class="req">*</span></label>
     <select id="creditProfile" name="creditProfile" required>
@@ -769,7 +719,37 @@ fbq('track', 'PageView');
     </select>
     <div class="field-error">Please select credit profile</div>
   </div>
-  <!-- F8: Contact preference -->
+  <div class="field">
+    <label for="fundsTimescale">How soon do you need the funds? <span class="req">*</span></label>
+    <select id="fundsTimescale" name="fundsTimescale" required>
+      <option value="">Select timescale…</option>
+      <option value="asap">As soon as possible</option>
+      <option value="within_2_weeks">Within 2 weeks</option>
+      <option value="within_month">Within a month</option>
+      <option value="flexible">Flexible — no immediate pressure</option>
+    </select>
+    <div id="urgencyNote" style="display:none;margin-top:0.5rem;padding:0.65rem 0.85rem;border-radius:8px;background:rgba(0,181,176,0.10);border:1px solid rgba(0,181,176,0.32);font-size:0.84rem;color:#1C184F;line-height:1.45;">⏱ <strong>Fast-track noted.</strong> Getting funds out quickly depends on fast document return — the call will cover exactly what’s needed.</div>
+    <div class="field-error">Please select a timescale</div>
+  </div>
+  <div class="field">
+    <label for="firstChargeStatus">Current mortgage / first charge status <span class="req">*</span></label>
+    <select id="firstChargeStatus" name="firstChargeStatus" required>
+      <option value="">Select…</option>
+      <option value="ongoing">Running normally — payments up to date</option>
+      <option value="term_ending">Term ending or ended within 6 months</option>
+      <option value="in_arrears">In arrears</option>
+      <option value="not_sure">Not sure</option>
+    </select>
+    <div class="field-error">Please confirm mortgage status</div>
+  </div>
+  <div class="field">
+    <label for="restrictionsPresent">Any restrictions, notices or charging orders on the title?</label>
+    <select id="restrictionsPresent" name="restrictionsPresent">
+      <option value="not_sure">Not sure</option>
+      <option value="no">No</option>
+      <option value="yes">Yes</option>
+    </select>
+  </div>
   <div class="field">
     <label for="contactPreference">Best time to contact you</label>
     <select id="contactPreference" name="contactPreference">
@@ -779,7 +759,6 @@ fbq('track', 'PageView');
       <option value="weekends">Weekends</option>
     </select>
   </div>
-  <!-- AI call consent (unticked by default per build brief) -->
   <div class="field" style="margin-bottom:1.1rem">
     <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;line-height:1.4"><input type="checkbox" id="aiCallConsent" name="aiCallConsent" value="yes" style="accent-color:#00B5B0;margin-top:0.2rem;flex-shrink:0"> I am happy for an AI assistant to handle the initial call with me before connecting me to a broker</label>
   </div>
@@ -1139,6 +1118,16 @@ fbq('track', 'PageView');
   });
   syncPreviousAddressRequirement();
 
+  // Timescale urgency banner (F3)
+  (function() {
+    var ftEl = document.getElementById('fundsTimescale');
+    var unEl = document.getElementById('urgencyNote');
+    if (ftEl && unEl) {
+      ftEl.addEventListener('change', function() {
+        unEl.style.display = (this.value === 'asap' || this.value === 'within_2_weeks') ? 'block' : 'none';
+      });
+    }
+  })();
   const chargeRequested = document.getElementById('chargeRequested');
   const loanIntentField = document.getElementById('loanIntentField');
   function setLoanIntent(value) {
@@ -1379,16 +1368,13 @@ fbq('track', 'PageView');
       secondChargeLender: form.secondChargeLender.value.trim(),
       secondChargeBalance: form.secondChargeBalance.value.trim(),
       loanIntent: (form.querySelector('input[name="loanIntent"]:checked') || {}).value || '',
-      creditProfile: form.creditProfile ? form.creditProfile.value : '',
-      fundsTimescale: form.fundsTimescale ? form.fundsTimescale.value : '',
-      urgencyFlag: (form.fundsTimescale && (form.fundsTimescale.value === 'asap' || form.fundsTimescale.value === 'within_2_weeks')) ? 'true' : 'false',
-      titleOwnership: form.titleOwnership ? form.titleOwnership.value : '',
-      coOwnerName: form.coOwnerName ? form.coOwnerName.value.trim() : '',
-      owningCompanyName: form.owningCompanyName ? form.owningCompanyName.value.trim() : '',
-      firstChargeStatus: form.firstChargeStatus ? form.firstChargeStatus.value : '',
-      restrictionsPresent: form.restrictionsPresent ? form.restrictionsPresent.value : '',
-      contactPreference: form.contactPreference ? form.contactPreference.value : 'any_time',
-      aiCallConsent: (form.aiCallConsent && form.aiCallConsent.checked) ? 'yes' : 'no',
+      creditProfile: (document.getElementById('creditProfile') || {}).value || '',
+      fundsTimescale: (document.getElementById('fundsTimescale') || {}).value || '',
+      urgencyFlag: (function(){ var v = (document.getElementById('fundsTimescale') || {}).value || ''; return (v === 'asap' || v === 'within_2_weeks') ? 'true' : 'false'; })(),
+      firstChargeStatus: (document.getElementById('firstChargeStatus') || {}).value || '',
+      restrictionsPresent: (document.getElementById('restrictionsPresent') || {}).value || '',
+      contactPreference: (document.getElementById('contactPreference') || {}).value || 'any_time',
+      aiCallConsent: (document.getElementById('aiCallConsent') && document.getElementById('aiCallConsent').checked) ? 'yes' : 'no',
       purpose: form.purpose.value,
       userAgent: navigator.userAgent,
       referrer: document.referrer || 'direct',
@@ -1481,6 +1467,13 @@ fbq('track', 'PageView');
       utm_campaign: payload.utm_campaign,
       utm_content: payload.utm_content,
       utm_term: payload.utm_term,
+      credit_profile: payload.creditProfile || '',
+      funds_timescale: payload.fundsTimescale || '',
+      urgency_flag: payload.urgencyFlag || 'false',
+      first_charge_status: payload.firstChargeStatus || '',
+      restrictions_present: payload.restrictionsPresent || '',
+      contact_preference: payload.contactPreference || 'any_time',
+      ai_call_consent: payload.aiCallConsent || 'no',
       fbclid: payload.fbclid
     };
 

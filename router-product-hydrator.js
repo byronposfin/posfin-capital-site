@@ -394,7 +394,7 @@
     return true;
   }
   function isMoneyName(name) {
-    return /amount|balance|value|loan|arrears|charge/i.test(String(name || '')) && !/years|yearBuilt|bedrooms|bathrooms|receptions|floorArea|additionalProperties/i.test(String(name || ''));
+    return /amount|balance|value|loan/i.test(String(name || '')) && !/years|yearBuilt|bedrooms|bathrooms|receptions|floorArea|additionalProperties/i.test(String(name || ''));
   }
   function formatMoneyDisplay(v) {
     var raw = money(v);
@@ -419,8 +419,8 @@
   }
   function carriedValueHtml(label, value, name, fallbackInput) {
     if (!norm(value)) return fallbackInput;
-    return '<div class="mb-5"><div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px">'+escapeHtml(label)+'</div>'+ 
-      '<div style="min-height:54px;padding:15px 18px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E">'+escapeHtml(value)+'</div>'+ 
+    return '<div class="mb-5"><div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px">'+escapeHtml(label)+'</div>'+
+      '<div style="min-height:54px;padding:15px 18px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E">'+escapeHtml(value)+'</div>'+
       '<input type="hidden" name="'+escapeHtml(name)+'" value="'+escapeHtml(value)+'"></div>';
   }
   function smallNote(text) {
@@ -488,18 +488,26 @@
   }
   function outstandingBox(d) {
     var items = outstandingItems(d);
-    if (!items.length) return '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px"><strong>Outstanding items:</strong> none flagged. Case is ready for LOR mapping subject to broker review.</div>';
-    return '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(212,168,83,.45);background:rgba(212,168,83,.08);color:#1C184F;font-size:13px"><strong>Outstanding items for follow-up / LOR mapping:</strong><ul style="margin:8px 0 0 18px;padding:0">'+items.map(function(i){return '<li>'+escapeHtml(i)+'</li>';}).join('')+'</ul></div>';
+    if (!items.length) return '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px"><strong>Outstanding items:</strong> Your answers are ready for us to discuss on the call.</div>';
+    return '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(212,168,83,.45);background:rgba(212,168,83,.08);color:#1C184F;font-size:13px"><strong>We will confirm on the call:</strong><ul style="margin:8px 0 0 18px;padding:0">'+items.map(function(i){return '<li>'+escapeHtml(i)+'</li>';}).join('')+'</ul></div>';
   }
   function renderStepThree() {
+    Object.assign(EXTRA, collectFormValues()); // Capture step 2 BEFORE replacing the DOM (credit profile).
     var card = productFormHeading() && productFormHeading().parentElement;
     if (!card) return;
     card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Security property.</h3>'+ 
-      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 3 of 4 — The property. Carried-through answers are pre-filled below. New property and redemption questions remain live.</div>'+ 
+      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 3 of 4 — The property. Check your details below and tell us about any existing borrowing.</div>'+ 
       fieldHtml('Security property address', V.propertyAddress, 'securityAddress')+
       fieldHtml('Security postcode', V.postcode, 'securityPostcode')+
       fieldHtml('Estimated property value', V.propertyValue ? '£' + Number(V.propertyValue).toLocaleString('en-GB') : '', 'propertyValue')+
-      greenSection('Charge stack',
+      selectHtml('Who owns the property?', 'titleOwnership', [['','Please select'],['personal_sole','Personal name — sole owner'],['personal_joint','Joint with spouse or partner'],['company','Company'],['other','Other']], PARAMS.title_ownership || '')+
+      fieldHtml('Co-owner name (if jointly owned)', PARAMS.co_owner_name || '', 'coOwnerName')+
+      fieldHtml('Company name (if company-owned)', PARAMS.owning_company_name || '', 'owningCompanyName')+
+      selectHtml('Is your mortgage up to date and still running?', 'firstChargeStatus', [['','Please select'],['ongoing','Up to date and still running'],['term_ending','Term ended or ending within 6 months'],['in_arrears','In arrears'],['not_sure','Not sure']], '')+
+      selectHtml('Is there a second charge?', 'secondChargePresent', [['','Please select'],['yes','Yes'],['no','No']], '')+
+      selectHtml('Are there any restrictions on the title?', 'restrictionsPresent', [['','Please select'],['yes','Yes'],['no','No'],['not_sure','Not sure']], '')+
+      (V.arrears === 'Yes' ? '<p style="background:#dff6f3;padding:16px;border-left:4px solid #008f8a">You told us there are arrears — enter the amount here, and confirm whether the mortgage balance includes them.</p>' : '')+
+      greenSection('Existing borrowing',
         carriedValueHtml('First charge lender', V.firstChargeLender, 'firstChargeLender', fieldHtml('First charge lender', '', 'firstChargeLender'))+
         fieldHtml('First charge balance', V.firstChargeBalance ? '£' + Number(V.firstChargeBalance).toLocaleString('en-GB') : '', 'firstChargeBalance')+
         fieldHtml('Approximate arrears amount (£)', V.arrearsAmount ? '£' + Number(V.arrearsAmount).toLocaleString('en-GB') : '', 'firstChargeArrearsAmount')+
@@ -557,40 +565,23 @@
     return '<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #E5E1D6;background:#FFFFFF"><div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1C184F;margin-bottom:10px">'+title+'</div>'+body+'</div>';
   }
   function updateFacilitySummary() {
-    var base = Number(moneyInputValue('loanAmount', V.loanAmount)) || 0;
-    var property = Number(moneyInputValue('propertyValue', V.propertyValue)) || 0;
-    var first = Number(moneyInputValue('firstChargeBalance', V.firstChargeBalance)) || 0;
-    var second = Number(moneyInputValue('secondChargeBalance', V.secondChargeBalance)) || 0;
-    var arrears = Number(moneyInputValue('firstChargeArrearsAmount', V.arrearsAmount)) || 0;
-    var redemptionStructure = redemptionMode(checkedValue('redemptionStructure') || EXTRA.redemptionStructure || '');
-    var legalChoice = checkedValue('legalCosts');
-    var bufferChoice = checkedValue('bufferAmount');
-    var addRedemptions = redemptionStructure === 'add_to_facility';
-    var addedArrears = addRedemptions ? arrears : 0;
-    var addedSecond = addRedemptions ? second : 0;
-    var retainedSecond = redemptionStructure === 'deduct_from_requested' || addRedemptions ? 0 : second;
-    var legals = legalChoice === 'add_2000' ? 2000 : 0;
-    var buffer = bufferChoice ? Number(bufferChoice) || 0 : 0;
-    var facility = base + addedArrears + addedSecond + legals + buffer;
-    var totalDebt = first + retainedSecond + facility;
-    var ltv = property ? Math.round((totalDebt / property) * 100) : '';
-    var unconfirmed = [];
-    if ((arrears || second) && !redemptionStructure) unconfirmed.push('redemption structure');
-    if (!legalChoice) unconfirmed.push('legal buffer');
-    if (!bufferChoice) unconfirmed.push('contingency buffer');
     var box = document.getElementById('posfin-facility-summary');
-    if (!box) return;
-    box.innerHTML = '<strong>Net LTV formula:</strong> ('+pounds(first)+' first charge + '+pounds(retainedSecond)+' retained second charge + '+pounds(facility)+' facility) ÷ '+pounds(property)+' = '+(ltv ? ltv+'%' : 'TBC')+'<br>'+
-      '<span style="color:#5A5770;font-size:13px">Facility = base requested '+pounds(base)+' + redemptions added '+pounds(addedArrears + addedSecond)+' + legals '+pounds(legals)+' + buffer '+pounds(buffer)+'.</span>'+
-      (unconfirmed.length ? '<br><span style="color:#B23A48;font-size:13px"><strong>Unconfirmed:</strong> '+unconfirmed.join(', ')+'. These must be answered before the figure is final.</span>' : '');
+    if (!box || !window.PosfinFactFind) return;
+    var d = window.PosfinFactFind.normalise(Object.assign({}, PARAMS,collectFormValues()));
+    var c = window.PosfinFactFind.calculate(d);
+    box.innerHTML = '<strong>Paid to you on day one</strong><div style="font-size:34px;color:#008f8a;font-weight:800">'+pounds(c.cash)+'</div>'+
+      'Redemptions: '+pounds(c.arrears+c.second)+' · Legal allowance: '+pounds(d.legal_buffer)+' · Contingency: '+pounds(d.contingency_buffer)+
+      '<p><strong>Total facility before lender fees / interest: '+pounds(c.facility)+'</strong></p><p>Net LTV: ('+pounds(c.retainedFirst)+' retained mortgage + '+pounds(c.retainedSecond)+' retained second charge + '+pounds(c.facility)+' facility) ÷ '+pounds(d.property_value)+' = '+(c.ltv===null?'To confirm':c.ltv.toFixed(1)+'%')+'</p>'+
+      (d.urgency_flag ? '<p style="background:#fff3d9;padding:12px">You need funds '+window.PosfinFactFind.label(d.funds_timescale).toLowerCase()+'. Timing depends on fast document return and lender checks.</p>' : '');
   }
+
   function renderStepFour() {
     Object.assign(EXTRA, collectFormValues());
     var card = productFormHeading() && productFormHeading().parentElement;
     if (!card) return;
     card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Loan requirements.</h3>'+ 
-      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Loan requirements. No hidden defaults are applied.</div>'+ 
-      fieldHtml('Loan amount requested', V.loanAmount ? pounds(V.loanAmount) : '', 'loanAmount')+
+      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Your loan. Choose the amount, costs and timing that suit your needs.</div>'+ 
+      fieldHtml('Paid to you on day one — amount requested', V.loanAmount ? pounds(V.loanAmount) : '', 'loanAmount')+
       greenSection('Loan amount type',
         '<div class="grid sm:grid-cols-1 gap-2">'+
         cardChoiceHtml('netGrossRequest','net','I need this amount released to me on day one','This is the cash you want after existing lender deductions/redemptions. The lender then works out the total gross facility.', false)+
@@ -605,7 +596,7 @@
         cardChoiceHtml('repaymentPreference','unsure','Not sure — lender/Posfin to advise','We will choose the most suitable structure for the lender route and your affordability.', false)+
         '</div>', 'This is only a preference at this stage — final structure depends on lender, regulation and affordability.')+
       selectHtml('Preferred exit strategy', 'exitStrategy', [['','Please select'],['sell_property','Sell the property'],['refinance_mortgage','Refinance to mortgage'],['equity_release','Equity release'],['sell_other_asset','Sell another asset'],['business_income','Business income'],['ongoing_bridge','Ongoing bridging roll'],['other','Other / discuss']], '')+
-      selectHtml('How soon do you need funds?', 'requiredTimescale', [['','Please select'],['within_2_weeks','Within 2 weeks'],['2_4_weeks','2–4 weeks'],['1_2_months','1–2 months'],['no_fixed_deadline','No fixed deadline']], '')+
+      selectHtml('How soon do you need funds?', 'requiredTimescale', [['','Please select'],['asap','As soon as possible'],['within_2_weeks','Within 2 weeks'],['within_month','Within a month'],['flexible','Flexible']], '')+
       loanCalcSection('Costs and buffer',
         '<div class="grid sm:grid-cols-2 gap-2" style="margin-bottom:12px">'+
         choiceHtml('legalCosts','add_2000','Add £2,000 legal cost buffer', false)+
@@ -614,6 +605,8 @@
         choiceHtml('bufferAmount','0','No contingency buffer', false)+
         choiceHtml('bufferAmount','5000','Add £5,000 contingency', false)+
         choiceHtml('bufferAmount','10000','Add £10,000 contingency', false)+'</div>')+
+      selectHtml('Best time to contact you', 'contactPreference', [['any_time','Any time'],['business_hours','Business hours'],['evenings','Evenings'],['weekends','Weekends']], 'any_time')+
+      '<label style="display:block;padding:16px"><input type="checkbox" name="aiCallConsent"> I agree to an optional call from Posfin’s AI assistant. I can withdraw this consent.</label>'+
       textareaHtml('Anything else we should know?', '', 'borrowerNotes', 'Adverse credit, complex title, development history, deadlines, or anything else.')+
       '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+ 
       greenSection('Solicitor preference',
@@ -623,7 +616,7 @@
         cardChoiceHtml('solicitorPreference','discuss','Not sure — discuss with Posfin','We can explain the difference on the call and help you choose the route that best suits the case.', false)+
         '</div>', 'Optional — we are not forcing a solicitor on you. Posfin does not receive referral fees and has no commercial arrangements with panel solicitors. The reason we mention them is speed: we know how they work, they know bridging lender requirements, and that can help towards a faster completion.')+
       outstandingBox(collectFormValues())+
-      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Submit enquiry →</button></div>';
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Complete Fact Find →</button></div>';
     rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
     Array.prototype.slice.call(card.querySelectorAll('input')).forEach(function(input){ paintOption(input, input.checked); });
     updateFacilitySummary();
@@ -677,20 +670,10 @@
     var card = productFormHeading() && productFormHeading().parentElement;
     if (!card) return;
     var d = payload || collectFormValues();
-    var c = calcScorecard(d);
-    var ref = PARAMS.deal_ref || PARAMS.case_ref || ('POSFIN-' + Date.now().toString().slice(-6));
-    card.innerHTML = '<div style="text-align:center;padding:18px 0 8px;border-bottom:3px solid #1C184F;margin-bottom:20px">'+
-      '<div style="font-size:38px;margin-bottom:10px">✅</div>'+ 
-      '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Enquiry received.</h3>'+ 
-      '<p style="color:#5A5770;font-size:14px;line-height:1.6;margin-top:8px">Reference '+escapeHtml(ref)+'. We will contact you on WhatsApp using the mobile number provided.</p></div>'+ 
-      '<div style="display:grid;gap:14px;color:#1C184F;font-size:14px;line-height:1.6">'+
-      '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>Your details</strong><br>'+escapeHtml(d.first_name||d.firstName||V.firstName)+' '+escapeHtml(d.last_name||d.lastName||V.lastName)+'<br>'+escapeHtml(d.mobile||V.mobile)+'<br>'+escapeHtml(d.email||V.email)+'</div>'+ 
-      '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>The security property</strong><br>'+escapeHtml(d.securityAddress||V.propertyAddress)+', '+escapeHtml(d.securityPostcode||V.postcode)+'<br>Tenure: '+escapeHtml(d.tenure||'TBC')+'<br>Spec: '+escapeHtml(d.bedrooms||'TBC')+' bed / '+escapeHtml(d.bathrooms||'TBC')+' bath / '+escapeHtml(d.receptions||'TBC')+' reception · '+escapeHtml(d.floorArea||'TBC')+' '+escapeHtml(d.floorAreaUnit||'')+'</div>'+ 
-      '<div style="padding:14px;border:1px solid #E5E1D6;background:#FAF8F3"><strong>Additions to loan</strong><br>Mandatory redemptions: '+pounds(c.addedSecond + c.addedArrears)+'<br>— Second charge / HMRC / restriction: '+pounds(c.addedSecond)+'<br>— Arrears: '+pounds(c.addedArrears)+'<br>Legal buffer: '+pounds(c.legals)+'<br>Contingency: '+pounds(c.buffer)+'<br><strong>Total additions: '+pounds(c.additions)+'</strong></div>'+ 
-      '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Your loan</strong><br>Net cash day one: '+pounds(c.netDayOne)+'<br>Facility before legal/buffer: '+pounds(c.base + c.addedSecond + c.addedArrears)+'<br>Additions incl. legal/buffer: '+pounds(c.additions)+'<br>Total facility: '+pounds(c.facility)+'<br>Net or gross: '+escapeHtml(d.netGrossRequest||'TBC')+'<br>Repayment preference: '+escapeHtml(d.repaymentPreference||'TBC')+'<br>Purpose: '+escapeHtml(V.loanPurpose||PARAMS.loan_purpose||'TBC')+'<br>Exit: '+escapeHtml(d.exitStrategy||'TBC')+'<br>Timescale: '+escapeHtml(d.requiredTimescale||'TBC')+'<br>Credit profile: '+escapeHtml(d.creditProfile||'TBC')+'<br><strong>Net LTV: '+(c.ltv?c.ltv+'%':'TBC')+'</strong></div>'+ 
-      outstandingBox(d)+
-      '<div style="padding:14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055)"><strong>Next step:</strong> WhatsApp/Email scorecard should carry the outstanding-items checklist into broker follow-up and LOR mapping. No time-to-fund promise is made here.</div>'+ 
-      '</div>';
+    var ref = d.deal_ref || PARAMS.deal_ref || PARAMS.case_ref;
+    obs.disconnect();
+    document.body.innerHTML = window.PosfinFactFind.render(d, ref);
+    document.body.style.background = '#faf8f3';
     rewriteSideStep('Submitted', 'Submitted');
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
   }
@@ -700,6 +683,7 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; btn.style.opacity = '.72'; }
     Object.assign(EXTRA, collectFormValues());
     var payload = collectFormValues();
+    payload = window.PosfinFactFind.normalise(Object.assign({}, PARAMS, payload));
     payload.redemptionStructure = redemptionMode(payload.redemptionStructure);
     var crmProduct = String(PARAMS.route || 'main_loan').toLowerCase().trim().replace(/[\s-]+/g, '_');
     if (crmProduct === 'senior_desk' || crmProduct === 'not_sure' || crmProduct === 'standard_bridge') crmProduct = 'main_loan';
@@ -745,15 +729,18 @@
     payload.estimated_legal_cost  = payload.legalCosts === 'add_2000' ? '2000' : payload.legalCosts === 'do_not_add' ? '0' : payload.estimated_legal_cost || '';
     payload.submitted_at = new Date().toISOString();
     payload.outstanding_items = outstandingItems(payload).join(' | ');
-    payload.lor_mapping_status = payload.outstanding_items ? 'Outstanding borrower follow-up required before broker portal / LOR finalisation' : 'Ready for broker portal / LOR mapping subject to broker review';
+    payload.lor_mapping_status = payload.outstanding_items ? 'Outstanding borrower follow-up required before our call finalisation' : 'Ready for our call mapping subject to broker review';
     try {
       var res = await fetch('/api/lead', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error('Lead API failed: ' + res.status);
+      var result = await res.json();
+      payload.scorecard_url = result.scorecardUrl || '';
+      payload.deal_ref = result.leadRef || payload.deal_ref;
       renderSubmitted(payload);
     } catch (err) {
       console.warn('[router continuation] submit failed', err);
-      showError('Something went wrong submitting the enquiry. Please try again, or WhatsApp Posfin on +44 7446 950 389.', btn);
-      if (btn) { btn.disabled = false; btn.textContent = original || 'Submit enquiry →'; btn.style.opacity = '1'; }
+      showError('Something went wrong saving your Fact Find. Please try again, or WhatsApp Posfin on +44 7446 950 389.', btn);
+      if (btn) { btn.disabled = false; btn.textContent = original || 'Complete Fact Find →'; btn.style.opacity = '1'; }
     }
   }
 
@@ -791,7 +778,14 @@
       if (validateStepTwo()) renderStepThree();
       return;
     }
-    if (btn && btn.getAttribute('data-posfin-next') === 'step4') { ev.preventDefault(); renderStepFour(); return; }
+    if (btn && btn.getAttribute('data-posfin-next') === 'step4') {
+      ev.preventDefault();
+      for (var name of ['titleOwnership','firstChargeStatus','secondChargePresent','restrictionsPresent']) {
+        var field = document.querySelector('[name="'+name+'"]');
+        if (!field || !field.value) { showError('Please answer ownership, mortgage status, second charge and restrictions before continuing.',field); return; }
+      }
+      renderStepFour(); return;
+    }
     if (btn && btn.getAttribute('data-posfin-next') === 'submit') { ev.preventDefault(); submitRouterLead(btn); return; }
     setTimeout(tick, 80);
   }, true);
