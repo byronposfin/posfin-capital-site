@@ -1,3 +1,5 @@
+import {saveIntake, sheetId} from '../lib/clean-intake.js';
+import {validToken, tokenFor} from '../lib/scorecard-access.js';
 /**
  * Posfin Capital — Lead Capture API
  * POST /api/lead
@@ -775,9 +777,9 @@ export default async function handler(req, res) {
       }); return;
     }
 
-    // Routing is not a completed Fact Find. Avoid duplicate/incomplete case writes and premature alerts.
-    if (data.route_check_stage === 'router_initial') return res.status(200).json({ok:true,leadRef:data.deal_ref,partial:true});
+    if (!/^[A-Za-z0-9._-]{6,100}$/.test(data.deal_ref||'')) return res.status(400).json({error:'Valid case reference required'});
 
+    if(!data.first_name || !data.mobile || !data.email) return res.status(400).json({error:'Name, mobile and email are required'});
     // Auth via service account JSON stored in Vercel env
     const saB64 = process.env.GOOGLE_SA_B64;
     if (!saB64) {
@@ -791,61 +793,19 @@ export default async function handler(req, res) {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
-    // Validate the canonical schema before making ANY lead writes. Never overwrite Q (live: Lender).
-    const headerResult = await sheets.spreadsheets.values.get({spreadsheetId:SHEET_ID,range:"'Pipeline V1.0'!1:1"});
-    const pipelineHeaders = headerResult.data.values?.[0] || [];
-    const missingHeaders = REQUIRED_KEYS.filter(k => !pipelineHeaders.includes(k));
-    if (missingHeaders.length) throw new Error('Fact Find schema migration required: '+missingHeaders.join(', '));
+    const id=sheetId();
     const BASE_URL = process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL ? 'https://'+process.env.VERCEL_URL : (process.env.NEXT_PUBLIC_BASE_URL || 'https://posfincapital.com');
     const scorecardUrl = scorecardLink(BASE_URL, data.deal_ref);
-    const leadRowNumber = await appendRowAtFirstEmpty(sheets, tabName, row);
-    let pipelineRowNumber = null;
-    let pipelineV2Result = null;
-    if (pipelineRow) {
-      const record = pipelineRecord(data, pipelineRow[0], scorecardUrl);
-      pipelineRowNumber = await appendRowAtFirstEmpty(sheets, 'Pipeline V1.0', mapPipelineHeaders(pipelineHeaders,record));
-    }
-    // Existing v2 mirror retained, but it is not the Fact Find source of truth.
-    if (pipelineV2Row) {
-      try { pipelineV2Result = await upsertPipelineV2Row(sheets, pipelineV2Row); }
-      catch (e) { console.warn('[Lead API] v2 mirror failed:', e.message); }
-    }
-
-    // ── Case_Timeline row (mandatory touch log) ───────────────────────
-    let timelineRowNumber = null;
-    try {
-      const timelineRow = formatCaseTimelineRow(data, ts, product, tabName, leadRowNumber, pipelineRowNumber, scorecardUrl);
-      timelineRowNumber = await appendRowAtFirstEmpty(sheets, 'Case_Timeline', timelineRow);
-    } catch (e) { console.warn('[Lead API] Case_Timeline write failed:', e.message); }
-
-    // ── Owner CALLS queue ─────────────────────────────────────────────
-    let callSheetRowNumber = null;
-    let callSheetTab = null;
-    const owner = explicitBrokerOwner(data);
-    let rawLeadRowNumber = null;
-    try {
-      rawLeadRowNumber = await markRawLeadAssignedIfMatched(sheets, data, owner.name, data.deal_ref, pipelineRowNumber);
-    } catch (e) { console.warn('[Lead API] Raw Leads owner stamp failed:', e.message); }
-    const suppressCalls = data.suppress_calls === true || data.suppress_calls === 'true'
-      || data.partial_route_check === true || data.partial_route_check === 'true'
-      || data.route_check_stage === 'router_initial'
-      || data.page_source === 'apply-intelligent-router';
-    if (!suppressCalls && (product === 'equitable_charges' || (hasExplicitOwnerTag(data) && (owner.name === 'Chris' || owner.name === 'Byron')))) {
-      try {
-        const call = product === 'equitable_charges'
-          ? formatEquitableCallRow(data, ts, pipelineRowNumber, leadRowNumber)
-          : formatBrokerCallRow(data, ts, product, pipelineRowNumber, leadRowNumber, tabName);
-        callSheetTab = call.tab;
-        callSheetRowNumber = await appendRowAtFirstEmpty(sheets, callSheetTab, call.row);
-      } catch (e) { console.warn('[Lead API] call sheet write failed:', e.message); }
-    }
+    const saved=await saveIntake(sheets,id,submitted,product,scorecardUrl,ref=>validToken(ref,submitted.resume_token));
+    const owner=explicitBrokerOwner(data);
+    if(saved.partial || !saved.firstCompletion) return res.status(200).json({...saved,resumeToken:tokenFor(saved.leadRef)});
 
     // ── Telegram broker alert ──────────────────────────────────────────
     const TELE_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const isMain = ['main_loan', 'bank_bridge', 'purchase_refurb', 'acquisition_finance', 'equitable_charges', 'development_finance', 'development_exit_finance'].includes(product);
     const brokerName = owner.name;
 
-    if (TELE_TOKEN && data.deal_ref) {
+    if (TELE_TOKEN && data.deal_ref && process.env.FACTFIND_INTERNAL_ALERTS === 'true') {
       const productLabel = pipelineRow ? pipelineRow[11] : product.replace(/_/g,' ');
       const name = `${data.first_name || ''} ${data.last_name || ''}`.trim();
       const msg = [
@@ -864,31 +824,14 @@ export default async function handler(req, res) {
       ].filter(Boolean).join('\n');
 
       const recipients = [...new Set([owner.chatId, '1750758657', '8634157536'])];
-      await Promise.all(recipients.map((chatId) => fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage`, {
+      saved.alerts=await Promise.all(recipients.map(async(chatId) => {try{const response=await fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'Markdown', disable_web_page_preview: false }),
-      }))).catch(e => console.warn('[Lead API] Telegram failed:', e.message));
+        body: JSON.stringify({ chat_id: chatId, text: msg.replace(/\*/g,''), disable_web_page_preview: true }),
+      });const result=await response.json();return {chatId,ok:response.ok&&result.ok===true,messageId:result.result?.message_id||null};}catch(e){return {chatId,ok:false,messageId:null};}}));
     }
 
-    if (data.prefill_token) {
-      try {
-        const prefillRows = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'Prefill_Tokens'!A:M` });
-        const rows = prefillRows.data.values || [];
-        const idx = rows.findIndex((r, i) => i > 0 && r[0] === data.prefill_token);
-        if (idx > 0) {
-          await sheets.spreadsheets.values.update({
-            spreadsheetId: SHEET_ID,
-            range: `'Prefill_Tokens'!M${idx + 1}`,
-            valueInputOption: 'USER_ENTERED',
-            requestBody: { values: [[new Date().toISOString()]] },
-          });
-        }
-      } catch (e) { console.warn('[Lead API] Prefill token submit stamp failed:', e.message); }
-    }
-
-    console.log(`[Lead API] ${data.deal_ref} → ${tabName} | PIPELINE_v2: ${pipelineV2Result?.caseId || 'n/a'} | Scorecard: ${scorecardUrl}`);
-    res.status(200).json({ ok: true, leadRef: data.deal_ref, tab: tabName, row: leadRowNumber, pipeline: !!pipelineRow, pipelineRow: pipelineRowNumber, pipelineV2: pipelineV2Result, callSheet: callSheetTab, callSheetRow: callSheetRowNumber, rawLeadRow: rawLeadRowNumber, scorecardUrl, timelineRow: timelineRowNumber }); return;
+    return res.status(200).json({...saved,resumeToken:tokenFor(saved.leadRef)});
 
   } catch (err) {
     console.error('[Lead API Error]', err);

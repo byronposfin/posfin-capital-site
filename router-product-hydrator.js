@@ -7,6 +7,7 @@
   if (qs.get('from') !== 'apply_router' || !qs.get('case_ref')) return;
 
   var PARAMS = Object.fromEntries(qs.entries());
+  if(!PARAMS.second_charge_present&&PARAMS.second_charges)PARAMS.second_charge_present=PARAMS.second_charges.toLowerCase().replace(/ /g,'_');
   var STYLE_ID = 'posfin-router-hydrator-style';
   var BOX_ID = 'posfin-router-carried-box';
   var PROMOTED_ID = 'posfin-router-promoted-apply';
@@ -27,6 +28,7 @@
   function purpose(v) {
     var x = lower(v);
     if (!x) return '';
+    if (x.includes('business')) return 'Business cashflow';
     if (x.includes('refinance') || x.includes('capital')) return 'Refinance / capital raise';
     if (x.includes('purchase') && x.includes('refurb')) return 'Purchase and refurb';
     if (x.includes('purchase')) return x.includes('auction') ? 'Auction purchase' : 'Property purchase';
@@ -219,7 +221,8 @@
       ['Additional charges', V.secondCharges === 'Yes' ? [V.secondChargeProvider, V.secondChargeBalance ? '£' + Number(V.secondChargeBalance).toLocaleString('en-GB') : ''].filter(Boolean).join(' — ') : V.secondCharges],
       ['Mortgage arrears', V.arrears],
       ['Loan amount', V.loanAmount ? '£' + Number(V.loanAmount).toLocaleString('en-GB') : ''],
-      ['Charge requested', V.chargeRequested]
+      ['Charge requested', V.chargeRequested],
+      ...['title_ownership','first_charge_status','second_charge_present','restrictions_present','credit_profile','funds_timescale','contact_preference','ai_call_consent'].map(function(k){var names={title_ownership:'Ownership',first_charge_status:'Mortgage status',second_charge_present:'Second charge',restrictions_present:'Restrictions',credit_profile:'Credit profile',funds_timescale:'Funds needed',contact_preference:'Contact preference',ai_call_consent:'AI-call consent'};return [names[k],PARAMS[k]===undefined?'':window.PosfinFactFind.label(PARAMS[k])];})
     ].filter(function(r){return norm(r[1]);});
     return rows;
   }
@@ -253,6 +256,15 @@
     setByLabels(['2nd charge balance'], V.secondChargeBalance);
     if (V.arrears) clickOption('arrears', V.arrears === 'Yes' ? 'Yes — I have arrears' : 'No arrears');
     setByLabels(['loan amount required'], V.loanAmount);
+    if(PARAMS.credit_profile){
+      var credit={excellent:'Excellent',good:'Good',average:'Average',poor_adverse:'Poor / adverse credit',not_sure:'Not sure'}[PARAMS.credit_profile];
+      clickOption('creditProfile',credit);
+      var cr=document.querySelector('input[name="creditProfile"]');if(cr)cr.closest('.mb-5').hidden=true;
+    }
+    // Step 1's submit includes contact permission; AI consent remains separate.
+    var contact=consentInput();if(contact){setOption(contact,true);contact.closest('label').hidden=true;contact.closest('label').style.setProperty('display','none','important');}
+    ['first name','last name','mobile','email'].forEach(function(k){var e=byLabel(k);if(e)e.readOnly=true;});
+    var purposeInput=document.querySelector('input[name="loanPurpose"]');if(purposeInput&&V.loanPurpose)purposeInput.closest('.mb-5').hidden=true;
     didInitialHydrate = true;
     return true;
   }
@@ -406,21 +418,25 @@
   function fieldHtml(label, value, name) {
     var moneyField = isMoneyName(name);
     var safeVal = moneyField ? formatMoneyDisplay(value) : String(value || '');
-    return '<div class="mb-5"><label style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><input name="'+name+'" value="'+safeVal.replace(/"/g,'&quot;')+'" '+(moneyField?'data-posfin-money="1" inputmode="numeric" autocomplete="off" ':'')+'style="width:100%;height:54px;padding:0 18px;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none"/></div>';
+    return '<div class="mb-5"><label style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><input name="'+name+'" value="'+safeVal.replace(/"/g,'&quot;')+'" '+(moneyField?'data-posfin-money="1" inputmode="numeric" autocomplete="off" ':'')+'style="width:100%;height:54px;padding:0 18px;font-family:Arial,Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none"/></div>';
   }
   function escapeHtml(v) {
     return String(v || '').replace(/[&<>\"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]); });
   }
   function textareaHtml(label, value, name, placeholder) {
-    return '<div class="mb-5"><label style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><textarea name="'+name+'" placeholder="'+escapeHtml(placeholder||'')+'" style="width:100%;min-height:96px;padding:14px 18px;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none">'+escapeHtml(value||'')+'</textarea></div>';
+    return '<div class="mb-5"><label style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><textarea name="'+name+'" placeholder="'+escapeHtml(placeholder||'')+'" style="width:100%;min-height:96px;padding:14px 18px;font-family:Arial,Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none">'+escapeHtml(value||'')+'</textarea></div>';
   }
   function selectHtml(label, name, options, selected) {
-    return '<div class="mb-5"><label style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><select name="'+name+'" style="width:100%;height:54px;padding:0 18px;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none">'+options.map(function(o){ return '<option value="'+escapeHtml(o[0])+'"'+(o[0]===selected?' selected':'')+'>'+escapeHtml(o[1])+'</option>'; }).join('')+'</select></div>';
+    var key={titleOwnership:'title_ownership',firstChargeStatus:'first_charge_status',secondChargePresent:'second_charge_present',restrictionsPresent:'restrictions_present',requiredTimescale:'funds_timescale',contactPreference:'contact_preference'}[name];
+    var val=key&&PARAMS[key];
+    if(!val&&name==='secondChargePresent'&&V.secondCharges)val=V.secondCharges.toLowerCase().replace(/ /g,'_');
+    if(val)return carriedValueHtml(label,val,name,'',window.PosfinFactFind.label(val));
+    return '<div class="mb-5"><label style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><select name="'+name+'" style="width:100%;height:54px;padding:0 18px;font-family:Arial,Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none">'+options.map(function(o){ return '<option value="'+escapeHtml(o[0])+'"'+(o[0]===selected?' selected':'')+'>'+escapeHtml(o[1])+'</option>'; }).join('')+'</select></div>';
   }
-  function carriedValueHtml(label, value, name, fallbackInput) {
+  function carriedValueHtml(label, value, name, fallbackInput, displayValue) {
     if (!norm(value)) return fallbackInput;
-    return '<div class="mb-5"><div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px">'+escapeHtml(label)+'</div>'+
-      '<div style="min-height:54px;padding:15px 18px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;color:#1A1A2E">'+escapeHtml(value)+'</div>'+
+    return '<div class="mb-5"><div style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px">'+escapeHtml(label)+'</div>'+
+      '<div style="min-height:54px;padding:15px 18px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:Arial,Arial,sans-serif;font-size:16px;color:#1A1A2E">'+escapeHtml(displayValue||value)+'</div>'+
       '<input type="hidden" name="'+escapeHtml(name)+'" value="'+escapeHtml(value)+'"></div>';
   }
   function smallNote(text) {
@@ -428,13 +444,13 @@
   }
   function greenSection(title, body, note) {
     return '<div style="margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.045)">'+
-      '<div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#008C88;margin-bottom:8px">'+escapeHtml(title)+'</div>'+
+      '<div style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#008C88;margin-bottom:8px">'+escapeHtml(title)+'</div>'+
       (note ? '<div style="font-size:12px;line-height:1.55;color:#5A5770;margin-bottom:12px">'+escapeHtml(note)+'</div>' : '') + body + '</div>';
   }
   function cardChoiceHtml(name, value, label, sub, checked) {
-    return '<label class="flex items-start gap-3 cursor-pointer transition-colors" style="padding:14px 16px;border:1px solid '+(checked?'#00B5B0':'#E5E1D6')+';background:'+(checked?'rgba(0,181,176,0.06)':'#FFFFFF')+';font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:58px">'+
-      '<input type="radio" class="sr-only" name="'+name+'" value="'+escapeHtml(value)+'"'+(checked?' checked':'')+'/>'+ 
-      '<span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid '+(checked?'#00B5B0':'#CFC9B8')+';background:'+(checked?'#00B5B0':'#FFFFFF')+';margin-top:2px"></span>'+ 
+    return '<label class="flex items-start gap-3 cursor-pointer transition-colors" style="padding:14px 16px;border:1px solid '+(checked?'#00B5B0':'#E5E1D6')+';background:'+(checked?'rgba(0,181,176,0.06)':'#FFFFFF')+';font-family:Arial,Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:58px">'+
+      '<input type="radio" class="sr-only" name="'+name+'" value="'+escapeHtml(value)+'"'+(checked?' checked':'')+'/>'+
+      '<span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid '+(checked?'#00B5B0':'#CFC9B8')+';background:'+(checked?'#00B5B0':'#FFFFFF')+';margin-top:2px"></span>'+
       '<span><strong style="display:block;color:#1C184F;margin-bottom:2px">'+escapeHtml(label)+'</strong>'+(sub?'<span style="display:block;color:#6F6B7A;font-size:12px;line-height:1.45">'+escapeHtml(sub)+'</span>':'')+'</span></label>';
   }
   function mandatoryRedemptionsInner() {
@@ -448,7 +464,7 @@
     if (!rows) rows = '<div style="color:#6F6B7A;font-size:13px">No mandatory redemptions have been entered yet. If arrears or second charges are added, they will appear here automatically.</div>';
     return '<div style="font-size:13px;color:#1C184F;line-height:1.55">'+
       '<p style="margin:0 0 10px;color:#5A5770">These items normally need to be repaid on completion so the new lender has the required clean charge position.</p>'+rows+
-      '<div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(28,24,79,.14);margin-top:6px;padding-top:8px"><strong>Total mandatory redemptions</strong><strong style="color:#D4A853">'+pounds(total)+'</strong></div>'+ 
+      '<div style="display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(28,24,79,.14);margin-top:6px;padding-top:8px"><strong>Total mandatory redemptions</strong><strong style="color:#D4A853">'+pounds(total)+'</strong></div>'+
       '<div style="margin-top:14px" class="grid sm:grid-cols-2 gap-2">'+
       cardChoiceHtml('redemptionStructure','add_to_facility','Add to requested loan amount','Example: £200k requested + £'+total.toLocaleString('en-GB')+' redemptions = £'+(200000+total).toLocaleString('en-GB')+' facility.', selected === 'add_to_facility')+
       cardChoiceHtml('redemptionStructure','deduct_from_requested','Deduct from requested amount','Example: £200k requested - £'+total.toLocaleString('en-GB')+' redemptions = £'+Math.max(0,200000-total).toLocaleString('en-GB')+' net to borrower.', selected === 'deduct_from_requested')+
@@ -457,8 +473,8 @@
   }
   function buildMandatoryRedemptionsCard() {
     return '<div id="posfin-mandatory-redemptions-wrap" style="margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.045)">'+
-      '<div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#008C88;margin-bottom:8px">Mandatory redemptions at completion</div>'+ 
-      '<div style="font-size:12px;line-height:1.55;color:#5A5770;margin-bottom:12px">Second charges and mortgage arrears are not optional if the target lender requires a clean second/first charge position.</div>'+ 
+      '<div style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#008C88;margin-bottom:8px">Mandatory redemptions at completion</div>'+
+      '<div style="font-size:12px;line-height:1.55;color:#5A5770;margin-bottom:12px">Second charges and mortgage arrears are not optional if the target lender requires a clean second/first charge position.</div>'+
       '<div id="posfin-mandatory-redemptions-live">'+mandatoryRedemptionsInner()+'</div></div>';
   }
   function updateMandatoryRedemptionsCard() {
@@ -492,17 +508,18 @@
     return '<div style="margin:0 0 16px;padding:14px 16px;border:1px solid rgba(212,168,83,.45);background:rgba(212,168,83,.08);color:#1C184F;font-size:13px"><strong>We will confirm on the call:</strong><ul style="margin:8px 0 0 18px;padding:0">'+items.map(function(i){return '<li>'+escapeHtml(i)+'</li>';}).join('')+'</ul></div>';
   }
   function renderStepThree() {
+    saveProgress(2);
     Object.assign(EXTRA, collectFormValues()); // Capture step 2 BEFORE replacing the DOM (credit profile).
     var card = productFormHeading() && productFormHeading().parentElement;
     if (!card) return;
-    card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Security property.</h3>'+ 
-      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 3 of 4 — The property. Check your details below and tell us about any existing borrowing.</div>'+ 
+    card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:Georgia,Georgia,serif;color:#1C184F;font-weight:600">Security property.</h3>'+
+      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 3 of 4 — The property. Check your details below and tell us about any existing borrowing.</div>'+
       fieldHtml('Security property address', V.propertyAddress, 'securityAddress')+
       fieldHtml('Security postcode', V.postcode, 'securityPostcode')+
       fieldHtml('Estimated property value', V.propertyValue ? '£' + Number(V.propertyValue).toLocaleString('en-GB') : '', 'propertyValue')+
       selectHtml('Who owns the property?', 'titleOwnership', [['','Please select'],['personal_sole','Personal name — sole owner'],['personal_joint','Joint with spouse or partner'],['company','Company'],['other','Other']], PARAMS.title_ownership || '')+
-      fieldHtml('Co-owner name (if jointly owned)', PARAMS.co_owner_name || '', 'coOwnerName')+
-      fieldHtml('Company name (if company-owned)', PARAMS.owning_company_name || '', 'owningCompanyName')+
+      (PARAMS.title_ownership==='personal_joint'?fieldHtml('Co-owner name (if jointly owned)', PARAMS.co_owner_name || '', 'coOwnerName'):'')+
+      (PARAMS.title_ownership==='company'?fieldHtml('Company name (if company-owned)', PARAMS.owning_company_name || '', 'owningCompanyName'):'')+
       selectHtml('Is your mortgage up to date and still running?', 'firstChargeStatus', [['','Please select'],['ongoing','Up to date and still running'],['term_ending','Term ended or ending within 6 months'],['in_arrears','In arrears'],['not_sure','Not sure']], '')+
       selectHtml('Is there a second charge?', 'secondChargePresent', [['','Please select'],['yes','Yes'],['no','No']], '')+
       selectHtml('Are there any restrictions on the title?', 'restrictionsPresent', [['','Please select'],['yes','Yes'],['no','No'],['not_sure','Not sure']], '')+
@@ -539,7 +556,7 @@
         'If zero, select 0 and move on. If portfolio, we capture enough to trigger the right follow-up pack.')+
       textareaHtml('Property notes / condition / works', '', 'propertyNotes', 'E.g. vacant, tenanted, refurbishment needed, title issue, works completed.')+
       outstandingBox(collectFormValues())+
-      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Continue to loan structure →</button></div>';
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="step4" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:Arial,Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Continue to loan structure →</button></div>';
     rewriteSideStep('Step 3 of 4 — The property', 'The property');
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
   }
@@ -559,10 +576,10 @@
     return '£' + v.toLocaleString('en-GB');
   }
   function choiceHtml(name, value, label, checked) {
-    return '<label class="flex items-center gap-3 cursor-pointer transition-colors" style="padding:12px 14px;border:1px solid #E5E1D6;background:#FFFFFF;font-family:\"DM Sans\",Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:50px"><input type="radio" class="sr-only" name="'+name+'" value="'+value+'"'+(checked?' checked':'')+'/><span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid #CFC9B8;background:#FFFFFF"></span>'+label+'</label>';
+    return '<label class="flex items-center gap-3 cursor-pointer transition-colors" style="padding:12px 14px;border:1px solid #E5E1D6;background:#FFFFFF;font-family:Arial,Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:50px"><input type="radio" class="sr-only" name="'+name+'" value="'+value+'"'+(checked?' checked':'')+'/><span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid #CFC9B8;background:#FFFFFF"></span>'+label+'</label>';
   }
   function loanCalcSection(title, body) {
-    return '<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #E5E1D6;background:#FFFFFF"><div style="font-family:\"DM Sans\",Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1C184F;margin-bottom:10px">'+title+'</div>'+body+'</div>';
+    return '<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #E5E1D6;background:#FFFFFF"><div style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1C184F;margin-bottom:10px">'+title+'</div>'+body+'</div>';
   }
   function updateFacilitySummary() {
     var box = document.getElementById('posfin-facility-summary');
@@ -576,12 +593,13 @@
   }
 
   function renderStepFour() {
+    saveProgress(3);
     Object.assign(EXTRA, collectFormValues());
     var card = productFormHeading() && productFormHeading().parentElement;
     if (!card) return;
-    card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:\"Playfair Display\",Georgia,serif;color:#1C184F;font-weight:600">Loan requirements.</h3>'+ 
-      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Your loan. Choose the amount, costs and timing that suit your needs.</div>'+ 
-      fieldHtml('Paid to you on day one — amount requested', V.loanAmount ? pounds(V.loanAmount) : '', 'loanAmount')+
+    card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:Georgia,Georgia,serif;color:#1C184F;font-weight:600">Loan requirements.</h3>'+
+      '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 4 of 4 — Your loan. Choose the amount, costs and timing that suit your needs.</div>'+
+      fieldHtml('Loan amount requested', V.loanAmount ? pounds(V.loanAmount) : '', 'loanAmount')+
       greenSection('Loan amount type',
         '<div class="grid sm:grid-cols-1 gap-2">'+
         cardChoiceHtml('netGrossRequest','net','I need this amount released to me on day one','This is the cash you want after existing lender deductions/redemptions. The lender then works out the total gross facility.', false)+
@@ -606,9 +624,9 @@
         choiceHtml('bufferAmount','5000','Add £5,000 contingency', false)+
         choiceHtml('bufferAmount','10000','Add £10,000 contingency', false)+'</div>')+
       selectHtml('Best time to contact you', 'contactPreference', [['any_time','Any time'],['business_hours','Business hours'],['evenings','Evenings'],['weekends','Weekends']], 'any_time')+
-      '<label style="display:block;padding:16px"><input type="checkbox" name="aiCallConsent"> I agree to an optional call from Posfin’s AI assistant. I can withdraw this consent.</label>'+
+      carriedValueHtml('AI-call consent',PARAMS.ai_call_consent||'no','aiCallConsent','', /^(yes|true|1)$/i.test(PARAMS.ai_call_consent||'')?'Yes':'No')+
       textareaHtml('Anything else we should know?', '', 'borrowerNotes', 'Adverse credit, complex title, development history, deadlines, or anything else.')+
-      '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+ 
+      '<div id="posfin-facility-summary" style="margin:0 0 16px;padding:14px 16px;border:1px solid #E5E1D6;background:#FAF8F3;color:#1C184F"></div>'+
       greenSection('Solicitor preference',
         '<div class="grid sm:grid-cols-1 gap-2">'+
         cardChoiceHtml('solicitorPreference','panel','Yes — I would like to utilise a solicitor from the Posfin panel','Low-cost, highly proactive options including LARK, Taylor Rose, Ackroyds and others. UK-wide available. Approximate legal fees are usually around £2,000. Posfin does not earn referral fees and has no commercial agreement with these firms.', false)+
@@ -616,7 +634,7 @@
         cardChoiceHtml('solicitorPreference','discuss','Not sure — discuss with Posfin','We can explain the difference on the call and help you choose the route that best suits the case.', false)+
         '</div>', 'Optional — we are not forcing a solicitor on you. Posfin does not receive referral fees and has no commercial arrangements with panel solicitors. The reason we mention them is speed: we know how they work, they know bridging lender requirements, and that can help towards a faster completion.')+
       outstandingBox(collectFormValues())+
-      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:\"DM Sans\",Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Complete Fact Find →</button></div>';
+      '<div class="mt-10 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4"><button type="button" data-posfin-next="submit" class="inline-flex items-center justify-center gap-3" style="display:flex;width:100%;min-width:100%;background:#00B5B0;color:#fff;font-family:Arial,Arial,sans-serif;font-size:16px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:24px 30px;min-height:76px;border-radius:6px;border:0;cursor:pointer;margin:0;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)">Complete Fact Find →</button></div>';
     rewriteSideStep('Step 4 of 4 — Loan requirements', 'Loan requirements');
     Array.prototype.slice.call(card.querySelectorAll('input')).forEach(function(input){ paintOption(input, input.checked); });
     updateFacilitySummary();
@@ -677,7 +695,15 @@
     rewriteSideStep('Submitted', 'Submitted');
     window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
   }
+  var progressQueue=Promise.resolve();
+  function saveProgress(step){
+    var payload=Object.assign({},PARAMS,collectFormValues(),{product:PARAMS.route==='senior_desk'?'main_loan':(PARAMS.route||'main_loan'),deal_ref:PARAMS.deal_ref||PARAMS.case_ref,route_check_stage:'progress',progress_step:step});
+    payload.resume_token=sessionStorage.getItem('posfin_resume_'+payload.deal_ref)||'';
+    payload.intake_nonce=sessionStorage.getItem('posfin_nonce')||'';
+    progressQueue=progressQueue.then(async function(){var r=await fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw Error('Progress save failed');}).catch(function(){console.warn('Progress save pending; final submission will retry all answers.');});
+  }
   async function submitRouterLead(btn) {
+    await progressQueue;
     clearError();
     var original = btn && btn.textContent;
     if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; btn.style.opacity = '.72'; }
@@ -719,7 +745,7 @@
     payload.charge_request        = payload.chargeRequested || PARAMS.charge_requested || payload.charge_request || '';
     payload.residential_address   = payload.residentialAddress || payload.homeAddress || payload.residential_address || '';
     // Buffer / legal / solicitor normalised
-    payload.legal_buffer          = payload.legalCosts === 'add_2000' ? 'Yes' : payload.legalCosts === 'do_not_add' ? 'No' : payload.legal_buffer || '';
+    payload.legal_buffer          = payload.legalCosts === 'add_2000' ? 2000 : payload.legalCosts === 'do_not_add' ? 0 : payload.legal_buffer || 0;
     payload.overrun_buffer        = Number(payload.bufferAmount || 0) > 0 ? 'Yes' : payload.bufferAmount === '0' ? 'No' : payload.overrun_buffer || '';
     payload.contingency_buffer_amount = payload.bufferAmount || payload.contingency_buffer_amount || '0';
     payload.panel_solicitor_opt_in = payload.solicitorPreference === 'panel' ? 'Yes'
@@ -727,6 +753,9 @@
       : payload.solicitorPreference === 'discuss' ? 'TBC'
       : payload.panel_solicitor_opt_in || '';
     payload.estimated_legal_cost  = payload.legalCosts === 'add_2000' ? '2000' : payload.legalCosts === 'do_not_add' ? '0' : payload.estimated_legal_cost || '';
+    payload.resume_token=sessionStorage.getItem('posfin_resume_'+payload.deal_ref)||'';
+    payload.intake_nonce=sessionStorage.getItem('posfin_nonce')||'';
+    payload.route_check_stage = 'complete';
     payload.submitted_at = new Date().toISOString();
     payload.outstanding_items = outstandingItems(payload).join(' | ');
     payload.lor_mapping_status = payload.outstanding_items ? 'Outstanding borrower follow-up required before our call finalisation' : 'Ready for our call mapping subject to broker review';
@@ -734,7 +763,8 @@
       var res = await fetch('/api/lead', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error('Lead API failed: ' + res.status);
       var result = await res.json();
-      payload.scorecard_url = result.scorecardUrl || '';
+      if(!result.ok || result.partial || !result.scorecardUrl)throw new Error('Completion was not saved');
+      payload.scorecard_url = result.scorecardUrl;
       payload.deal_ref = result.leadRef || payload.deal_ref;
       renderSubmitted(payload);
     } catch (err) {

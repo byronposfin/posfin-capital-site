@@ -1200,6 +1200,12 @@ fbq('track', 'PageView');
     q.set('case_ref', (apiResult && (apiResult.leadRef || apiResult.case_ref)) || payload.reference || '');
     q.set('deal_ref', (apiResult && apiResult.leadRef) || payload.reference || '');
     const fields = {
+      credit_profile:payload.creditProfile,
+      funds_timescale:payload.fundsTimescale,
+      first_charge_status:payload.firstChargeStatus,
+      restrictions_present:payload.restrictionsPresent,
+      contact_preference:payload.contactPreference,
+      ai_call_consent:payload.aiCallConsent,
       first_name: nameParts.first,
       last_name: nameParts.last,
       full_name: payload.name,
@@ -1246,9 +1252,10 @@ fbq('track', 'PageView');
   }
   function confirmationRef(payload) {
     if (payload.prefill_case_ref) return payload.prefill_case_ref;
-    const digits = String(Date.now()).slice(-6);
+    const saved=sessionStorage.getItem('posfin_intake_ref'); if(saved)return saved;
+    const digits = crypto.randomUUID();
     const last = (payload.name || 'WEB').trim().split(/\s+/).pop().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'WEB';
-    return 'POSFIN-WEB-' + last + '-' + digits;
+    const ref='POSFIN-WEB-' + digits; sessionStorage.setItem('posfin_intake_ref',ref); return ref;
   }
   function populateConfirmation(payload, ref) {
     const card = document.getElementById('confirmationCard');
@@ -1397,8 +1404,10 @@ fbq('track', 'PageView');
 
     const nameParts = splitName(payload.name);
     const crmPayload = {
-      product: ['speed_loan','main_loan','bank_bridge','purchase_refurb','back_to_back','development_finance','development_exit_finance','acquisition_finance','senior_desk'].includes(payload.resolvedRoute) ? payload.resolvedRoute : 'main_loan',
+      product: payload.resolvedRoute === 'senior_desk' ? 'main_loan' : ['speed_loan','main_loan','bank_bridge','purchase_refurb','back_to_back','development_finance','development_exit_finance','acquisition_finance','senior_desk'].includes(payload.resolvedRoute) ? payload.resolvedRoute : 'main_loan',
       deal_ref: payload.reference,
+      resume_token: sessionStorage.getItem('posfin_resume_'+payload.reference)||'',
+      intake_nonce: sessionStorage.getItem('posfin_nonce') || (function(){var n=crypto.randomUUID();sessionStorage.setItem('posfin_nonce',n);return n;})(),
       first_name: nameParts.first,
       last_name: nameParts.last,
       mobile: payload.phone,
@@ -1467,6 +1476,9 @@ fbq('track', 'PageView');
       utm_campaign: payload.utm_campaign,
       utm_content: payload.utm_content,
       utm_term: payload.utm_term,
+      title_ownership: payload.title_ownership,
+      co_owner_name: payload.co_owner_name,
+      owning_company_name: payload.owning_company_name,
       credit_profile: payload.creditProfile || '',
       funds_timescale: payload.fundsTimescale || '',
       urgency_flag: payload.urgencyFlag || 'false',
@@ -1486,25 +1498,18 @@ fbq('track', 'PageView');
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(crmPayload)
         });
-        if (leadRes && leadRes.ok) apiResult = await leadRes.json().catch(function(){ return null; });
-      } catch (e) {}
+        if (!leadRes.ok) throw new Error('Save failed');
+        apiResult=await leadRes.json();
+        if(apiResult.resumeToken)sessionStorage.setItem('posfin_resume_'+apiResult.leadRef,apiResult.resumeToken);
+      } catch (e) { throw e; }
       // Treat the Router as the join, not the finish line: continue straight into the matched product page.
       if (location.hostname === 'posfincapital.com' && typeof fbq === 'function') fbq('track', 'Lead');
       continueToProduct(payload, apiResult);
     } catch (err) {
-      // Network failure — store locally and still show success so lead isn't lost
-      await fetch('/api/lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(crmPayload)
-      }).catch(function(){});
-      try {
-        const queued = JSON.parse(localStorage.getItem('posfin_queued_leads') || '[]');
-        queued.push(payload);
-        localStorage.setItem('posfin_queued_leads', JSON.stringify(queued));
-      } catch (e) {}
-      // Even on network failure, continue with URL prefill so the borrower does not hit a dead thank-you screen.
-      continueToProduct(payload, null);
+      submitBtn.classList.remove('loading'); submitBtn.disabled=false;
+      let notice=document.getElementById('save-error');if(!notice){notice=document.createElement('p');notice.id='save-error';notice.setAttribute('role','alert');submitBtn.after(notice);}
+      notice.textContent='We could not save your details. Please try again; your answers are still here.';
+
     }
   });
 })();
@@ -1768,5 +1773,8 @@ fbq('track', 'PageView');
 })();
 </script>
 
+<script>
+(function(){const owner=document.getElementById('titleOwnership');function update(){for(const [id,v] of [['coOwnerName','personal_joint'],['owningCompanyName','company']]){const el=document.getElementById(id);if(!el)continue;const group=el.closest('.form-group')||el.parentElement;group.hidden=owner.value!==v;if(group.hidden)el.value='';}}owner.addEventListener('change',update);update();})();
+</script>
 </body>
 </html>
