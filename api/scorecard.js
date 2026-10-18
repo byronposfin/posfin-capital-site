@@ -194,6 +194,28 @@ function renderScorecard(d) {
     ${row('Solicitor preference', safeDisplay(d.solicitorPreference))}
   </section>
 
+  <section class="card">
+    <h2>Property and ownership</h2>
+    ${d.titleOwnership ? row('Title ownership', d.titleOwnership) : ''}
+    ${d.firstChargeStatus ? row('Mortgage status', d.firstChargeStatus) : ''}
+    ${d.restrictionsPresent ? row('Restrictions on title', d.restrictionsPresent) : ''}
+    ${d.creditProfile ? row('Credit profile', d.creditProfile) : ''}
+    ${d.urgencyFlag === 'true' ? '<div style="padding:10px 0;font-size:13px;color:#0FA89E;font-weight:600;">Fast-track case noted</div>' : ''}
+
+    <section class="card" style="border-left:4px solid #0FA89E;background:#EAF6F4;padding:16px 18px;">
+    <p style="margin:0;font-size:14px;line-height:1.55;color:#1B1840;"><b>We will confirm on the call:</b> property condition, planned works, anything on the title, and the most suitable lender.</p>
+  </section>
+
+  <section class="card">
+    <h2>What happens next</h2>
+    <ol style="margin:0;padding:0 0 0 1.3rem;display:flex;flex-direction:column;gap:10px;">
+      <li style="font-size:14px;line-height:1.5;">We call you to review your Fact Find, correct anything and shortlist lenders.</li>
+      <li style="font-size:14px;line-height:1.5;">Indicative terms usually within 1-2 days of the call.</li>
+      <li style="font-size:14px;line-height:1.5;">You choose. We issue your Engagement Letter for e-signature.</li>
+      <li style="font-size:14px;line-height:1.5;">We instruct solicitors and request redemption statements on your behalf.</li>
+    </ol>
+  </section>
+
   <div class="ref"><div style="font-size:12px;color:rgba(255,255,255,.7);margin-bottom:6px">Reference</div><code>${esc(d.ref)}</code></div>
   <p class="footer">Generated ${esc(generated)} · This is a summary of your declared position only. No credit search has been made. Posfin Capital Ltd · FCA FRN 913022 · 96 Kensington High Street, London W8 4SG</p>
 </div>
