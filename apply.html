@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#FFFFFF">
 <title>Apply | Posfin Capital — Bridging Finance from £26k to £100m</title>
-<meta name="description" content="60-second application. Secured bridging, development and acquisition finance £26k–£100m. Senior broker-led. Terms fast.">
+<meta name="description" content="60-second Fact Find. Secured bridging, development and acquisition finance £26k–£100m. Senior broker-led. Terms fast.">
 <meta property="og:title" content="Apply for Bridging Finance | Posfin Capital">
-<meta property="og:description" content="60-second application. Senior broker-led terms.">
+<meta property="og:description" content="60-second Fact Find. Senior broker-led terms.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -498,8 +498,8 @@ fbq('track', 'PageView');
 <!-- Router form moved above marketing/trust stack for mobile-first application flow. -->
 <main class="form-wrap">
   <div class="form-card" id="formCard">
-    <h2 class="form-title">Property finance router</h2>
-    <p class="form-sub">One enquiry, routed to the right Posfin product: bridge, speed loan, bank bridge, purchase/refurb, development finance, dev exit or senior desk.</p>
+    <h2 class="form-title">Fact Find</h2>
+    <p class="form-sub">This is a fact-finding form only. Nothing is sent to a lender and no credit search is made.</p>
     <div class="prefill-note" id="prefillNote" aria-live="polite"></div>
 
 <form id="applyForm" novalidate>
@@ -590,6 +590,9 @@ fbq('track', 'PageView');
     <small style="display:block;margin-top:0.35rem;opacity:0.68;font-size:0.82rem;">Tick once — we’ll copy the home address/postcode into the security fields.</small>
   </div>
 
+  <div class="field"><label for="titleOwnership">Who owns the property?</label><select id="titleOwnership" name="titleOwnership" required><option value="">Please select</option><option value="personal_sole">Personal name — sole owner</option><option value="personal_joint">Joint with spouse or partner</option><option value="company">Company</option><option value="other">Other</option></select></div>
+  <div class="field"><label for="coOwnerName">Co-owner name (if jointly owned)</label><input id="coOwnerName" name="coOwnerName"></div>
+  <div class="field"><label for="owningCompanyName">Company name (if company-owned)</label><input id="owningCompanyName" name="owningCompanyName"></div>
   <div class="field">
     <label for="propertyAddress">Security Property Address <span class="req">*</span></label>
     <input type="text" id="propertyAddress" name="propertyAddress" autocomplete="street-address" required placeholder="House number + street name">
@@ -703,13 +706,91 @@ fbq('track', 'PageView');
     <div class="field-error">Please select a purpose</div>
   </div>
 
+  <!-- F3: Timescale + urgency flag -->
+  <div class="field">
+    <label for="fundsTimescale">How soon do you need the funds? <span class="req">*</span></label>
+    <select id="fundsTimescale" name="fundsTimescale" required>
+      <option value="">Select timescale…</option>
+      <option value="asap">As soon as possible</option>
+      <option value="within_2_weeks">Within 2 weeks</option>
+      <option value="within_month">Within a month</option>
+      <option value="flexible">Flexible — no immediate pressure</option>
+    </select>
+    <div id="urgencyNote" style="display:none;margin-top:0.5rem;padding:0.65rem 0.85rem;border-radius:8px;background:rgba(0,181,176,0.10);border:1px solid rgba(0,181,176,0.32);font-size:0.84rem;color:#1C184F;line-height:1.45;">⏱ <strong>Fast-track noted.</strong> Getting funds out quickly depends on fast document return — the call will cover what’s needed.</div>
+    <div class="field-error">Please select a timescale</div>
+  </div>
+  <!-- F5: Title ownership -->
+  <div class="field">
+    <label for="titleOwnership">Who owns the security property? <span class="req">*</span></label>
+    <select id="titleOwnership" name="titleOwnership" required>
+      <option value="">Select…</option>
+      <option value="personal_sole">In my name alone</option>
+      <option value="personal_joint">Jointly — with spouse or partner</option>
+      <option value="company">Company-owned</option>
+      <option value="other">Other / not sure</option>
+    </select>
+    <div class="field-error">Please select ownership</div>
+  </div>
+  <div id="coOwnerBlock" style="display:none" class="field"><label for="coOwnerName">Co-owner full name</label><input type="text" id="coOwnerName" name="coOwnerName" placeholder="e.g. Jane Smith"></div>
+  <div id="companyNameBlock" style="display:none" class="field"><label for="owningCompanyName">Company name</label><input type="text" id="owningCompanyName" name="owningCompanyName" placeholder="e.g. Smith Properties Ltd"></div>
+  <!-- F6: First charge status -->
+  <div class="field">
+    <label for="firstChargeStatus">What is the status of your current mortgage / first charge? <span class="req">*</span></label>
+    <select id="firstChargeStatus" name="firstChargeStatus" required>
+      <option value="">Select…</option>
+      <option value="ongoing">Running normally — payments up to date</option>
+      <option value="term_ending">Term ending or ended within 6 months</option>
+      <option value="in_arrears">In arrears</option>
+      <option value="not_sure">Not sure</option>
+    </select>
+    <div class="field-error">Please confirm mortgage status</div>
+  </div>
+  <!-- F7: Restrictions present (separate from second charge) -->
+  <div class="field">
+    <label for="restrictionsPresent">Any restrictions, notices or charging orders on the title? <span class="req">*</span></label>
+    <select id="restrictionsPresent" name="restrictionsPresent" required>
+      <option value="">Select…</option>
+      <option value="no">No</option>
+      <option value="yes">Yes</option>
+      <option value="not_sure">Not sure</option>
+    </select>
+    <div class="field-error">Please confirm restriction status</div>
+  </div>
+  <!-- Credit profile — was dropping; now wired end to end -->
+  <div class="field">
+    <label for="creditProfile">Credit profile <span class="req">*</span></label>
+    <select id="creditProfile" name="creditProfile" required>
+      <option value="">Select…</option>
+      <option value="excellent">Excellent — clean credit history</option>
+      <option value="good">Good — minor historic issues only</option>
+      <option value="average">Average — some defaults or CCJs over 3 years ago</option>
+      <option value="poor_adverse">Poor / adverse — recent defaults, CCJs or bankruptcy</option>
+      <option value="not_sure">Not sure</option>
+    </select>
+    <div class="field-error">Please select credit profile</div>
+  </div>
+  <!-- F8: Contact preference -->
+  <div class="field">
+    <label for="contactPreference">Best time to contact you</label>
+    <select id="contactPreference" name="contactPreference">
+      <option value="any_time">Any time</option>
+      <option value="business_hours">Business hours (9am – 6pm)</option>
+      <option value="evenings">Evenings (after 6pm)</option>
+      <option value="weekends">Weekends</option>
+    </select>
+  </div>
+  <!-- AI call consent (unticked by default per build brief) -->
+  <div class="field" style="margin-bottom:1.1rem">
+    <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-size:0.9rem;font-weight:500;line-height:1.4"><input type="checkbox" id="aiCallConsent" name="aiCallConsent" value="yes" style="accent-color:#00B5B0;margin-top:0.2rem;flex-shrink:0"> I am happy for an AI assistant to handle the initial call with me before connecting me to a broker</label>
+  </div>
+
   <button type="submit" class="btn" id="submitBtn">
     <span class="btn-text">Get My Indicative Offer</span>
     <span class="spinner"></span>
   </button>
 
   <p class="consent">
-    By submitting you agree to be contacted by Posfin Capital regarding your enquiry.
+    By submitting you agree to be contacted by Posfin Capital regarding your Fact Find.
     We treat your data per our <a href="/privacy">Privacy Policy</a>. No spam, ever.
   </p>
 </form>
@@ -720,7 +801,7 @@ fbq('track', 'PageView');
     <div class="success-icon">
       <svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
     </div>
-    <h2>Application received — your route scorecard is ready</h2>
+    <h2>Fact Find received — your scorecard is ready</h2>
     <p>Thanks. We have your property, loan and charge-stack details. Keep the reference below; if the selected route is not the strongest fit, Posfin will move it to the correct product before issuing terms.</p>
     <div class="confirmation-card" id="confirmationCard" aria-live="polite"></div>
   </div>
@@ -730,7 +811,7 @@ fbq('track', 'PageView');
 <section class="apply-shell">
 <div class="apply-copy">
 <section class="hero">
-  <span class="hero-eyebrow">60-Second Application</span>
+  <span class="hero-eyebrow">60-Second Fact Find</span>
   <h1>Property finance.<br><span>Structured fast.</span></h1>
   <p>£26k to £100m bridging, development exit and acquisition finance. Senior broker-led, matched to the deal — not a call centre.</p>
 </section>
@@ -814,7 +895,7 @@ fbq('track', 'PageView');
   <div class="pfs-inner">
     <div class="pfs-eyebrow">Product Stack</div>
     <h2 class="pfs-title">Explore the Posfin Product Stack</h2>
-    <p class="pfs-sub">One enquiry, the right route. Each product is matched to the deal &mdash; not the easiest option for us.</p>
+    <p class="pfs-sub">One Fact Find, the right route. Each product is matched to the deal &mdash; not the easiest option for us.</p>
     <div class="pfs-grid">
 
       <a class="pfs-card" href="/speed-loan">
@@ -1138,6 +1219,7 @@ fbq('track', 'PageView');
       email: payload.email,
       dob: payload.dateOfBirth,
       date_of_birth: payload.dateOfBirth,
+      home_equals_security: payload.securityIsHome === 'Yes',
       home_address: payload.homeAddress,
       residential_address: payload.homeAddress,
       current_address_move_in_month: payload.currentAddressMoveInMonth,
@@ -1148,6 +1230,9 @@ fbq('track', 'PageView');
       previous_address: payload.previousAddress,
       previous_residential_address: payload.previousAddress,
       previous_postcode: payload.previousPostcode,
+      title_ownership: payload.title_ownership,
+      co_owner_name: payload.co_owner_name,
+      owning_company_name: payload.owning_company_name,
       security_address: payload.propertyAddress,
       property_address: payload.propertyAddress,
       home_postcode: payload.homePostcode,
@@ -1281,6 +1366,9 @@ fbq('track', 'PageView');
       propertyAddress: (form.propertyAddress.value.trim() + ', ' + canonicalPostcode(form.propertyPostcode.value)).trim(),
       propertyPostcode: canonicalPostcode(form.propertyPostcode.value),
       securityIsHome: form.securityIsHome && form.securityIsHome.checked ? 'Yes' : 'No',
+      title_ownership: form.titleOwnership.value,
+      co_owner_name: form.coOwnerName.value.trim(),
+      owning_company_name: form.owningCompanyName.value.trim(),
       propertyValue: form.propertyValue.value.trim(),
       loanAmount: form.loanAmount.value.trim(),
       chargeRequested: form.chargeRequested.value,
@@ -1291,6 +1379,16 @@ fbq('track', 'PageView');
       secondChargeLender: form.secondChargeLender.value.trim(),
       secondChargeBalance: form.secondChargeBalance.value.trim(),
       loanIntent: (form.querySelector('input[name="loanIntent"]:checked') || {}).value || '',
+      creditProfile: form.creditProfile ? form.creditProfile.value : '',
+      fundsTimescale: form.fundsTimescale ? form.fundsTimescale.value : '',
+      urgencyFlag: (form.fundsTimescale && (form.fundsTimescale.value === 'asap' || form.fundsTimescale.value === 'within_2_weeks')) ? 'true' : 'false',
+      titleOwnership: form.titleOwnership ? form.titleOwnership.value : '',
+      coOwnerName: form.coOwnerName ? form.coOwnerName.value.trim() : '',
+      owningCompanyName: form.owningCompanyName ? form.owningCompanyName.value.trim() : '',
+      firstChargeStatus: form.firstChargeStatus ? form.firstChargeStatus.value : '',
+      restrictionsPresent: form.restrictionsPresent ? form.restrictionsPresent.value : '',
+      contactPreference: form.contactPreference ? form.contactPreference.value : 'any_time',
+      aiCallConsent: (form.aiCallConsent && form.aiCallConsent.checked) ? 'yes' : 'no',
       purpose: form.purpose.value,
       userAgent: navigator.userAgent,
       referrer: document.referrer || 'direct',
@@ -1323,6 +1421,7 @@ fbq('track', 'PageView');
       date_of_birth: payload.dateOfBirth,
       borrower_dob: payload.dateOfBirth,
       residential_address: payload.homeAddress,
+      home_equals_security: payload.securityIsHome === 'Yes',
       home_address: payload.homeAddress,
       current_address_move_in_month: payload.currentAddressMoveInMonth,
       current_address_move_in_year: payload.currentAddressMoveInYear,
@@ -1386,14 +1485,7 @@ fbq('track', 'PageView');
     };
 
     try {
-      const formData = new URLSearchParams();
-      Object.keys(payload).forEach(function(k) { formData.append(k, payload[k]); });
-      await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData.toString(),
-        mode: 'no-cors'
-      });
+      // The canonical API owns capture. No parallel Zapier send from preview or production.
       let apiResult = null;
       try {
         const leadRes = await fetch('/api/lead', {
@@ -1404,7 +1496,7 @@ fbq('track', 'PageView');
         if (leadRes && leadRes.ok) apiResult = await leadRes.json().catch(function(){ return null; });
       } catch (e) {}
       // Treat the Router as the join, not the finish line: continue straight into the matched product page.
-      if (typeof fbq === 'function') fbq('track', 'Lead');
+      if (location.hostname === 'posfincapital.com' && typeof fbq === 'function') fbq('track', 'Lead');
       continueToProduct(payload, apiResult);
     } catch (err) {
       // Network failure — store locally and still show success so lead isn't lost
