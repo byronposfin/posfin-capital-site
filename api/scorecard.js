@@ -144,7 +144,7 @@ function renderScorecard(d) {
   <section class="hero">
     <div class="eyebrow">Application scorecard</div>
     <h1>Application received.</h1>
-    <p class="sub">Byron or Chris will call you within 30 minutes during business hours with your indicative terms.</p>
+    <p class="sub">A senior broker will call you to review your Fact Find and match your case to the right lender. Have your photo ID and a recent proof of address to hand for the call.</p>
   </section>
 
   <section class="grid">
@@ -195,7 +195,7 @@ function renderScorecard(d) {
   </section>
 
   <div class="ref"><div style="font-size:12px;color:rgba(255,255,255,.7);margin-bottom:6px">Reference</div><code>${esc(d.ref)}</code></div>
-  <p class="footer">Generated ${esc(generated)} · Posfin Capital Ltd · FCA FRN 913022 · 96 Kensington High Street, London W8 4SG</p>
+  <p class="footer">Generated ${esc(generated)} · This is a summary of your declared position only. No credit search has been made. Posfin Capital Ltd · FCA FRN 913022 · 96 Kensington High Street, London W8 4SG</p>
 </div>
 </body>
 </html>`;
