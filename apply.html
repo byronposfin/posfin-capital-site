@@ -559,6 +559,8 @@ fbq('track', 'PageView');
     <div class="field-error">Please select the type of property or asset offered as security.</div>
   </div>
 
+  <div id="residentialDetails"><div class="field"><label for="residentialType">Residential property type <span class="req">*</span></label><select id="residentialType" name="residentialType" required><option value="">Please select</option><option value="House">House</option><option value="Flat">Flat</option><option value="Bungalow">Bungalow</option><option value="Farmhouse">Farmhouse</option><option value="Maisonette">Maisonette</option><option value="Other">Other</option></select><div class="field-error">Please select residential property type.</div></div><div class="field"><label for="propertyStyle">Property style <span class="req">*</span></label><select id="propertyStyle" name="propertyStyle" required><option value="">Please select</option><option value="Converted">Converted</option><option value="Detached">Detached</option><option value="End Terraced">End Terraced</option><option value="Purpose Built">Purpose Built</option><option value="Semi-Detached">Semi-Detached</option><option value="Terraced">Terraced</option><option value="Unknown">Unknown</option></select><div class="field-error">Please select property style.</div></div></div>
+
   <input type="hidden" id="productIntent" name="productIntent" value="not_sure">
 
   <div class="field">
@@ -1060,6 +1062,12 @@ fbq('track', 'PageView');
       if (prefillRecord.security_address) form.propertyAddress.value = prefillRecord.security_address;
       if (prefillRecord.security_postcode) form.propertyPostcode.value = String(prefillRecord.security_postcode).toUpperCase();
       if (prefillRecord.property_type && Array.from(form.assetType.options).some(o => o.value === prefillRecord.property_type)) form.assetType.value = prefillRecord.property_type;
+      syncResidentialDetails();
+      if (form.assetType.value === 'Residential') {
+        for (const [key, el] of [['residential_type', form.residentialType], ['property_style', form.propertyStyle]]) {
+          if (prefillRecord[key] && Array.from(el.options).some(o => o.value === prefillRecord[key])) el.value = prefillRecord[key];
+        }
+      }
       if (prefillRecord.property_value) form.propertyValue.value = prefillRecord.property_value;
       if (prefillRecord.loan_amount) form.loanAmount.value = prefillRecord.loan_amount;
       if (prefillRecord.first_charge_lender) form.firstChargeLender.value = prefillRecord.first_charge_lender;
@@ -1075,6 +1083,16 @@ fbq('track', 'PageView');
       }
     } catch (e) {}
   }
+  function syncResidentialDetails() {
+    const residential = form.assetType.value === 'Residential';
+    document.getElementById('residentialDetails').hidden = !residential;
+    [form.residentialType, form.propertyStyle].forEach(function(el) {
+      el.required = residential; el.disabled = !residential;
+      if (!residential) { el.value = ''; el.closest('.field').classList.remove('has-error'); }
+    });
+  }
+  form.assetType.addEventListener('change', syncResidentialDetails);
+  syncResidentialDetails();
   loadPrefill();
   function copyHomeToSecurity() {
     form.propertyAddress.value = form.homeAddress.value.trim();
@@ -1263,6 +1281,8 @@ fbq('track', 'PageView');
       previous_residential_address: payload.previousAddress,
       previous_postcode: payload.previousPostcode,
       property_type: payload.property_type,
+      residential_type: payload.residential_type,
+      property_style: payload.property_style,
       title_ownership: payload.title_ownership,
       co_owner_name: payload.co_owner_name,
       owning_company_name: payload.owning_company_name,
@@ -1401,6 +1421,8 @@ fbq('track', 'PageView');
       propertyPostcode: canonicalPostcode(form.propertyPostcode.value),
       securityIsHome: form.securityIsHome && form.securityIsHome.checked ? 'Yes' : 'No',
       property_type: form.assetType.value,
+      residential_type: form.assetType.value === 'Residential' ? form.residentialType.value : '',
+      property_style: form.assetType.value === 'Residential' ? form.propertyStyle.value : '',
       title_ownership: form.titleOwnership.value,
       co_owner_name: form.coOwnerName.value.trim(),
       owning_company_name: form.owningCompanyName.value.trim(),
@@ -1516,6 +1538,8 @@ fbq('track', 'PageView');
       utm_content: payload.utm_content,
       utm_term: payload.utm_term,
       property_type: payload.property_type,
+      residential_type: payload.residential_type,
+      property_style: payload.property_style,
       title_ownership: payload.title_ownership,
       co_owner_name: payload.co_owner_name,
       owning_company_name: payload.owning_company_name,
