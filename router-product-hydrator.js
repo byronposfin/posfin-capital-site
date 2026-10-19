@@ -514,6 +514,7 @@
     if (!card) return;
     card.innerHTML = '<h3 class="text-2xl md:text-3xl" style="font-family:Georgia,Georgia,serif;color:#1C184F;font-weight:600">Security property.</h3>'+
       '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);color:#1C184F;font-size:13px">Step 3 of 4 — The property. Check your details below and tell us about any existing borrowing.</div>'+
+      carriedValueHtml('Security asset type', PARAMS.property_type || '', 'assetType', fieldHtml('Security asset type', '', 'assetType'))+
       fieldHtml('Security property address', V.propertyAddress, 'securityAddress')+
       fieldHtml('Security postcode', V.postcode, 'securityPostcode')+
       fieldHtml('Estimated property value', V.propertyValue ? '£' + Number(V.propertyValue).toLocaleString('en-GB') : '', 'propertyValue')+

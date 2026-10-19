@@ -523,6 +523,26 @@ fbq('track', 'PageView');
     </div>
   </div>
 
+  <div class="field">
+    <label for="assetType">Security asset type <span class="req">*</span></label>
+    <select id="assetType" name="assetType" required>
+      <option value="Residential" selected>Residential</option>
+      <option value="Commercial — general">Commercial — general</option>
+      <option value="Mixed use / semi-commercial">Mixed use / semi-commercial</option>
+      <option value="Pub">Pub</option>
+      <option value="Retail / shop">Retail / shop</option>
+      <option value="Office">Office</option>
+      <option value="Industrial / warehouse">Industrial / warehouse</option>
+      <option value="Hotel / guest house">Hotel / guest house</option>
+      <option value="Care home">Care home</option>
+      <option value="Leisure">Leisure</option>
+      <option value="Leisure Pier">Leisure Pier</option>
+      <option value="Land / development site">Land / development site</option>
+      <option value="Other">Other</option>
+    </select>
+    <div class="field-error">Please select the type of property or asset offered as security.</div>
+  </div>
+
   <input type="hidden" id="productIntent" name="productIntent" value="not_sure">
 
   <div class="field">
@@ -1023,6 +1043,7 @@ fbq('track', 'PageView');
       if (prefillRecord.home_postcode) form.homePostcode.value = String(prefillRecord.home_postcode).toUpperCase();
       if (prefillRecord.security_address) form.propertyAddress.value = prefillRecord.security_address;
       if (prefillRecord.security_postcode) form.propertyPostcode.value = String(prefillRecord.security_postcode).toUpperCase();
+      if (prefillRecord.property_type && Array.from(form.assetType.options).some(o => o.value === prefillRecord.property_type)) form.assetType.value = prefillRecord.property_type;
       if (prefillRecord.property_value) form.propertyValue.value = prefillRecord.property_value;
       if (prefillRecord.loan_amount) form.loanAmount.value = prefillRecord.loan_amount;
       if (prefillRecord.first_charge_lender) form.firstChargeLender.value = prefillRecord.first_charge_lender;
@@ -1225,6 +1246,7 @@ fbq('track', 'PageView');
       previous_address: payload.previousAddress,
       previous_residential_address: payload.previousAddress,
       previous_postcode: payload.previousPostcode,
+      property_type: payload.property_type,
       title_ownership: payload.title_ownership,
       co_owner_name: payload.co_owner_name,
       owning_company_name: payload.owning_company_name,
@@ -1362,6 +1384,7 @@ fbq('track', 'PageView');
       propertyAddress: (form.propertyAddress.value.trim() + ', ' + canonicalPostcode(form.propertyPostcode.value)).trim(),
       propertyPostcode: canonicalPostcode(form.propertyPostcode.value),
       securityIsHome: form.securityIsHome && form.securityIsHome.checked ? 'Yes' : 'No',
+      property_type: form.assetType.value,
       title_ownership: form.titleOwnership.value,
       co_owner_name: form.coOwnerName.value.trim(),
       owning_company_name: form.owningCompanyName.value.trim(),
@@ -1476,6 +1499,7 @@ fbq('track', 'PageView');
       utm_campaign: payload.utm_campaign,
       utm_content: payload.utm_content,
       utm_term: payload.utm_term,
+      property_type: payload.property_type,
       title_ownership: payload.title_ownership,
       co_owner_name: payload.co_owner_name,
       owning_company_name: payload.owning_company_name,
