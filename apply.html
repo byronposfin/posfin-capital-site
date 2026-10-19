@@ -559,7 +559,10 @@ fbq('track', 'PageView');
     <div class="field-error">Please select the type of property or asset offered as security.</div>
   </div>
 
-  <div id="residentialDetails"><div class="field"><label for="residentialType">Residential property type <span class="req">*</span></label><select id="residentialType" name="residentialType" required><option value="">Please select</option><option value="House">House</option><option value="Flat">Flat</option><option value="Bungalow">Bungalow</option><option value="Farmhouse">Farmhouse</option><option value="Maisonette">Maisonette</option><option value="Other">Other</option></select><div class="field-error">Please select residential property type.</div></div><div class="field"><label for="propertyStyle">Property style <span class="req">*</span></label><select id="propertyStyle" name="propertyStyle" required><option value="">Please select</option><option value="Converted">Converted</option><option value="Detached">Detached</option><option value="End Terraced">End Terraced</option><option value="Purpose Built">Purpose Built</option><option value="Semi-Detached">Semi-Detached</option><option value="Terraced">Terraced</option><option value="Unknown">Unknown</option></select><div class="field-error">Please select property style.</div></div></div>
+  <div id="residentialDetails"><div class="field"><label for="residentialType">Residential property type <span class="req">*</span></label><select id="residentialType" name="residentialType" required><option value="">Please select</option><option value="House">House</option><option value="Flat">Flat</option><option value="Bungalow">Bungalow</option><option value="Maisonette">Maisonette</option><option value="Other">Other</option></select><div class="field-error">Please select residential property type.</div></div><div class="field"><label for="propertyStyle">Property style <span class="req">*</span></label><select id="propertyStyle" name="propertyStyle" required><option value="">Please select</option><option value="Converted">Converted</option><option value="Detached">Detached</option><option value="End Terraced">End Terraced</option><option value="Purpose Built">Purpose Built</option><option value="Semi-Detached">Semi-Detached</option><option value="Terraced">Terraced</option><option value="Unknown">Unknown</option></select><div class="field-error">Please select property style.</div></div></div>
+
+  <div class="field"><label><input type="checkbox" id="includesFarmland" name="includesFarmland"> The security includes farmland or farm buildings (including a former/non-working farm).</label></div>
+  <div id="farmDetails" hidden><div class="field"><label for="farmOperation">Is this a working farm? <span class="req">*</span></label><select id="farmOperation" name="farmOperation"><option value="">Please select</option><option value="Working farm">Working farm</option><option value="Non-working / former farm">Non-working / former farm</option><option value="Not sure">Not sure</option></select><div class="field-error">Please select an answer.</div></div><div class="field"><label for="farmBusiness">Does any business operate at the property? <span class="req">*</span></label><select id="farmBusiness" name="farmBusiness"><option value="">Please select</option><option value="Yes">Yes</option><option value="No">No</option><option value="Not sure">Not sure</option></select><div class="field-error">Please select an answer.</div></div><div class="field" id="farmBusinessDescriptionField" hidden><label for="farmBusinessDescription">What business operates here? <span class="req">*</span></label><input id="farmBusinessDescription" name="farmBusinessDescription" type="text" maxlength="500" placeholder="For example: farming, holiday lets, storage or workshops"><div class="field-error">Please describe the business.</div></div><div class="field"><label for="farmResidentialShare">Approximately how much of the buildings’ floor area is residential? <span class="req">*</span></label><select id="farmResidentialShare" name="farmResidentialShare"><option value="">Please select</option><option value="Less than 40%">Less than 40%</option><option value="40% or more">40% or more</option><option value="Not sure">Not sure</option></select><div class="field-error">Please select an answer.</div></div><p class="field-hint">Your best estimate is fine. We will confirm the layout and use with you.</p></div>
 
   <input type="hidden" id="productIntent" name="productIntent" value="not_sure">
 
@@ -1062,6 +1065,15 @@ fbq('track', 'PageView');
       if (prefillRecord.security_address) form.propertyAddress.value = prefillRecord.security_address;
       if (prefillRecord.security_postcode) form.propertyPostcode.value = String(prefillRecord.security_postcode).toUpperCase();
       if (prefillRecord.property_type && Array.from(form.assetType.options).some(o => o.value === prefillRecord.property_type)) form.assetType.value = prefillRecord.property_type;
+      if (prefillRecord.includes_farmland === 'Yes') form.includesFarmland.checked = true;
+      syncFarmDetails();
+      if (form.includesFarmland.checked) {
+        for (const [key, el] of [['farm_operation', form.farmOperation], ['farm_business', form.farmBusiness], ['farm_residential_share', form.farmResidentialShare]]) {
+          if (prefillRecord[key] && Array.from(el.options).some(o => o.value === prefillRecord[key])) el.value = prefillRecord[key];
+        }
+        syncFarmDetails();
+        if (form.farmBusiness.value === 'Yes') form.farmBusinessDescription.value = prefillRecord.farm_business_description || '';
+      }
       syncResidentialDetails();
       if (form.assetType.value === 'Residential') {
         for (const [key, el] of [['residential_type', form.residentialType], ['property_style', form.propertyStyle]]) {
@@ -1091,6 +1103,25 @@ fbq('track', 'PageView');
       if (!residential) { el.value = ''; el.closest('.field').classList.remove('has-error'); }
     });
   }
+  function syncFarmDetails() {
+    const farmAsset = ['Farm', 'Agricultural Land'].includes(form.assetType.value);
+    if (farmAsset) form.includesFarmland.checked = true;
+    form.includesFarmland.disabled = farmAsset;
+    const farm = form.includesFarmland.checked;
+    document.getElementById('farmDetails').hidden = !farm;
+    [form.farmOperation, form.farmBusiness, form.farmResidentialShare].forEach(function(el) {
+      el.required = farm; el.disabled = !farm;
+      if (!farm) { el.value = ''; el.closest('.field').classList.remove('has-error'); }
+    });
+    const describe = farm && form.farmBusiness.value === 'Yes';
+    document.getElementById('farmBusinessDescriptionField').hidden = !describe;
+    form.farmBusinessDescription.required = describe; form.farmBusinessDescription.disabled = !describe;
+    if (!describe) { form.farmBusinessDescription.value = ''; form.farmBusinessDescription.closest('.field').classList.remove('has-error'); }
+  }
+  form.assetType.addEventListener('change', syncFarmDetails);
+  form.includesFarmland.addEventListener('change', syncFarmDetails);
+  form.farmBusiness.addEventListener('change', syncFarmDetails);
+  syncFarmDetails();
   form.assetType.addEventListener('change', syncResidentialDetails);
   syncResidentialDetails();
   loadPrefill();
@@ -1283,6 +1314,11 @@ fbq('track', 'PageView');
       property_type: payload.property_type,
       residential_type: payload.residential_type,
       property_style: payload.property_style,
+      includes_farmland: payload.includes_farmland,
+      farm_operation: payload.farm_operation,
+      farm_business: payload.farm_business,
+      farm_business_description: payload.farm_business_description,
+      farm_residential_share: payload.farm_residential_share,
       title_ownership: payload.title_ownership,
       co_owner_name: payload.co_owner_name,
       owning_company_name: payload.owning_company_name,
@@ -1421,6 +1457,12 @@ fbq('track', 'PageView');
       propertyPostcode: canonicalPostcode(form.propertyPostcode.value),
       securityIsHome: form.securityIsHome && form.securityIsHome.checked ? 'Yes' : 'No',
       property_type: form.assetType.value,
+      includes_farmland: form.includesFarmland.checked ? 'Yes' : 'No',
+      farm_operation: form.includesFarmland.checked ? form.farmOperation.value : '',
+      farm_business: form.includesFarmland.checked ? form.farmBusiness.value : '',
+      farm_business_description: form.includesFarmland.checked && form.farmBusiness.value === 'Yes' ? form.farmBusinessDescription.value.trim() : '',
+      farm_residential_share: form.includesFarmland.checked ? form.farmResidentialShare.value : '',
+
       residential_type: form.assetType.value === 'Residential' ? form.residentialType.value : '',
       property_style: form.assetType.value === 'Residential' ? form.propertyStyle.value : '',
       title_ownership: form.titleOwnership.value,
@@ -1540,6 +1582,11 @@ fbq('track', 'PageView');
       property_type: payload.property_type,
       residential_type: payload.residential_type,
       property_style: payload.property_style,
+      includes_farmland: payload.includes_farmland,
+      farm_operation: payload.farm_operation,
+      farm_business: payload.farm_business,
+      farm_business_description: payload.farm_business_description,
+      farm_residential_share: payload.farm_residential_share,
       title_ownership: payload.title_ownership,
       co_owner_name: payload.co_owner_name,
       owning_company_name: payload.owning_company_name,
