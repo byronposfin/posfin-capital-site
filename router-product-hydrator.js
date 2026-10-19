@@ -1,3 +1,4 @@
+// Mobile interaction repair 2026-10-20: bounded updates and native choice taps.
 // POSFIN Router → Product Page Hydrator
 // Locked 2026-09-19: carries /apply router answers into product page steps.
 // Activates only for router-referred URLs: ?from=apply_router&case_ref=...
@@ -180,7 +181,7 @@
     if (document.getElementById(STYLE_ID)) return;
     var st = document.createElement('style');
     st.id = STYLE_ID;
-    st.textContent = 'html.posfin-router-continuation,body.posfin-router-continuation{scroll-behavior:auto!important}#'+BOX_ID+'{margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:"DM Sans",Arial,sans-serif;color:#1C184F;font-size:13px;line-height:1.45}#'+BOX_ID+' strong{color:#00B5B0}#'+BOX_ID+' ul{margin:8px 0 0 18px;padding:0;color:#5A5770}.posfin-router-promoted-form [data-posfin-next]{display:flex!important;width:100%!important;min-width:100%!important;min-height:76px!important;padding:24px 30px!important;background:#00B5B0!important;color:#fff!important;border:0!important;border-radius:6px!important;font-size:16px!important;font-weight:900!important;letter-spacing:.12em!important;text-transform:uppercase!important;justify-content:center!important;align-items:center!important;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)!important;margin:0!important}.posfin-router-promoted-form{scroll-margin-top:0!important;margin-top:0!important}.posfin-router-promoted-form [class~="h-1"]{height:10px!important;border-radius:0!important}.posfin-router-promoted-form>div{padding-top:14px!important;padding-bottom:38px!important}.posfin-router-promoted-form [class*="mb-14"],.posfin-router-promoted-form [class*="md:mb-20"]{margin-bottom:18px!important}@media(max-width:767px){.posfin-router-promoted-form{padding-top:0!important}.posfin-router-promoted-form>div{padding-top:10px!important}.posfin-router-promoted-form .grid{display:flex!important;flex-direction:column!important;gap:18px!important}.posfin-router-promoted-form .grid>div:nth-child(2){order:-1!important}.posfin-router-promoted-form [class*="md:col-span"]{min-width:0!important}.posfin-router-promoted-form [class*="space-y-6"]{margin-top:0!important}}';
+    st.textContent = 'html.posfin-router-continuation,body.posfin-router-continuation{scroll-behavior:auto!important}#'+BOX_ID+'{margin:0 0 18px;padding:14px 16px;border:1px solid rgba(0,181,176,.28);background:rgba(0,181,176,.055);font-family:"DM Sans",Arial,sans-serif;color:#1C184F;font-size:13px;line-height:1.45}#'+BOX_ID+' strong{color:#00B5B0}#'+BOX_ID+' ul{margin:8px 0 0 18px;padding:0;color:#5A5770}.posfin-router-promoted-form [data-posfin-next]{display:flex!important;width:100%!important;min-width:100%!important;min-height:76px!important;padding:24px 30px!important;background:#00B5B0!important;color:#fff!important;border:0!important;border-radius:6px!important;font-size:16px!important;font-weight:900!important;letter-spacing:.12em!important;text-transform:uppercase!important;justify-content:center!important;align-items:center!important;box-shadow:0 18px 36px -20px rgba(0,181,176,.9)!important;margin:0!important}.posfin-router-promoted-form{scroll-margin-top:0!important;margin-top:0!important}.posfin-router-promoted-form [class~="h-1"]{height:10px!important;border-radius:0!important}.posfin-router-promoted-form>div{padding-top:14px!important;padding-bottom:38px!important}.posfin-router-promoted-form [class*="mb-14"],.posfin-router-promoted-form [class*="md:mb-20"]{margin-bottom:18px!important}@media(max-width:767px){.posfin-router-promoted-form{padding-top:0!important}.posfin-router-promoted-form>div{padding-top:10px!important}.posfin-router-promoted-form .grid{display:flex!important;flex-direction:column!important;gap:18px!important}.posfin-router-promoted-form>div>.grid>div:nth-child(2){order:-1!important}.posfin-router-promoted-form [class*="md:col-span"]{min-width:0!important}.posfin-router-promoted-form [class*="space-y-6"]{margin-top:0!important}}';
     document.head.appendChild(st);
   }
   function productFormHeading() {
@@ -287,7 +288,7 @@
       else if (/^Step\s+2\s+of\s+3$/i.test(t)) el.textContent = 'Step 3 of 4 — The property';
       else if (/^Step\s+3\s+of\s+3(?:\s*·\s*Almost there)?$/i.test(t)) el.textContent = 'Step 4 of 4 — Loan requirements';
     });
-    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {acceptNode:function(n){return n.parentElement && n.parentElement.closest('script,style,noscript') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;}});
     var nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(function(n){
@@ -320,7 +321,7 @@
     var overrun = checkedText('contingency') ? 10000 : 0;
     var netFacility = ln + second + arrears + legal + overrun;
     var netLtv = Math.round(((fc + netFacility) / pv) * 100);
-    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {acceptNode:function(n){return n.parentElement && n.parentElement.closest('script,style,noscript') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;}});
     var nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach(function(n){
       if (/Estimated LTV|Net LTV/i.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/Estimated LTV/g, 'Net LTV');
@@ -449,7 +450,7 @@
   }
   function cardChoiceHtml(name, value, label, sub, checked) {
     return '<label class="flex items-start gap-3 cursor-pointer transition-colors" style="padding:14px 16px;border:1px solid '+(checked?'#00B5B0':'#E5E1D6')+';background:'+(checked?'rgba(0,181,176,0.06)':'#FFFFFF')+';font-family:Arial,Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:58px">'+
-      '<input type="radio" class="sr-only" name="'+name+'" value="'+escapeHtml(value)+'"'+(checked?' checked':'')+'/>'+
+      '<input type="radio" data-posfin-native-choice="1" class="sr-only" name="'+name+'" value="'+escapeHtml(value)+'"'+(checked?' checked':'')+'/>'+
       '<span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid '+(checked?'#00B5B0':'#CFC9B8')+';background:'+(checked?'#00B5B0':'#FFFFFF')+';margin-top:2px"></span>'+
       '<span><strong style="display:block;color:#1C184F;margin-bottom:2px">'+escapeHtml(label)+'</strong>'+(sub?'<span style="display:block;color:#6F6B7A;font-size:12px;line-height:1.45">'+escapeHtml(sub)+'</span>':'')+'</span></label>';
   }
@@ -482,7 +483,12 @@
     if (!box) return;
     var selected = checkedValue('redemptionStructure');
     if (selected) EXTRA.redemptionStructure = selected;
-    box.innerHTML = mandatoryRedemptionsInner();
+    var html = mandatoryRedemptionsInner();
+    // Legacy autofill emits change events for newly inserted inputs. Do not
+    // recreate unchanged controls (or steal focus) in response to those events.
+    if (box._posfinRenderedHtml === html) return;
+    box._posfinRenderedHtml = html;
+    box.innerHTML = html;
     Array.prototype.slice.call(box.querySelectorAll('input')).forEach(function(input){ paintOption(input, input.checked); });
   }
   function outstandingItems(d) {
@@ -551,7 +557,7 @@
         selectHtml('Approx. year built', 'yearBuilt', [['','Select'],['pre_1900','Pre-1900'],['1900_1930','1900–1930'],['1930_1950','1930–1950'],['1950_1980','1950–1980'],['1980_2000','1980–2000'],['2000_2010','2000–2010'],['2010_2020','2010–2020'],['2020_plus','2020+'],['unknown','Not sure']], '')+
         fieldHtml('Floor area', '', 'floorArea')+
         selectHtml('Floor area unit', 'floorAreaUnit', [['sqft','sq ft'],['sqm','sq m'],['unknown','Not sure']], 'sqft')+
-        '</div>', 'Dropdowns/tap boxes only where possible. Unknowns become follow-up items instead of blocking the borrower.')+
+        '</div>', 'Select the details you know. Choose “Not sure” for anything you would like to discuss with us.')+
       greenSection('Additional security / portfolio',
         selectHtml('How many additional properties can be offered?', 'additionalProperties', [['0','0 — this property only'],['1','1 additional property'],['2','2 additional properties'],['3','3 additional properties'],['4','4 additional properties'],['5_plus','5+ / portfolio — send spreadsheet'],['unknown','Not sure']], '0')+
         textareaHtml('Additional security notes', '', 'additionalSecurityNotes', 'Address/value/charge details if known. If not known, we will request after the call.'),
@@ -578,7 +584,7 @@
     return '£' + v.toLocaleString('en-GB');
   }
   function choiceHtml(name, value, label, checked) {
-    return '<label class="flex items-center gap-3 cursor-pointer transition-colors" style="padding:12px 14px;border:1px solid #E5E1D6;background:#FFFFFF;font-family:Arial,Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:50px"><input type="radio" class="sr-only" name="'+name+'" value="'+value+'"'+(checked?' checked':'')+'/><span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid #CFC9B8;background:#FFFFFF"></span>'+label+'</label>';
+    return '<label class="flex items-center gap-3 cursor-pointer transition-colors" style="padding:12px 14px;border:1px solid #E5E1D6;background:#FFFFFF;font-family:Arial,Arial,sans-serif;font-size:14px;color:#1A1A2E;min-height:50px"><input type="radio" data-posfin-native-choice="1" class="sr-only" name="'+name+'" value="'+value+'"'+(checked?' checked':'')+'/><span class="flex-shrink-0 inline-flex items-center justify-center" style="width:18px;height:18px;border-radius:50%;border:2px solid #CFC9B8;background:#FFFFFF"></span>'+label+'</label>';
   }
   function loanCalcSection(title, body) {
     return '<div style="margin:0 0 18px;padding:14px 16px;border:1px solid #E5E1D6;background:#FFFFFF"><div style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#1C184F;margin-bottom:10px">'+title+'</div>'+body+'</div>';
@@ -791,6 +797,9 @@
   }
 
   function tick() {
+    // Our own DOM updates must not schedule another observer pass.
+    if (obs) obs.disconnect();
+    try {
     promoteProductForm();
     hydrateVisibleFields();
     ensureCarriedBox();
@@ -799,6 +808,25 @@
     labelFooterWhatsapp();
     widenConsentTouchTargets();
     formatMoneyInputs();
+    } finally {
+      if (obs && document.body) obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+    }
+  }
+  var pendingUpdate = null;
+  var lastFieldValues = new WeakMap();
+  function fieldChanged(field) {
+    if (!field || !field.matches || !field.matches('input,select,textarea')) return false;
+    var value = /^(radio|checkbox)$/.test(field.type) ? field.checked : field.value;
+    if (lastFieldValues.has(field) && lastFieldValues.get(field) === value) return false;
+    lastFieldValues.set(field, value);
+    return true;
+  }
+  function scheduleUpdate() {
+    if (pendingUpdate !== null) return;
+    pendingUpdate = setTimeout(function(){
+      pendingUpdate = null;
+      tick(); updateMandatoryRedemptionsCard(); updateFacilitySummary();
+    }, 60);
   }
   document.addEventListener('click', function(ev){
     var a = ev.target && ev.target.closest && ev.target.closest('a');
@@ -806,7 +834,7 @@
     var broadConsent = ev.target && ev.target.closest && ev.target.closest('[data-posfin-consent-touch]');
     if (!label && broadConsent) label = broadConsent;
     var input = label && label.querySelector('input[type="radio"],input[type="checkbox"]');
-    if (input && !a) {
+    if (input && !a && !input.hasAttribute('data-posfin-native-choice')) {
       ev.preventDefault();
       if (input.type === 'checkbox') setOption(input, !input.checked); else setOption(input, true);
       clearError();
@@ -826,16 +854,24 @@
       renderStepFour(); return;
     }
     if (btn && btn.getAttribute('data-posfin-next') === 'submit') { ev.preventDefault(); submitRouterLead(btn); return; }
-    setTimeout(tick, 80);
+    scheduleUpdate();
   }, true);
-  document.addEventListener('change', function(){ setTimeout(function(){ tick(); updateMandatoryRedemptionsCard(); updateFacilitySummary(); }, 60); }, true);
+  document.addEventListener('change', function(ev){
+    if (!fieldChanged(ev.target)) return;
+    var choice = ev.target;
+    if (choice && choice.matches && choice.matches('[data-posfin-native-choice]')) {
+      document.querySelectorAll('input[name="'+CSS.escape(choice.name)+'"]').forEach(function(peer){ lastFieldValues.set(peer, peer.checked); paintOption(peer, peer.checked); });
+      clearError();
+    }
+    scheduleUpdate(); }, true);
   document.addEventListener('input', function(ev){
     var target = ev.target;
+    if (!target || /^(radio|checkbox)$/.test(target.type) || !fieldChanged(target)) return;
     if (target && target.matches && target.matches('input[data-posfin-money="1"]')) {
       var formatted = formatMoneyDisplay(target.value);
       if (formatted && target.value !== formatted) target.value = formatted;
     }
-    setTimeout(function(){ updateMandatoryRedemptionsCard(); tick(); updateFacilitySummary(); }, 60);
+    scheduleUpdate();
   }, true);
   var obs = new MutationObserver(function(){ clearTimeout(obs._t); obs._t=setTimeout(tick, 60); });
   function start() {
