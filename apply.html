@@ -1671,6 +1671,7 @@ fbq('track', 'PageView');
         apiResult=await leadRes.json();
         if(apiResult.declined){form.innerHTML='<h2>Thank you</h2><p id=minimum-value-decline></p>';document.getElementById('minimum-value-decline').textContent=apiResult.declineMessage;form.scrollIntoView();return;}
         if(apiResult.resumeToken)sessionStorage.setItem('posfin_resume_'+apiResult.leadRef,apiResult.resumeToken);
+        sessionStorage.setItem('posfin_credit_'+apiResult.leadRef, JSON.stringify({credit_events_status:payload.credit_events_status,credit_events:payload.credit_events,credit_events_notes:payload.credit_events_notes,mortgage_missed_12m:payload.mortgage_missed_12m}));
       } catch (e) { throw e; }
       // Treat the Router as the join, not the finish line: continue straight into the matched product page.
       if (location.hostname === 'posfincapital.com' && typeof fbq === 'function') fbq('track', 'Lead');

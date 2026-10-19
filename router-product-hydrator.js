@@ -691,11 +691,17 @@
     if (!card) return;
     var d = payload || collectFormValues();
     var ref = d.deal_ref || PARAMS.deal_ref || PARAMS.case_ref;
+    // Keep sensitive disclosures out of URL parameters; server already holds these answers.
+    try { d = Object.assign({}, JSON.parse(sessionStorage.getItem('posfin_credit_'+ref) || '{}'), d); } catch (_) {}
     obs.disconnect();
     document.body.innerHTML = window.PosfinFactFind.render(d, ref);
     document.body.style.background = '#faf8f3';
-    rewriteSideStep('Submitted', 'Submitted');
-    window.scrollTo(0, formTop().getBoundingClientRect().top + window.pageYOffset - 4);
+    // The form no longer exists after body replacement. Focus the new heading
+    // without scrolling, then reset the viewport immediately (including mobile).
+    var heading = document.querySelector('.ff h1');
+    if (heading) { heading.setAttribute('tabindex','-1'); heading.focus({preventScroll:true}); }
+    window.scrollTo({top:0,left:0,behavior:'instant'});
+    requestAnimationFrame(function(){ window.scrollTo({top:0,left:0,behavior:'instant'}); });
   }
   var progressQueue=Promise.resolve();
   function saveProgress(step){
