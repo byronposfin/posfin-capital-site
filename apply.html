@@ -761,6 +761,37 @@ fbq('track', 'PageView');
     <div class="field-error">Please select credit profile</div>
   </div>
   <div class="field">
+    <label for="creditEventsStatus">Any credit or insolvency issues we should know about? <span class="req">*</span></label>
+    <small style="display:block;margin-bottom:0.5rem;opacity:0.75">Include current or previous issues affecting you, or a company you own or have been a director of. This helps us find suitable options — it does not automatically rule you out.</small>
+    <select id="creditEventsStatus" name="creditEventsStatus" required>
+      <option value="">Select…</option><option value="none">None — current or previous</option><option value="yes">Yes — I can give some details</option><option value="not_sure">Not sure — discuss on the call</option>
+    </select>
+    <div class="field-error">Please select an answer</div>
+  </div>
+  <fieldset id="creditEventsDetails" class="field" hidden style="border:1px solid #d9e5e5;border-radius:8px;padding:14px;margin:0 0 18px">
+    <legend style="font-size:0.9rem">Which apply? Select all that apply.</legend>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="defaults" style="width:auto;flex-shrink:0;margin-top:3px">Defaults or missed credit payments</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="ccjs" style="width:auto;flex-shrink:0;margin-top:3px">County Court Judgments (CCJs)</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="bankruptcy_petition" style="width:auto;flex-shrink:0;margin-top:3px">Current bankruptcy petition (not yet decided)</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="bankruptcy_current" style="width:auto;flex-shrink:0;margin-top:3px">Current bankruptcy / not yet discharged</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="bankruptcy_discharged" style="width:auto;flex-shrink:0;margin-top:3px">Previous bankruptcy — discharged</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="personal_arrangement" style="width:auto;flex-shrink:0;margin-top:3px">Personal insolvency arrangement (IVA) or debt relief order</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="company_petition" style="width:auto;flex-shrink:0;margin-top:3px">Current company winding-up petition (not yet decided)</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="company_current" style="width:auto;flex-shrink:0;margin-top:3px">Current company liquidation, administration or insolvency arrangement</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="company_previous" style="width:auto;flex-shrink:0;margin-top:3px">Previous company liquidation, administration or insolvency arrangement</label>
+    <label style="display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:0.86rem;font-weight:400"><input type="checkbox" name="creditEvents" value="other" style="width:auto;flex-shrink:0;margin-top:3px">Something else / prefer to explain on the call</label>
+    <label for="creditEventsNotes">Anything helpful to add? (Optional)</label>
+    <textarea id="creditEventsNotes" name="creditEventsNotes" maxlength="1500" rows="3" placeholder="For example: approximate date, amount, whether resolved, and which person or company it relates to."></textarea>
+  </fieldset>
+  <div class="field">
+    <label for="mortgageMissed12m">How many mortgage payments have you missed in the last 12 months? <span class="req">*</span></label>
+    <small style="display:block;margin-bottom:0.5rem;opacity:0.75">Include payments you later caught up with. This is separate from any arrears outstanding today.</small>
+    <select id="mortgageMissed12m" name="mortgageMissed12m" required>
+      <option value="">Select…</option><option value="0">None</option><option value="1">One</option><option value="2_plus">Two or more</option><option value="not_applicable">No mortgage during this period</option><option value="not_sure">Not sure</option>
+    </select>
+    <div class="field-error">Please select an answer</div>
+  </div>
+  <div class="field">
     <label for="fundsTimescale">How soon do you need the funds? <span class="req">*</span></label>
     <select id="fundsTimescale" name="fundsTimescale" required>
       <option value="">Select timescale…</option>
@@ -1049,6 +1080,14 @@ fbq('track', 'PageView');
     });
   }
 
+  function syncCreditEvents() {
+    const show = form.creditEventsStatus.value === 'yes';
+    const box = document.getElementById('creditEventsDetails');
+    box.hidden = !show;
+    box.querySelectorAll('input,textarea').forEach(el => { el.disabled = !show; if (!show) { if (el.type === 'checkbox') el.checked = false; else el.value = ''; } });
+  }
+  form.creditEventsStatus.addEventListener('change', syncCreditEvents);
+  syncCreditEvents();
   async function loadPrefill() {
     if (!token) return;
     try {
@@ -1057,6 +1096,15 @@ fbq('track', 'PageView');
       const data = await res.json();
       prefillRecord = data.prefill || null;
       if (!prefillRecord) return;
+      for (const [key, name] of [['credit_events_status','creditEventsStatus'],['mortgage_missed_12m','mortgageMissed12m']]) {
+        if (prefillRecord[key] !== undefined && Array.from(form[name].options).some(o => o.value === prefillRecord[key])) form[name].value = prefillRecord[key];
+      }
+      syncCreditEvents();
+      if (form.creditEventsStatus.value === 'yes') {
+        document.querySelectorAll('[name="creditEvents"]').forEach(el => { el.checked = (prefillRecord.credit_events || []).includes(el.value); });
+        form.creditEventsNotes.value = prefillRecord.credit_events_notes || '';
+      }
+
       if (prefillRecord.first_name) form.name.value = prefillRecord.first_name;
       if (prefillRecord.mobile) form.phone.value = prefillRecord.mobile;
       if (prefillRecord.email) form.email.value = prefillRecord.email;
@@ -1479,6 +1527,11 @@ fbq('track', 'PageView');
       secondChargeBalance: form.secondChargeBalance.value.trim(),
       loanIntent: (form.querySelector('input[name="loanIntent"]:checked') || {}).value || '',
       creditProfile: (document.getElementById('creditProfile') || {}).value || '',
+      credit_events_status: form.creditEventsStatus.value,
+      credit_events: form.creditEventsStatus.value === 'yes' ? Array.from(document.querySelectorAll('[name="creditEvents"]:checked')).map(el => el.value) : [],
+      credit_events_notes: form.creditEventsStatus.value === 'yes' ? form.creditEventsNotes.value.trim() : '',
+      mortgage_missed_12m: form.mortgageMissed12m.value,
+
       fundsTimescale: (document.getElementById('fundsTimescale') || {}).value || '',
       urgencyFlag: (function(){ var v = (document.getElementById('fundsTimescale') || {}).value || ''; return (v === 'asap' || v === 'within_2_weeks') ? 'true' : 'false'; })(),
       firstChargeStatus: (document.getElementById('firstChargeStatus') || {}).value || '',
@@ -1591,6 +1644,11 @@ fbq('track', 'PageView');
       co_owner_name: payload.co_owner_name,
       owning_company_name: payload.owning_company_name,
       credit_profile: payload.creditProfile || '',
+      credit_events_status: payload.credit_events_status,
+      credit_events: payload.credit_events,
+      credit_events_notes: payload.credit_events_notes,
+      mortgage_missed_12m: payload.mortgage_missed_12m,
+
       funds_timescale: payload.fundsTimescale || '',
       urgency_flag: payload.urgencyFlag || 'false',
       first_charge_status: payload.firstChargeStatus || '',
