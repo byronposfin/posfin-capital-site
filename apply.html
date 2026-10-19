@@ -1611,6 +1611,7 @@ fbq('track', 'PageView');
         });
         if (!leadRes.ok) throw new Error('Save failed');
         apiResult=await leadRes.json();
+        if(apiResult.declined){form.innerHTML='<h2>Thank you</h2><p id=minimum-value-decline></p>';document.getElementById('minimum-value-decline').textContent=apiResult.declineMessage;form.scrollIntoView();return;}
         if(apiResult.resumeToken)sessionStorage.setItem('posfin_resume_'+apiResult.leadRef,apiResult.resumeToken);
       } catch (e) { throw e; }
       // Treat the Router as the join, not the finish line: continue straight into the matched product page.
@@ -1887,5 +1888,5 @@ fbq('track', 'PageView');
 <script>
 (function(){const owner=document.getElementById('titleOwnership');function update(){for(const [id,v] of [['coOwnerName','personal_joint'],['owningCompanyName','company']]){const el=document.getElementById(id);if(!el)continue;const group=el.closest('.form-group')||el.parentElement;group.hidden=owner.value!==v;if(group.hidden)el.value='';}}owner.addEventListener('change',update);update();})();
 </script>
-</body>
+<script src="/land-routing.js"></script></body>
 </html>

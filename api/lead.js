@@ -19,6 +19,7 @@ import { normalise, pipelineRecord, mapPipelineHeaders, REQUIRED_KEYS } from '..
 const SHEET_ID = process.env.FACTFIND_SHEET_ID || '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
 
 const TAB_MAP = {
+  pa_land: 'Raw Leads',
   development_finance:       'Dev Finance Leads',
   development_exit_finance:  'Dev Exit Leads',
   speed_loan:                'Speed Loan Leads',
@@ -724,7 +725,18 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
   try {
     const body = req.body;
-    const { product, ...submitted } = body;
+    let { product, ...submitted } = body;
+    if(product==='pa_land'){
+      if(globalThis.PosfinLand.route(submitted)!=='pa_land')return res.status(400).json({error:'Use the property or development Fact Find for this security / funding purpose'});
+      submitted.intake_type='pa_land';
+      const required=globalThis.PosfinLandFields.filter(f=>f.type!=='charges'&&globalThis.PosfinLand.visible(f,submitted));
+      if(required.some(f=>submitted[f.key]===undefined||String(submitted[f.key]).trim()===''))return res.status(400).json({error:'Please complete all visible Land Fact Find questions'});
+      if(!(Number(submitted.property_value)>0)||!(Number(submitted.loan_amount)>0))return res.status(400).json({error:'Please enter a positive value and loan amount'});
+      if(submitted.secured_lending==='Yes'&&(!Array.isArray(submitted.charges)||!submitted.charges.length||submitted.charges.some(c=>!c.lender||c.balance===''||!Number.isFinite(Number(c.balance))||Number(c.balance)<0||!c.charge_position||!c.titles||!c.payment_or_rate||!c.status||!c.redemption)))return res.status(400).json({error:'Please complete every secured loan'});
+      for(const f of globalThis.PosfinLandFields)if(!globalThis.PosfinLand.visible(f,submitted))delete submitted[f.key];
+      submitted.charges=submitted.secured_lending==='Yes'?submitted.charges:[];
+      submitted.land_evidence=globalThis.PosfinLand.assess(submitted);
+    }
     const data = normalise(submitted);
 
     const tabName = TAB_MAP[product];
@@ -798,7 +810,7 @@ export default async function handler(req, res) {
     const scorecardUrl = scorecardLink(BASE_URL, data.deal_ref);
     const saved=await saveIntake(sheets,id,submitted,product,scorecardUrl,ref=>validToken(ref,submitted.resume_token));
     const owner=explicitBrokerOwner(data);
-    if(saved.partial || !saved.firstCompletion) return res.status(200).json({...saved,resumeToken:tokenFor(saved.leadRef)});
+    if(saved.declined || saved.partial || !saved.firstCompletion) return res.status(200).json({...saved,resumeToken:tokenFor(saved.leadRef)});
 
     // ── Telegram broker alert ──────────────────────────────────────────
     const TELE_TOKEN = process.env.TELEGRAM_BOT_TOKEN;

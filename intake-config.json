@@ -1,0 +1,428 @@
+{
+  "_meta": {
+    "ref": "INTAKE-CONFIG-100926",
+    "version": "1.3",
+    "date": "2026-10-19",
+    "purpose": "Single parameterised source for The Router, the PA forms, future tailored landing pages, and the borrower portal. Amend here; front ends read from this rather than hardcoding.",
+    "engine_module": "posfin_calc_engine.js (MASTER V4.1)",
+    "governed_by": [
+      "ROUTER-MAP-090926",
+      "JOURNEY-DOCTRINE-090926"
+    ],
+    "supersedes": "INTAKE-CONFIG-100926 v1.2",
+    "ui_note": "UI takes percentages in plain percent (type 1 for 1%, 70 for 70%); the engine divides by 100. Money fields format with thousands separators.",
+    "v1.2_change": "brand.posfin block replaced with the OFFICIAL confirmed spec from posfin-logo-guidline.pdf (design by tharangapunchihewa.com). The prior block (navy #16143C, teal #17ADA8, Fraunces/Inter) was a placeholder inserted during Router build, never a designer delivery, and is retired. This file is the single parameterised source — front ends read from here, so this correction propagates everywhere."
+  },
+  "brand": {
+    "posfin": {
+      "navy": "#10131C",
+      "navyDeep": "#0B0D14",
+      "ink": "#10131C",
+      "teal": "#01BAB5",
+      "tealDeep": "#019A96",
+      "gold": "#D4A853",
+      "goldSoft": "#F7ECDC",
+      "cream": "#F7F9FB",
+      "surface": "#FFFFFF",
+      "line": "#E2E8E7",
+      "muted": "#8B92A4",
+      "softTeal": "#E6F7F6"
+    },
+    "placed": {
+      "note": "Placed is teal-led with dark ink; separate brand, never carries the Posfin dolphin. See brand-architecture doctrine. Confirmed spec: teal #01BAB5, ink #0B2E33, font M PLUS 1, mark = checkmark in rounded square (see placed_Logo-Guide.pdf)."
+    },
+    "type": {
+      "display_serif": "Barlow Condensed (official Posfin brand font, per posfin-logo-guidline.pdf)",
+      "body_sans": "Barlow Condensed"
+    },
+    "wordmark": "posfin-wordmark-teal.svg (dolphin-in-ring, teal, from the official 2026 brand pack)"
+  },
+  "ltv": {
+    "default_cap": 0.7,
+    "notes": "Bank Bridge / Dev Exit lenders reach 0.75; some to 0.80 for the right asset. Cap is per-lender from the waterfall."
+  },
+  "calc_defaults_MASTER_V4_1": {
+    "ratePM": 0.02,
+    "termMin": 3,
+    "brokerPct_of_net": 0.01,
+    "arrPct_of_net": 0.03,
+    "arr_lender_share": 0.02,
+    "arr_posfin_share": 0.01,
+    "legals": 1550,
+    "setup": 750,
+    "back_to_back_buffer": 10000,
+    "note": "brokerPct default 1% — a low, illustration-friendly starting rate; DISCRETIONARY per deal (fee doctrine). NOTE: this is 1% (0.01), not 7.5%. Interest is charged on the subtotal for the term; rolled adds it to gross, serviced pays it monthly."
+  },
+  "bands": {
+    "value": [
+      "Under £200k",
+      "£200k–£250k",
+      "£250k–£400k",
+      "£400k–£600k",
+      "£600k–£1m",
+      "£1m–£2m",
+      "£2m–£5m",
+      "£5m+"
+    ],
+    "existing_debt": [
+      "Nothing — it's mortgage-free",
+      "Under £100k",
+      "£100k–£250k",
+      "£250k–£500k",
+      "£500k–£1m",
+      "£1m+"
+    ],
+    "loan": [
+      "Under £26k",
+      "£26k–£75k",
+      "£75k–£150k",
+      "£150k–£300k",
+      "£300k–£500k",
+      "£500k–£1m",
+      "£1m–£2m",
+      "£2m–£5m",
+      "£5m–£15m"
+    ],
+    "cost": [
+      "Under £100k",
+      "£100k–£250k",
+      "£250k–£500k",
+      "£500k–£1m",
+      "£1m–£2.5m",
+      "£2.5m+"
+    ],
+    "income": [
+      "None yet",
+      "Under £25k / yr",
+      "£25k–£50k",
+      "£50k–£100k",
+      "£100k–£250k",
+      "£250k+"
+    ]
+  },
+  "thresholds": {
+    "fast_track": {
+      "experience": [
+        "Experienced landlord or developer",
+        "Professional or institutional"
+      ],
+      "loan_bands": [
+        "£500k–£1m",
+        "£1m–£2m",
+        "£2m–£5m",
+        "£5m–£15m"
+      ],
+      "min_completeness_pct": 70
+    },
+    "callback_unlock_completeness_pct": 80,
+    "development_test_min_loan_bands": [
+      "£1m–£2m",
+      "£2m–£5m",
+      "£5m–£15m"
+    ],
+    "development_test_never_below": "£500k",
+    "minimum_security_value": 200000,
+    "minimum_loan": null
+  },
+  "routing_rules": {
+    "development_test": "A value-enhancing intent stays a Standard Bridge unless it is GDV-driven/staged AND material in size (loan ≥ ~£1m; never ≤£500k). Ground-up is always Development; Development Exit is its own scorecard.",
+    "security_asset_rule": "Development structuring applies only to the asset being developed. Raising on a property already owned to deploy elsewhere = Standard Bridge secured on that asset.",
+    "clean_charge_rule": "On PA_MainBridge, existing 2nd/3rd charges are generally redeemed for a clean charge position; the headroom calc funds all redemptions before any net release.",
+    "bank_bridge_is_a_rate_lane": "Bank Bridge is the lower-rate lane of the same Standard Bridge (same 70% cap, same PA_MainBridge). Never a borrower choice; the desk elevates pricing where security/size justify it.",
+    "land_lane_rule": "Any case where the security is land (bare or with consent, no habitable dwelling) routes to Land Finance, purchase or refinance. Ground-up build cost funding stays Development Finance. A dwelling on the land in habitable use routes as property, not land."
+  },
+  "offer_cards": {
+    "Speed Desk": "/speed-loan",
+    "Main Bridging Loan": "/main-loan",
+    "Bank Bridge": "/bank-bridge",
+    "Purchase & Refurb": "/purchase-refurb",
+    "Back-to-Back Bridge": "/back-to-back",
+    "Development Finance": "/development-finance",
+    "Development Exit": "/dev-exit",
+    "Acquisition Finance": "/acquisition-finance",
+    "Equitable Charges": "/equitable-charges",
+    "Senior Desk": "/senior-desk",
+    "Land Finance": "/land"
+  },
+  "execution_cards_desk_assigned": [
+    "Speed Desk",
+    "Equitable Charges",
+    "Bank Bridge",
+    "Back-to-Back Bridge"
+  ],
+  "pa_forms": [
+    "PA_MainBridge",
+    "PA_PurchaseRefurb",
+    "PA_Development",
+    "PA_DevExit",
+    "PA_Acquisition",
+    "PA_Triage",
+    "PA_Land"
+  ],
+  "router_steer": [
+    {
+      "id": "s1",
+      "group": "Raising money on property you already own",
+      "label": "Raise capital against my home",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge",
+      "regulated_flag": true
+    },
+    {
+      "id": "s2",
+      "group": "Raising money on property you already own",
+      "label": "Home improvement or renovation",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge",
+      "regulated_flag": true,
+      "dev_test": true
+    },
+    {
+      "id": "s3",
+      "group": "Raising money on property you already own",
+      "label": "Clear or consolidate secured debt",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s4",
+      "group": "Raising money on property you already own",
+      "label": "Mortgage arrears — avoid repossession",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge",
+      "regulated_flag": true,
+      "urgent": true
+    },
+    {
+      "id": "s5",
+      "group": "Raising money on property you already own",
+      "label": "Tax bill or HMRC demand",
+      "card": "Speed Desk",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s6",
+      "group": "Raising money on property you already own",
+      "label": "Business cashflow, secured on property",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s7",
+      "group": "Raising money on property you already own",
+      "label": "Refinance a portfolio",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s8",
+      "group": "Buying property",
+      "label": "Bridge a purchase before my sale completes",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s9",
+      "group": "Buying property",
+      "label": "Auction purchase — deadline to meet",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge",
+      "urgent": true
+    },
+    {
+      "id": "s10",
+      "group": "Buying property",
+      "label": "Below-market-value purchase",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s11",
+      "group": "Buying property",
+      "label": "Buy a property that needs work",
+      "card": "Purchase & Refurb",
+      "pa": "PA_PurchaseRefurb",
+      "dev_test": true
+    },
+    {
+      "id": "s12",
+      "group": "Buying property",
+      "label": "Buy-to-let purchase or refinance",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s13",
+      "group": "Buying property",
+      "label": "Land purchase, with or without planning",
+      "card": "Land Finance",
+      "pa": "PA_Land",
+      "dev_test": true,
+      "security_asset_gate": true
+    },
+    {
+      "id": "s14",
+      "group": "Building or improving",
+      "label": "Development finance — ground up",
+      "card": "Development Finance",
+      "pa": "PA_Development",
+      "always_development": true,
+      "security_asset_gate": true
+    },
+    {
+      "id": "s15",
+      "group": "Building or improving",
+      "label": "Development exit — scheme finished or nearly",
+      "card": "Development Exit",
+      "pa": "PA_DevExit"
+    },
+    {
+      "id": "s16",
+      "group": "Building or improving",
+      "label": "Refurbishment — light, no structural work",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge",
+      "dev_test": true,
+      "security_asset_gate": true
+    },
+    {
+      "id": "s17",
+      "group": "Building or improving",
+      "label": "Refurbishment — heavy, conversion or change of use",
+      "card": "Development Finance",
+      "pa": "PA_Development",
+      "dev_test": true,
+      "security_asset_gate": true
+    },
+    {
+      "id": "s18",
+      "group": "Commercial & trading assets",
+      "label": "Commercial purchase — my business will occupy",
+      "card": "Acquisition Finance",
+      "pa": "PA_Acquisition"
+    },
+    {
+      "id": "s19",
+      "group": "Commercial & trading assets",
+      "label": "Commercial investment purchase",
+      "card": "Acquisition Finance",
+      "pa": "PA_Acquisition"
+    },
+    {
+      "id": "s20",
+      "group": "Commercial & trading assets",
+      "label": "Hotel, pub or leisure",
+      "card": "Acquisition Finance",
+      "pa": "PA_Acquisition"
+    },
+    {
+      "id": "s21",
+      "group": "Commercial & trading assets",
+      "label": "HMO purchase or refinance",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s22",
+      "group": "Commercial & trading assets",
+      "label": "Semi-commercial or mixed use",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s23",
+      "group": "Situations",
+      "label": "Probate or inheritance — buying out beneficiaries",
+      "card": "Senior Desk",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s24",
+      "group": "Situations",
+      "label": "Divorce or separation — transfer of equity",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge",
+      "regulated_flag": true
+    },
+    {
+      "id": "s25",
+      "group": "Situations",
+      "label": "Bridge to sale — listed or about to be",
+      "card": "Main Bridging Loan",
+      "pa": "PA_MainBridge"
+    },
+    {
+      "id": "s26",
+      "group": "Situations",
+      "label": "Something else, or not sure yet",
+      "card": "Senior Desk",
+      "pa": "PA_Triage"
+    },
+    {
+      "id": "s13b",
+      "group": "Raising money on property you already own",
+      "label": "Raise money on land I already own",
+      "card": "Land Finance",
+      "pa": "PA_Land",
+      "security_asset_gate": true
+    },
+    {
+      "id": "s13c",
+      "group": "Situations",
+      "label": "Land loan ending or lender pressing — refinance land",
+      "card": "Land Finance",
+      "pa": "PA_Land",
+      "urgent": true
+    }
+  ],
+  "borrower_portal": {
+    "principle": "The Router + PA layers become the borrower's own build. Once saved, it is their portal/app and their record.",
+    "vault": [
+      "photo ID",
+      "proof of address",
+      "redemption statements",
+      "mortgage statements",
+      "letter of authority",
+      "existing charge-holder details",
+      "title"
+    ],
+    "documents_generated": [
+      "Asset & Liability form (extracted from in-flow answers)",
+      "Standard PLEs / remortgage questionnaire",
+      "LOR",
+      "Engagement Letter"
+    ],
+    "sync": "Portal is the borrower's centralised record; a visual/mirror is saved to the CRM."
+  },
+  "credit_backed_fields": {
+    "adverse": [
+      "None",
+      "Historic",
+      "Recent"
+    ],
+    "ccj": [
+      "No",
+      "Satisfied",
+      "Unsatisfied"
+    ],
+    "missed_mortgage_payments_12m": [
+      "No",
+      "1–2",
+      "3+"
+    ],
+    "bankruptcy_iva": [
+      "No",
+      "Petition",
+      "Discharged",
+      "Active"
+    ],
+    "score_band": [
+      "Excellent",
+      "Good",
+      "Fair",
+      "Poor"
+    ],
+    "note": "Captured in Stage 2 (PA forms) so lender terms come back credit-backed on Placed."
+  },
+  "decline_copy": "Thank you. We only arrange finance against land or property worth £200,000 or more, so we're not able to help with this one. If the value is higher than you've entered, reply to us and we'll look again."
+}

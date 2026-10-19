@@ -1,0 +1,9 @@
+(function(){
+const form=document.querySelector('form'),asset=document.querySelector('#assetType');if(!form||!asset)return;
+const box=document.createElement('div');box.style.cssText='padding:18px;margin:16px 0;border:1px solid #01bab5;background:#e6f7f6';box.innerHTML='<b>Land purchase or refinance?</b><p>With or without planning, use the dedicated Land Fact Find.</p><a href="/land" data-land-steer="s13">Buy land →</a><br><a href="/land" data-land-steer="s13b">Raise money on land I already own →</a><br><a href="/land" data-land-steer="s13c">Land loan ending or lender pressing →</a>';
+(asset.closest('.field')||asset.parentElement).after(box);
+function carry(){const d=Object.fromEntries(new FormData(form)),parts=(d.name||'').trim().split(/\s+/);return {property_address:d.propertyAddress||'',property_value:d.propertyValue||'',loan_amount:d.loanAmount||'',first_name:parts.slice(0,-1).join(' ')||parts[0]||'',last_name:parts.length>1?parts.at(-1):'',mobile:d.phone||'',email:d.email||'',carried_property_answers:d};}
+form.addEventListener('submit',e=>{if(['Land with No Planning','Land with Planning','Agricultural Land'].includes(asset.value)){e.preventDefault();e.stopImmediatePropagation();sessionStorage.setItem('posfin_land_transfer',JSON.stringify(carry()));location.href='/land';}},true);
+box.querySelectorAll('a').forEach(a=>a.onclick=()=>{const address=form.elements.propertyAddress?.value;sessionStorage.setItem('posfin_land_transfer',JSON.stringify(carry()));});
+const transfer=JSON.parse(sessionStorage.getItem('posfin_land_transfer')||'null');if(transfer){if(transfer.property_address&&form.elements.propertyAddress)form.elements.propertyAddress.value=transfer.property_address;if(transfer.product==='development_finance'&&form.elements.productIntent)form.elements.productIntent.value='development_finance';if(transfer.product==='main_loan')asset.value='Residential';sessionStorage.removeItem('posfin_land_transfer');}
+})();

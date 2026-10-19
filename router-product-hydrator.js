@@ -765,6 +765,7 @@
       var res = await fetch('/api/lead', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error('Lead API failed: ' + res.status);
       var result = await res.json();
+      if(result.declined){document.body.innerHTML='<main style="max-width:700px;margin:60px auto;padding:24px;font:18px/1.6 Arial"><h1>Thank you</h1><p id=minimum-value-decline></p></main>';document.getElementById('minimum-value-decline').textContent=result.declineMessage;return;}
       if(!result.ok || result.partial || !result.scorecardUrl)throw new Error('Completion was not saved');
       payload.scorecard_url = result.scorecardUrl;
       payload.deal_ref = result.leadRef || payload.deal_ref;

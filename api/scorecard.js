@@ -14,6 +14,6 @@ export default async function handler(req,res){
  if(!hit?.state?.completed)return res.status(404).send('Completed Fact Find not found.');
  const d={...hit.state.answers,scorecard_url:scorecardLink('',ref)};
  res.setHeader('Content-Type','text/html; charset=utf-8');
- return res.status(200).send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your next steps — Posfin Capital</title></head><body>'+renderTasks(d)+render(d,ref)+'<script src="/factfind-events.js"></script></body></html>');
+ return res.status(200).send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/land.css"><title>Your next steps — Posfin Capital</title></head><body>'+(d.intake_type==='pa_land'?'':renderTasks(d))+render(d,ref)+'<script src="/factfind-events.js"></script></body></html>');
  }catch(e){console.error('[Scorecard]',e.message);return res.status(500).send('Unable to load your Fact Find.');}
 }

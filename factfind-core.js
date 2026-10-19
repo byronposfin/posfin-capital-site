@@ -57,6 +57,7 @@ function ukMobile(v){const p=String(v||'').replace(/[\s()-]/g,'');return /^0\d{1
 function dateDisplay(v){return /^\d{4}-\d{2}-\d{2}$/.test(String(v))?String(v).split('-').reverse().join('/'):v;}
 function address(line,postcode){const p=String(postcode||'').trim().toUpperCase();return !p||String(line||'').toUpperCase().replace(/\s/g,'').includes(p.replace(/\s/g,''))?line:[line,p].filter(Boolean).join(', ');}
 function render(input,ref){
+ if(input.intake_type==='pa_land' && root.PosfinLand)return root.PosfinLand.render(input,ref);
  const d=normalise(input),c=calculate(d);
  const row=(k,v)=>`<div class="ff-row"><span>${esc(k)}</span><b>${esc(v===''?'To confirm':v)}</b></div>`;
  const section=(name,rows)=>`<section class="ff-section"><h2>${name}</h2>${rows}</section>`;
