@@ -135,5 +135,11 @@
       "source": "/s/:token",
       "destination": "/api/s/:token"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/notifications",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }

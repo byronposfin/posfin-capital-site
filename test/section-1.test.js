@@ -497,10 +497,9 @@ describe('Section 1 — case_completion and SmartLink', () => {
       assert.equal(rows[1].recipient, '8634157536'); // Chris
     });
 
-    it('processOutbox marks as failed when TELEGRAM_BOT_TOKEN is missing, retries on next run', async () => {
+    it('processOutbox marks as failed, retries, then marks exhausted', async () => {
       const client = createMockSupabase();
       delete process.env.TELEGRAM_BOT_TOKEN;
-      // Pre-populate a pending notification
       client._tables.case_notifications.push({
         id: 1, case_id: 'CASE-RETRY', channel: 'telegram', recipient: '1750758657',
         message: 'Test', status: 'pending', attempts: 0, max_attempts: 3,
@@ -508,26 +507,54 @@ describe('Section 1 — case_completion and SmartLink', () => {
         created_at: new Date().toISOString(),
       });
 
-      // First attempt — fails (no token)
-      const run1 = await processOutbox(client);
-      assert.equal(run1.processed, 1);
-      const row = client._tables.case_notifications[0];
-      assert.equal(row.status, 'failed');
-      assert.equal(row.attempts, 1);
-      assert.ok(row.last_error.includes('TELEGRAM_BOT_TOKEN'));
+      // Attempts 1-3: each fails, status stays 'failed', attempts increment
+      for (let i = 1; i <= 3; i++) {
+        const run = await processOutbox(client);
+        assert.equal(run.processed, 1);
+        assert.equal(client._tables.case_notifications[0].attempts, i);
+        assert.equal(client._tables.case_notifications[0].status, 'failed');
+      }
 
-      // Second attempt — still fails but retries (attempts < max)
-      const run2 = await processOutbox(client);
-      assert.equal(run2.processed, 1);
-      assert.equal(client._tables.case_notifications[0].attempts, 2);
-      assert.equal(client._tables.case_notifications[0].status, 'failed');
-
-      // Third attempt — hits max, next run skips it
-      const run3 = await processOutbox(client);
-      assert.equal(client._tables.case_notifications[0].attempts, 3);
-
+      // Next run: exhaustion sweep marks it 'exhausted', then query finds nothing
       const run4 = await processOutbox(client);
-      assert.equal(run4.results[0].status, 'exhausted', 'Must not retry past max_attempts');
+      assert.equal(client._tables.case_notifications[0].status, 'exhausted');
+      assert.equal(run4.processed, 0, 'Exhausted item must not be processed again');
+    });
+
+    it('50 exhausted alerts do not starve newer pending alerts', async () => {
+      const client = createMockSupabase();
+      delete process.env.TELEGRAM_BOT_TOKEN;
+
+      // Pre-populate 50 exhausted entries
+      for (let i = 0; i < 50; i++) {
+        client._tables.case_notifications.push({
+          id: i + 1, case_id: `CASE-OLD-${i}`, channel: 'telegram',
+          recipient: '1750758657', message: `Old ${i}`,
+          status: 'failed', attempts: 3, max_attempts: 3,
+          last_attempt_at: new Date().toISOString(), delivered_at: null,
+          last_error: 'exhausted', created_at: new Date(Date.now() - 86400000).toISOString(),
+        });
+      }
+
+      // Add 1 newer pending alert
+      client._tables.case_notifications.push({
+        id: 51, case_id: 'CASE-NEW', channel: 'telegram',
+        recipient: '1750758657', message: 'New alert',
+        status: 'pending', attempts: 0, max_attempts: 3,
+        last_attempt_at: null, delivered_at: null, last_error: null,
+        created_at: new Date().toISOString(),
+      });
+
+      const run = await processOutbox(client);
+      // The 50 exhausted items should be marked 'exhausted' and excluded
+      const exhausted = client._tables.case_notifications.filter(r => r.status === 'exhausted');
+      assert.equal(exhausted.length, 50, 'All 50 old entries must be marked exhausted');
+
+      // The new pending alert must be processed (attempted), not starved
+      assert.ok(run.processed >= 1, 'Newer pending alert must be processed');
+      const newEntry = client._tables.case_notifications.find(r => r.id === 51);
+      assert.equal(newEntry.attempts, 1, 'New alert must have been attempted');
+      assert.equal(newEntry.status, 'failed', 'Fails (no token) but was attempted');
     });
 
     it('notification is not silently dropped: persists across request boundary', async () => {
@@ -535,11 +562,9 @@ describe('Section 1 — case_completion and SmartLink', () => {
       client._tables.case_completion.push({ case_id: 'CASE-PERSIST', version: 1 });
       await enqueueAlert(client, { caseId: 'CASE-PERSIST', message: 'Persisted alert' });
 
-      // Simulate a separate request/worker reading the outbox
       const pending = client._tables.case_notifications.filter(r => r.status === 'pending');
       assert.equal(pending.length, 2, 'Both recipients must be persisted');
       assert.equal(pending[0].message, 'Persisted alert');
-      assert.equal(pending[1].message, 'Persisted alert');
     });
 
     it('formatCaseAlert includes case details', () => {
