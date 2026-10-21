@@ -137,9 +137,7 @@
     }
   ],
   "crons": [
-    {
-      "path": "/api/factfind-alert-worker",
-      "schedule": "*/5 * * * *"
-    }
+    { "path": "/api/factfind-alert-worker", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/notifications", "schedule": "*/5 * * * *" }
   ]
 }

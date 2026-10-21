@@ -140,7 +140,54 @@ create index if not exists notifications_case_idx
 comment on table case_notifications is 'Durable notification outbox. Worker/cron processes pending and retries failed entries.';
 
 -- ============================================================
--- 8. RLS — service-role only, deny all anon access
+-- 8. Atomic CAS update + audit — Postgres RPC function
+-- ============================================================
+-- Wraps the version-gated case update and audit insert in a single
+-- transaction. If either fails, both roll back. Returns the number
+-- of rows updated (0 = version conflict, 1 = success).
+create or replace function patch_case_atomic(
+  p_case_id text,
+  p_expected_version integer,
+  p_new_version integer,
+  p_fields jsonb,
+  p_updated_at timestamptz,
+  p_updated_by text,
+  p_broker_only jsonb,
+  p_audit_actor text,
+  p_audit_source text,
+  p_audit_idempotency_key text,
+  p_audit_diff jsonb
+) returns integer language plpgsql as $$
+declare
+  affected integer;
+begin
+  -- CAS update: only if version matches
+  update case_completion
+  set version = p_new_version,
+      fields = p_fields,
+      updated_at = p_updated_at,
+      updated_by = p_updated_by,
+      broker_only = coalesce(p_broker_only, broker_only)
+  where case_id = p_case_id
+    and version = p_expected_version;
+
+  get diagnostics affected = row_count;
+
+  if affected = 0 then
+    return 0;  -- Version conflict — caller should return 409
+  end if;
+
+  -- Audit row — same transaction, rolls back if this fails
+  insert into case_completion_audit (case_id, version, actor, source, idempotency_key, diff)
+  values (p_case_id, p_new_version, p_audit_actor, p_audit_source,
+          nullif(p_audit_idempotency_key, ''), p_audit_diff);
+
+  return 1;
+end;
+$$;
+
+-- ============================================================
+-- 9. RLS — service-role only, deny all anon access
 -- ============================================================
 alter table case_completion         enable row level security;
 alter table case_completion_audit   enable row level security;
