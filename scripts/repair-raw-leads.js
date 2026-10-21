@@ -28,7 +28,9 @@ const col = n => { let s = ''; for (n++; n; n = Math.floor((n - 1) / 26)) s = St
 async function main() {
   const sheetId = process.env.FACTFIND_SHEET_ID;
   if (!sheetId) { console.error('FACTFIND_SHEET_ID is required (must be staging)'); process.exit(1); }
-  if (sheetId === MASTER) { console.error('Refusing to run against production master sheet'); process.exit(1); }
+  const allowlist = (process.env.REPAIR_STAGING_ALLOWLIST || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (!allowlist.length) { console.error('REPAIR_STAGING_ALLOWLIST is required: comma-separated list of confirmed staging sheet IDs'); process.exit(1); }
+  if (!allowlist.includes(sheetId)) { console.error(`Sheet ${sheetId} is not in REPAIR_STAGING_ALLOWLIST. Refusing to run.`); process.exit(1); }
 
   const saB64 = process.env.GOOGLE_SA_B64;
   if (!saB64) { console.error('GOOGLE_SA_B64 is required'); process.exit(1); }
