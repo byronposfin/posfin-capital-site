@@ -15,11 +15,10 @@ Verification code delivery is stubbed (logs to console). To enable actual WhatsA
 No email service is configured. Options: Resend, SendGrid, SES, or another. The code generation/validation/expiry logic is implemented — only the delivery channel is stubbed.
 
 ### 4. SmartLink URL in Pipeline Clean scorecard column
-The design says to put "Open SmartLink" in the `📊 Scorecard link` column. This requires:
-- Deciding the URL format: `https://posfincapital.com/smartlink?t=<token>` or `/api/case/<token>`
-- Whether to generate the SmartLink token at intake time (when the case is created in Clean) or only when staff explicitly issues one
-
-Currently the scorecard column contains the existing HMAC-based scorecard link. Adding a SmartLink link alongside or replacing it requires a decision on whether both should coexist.
+The borrower page is at `/s/<token>`. Decision needed:
+- Whether to also write this URL to the `📊 Scorecard link` column in Pipeline Clean
+- Whether to generate the SmartLink token at intake time or only when staff explicitly issues one
+- Whether the existing HMAC scorecard link and the new SmartLink coexist or the new one replaces it
 
 ### 5. Seeding case_completion from existing intake data
 The first real test (Bouchon pilot) requires seeding `case_completion` from the existing Raw Leads packed state. This is a one-time data migration that should happen as part of the Bouchon pilot (Section 5), not automatically.
@@ -27,17 +26,16 @@ The first real test (Bouchon pilot) requires seeding `case_completion` from the 
 ## Known gaps — NOT YET BUILT
 
 ### Gap A: Staff authentication (M365)
-`api/case/[id]/token.js` now returns **501 Not Implemented** for all requests. The `x-staff-user` header placeholder has been removed. Token issuing and revocation are disabled until Microsoft 365 work-account sign-in is wired. The `M365_AUTH_IMPLEMENTED` constant must be flipped and `authenticateStaff` must validate an M365 bearer token before this endpoint can go live.
+`api/case/[id]/token.js` returns **501 Not Implemented** for all requests. The `x-staff-user` header code is **deleted** — the endpoint is a bare 501 stub. Token issuing and revocation are disabled until Microsoft 365 work-account sign-in is wired with a new implementation.
 
-### Gap B: Borrower-facing client page
-The SmartLink API (`GET /api/case/:token`) returns JSON. **No borrower-facing HTML page exists** to render the questionnaire UI. The existing `/api/scorecard` serves inline HTML for the Fact Find summary, but there is no equivalent page for the SmartLink gap-engine questionnaire. This page must be built before borrower delivery — it needs:
-- Postcode gate UI (input, lockout message, verification code fallback)
-- Gap engine batch rendering (≤ 6 questions per page, autosave on blur)
-- Progress indicator and section navigation
-- Mobile-first responsive layout matching the existing Posfin brand
-
-### Gap C: Export PDF rendering
+### Gap B: Export PDF rendering
 The `case_exports` table is in the migration. No PDF rendering logic exists. Deferred.
+
+### Gap C: Verification code delivery
+Code generation/validation/expiry/lockout implemented. Delivery **STUBBED** (console log). WATI config needed for WhatsApp; email service TBD.
+
+### Gap D: Field maps for A&L, remortgage, PA_Land
+Declared as stubs returning UNMAPPED. Main bridging is the only active field map.
 
 ## Not blocked — continued with assumptions
 
