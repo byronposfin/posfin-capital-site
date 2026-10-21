@@ -38,6 +38,7 @@ function createMockSupabase() {
     case_exports: [],
     case_gate_attempts: [],
     case_verification_codes: [],
+    case_notifications: [],
   };
 
   function makeQuery(tableName) {
@@ -51,6 +52,7 @@ function createMockSupabase() {
       select() { return chain; },
       eq(col, val) { filters.push(r => r[col] === val); return chain; },
       is(col, val) { filters.push(r => r[col] === val); return chain; },
+      in(col, vals) { filters.push(r => vals.includes(r[col])); return chain; },
       gte(col, val) { filters.push(r => r[col] >= val); return chain; },
       order(col, opts) { orderCol = col; orderDir = opts?.ascending === false ? 'desc' : 'asc'; return chain; },
       limit(n) { limitN = n; return chain; },
@@ -73,10 +75,16 @@ function createMockSupabase() {
     return {
       insert(rows) {
         const arr = Array.isArray(rows) ? rows : [rows];
+        const inserted = [];
         for (const row of arr) {
-          tables[tableName].push({ id: tables[tableName].length + 1, ...row });
+          const full = { id: tables[tableName].length + 1, ...row };
+          tables[tableName].push(full);
+          inserted.push(full);
         }
-        return { data: null, error: null, then(r) { r({ data: null, error: null }); } };
+        const result = { data: null, error: null };
+        result.select = () => ({ then(r) { r({ data: inserted, error: null }); } });
+        result.then = (r) => { r({ data: null, error: null }); };
+        return result;
       },
     };
   }
@@ -84,14 +92,17 @@ function createMockSupabase() {
   function makeUpdate(tableName) {
     let updateData = null;
     let filters = [];
+    let doSelect = false;
     const chain = {
       update(data) { updateData = data; return chain; },
       eq(col, val) { filters.push(r => r[col] === val); return chain; },
+      select() { doSelect = true; return chain; },
       then(resolve) {
+        const matched = [];
         for (const row of tables[tableName]) {
-          if (filters.every(f => f(row))) Object.assign(row, updateData);
+          if (filters.every(f => f(row))) { Object.assign(row, updateData); matched.push(row); }
         }
-        resolve({ data: null, error: null });
+        resolve({ data: doSelect ? matched : null, error: null });
       },
     };
     return chain;
