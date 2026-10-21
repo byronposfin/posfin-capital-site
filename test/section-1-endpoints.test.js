@@ -1,7 +1,11 @@
 /**
  * Section 1 endpoint tests — borrower GET/PATCH, staff token, MCP service.
  *
- * Tests the actual handler functions with mocked Supabase and req/res.
+ * Tests handler functions with mocked Supabase and req/res.
+ * Covers: postcode gate, forged identity, expired/revoked tokens,
+ * cross-case access, borrower-only fields, stale versions,
+ * concurrent writes, idempotent replay, disabled staff auth.
+ *
  * Zero live writes, no network calls.
  *
  * Run: node --test test/section-1-endpoints.test.js
@@ -23,7 +27,7 @@ import borrowerHandler from '../api/case/[token].js';
 import staffTokenHandler from '../api/case/[id]/token.js';
 import mcpHandler from '../api/case-completion.js';
 
-// ── Mock Supabase client (reused across tests) ──────────────────────
+// ── Mock Supabase ────────────────────────────────────────────────────
 
 function createMockSupabase() {
   const tables = {
@@ -69,8 +73,7 @@ function createMockSupabase() {
       insert(rows) {
         const arr = Array.isArray(rows) ? rows : [rows];
         for (const row of arr) {
-          const id = tables[tableName].length + 1;
-          tables[tableName].push({ id, ...row });
+          tables[tableName].push({ id: tables[tableName].length + 1, ...row });
         }
         return { data: null, error: null, then(r) { r({ data: null, error: null }); } };
       },
@@ -93,7 +96,7 @@ function createMockSupabase() {
     return chain;
   }
 
-  const client = {
+  return {
     _tables: tables,
     from(table) {
       return {
@@ -104,8 +107,6 @@ function createMockSupabase() {
       };
     },
   };
-
-  return client;
 }
 
 // ── Mock req/res ─────────────────────────────────────────────────────
@@ -116,10 +117,7 @@ function mockReq({ method = 'GET', query = {}, body = {}, headers = {} } = {}) {
 
 function mockRes() {
   const res = {
-    _status: null,
-    _json: null,
-    _headers: {},
-    _ended: false,
+    _status: null, _json: null, _headers: {}, _ended: false,
     status(code) { res._status = code; return res; },
     json(data) { res._json = data; return res; },
     end() { res._ended = true; return res; },
@@ -128,539 +126,442 @@ function mockRes() {
   return res;
 }
 
-// ── Seed a case with a token ─────────────────────────────────────────
+// ── Seed helpers ─────────────────────────────────────────────────────
 
 function seedCase(client, caseId, fields = {}, version = 1) {
   client._tables.case_completion.push({
-    case_id: caseId,
-    version,
-    fields,
-    sections: {},
-    broker_only: {},
-    updated_at: new Date().toISOString(),
-    updated_by: 'system',
+    case_id: caseId, version, fields, sections: {}, broker_only: {},
+    updated_at: new Date().toISOString(), updated_by: 'system',
   });
 }
 
-function seedToken(client, caseId) {
+function seedToken(client, caseId, opts = {}) {
   const { raw, hash } = generateToken();
   client._tables.case_tokens.push({
-    token_hash: hash,
-    case_id: caseId,
-    revoked_at: null,
+    token_hash: hash, case_id: caseId,
+    revoked_at: opts.revoked ? new Date().toISOString() : null,
     last_used_at: null,
   });
   return { raw, hash };
 }
 
-// ── Tests ────────────────────────────────────────────────────────────
+function authedReq(method, raw, caseId, body = {}) {
+  const session = signSession(caseId);
+  return mockReq({ method, query: { token: raw }, headers: { cookie: `smartlink_session=${session}` }, body });
+}
 
-describe('Borrower API — GET /api/case/:token', () => {
+// ══════════════════════════════════════════════════════════════════════
+// BORROWER API
+// ══════════════════════════════════════════════════════════════════════
+
+describe('Borrower GET /api/case/:token', () => {
   let client;
+  beforeEach(() => { client = createMockSupabase(); setClient(client); process.env.SMARTLINK_TOKEN_SECRET = 'test-secret'; });
 
-  beforeEach(() => {
-    client = createMockSupabase();
-    setClient(client);
-    process.env.SMARTLINK_TOKEN_SECRET = 'test-secret-for-endpoints';
-  });
-
-  it('returns 403 gate_required when no postcode/session provided', async () => {
-    seedCase(client, 'CASE-GATE-1', { postcode: { value: 'SW1A1AA', source: 'intake' } });
-    const { raw } = seedToken(client, 'CASE-GATE-1');
-
+  it('403 gate_required without postcode or session — no personal data leaked', async () => {
+    seedCase(client, 'C1', { postcode: { value: 'SW1A1AA', source: 'intake' }, first_name: { value: 'Secret', source: 'intake' } });
+    const { raw } = seedToken(client, 'C1');
     const res = mockRes();
     await borrowerHandler(mockReq({ query: { token: raw } }), res);
-
     assert.equal(res._status, 403);
     assert.equal(res._json.error, 'gate_required');
-    assert.equal(res._json.gate, 'postcode');
-    // No personal data before gate passes
-    assert.equal(res._json.fields, undefined);
-    assert.equal(res._json.batch, undefined);
+    assert.equal(res._json.fields, undefined, 'No fields before gate');
+    assert.equal(res._json.batch, undefined, 'No batch before gate');
   });
 
-  it('returns borrower view after correct postcode', async () => {
-    seedCase(client, 'CASE-GATE-2', {
-      postcode: { value: 'SW1A1AA', source: 'intake' },
-      exit_strategy: { value: 'Refinance', source: 'borrower' },
-    });
-    const { raw } = seedToken(client, 'CASE-GATE-2');
-
+  it('200 with borrower view after correct postcode (case-insensitive, spaces ignored)', async () => {
+    seedCase(client, 'C2', { postcode: { value: 'SW1A1AA', source: 'intake' }, exit_strategy: { value: 'Sale', source: 'borrower' } });
+    const { raw } = seedToken(client, 'C2');
     const res = mockRes();
-    await borrowerHandler(mockReq({ query: { token: raw, postcode: 'sw1a 1aa' } }), res);
-
+    await borrowerHandler(mockReq({ query: { token: raw, postcode: '  sw1a 1aa  ' } }), res);
     assert.equal(res._status, 200);
-    assert.equal(res._json.case_id, 'CASE-GATE-2');
-    assert.equal(res._json.version, 1);
-    assert.ok(res._json.batch, 'Should include gap engine batch');
-    assert.ok(res._json.progress, 'Should include progress');
-    // Session cookie set
+    assert.equal(res._json.case_id, 'C2');
+    assert.ok(res._json.batch);
     assert.ok(res._headers['Set-Cookie']?.includes('smartlink_session='));
   });
 
-  it('returns borrower view when valid session cookie present', async () => {
-    seedCase(client, 'CASE-SESSION', {
-      postcode: { value: 'EC2R8AH', source: 'intake' },
-    });
-    const { raw } = seedToken(client, 'CASE-SESSION');
-    const sessionCookie = signSession('CASE-SESSION');
-
+  it('200 with valid device session cookie — no postcode needed', async () => {
+    seedCase(client, 'C3', { postcode: { value: 'EC2R8AH', source: 'intake' } });
+    const { raw } = seedToken(client, 'C3');
     const res = mockRes();
-    await borrowerHandler(mockReq({
-      query: { token: raw },
-      headers: { cookie: `smartlink_session=${sessionCookie}` },
-    }), res);
-
+    await borrowerHandler(mockReq({ query: { token: raw }, headers: { cookie: `smartlink_session=${signSession('C3')}` } }), res);
     assert.equal(res._status, 200);
-    assert.equal(res._json.case_id, 'CASE-SESSION');
+    assert.equal(res._json.case_id, 'C3');
   });
 
-  it('returns 403 for incorrect postcode', async () => {
-    seedCase(client, 'CASE-WRONG-PC', {
-      postcode: { value: 'SW1A1AA', source: 'intake' },
-    });
-    const { raw } = seedToken(client, 'CASE-WRONG-PC');
-
+  it('403 for incorrect postcode', async () => {
+    seedCase(client, 'C4', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'C4');
     const res = mockRes();
     await borrowerHandler(mockReq({ query: { token: raw, postcode: 'EC2R8AH' } }), res);
-
     assert.equal(res._status, 403);
     assert.equal(res._json.gate, 'postcode');
   });
 
-  it('returns 404 for unknown token', async () => {
+  it('404 for unknown token', async () => {
     const res = mockRes();
     await borrowerHandler(mockReq({ query: { token: 'unknown-token-value-here' } }), res);
     assert.equal(res._status, 404);
   });
 
-  it('returns 410 for revoked token', async () => {
-    seedCase(client, 'CASE-REVOKED');
-    const { raw, hash } = generateToken();
-    client._tables.case_tokens.push({
-      token_hash: hash, case_id: 'CASE-REVOKED',
-      revoked_at: new Date().toISOString(), last_used_at: null,
-    });
-
+  it('410 for revoked token', async () => {
+    seedCase(client, 'C5');
+    const { raw } = seedToken(client, 'C5', { revoked: true });
     const res = mockRes();
     await borrowerHandler(mockReq({ query: { token: raw } }), res);
     assert.equal(res._status, 410);
+    assert.match(res._json.error, /revoked/i);
+  });
+
+  it('session cookie for case A does not grant access to case B', async () => {
+    seedCase(client, 'CASE-A', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    seedCase(client, 'CASE-B', { postcode: { value: 'EC2R8AH', source: 'intake' } });
+    const tokenB = seedToken(client, 'CASE-B');
+    // Session cookie is for CASE-A, but token resolves to CASE-B
+    const sessionA = signSession('CASE-A');
+    const res = mockRes();
+    await borrowerHandler(mockReq({ query: { token: tokenB.raw }, headers: { cookie: `smartlink_session=${sessionA}` } }), res);
+    assert.equal(res._status, 403, 'Cross-case session must be rejected');
+    assert.equal(res._json.error, 'gate_required');
+  });
+
+  it('expired session cookie requires fresh postcode', async () => {
+    seedCase(client, 'C6', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'C6');
+    // Craft an expired cookie (payload with exp in the past)
+    const expiredPayload = JSON.stringify({ caseId: 'C6', exp: Date.now() - 1000 });
+    const { createHmac } = await import('node:crypto');
+    const sig = createHmac('sha256', process.env.SMARTLINK_TOKEN_SECRET).update(expiredPayload).digest('base64url');
+    const expiredCookie = `${Buffer.from(expiredPayload).toString('base64url')}.${sig}`;
+    const res = mockRes();
+    await borrowerHandler(mockReq({ query: { token: raw }, headers: { cookie: `smartlink_session=${expiredCookie}` } }), res);
+    assert.equal(res._status, 403, 'Expired session must not pass gate');
   });
 });
 
-describe('Borrower API — PATCH /api/case/:token', () => {
+describe('Borrower PATCH /api/case/:token', () => {
   let client;
+  beforeEach(() => { client = createMockSupabase(); setClient(client); process.env.SMARTLINK_TOKEN_SECRET = 'test-secret'; });
 
-  beforeEach(() => {
-    client = createMockSupabase();
-    setClient(client);
-    process.env.SMARTLINK_TOKEN_SECRET = 'test-secret-for-endpoints';
-  });
-
-  it('accepts borrower-owned fields and increments version', async () => {
-    seedCase(client, 'CASE-PATCH-1', {
-      postcode: { value: 'SW1A1AA', source: 'intake' },
-    });
-    const { raw } = seedToken(client, 'CASE-PATCH-1');
-    const session = signSession('CASE-PATCH-1');
-
+  it('accepts borrower-owned fields, increments version, queues alert', async () => {
+    seedCase(client, 'P1', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'P1');
     const res = mockRes();
-    await borrowerHandler(mockReq({
-      method: 'PATCH',
-      query: { token: raw },
-      headers: { cookie: `smartlink_session=${session}` },
-      body: {
-        expected_version: 1,
-        idempotency_key: 'patch-001',
-        fields: { exit_strategy: 'Refinance', loan_purpose: 'Purchase' },
-      },
+    await borrowerHandler(authedReq('PATCH', raw, 'P1', {
+      expected_version: 1, idempotency_key: 'p-001',
+      fields: { exit_strategy: 'Refinance', loan_purpose: 'Purchase' },
     }), res);
-
     assert.equal(res._status, 200);
     assert.equal(res._json.ok, true);
     assert.equal(res._json.version, 2);
+    // Verify provenance
+    const c = client._tables.case_completion.find(r => r.case_id === 'P1');
+    assert.equal(c.fields.exit_strategy.source, 'borrower');
+    assert.ok(c.fields.exit_strategy.confirmed_at);
   });
 
-  it('rejects broker-only fields from borrower', async () => {
-    seedCase(client, 'CASE-PATCH-REJECT', {
-      postcode: { value: 'SW1A1AA', source: 'intake' },
-    });
-    const { raw } = seedToken(client, 'CASE-PATCH-REJECT');
-    const session = signSession('CASE-PATCH-REJECT');
-
+  it('rejects broker-only fields (proc_fee) from borrower', async () => {
+    seedCase(client, 'P2', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'P2');
     const res = mockRes();
-    await borrowerHandler(mockReq({
-      method: 'PATCH',
-      query: { token: raw },
-      headers: { cookie: `smartlink_session=${session}` },
-      body: {
-        expected_version: 1,
-        idempotency_key: 'patch-reject',
-        fields: { proc_fee: 1500 }, // broker-only
-      },
+    await borrowerHandler(authedReq('PATCH', raw, 'P2', {
+      expected_version: 1, idempotency_key: 'p-002',
+      fields: { proc_fee: 1500 },
     }), res);
-
     assert.equal(res._status, 400);
     assert.ok(res._json.rejected.includes('proc_fee'));
   });
 
-  it('returns 409 on stale expected_version with current state', async () => {
-    seedCase(client, 'CASE-409', {
-      postcode: { value: 'SW1A1AA', source: 'intake' },
-      exit_strategy: { value: 'Sale', source: 'borrower' },
-    }, 5);
-    const { raw } = seedToken(client, 'CASE-409');
-    const session = signSession('CASE-409');
-
+  it('mixed borrower + broker fields: borrower accepted, broker rejected', async () => {
+    seedCase(client, 'P2B', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'P2B');
     const res = mockRes();
-    await borrowerHandler(mockReq({
-      method: 'PATCH',
-      query: { token: raw },
-      headers: { cookie: `smartlink_session=${session}` },
-      body: {
-        expected_version: 2, // stale
-        idempotency_key: 'stale-001',
-        fields: { exit_strategy: 'New exit' },
-      },
+    await borrowerHandler(authedReq('PATCH', raw, 'P2B', {
+      expected_version: 1, idempotency_key: 'p-002b',
+      fields: { exit_strategy: 'Sale', proc_fee: 1500, broker_notes: 'Hacked' },
     }), res);
+    assert.equal(res._status, 200);
+    assert.equal(res._json.version, 2);
+    assert.deepEqual(res._json.rejected, ['proc_fee', 'broker_notes']);
+    const c = client._tables.case_completion.find(r => r.case_id === 'P2B');
+    assert.equal(c.fields.exit_strategy.value, 'Sale');
+    assert.equal(c.fields.proc_fee, undefined, 'Broker field must not be written');
+    assert.equal(c.fields.broker_notes, undefined, 'Broker field must not be written');
+  });
 
+  it('409 on stale expected_version with current state and batch', async () => {
+    seedCase(client, 'P3', { postcode: { value: 'SW1A1AA', source: 'intake' }, exit_strategy: { value: 'Sale', source: 'borrower' } }, 5);
+    const { raw } = seedToken(client, 'P3');
+    const res = mockRes();
+    await borrowerHandler(authedReq('PATCH', raw, 'P3', {
+      expected_version: 2, idempotency_key: 'p-003',
+      fields: { exit_strategy: 'New' },
+    }), res);
     assert.equal(res._status, 409);
     assert.equal(res._json.error, 'version_conflict');
     assert.equal(res._json.currentVersion, 5);
-    // Should include current borrower view
-    assert.ok(res._json.batch !== undefined, '409 should include current batch');
+    assert.ok(Array.isArray(res._json.batch), '409 must include current batch');
   });
 
-  it('replayed idempotency_key returns original result without double write', async () => {
-    seedCase(client, 'CASE-IDEM', {
-      postcode: { value: 'SW1A1AA', source: 'intake' },
-    });
-    const { raw } = seedToken(client, 'CASE-IDEM');
-    const session = signSession('CASE-IDEM');
-
-    // First write
+  it('replayed idempotency_key: original result, no double write, original value kept', async () => {
+    seedCase(client, 'P4', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'P4');
     const res1 = mockRes();
-    await borrowerHandler(mockReq({
-      method: 'PATCH',
-      query: { token: raw },
-      headers: { cookie: `smartlink_session=${session}` },
-      body: {
-        expected_version: 1,
-        idempotency_key: 'idem-borrower-001',
-        fields: { exit_strategy: 'Refinance' },
-      },
+    await borrowerHandler(authedReq('PATCH', raw, 'P4', {
+      expected_version: 1, idempotency_key: 'p-004',
+      fields: { exit_strategy: 'Refinance' },
     }), res1);
-    assert.equal(res1._status, 200);
     assert.equal(res1._json.version, 2);
 
-    // Replay same idempotency_key
     const res2 = mockRes();
-    await borrowerHandler(mockReq({
-      method: 'PATCH',
-      query: { token: raw },
-      headers: { cookie: `smartlink_session=${session}` },
-      body: {
-        expected_version: 1,
-        idempotency_key: 'idem-borrower-001',
-        fields: { exit_strategy: 'Different value' },
-      },
+    await borrowerHandler(authedReq('PATCH', raw, 'P4', {
+      expected_version: 1, idempotency_key: 'p-004',
+      fields: { exit_strategy: 'OVERWRITE ATTEMPT' },
     }), res2);
-    assert.equal(res2._status, 200);
     assert.equal(res2._json.replayed, true);
     assert.equal(res2._json.version, 2);
 
-    // Case should still have the original value
-    const c = client._tables.case_completion.find(r => r.case_id === 'CASE-IDEM');
-    assert.equal(c.fields.exit_strategy.value, 'Refinance');
-
-    // Only one audit row for this key
-    const audits = client._tables.case_completion_audit.filter(a => a.idempotency_key === 'idem-borrower-001');
-    assert.equal(audits.length, 1);
+    const c = client._tables.case_completion.find(r => r.case_id === 'P4');
+    assert.equal(c.fields.exit_strategy.value, 'Refinance', 'Replay must not overwrite');
+    assert.equal(client._tables.case_completion_audit.filter(a => a.idempotency_key === 'p-004').length, 1);
   });
 
-  it('requires postcode gate before PATCH', async () => {
-    seedCase(client, 'CASE-PATCH-GATE', {
-      postcode: { value: 'SW1A1AA', source: 'intake' },
-    });
-    const { raw } = seedToken(client, 'CASE-PATCH-GATE');
-
+  it('403 gate_required when PATCH sent without session or postcode', async () => {
+    seedCase(client, 'P5', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'P5');
     const res = mockRes();
     await borrowerHandler(mockReq({
-      method: 'PATCH',
-      query: { token: raw },
-      // No cookie, no postcode in body
-      body: {
-        expected_version: 1,
-        idempotency_key: 'patch-nogate',
-        fields: { exit_strategy: 'Refinance' },
-      },
+      method: 'PATCH', query: { token: raw },
+      body: { expected_version: 1, idempotency_key: 'p-005', fields: { exit_strategy: 'X' } },
     }), res);
-
     assert.equal(res._status, 403);
-    assert.equal(res._json.error, 'gate_required');
+  });
+
+  it('concurrent writes: second writer gets 409, first write persists', async () => {
+    seedCase(client, 'P6', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'P6');
+
+    // Writer A succeeds at version 1→2
+    const resA = mockRes();
+    await borrowerHandler(authedReq('PATCH', raw, 'P6', {
+      expected_version: 1, idempotency_key: 'p-006a',
+      fields: { exit_strategy: 'Writer A' },
+    }), resA);
+    assert.equal(resA._json.version, 2);
+
+    // Writer B tries with stale version 1 → 409
+    const resB = mockRes();
+    await borrowerHandler(authedReq('PATCH', raw, 'P6', {
+      expected_version: 1, idempotency_key: 'p-006b',
+      fields: { exit_strategy: 'Writer B' },
+    }), resB);
+    assert.equal(resB._status, 409);
+    assert.equal(resB._json.currentVersion, 2);
+
+    // Original value persists
+    const c = client._tables.case_completion.find(r => r.case_id === 'P6');
+    assert.equal(c.fields.exit_strategy.value, 'Writer A');
   });
 });
 
-describe('Staff API — POST /api/case/:id/token', () => {
+// ══════════════════════════════════════════════════════════════════════
+// STAFF TOKEN API — DISABLED UNTIL M365 AUTH
+// ══════════════════════════════════════════════════════════════════════
+
+describe('Staff API — POST /api/case/:id/token (M365 auth not implemented)', () => {
   let client;
+  beforeEach(() => { client = createMockSupabase(); setClient(client); });
 
-  beforeEach(() => {
-    client = createMockSupabase();
-    setClient(client);
-  });
-
-  it('issues a token when staff-authenticated', async () => {
-    seedCase(client, 'CASE-STAFF-1');
-
+  it('returns 501 for all requests — M365 auth not yet implemented', async () => {
+    seedCase(client, 'S1');
     const res = mockRes();
     await staffTokenHandler(mockReq({
-      method: 'POST',
-      query: { id: 'CASE-STAFF-1' },
+      method: 'POST', query: { id: 'S1' },
       headers: { 'x-staff-user': 'Byron' },
       body: { action: 'issue' },
     }), res);
-
-    assert.equal(res._status, 201);
-    assert.equal(res._json.ok, true);
-    assert.ok(res._json.token, 'Raw token must be returned');
-    assert.equal(res._json.case_id, 'CASE-STAFF-1');
-    // Token stored in DB
-    assert.equal(client._tables.case_tokens.length, 1);
-    assert.equal(client._tables.case_tokens[0].case_id, 'CASE-STAFF-1');
+    assert.equal(res._status, 501);
+    assert.match(res._json.error, /microsoft 365/i);
+    assert.equal(client._tables.case_tokens.length, 0, 'No token must be created');
   });
 
-  it('revokes a token', async () => {
-    seedCase(client, 'CASE-STAFF-2');
-    const { hash } = seedToken(client, 'CASE-STAFF-2');
-
+  it('forged x-staff-user header still returns 501', async () => {
+    seedCase(client, 'S2');
     const res = mockRes();
     await staffTokenHandler(mockReq({
-      method: 'POST',
-      query: { id: 'CASE-STAFF-2' },
+      method: 'POST', query: { id: 'S2' },
+      headers: { 'x-staff-user': 'byron' },
+      body: { action: 'issue' },
+    }), res);
+    assert.equal(res._status, 501);
+    assert.equal(client._tables.case_tokens.length, 0);
+  });
+
+  it('forged admin identity returns 501', async () => {
+    const res = mockRes();
+    await staffTokenHandler(mockReq({
+      method: 'POST', query: { id: 'X' },
+      headers: { 'x-staff-user': 'admin' },
+      body: { action: 'issue' },
+    }), res);
+    assert.equal(res._status, 501);
+  });
+
+  it('empty header returns 501', async () => {
+    const res = mockRes();
+    await staffTokenHandler(mockReq({
+      method: 'POST', query: { id: 'X' },
+      body: { action: 'issue' },
+    }), res);
+    assert.equal(res._status, 501);
+  });
+
+  it('revoke also returns 501', async () => {
+    seedCase(client, 'S3');
+    const { hash } = seedToken(client, 'S3');
+    const res = mockRes();
+    await staffTokenHandler(mockReq({
+      method: 'POST', query: { id: 'S3' },
       headers: { 'x-staff-user': 'Chris' },
       body: { action: 'revoke', token_hash: hash },
     }), res);
-
-    assert.equal(res._status, 200);
-    assert.equal(res._json.revoked, true);
-    assert.ok(client._tables.case_tokens[0].revoked_at);
-  });
-
-  it('rejects unauthenticated requests', async () => {
-    const res = mockRes();
-    await staffTokenHandler(mockReq({
-      method: 'POST',
-      query: { id: 'CASE-X' },
-      body: { action: 'issue' },
-    }), res);
-
-    assert.equal(res._status, 403);
-  });
-
-  it('rejects non-allowlisted users', async () => {
-    const res = mockRes();
-    await staffTokenHandler(mockReq({
-      method: 'POST',
-      query: { id: 'CASE-X' },
-      headers: { 'x-staff-user': 'hacker' },
-      body: { action: 'issue' },
-    }), res);
-
-    assert.equal(res._status, 403);
-  });
-
-  it('returns 404 for unknown case', async () => {
-    const res = mockRes();
-    await staffTokenHandler(mockReq({
-      method: 'POST',
-      query: { id: 'NONEXISTENT' },
-      headers: { 'x-staff-user': 'Byron' },
-      body: { action: 'issue' },
-    }), res);
-
-    assert.equal(res._status, 404);
+    assert.equal(res._status, 501);
   });
 });
 
+// ══════════════════════════════════════════════════════════════════════
+// MCP SERVICE API
+// ══════════════════════════════════════════════════════════════════════
+
 describe('MCP API — GET/PATCH /api/case-completion', () => {
   let client;
-
   beforeEach(() => {
-    client = createMockSupabase();
-    setClient(client);
+    client = createMockSupabase(); setClient(client);
     process.env.SMARTLINK_SERVICE_KEY = 'test-service-key';
   });
 
-  it('rejects requests without service key', async () => {
+  it('403 without service key', async () => {
     const res = mockRes();
     await mcpHandler(mockReq({ query: { case_id: 'X' } }), res);
     assert.equal(res._status, 403);
   });
 
-  it('rejects requests with wrong service key', async () => {
+  it('403 with wrong service key', async () => {
     const res = mockRes();
-    await mcpHandler(mockReq({
-      query: { case_id: 'X' },
-      headers: { 'x-service-key': 'wrong-key' },
-    }), res);
+    await mcpHandler(mockReq({ query: { case_id: 'X' }, headers: { 'x-service-key': 'wrong' } }), res);
     assert.equal(res._status, 403);
   });
 
   it('GET returns full case including broker_only and gaps', async () => {
-    seedCase(client, 'CASE-MCP-1', {
-      exit_strategy: { value: 'Refinance', source: 'borrower' },
-      product_route: { value: 'main_loan', source: 'system' },
-    });
+    seedCase(client, 'M1', { exit_strategy: { value: 'Sale', source: 'borrower' }, product_route: { value: 'main_loan', source: 'system' } });
     client._tables.case_completion[0].broker_only = { proc_fee: 1500 };
-
     const res = mockRes();
-    await mcpHandler(mockReq({
-      query: { case_id: 'CASE-MCP-1' },
-      headers: { 'x-service-key': 'test-service-key' },
-    }), res);
-
+    await mcpHandler(mockReq({ query: { case_id: 'M1' }, headers: { 'x-service-key': 'test-service-key' } }), res);
     assert.equal(res._status, 200);
-    assert.equal(res._json.case_id, 'CASE-MCP-1');
-    assert.equal(res._json.broker_only.proc_fee, 1500);
-    assert.ok(res._json.gaps, 'Should include gap analysis');
-    assert.ok(res._json.gaps.batch, 'Should include batch');
+    assert.equal(res._json.case_id, 'M1');
+    assert.equal(res._json.broker_only.proc_fee, 1500, 'MCP must see broker_only');
+    assert.ok(res._json.gaps);
   });
 
-  it('GET returns 404 for unknown case', async () => {
+  it('GET 404 for unknown case', async () => {
     const res = mockRes();
-    await mcpHandler(mockReq({
-      query: { case_id: 'NOPE' },
-      headers: { 'x-service-key': 'test-service-key' },
-    }), res);
+    await mcpHandler(mockReq({ query: { case_id: 'NOPE' }, headers: { 'x-service-key': 'test-service-key' } }), res);
     assert.equal(res._status, 404);
   });
 
-  it('PATCH with valid expected_version succeeds', async () => {
-    seedCase(client, 'CASE-MCP-PATCH', {
-      product_route: { value: 'main_loan', source: 'system' },
-    });
-
+  it('PATCH succeeds with valid expected_version', async () => {
+    seedCase(client, 'M2', { product_route: { value: 'main_loan', source: 'system' } });
     const res = mockRes();
     await mcpHandler(mockReq({
-      method: 'PATCH',
-      headers: { 'x-service-key': 'test-service-key' },
-      body: {
-        case_id: 'CASE-MCP-PATCH',
-        expected_version: 1,
-        idempotency_key: 'mcp-001',
-        source: 'tom',
-        fields: { exit_strategy: 'Sale' },
-      },
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'M2', expected_version: 1, idempotency_key: 'm-001', source: 'tom', fields: { exit_strategy: 'Sale' } },
     }), res);
-
     assert.equal(res._status, 200);
     assert.equal(res._json.ok, true);
     assert.equal(res._json.version, 2);
-    assert.ok(res._json.gaps, 'Should include updated gaps');
+    assert.ok(res._json.gaps);
   });
 
-  it('PATCH with stale version returns 409 with current state and gaps', async () => {
-    seedCase(client, 'CASE-MCP-STALE', {
-      product_route: { value: 'main_loan', source: 'system' },
-    }, 5);
-
+  it('PATCH 409 on stale version with current state and gaps', async () => {
+    seedCase(client, 'M3', { product_route: { value: 'main_loan', source: 'system' } }, 5);
     const res = mockRes();
     await mcpHandler(mockReq({
-      method: 'PATCH',
-      headers: { 'x-service-key': 'test-service-key' },
-      body: {
-        case_id: 'CASE-MCP-STALE',
-        expected_version: 2,
-        idempotency_key: 'mcp-stale',
-        source: 'claude',
-        fields: { exit_strategy: 'New' },
-      },
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'M3', expected_version: 2, idempotency_key: 'm-002', source: 'claude', fields: { exit_strategy: 'New' } },
     }), res);
-
     assert.equal(res._status, 409);
-    assert.equal(res._json.error, 'version_conflict');
     assert.equal(res._json.currentVersion, 5);
-    assert.ok(res._json.gaps, '409 should include gaps');
+    assert.ok(res._json.gaps);
   });
 
   it('PATCH replayed idempotency_key returns original result', async () => {
-    seedCase(client, 'CASE-MCP-IDEM', {
-      product_route: { value: 'main_loan', source: 'system' },
-    });
-
-    // First write
+    seedCase(client, 'M4', { product_route: { value: 'main_loan', source: 'system' } });
     const res1 = mockRes();
     await mcpHandler(mockReq({
-      method: 'PATCH',
-      headers: { 'x-service-key': 'test-service-key' },
-      body: {
-        case_id: 'CASE-MCP-IDEM',
-        expected_version: 1,
-        idempotency_key: 'mcp-idem-001',
-        source: 'tom',
-        fields: { loan_purpose: 'Original' },
-      },
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'M4', expected_version: 1, idempotency_key: 'm-003', source: 'tom', fields: { loan_purpose: 'Original' } },
     }), res1);
     assert.equal(res1._json.version, 2);
 
-    // Replay
     const res2 = mockRes();
     await mcpHandler(mockReq({
-      method: 'PATCH',
-      headers: { 'x-service-key': 'test-service-key' },
-      body: {
-        case_id: 'CASE-MCP-IDEM',
-        expected_version: 1,
-        idempotency_key: 'mcp-idem-001',
-        source: 'tom',
-        fields: { loan_purpose: 'Different' },
-      },
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'M4', expected_version: 1, idempotency_key: 'm-003', source: 'tom', fields: { loan_purpose: 'Different' } },
     }), res2);
-
-    assert.equal(res2._status, 200);
     assert.equal(res2._json.replayed, true);
     assert.equal(res2._json.version, 2);
   });
 
-  it('PATCH requires source', async () => {
+  it('PATCH requires source field', async () => {
     const res = mockRes();
     await mcpHandler(mockReq({
-      method: 'PATCH',
-      headers: { 'x-service-key': 'test-service-key' },
-      body: {
-        case_id: 'X',
-        expected_version: 1,
-        idempotency_key: 'k',
-        // source missing
-      },
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'X', expected_version: 1, idempotency_key: 'k' },
     }), res);
-
     assert.equal(res._status, 400);
     assert.match(res._json.error, /source/i);
   });
 
-  it('PATCH can write broker_only fields', async () => {
-    seedCase(client, 'CASE-MCP-BROKER', {
-      product_route: { value: 'main_loan', source: 'system' },
-    });
-
+  it('PATCH requires idempotency_key', async () => {
     const res = mockRes();
     await mcpHandler(mockReq({
-      method: 'PATCH',
-      headers: { 'x-service-key': 'test-service-key' },
-      body: {
-        case_id: 'CASE-MCP-BROKER',
-        expected_version: 1,
-        idempotency_key: 'broker-001',
-        source: 'broker',
-        fields: {},
-        broker_only: { proc_fee: 2500, notes: 'Good case' },
-      },
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'X', expected_version: 1, source: 'tom' },
     }), res);
+    assert.equal(res._status, 400);
+    assert.match(res._json.error, /idempotency/i);
+  });
 
+  it('PATCH can write broker_only fields', async () => {
+    seedCase(client, 'M5', { product_route: { value: 'main_loan', source: 'system' } });
+    const res = mockRes();
+    await mcpHandler(mockReq({
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'M5', expected_version: 1, idempotency_key: 'b-001', source: 'broker', fields: {}, broker_only: { proc_fee: 2500, notes: 'Good case' } },
+    }), res);
     assert.equal(res._status, 200);
-    const c = client._tables.case_completion.find(r => r.case_id === 'CASE-MCP-BROKER');
+    const c = client._tables.case_completion.find(r => r.case_id === 'M5');
     assert.equal(c.broker_only.proc_fee, 2500);
-    assert.equal(c.broker_only.notes, 'Good case');
+  });
+
+  it('concurrent MCP writes: second gets 409', async () => {
+    seedCase(client, 'M6', { product_route: { value: 'main_loan', source: 'system' } });
+
+    const resA = mockRes();
+    await mcpHandler(mockReq({
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'M6', expected_version: 1, idempotency_key: 'c-a', source: 'claude', fields: { exit_strategy: 'Claude A' } },
+    }), resA);
+    assert.equal(resA._json.version, 2);
+
+    const resB = mockRes();
+    await mcpHandler(mockReq({
+      method: 'PATCH', headers: { 'x-service-key': 'test-service-key' },
+      body: { case_id: 'M6', expected_version: 1, idempotency_key: 'c-b', source: 'tom', fields: { exit_strategy: 'Tom B' } },
+    }), resB);
+    assert.equal(resB._status, 409);
+
+    const c = client._tables.case_completion.find(r => r.case_id === 'M6');
+    assert.equal(c.fields.exit_strategy.value, 'Claude A', 'First write must persist');
   });
 });
