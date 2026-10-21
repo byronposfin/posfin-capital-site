@@ -41,13 +41,8 @@ function page(title, body) {
 .sl-progress-bar{background:var(--teal);height:100%;transition:width .3s}
 .sl-batch{max-width:700px;margin:auto}
 .sl-field{margin:22px 0}
-.sl-field label{display:block;font-weight:600;margin-bottom:6px}
-.sl-field input,.sl-field select,.sl-field textarea{width:100%}
-.sl-field .sl-choices{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-.sl-field .sl-choice{padding:10px 16px;border:1.5px solid #718096;border-radius:4px;cursor:pointer;background:#fff;font-size:15px}
-.sl-field .sl-choice.selected{background:var(--teal);color:#fff;border-color:var(--teal)}
-.sl-save-status{font-size:13px;color:#718096;min-height:20px;margin:6px 0}
-.sl-saved{color:#007b78}
+.sl-field label{display:block;font-weight:600;margin-bottom:4px;color:#515868;font-size:14px}
+.sl-field-value{font-size:16px;padding:4px 0}
 .sl-sections{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
 .sl-section-pill{padding:6px 14px;border-radius:16px;font-size:13px;font-weight:600}
 .sl-section-pill.complete{background:#e6f7f6;color:#007b78}
@@ -92,35 +87,15 @@ function codeGateHTML(error) {
 </div>`);
 }
 
+// Read-only field display. No inputs, no autosave.
+// Autosave UI will be enabled in a future milestone after staging acceptance.
 function renderField(f, currentValue) {
-  const val = currentValue?.value ?? '';
-  const id = `field-${esc(f.key)}`;
-  if (f.type === 'choice' && f.choices?.length) {
-    const buttons = f.choices.map(c =>
-      `<button type="button" class="sl-choice${val === c ? ' selected' : ''}" data-key="${esc(f.key)}" data-value="${esc(c)}">${esc(c.replace(/_/g, ' '))}</button>`
-    ).join('');
-    return `<div class="sl-field" data-field="${esc(f.key)}">
-      <label>${esc(f.label)}</label>
-      <div class="sl-choices">${buttons}</div>
-      <div class="sl-save-status" id="status-${esc(f.key)}"></div>
-    </div>`;
-  }
-  if (f.type === 'boolean') {
-    return `<div class="sl-field" data-field="${esc(f.key)}">
-      <label>${esc(f.label)}</label>
-      <div class="sl-choices">
-        <button type="button" class="sl-choice${val === true || val === 'yes' ? ' selected' : ''}" data-key="${esc(f.key)}" data-value="yes">Yes</button>
-        <button type="button" class="sl-choice${val === false || val === 'no' ? ' selected' : ''}" data-key="${esc(f.key)}" data-value="no">No</button>
-      </div>
-      <div class="sl-save-status" id="status-${esc(f.key)}"></div>
-    </div>`;
-  }
-  const inputType = f.type === 'currency' ? 'number' : f.type === 'tel' ? 'tel' : f.type === 'email' ? 'email' : f.type === 'date' ? 'date' : 'text';
-  const step = f.type === 'currency' ? ' step="1" min="0"' : '';
-  return `<div class="sl-field" data-field="${esc(f.key)}">
-    <label for="${id}">${esc(f.label)}</label>
-    <input type="${inputType}" id="${id}" name="${esc(f.key)}" value="${esc(val)}"${step} data-key="${esc(f.key)}">
-    <div class="sl-save-status" id="status-${esc(f.key)}"></div>
+  const val = currentValue?.value;
+  const display = val === 0 ? '0' : val === false ? 'No' : val === true ? 'Yes'
+    : val ? esc(String(val).replace(/_/g, ' ')) : '<span style="color:#8c6d00">To confirm</span>';
+  return `<div class="sl-field">
+    <label>${esc(f.label)}</label>
+    <div class="sl-field-value">${display}</div>
   </div>`;
 }
 
@@ -142,81 +117,18 @@ function questionnaireHTML(caseData, gaps, token) {
 </div>`);
   }
 
+  // Read-only view — no autosave script, no form inputs.
+  // Autosave UI will be enabled after staging acceptance.
   return page('Posfin SmartLink', `
 <div class="sl-batch">
   <p class="eyebrow">YOUR CASE</p>
-  <h1>A few more questions</h1>
-  <p>${gaps.progress.answered} of ${gaps.progress.total} answered${gaps.remaining > 0 ? ` &middot; ${gaps.remaining} more after this page` : ''}</p>
+  <h1>Your outstanding questions</h1>
+  <p>${gaps.progress.answered} of ${gaps.progress.total} answered${gaps.remaining > 0 ? ` &middot; ${gaps.remaining} more to discuss` : ''}</p>
   <div class="sl-progress"><div class="sl-progress-bar" style="width:${gaps.progress.pct}%"></div></div>
   <div class="sl-sections">${sectionPills}</div>
-  <form id="sl-form">
-    ${fields}
-  </form>
-</div>
-<script>
-(function(){
-  var version = ${caseData.version};
-  var apiUrl = '/api/case/' + ${JSON.stringify(token)};
-  var pending = {};
-  var saveTimeout = null;
-
-  function save(key, value) {
-    var statusEl = document.getElementById('status-' + key);
-    if (statusEl) statusEl.textContent = 'Saving...';
-    pending[key] = value;
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(flush, 400);
-  }
-
-  function flush() {
-    var fields = Object.assign({}, pending);
-    pending = {};
-    if (!Object.keys(fields).length) return;
-    var idemKey = 'sl-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
-    fetch(apiUrl, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ expected_version: version, idempotency_key: idemKey, fields: fields })
-    }).then(function(r) { return r.json(); }).then(function(data) {
-      if (data.version) version = data.version;
-      for (var k in fields) {
-        var s = document.getElementById('status-' + k);
-        if (s) { s.textContent = 'Saved'; s.className = 'sl-save-status sl-saved'; }
-      }
-      if (data.error === 'version_conflict' && data.currentVersion) {
-        version = data.currentVersion;
-      }
-      if (data.remaining === 0 && data.batch && data.batch.length === 0) {
-        location.reload();
-      }
-    }).catch(function() {
-      for (var k in fields) {
-        var s = document.getElementById('status-' + k);
-        if (s) { s.textContent = 'Save failed — try again'; s.className = 'sl-save-status'; }
-      }
-    });
-  }
-
-  document.addEventListener('change', function(e) {
-    var key = e.target.getAttribute('data-key');
-    if (key) save(key, e.target.value);
-  });
-  document.addEventListener('blur', function(e) {
-    var key = e.target.getAttribute('data-key');
-    if (key && e.target.value) save(key, e.target.value);
-  }, true);
-  document.addEventListener('click', function(e) {
-    var btn = e.target.closest('.sl-choice');
-    if (!btn) return;
-    var key = btn.getAttribute('data-key');
-    var value = btn.getAttribute('data-value');
-    btn.parentNode.querySelectorAll('.sl-choice').forEach(function(b) { b.classList.remove('selected'); });
-    btn.classList.add('selected');
-    save(key, value);
-  });
-})();
-</script>`);
+  ${fields}
+  <p style="margin-top:24px;color:#718096">Your broker will contact you to complete these questions. You do not need to do anything now.</p>
+</div>`);
 }
 
 export default async function handler(req, res) {
