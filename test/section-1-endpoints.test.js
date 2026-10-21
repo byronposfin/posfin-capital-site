@@ -26,6 +26,7 @@ import { signSession } from '../lib/postcode-gate.js';
 import borrowerHandler from '../api/case/[token].js';
 import staffTokenHandler from '../api/case/[id]/token.js';
 import mcpHandler from '../api/case-completion.js';
+import pageHandler from '../api/s/[token].js';
 
 // ── Mock Supabase ────────────────────────────────────────────────────
 
@@ -117,9 +118,10 @@ function mockReq({ method = 'GET', query = {}, body = {}, headers = {} } = {}) {
 
 function mockRes() {
   const res = {
-    _status: null, _json: null, _headers: {}, _ended: false,
+    _status: null, _json: null, _html: null, _headers: {}, _ended: false,
     status(code) { res._status = code; return res; },
     json(data) { res._json = data; return res; },
+    send(data) { res._html = data; return res; },
     end() { res._ended = true; return res; },
     setHeader(k, v) { res._headers[k] = v; return res; },
   };
@@ -563,5 +565,108 @@ describe('MCP API — GET/PATCH /api/case-completion', () => {
 
     const c = client._tables.case_completion.find(r => r.case_id === 'M6');
     assert.equal(c.fields.exit_strategy.value, 'Claude A', 'First write must persist');
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// BORROWER PAGE — /s/:token
+// ══════════════════════════════════════════════════════════════════════
+
+describe('Borrower page — GET /s/:token', () => {
+  let client;
+  beforeEach(() => { client = createMockSupabase(); setClient(client); process.env.SMARTLINK_TOKEN_SECRET = 'test-secret'; });
+
+  it('shows postcode gate when no session — HTML, no personal data', async () => {
+    seedCase(client, 'PG1', {
+      postcode: { value: 'SW1A1AA', source: 'intake' },
+      first_name: { value: 'Secret', source: 'intake' },
+    });
+    const { raw } = seedToken(client, 'PG1');
+    const res = mockRes();
+    await pageHandler(mockReq({ query: { token: raw } }), res);
+    assert.equal(res._status, 403);
+    assert.ok(res._html.includes('Verify your identity'), 'Must show gate');
+    assert.ok(res._html.includes('postcode'), 'Must ask for postcode');
+    assert.ok(!res._html.includes('Secret'), 'Must not leak personal data');
+  });
+
+  it('shows questionnaire after correct postcode — HTML with batch fields', async () => {
+    seedCase(client, 'PG2', {
+      postcode: { value: 'SW1A1AA', source: 'intake' },
+      exit_strategy: { value: 'Sale', source: 'borrower' },
+    });
+    const { raw } = seedToken(client, 'PG2');
+    const res = mockRes();
+    await pageHandler(mockReq({ query: { token: raw, postcode: 'sw1a 1aa' } }), res);
+    assert.equal(res._status, 200);
+    assert.ok(res._html.includes('sl-batch'), 'Must show questionnaire');
+    assert.ok(res._html.includes('sl-progress'), 'Must show progress bar');
+    assert.ok(res._html.includes('/api/case/'), 'Must include API URL for autosave');
+    assert.ok(res._headers['Set-Cookie']?.includes('smartlink_session='));
+  });
+
+  it('shows questionnaire with valid session cookie', async () => {
+    seedCase(client, 'PG3', { postcode: { value: 'EC2R8AH', source: 'intake' } });
+    const { raw } = seedToken(client, 'PG3');
+    const session = signSession('PG3');
+    const res = mockRes();
+    await pageHandler(mockReq({ query: { token: raw }, headers: { cookie: `smartlink_session=${session}` } }), res);
+    assert.equal(res._status, 200);
+    assert.ok(res._html.includes('sl-batch'));
+  });
+
+  it('shows error for incorrect postcode', async () => {
+    seedCase(client, 'PG4', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    const { raw } = seedToken(client, 'PG4');
+    const res = mockRes();
+    await pageHandler(mockReq({ query: { token: raw, postcode: 'EC2R8AH' } }), res);
+    assert.equal(res._status, 403);
+    assert.ok(res._html.includes('Incorrect postcode'));
+  });
+
+  it('404 for unknown token', async () => {
+    const res = mockRes();
+    await pageHandler(mockReq({ query: { token: 'unknown-token-value-here' } }), res);
+    assert.equal(res._status, 404);
+    assert.ok(res._html.includes('not valid'));
+  });
+
+  it('410 for revoked token', async () => {
+    seedCase(client, 'PG5');
+    const { raw } = seedToken(client, 'PG5', { revoked: true });
+    const res = mockRes();
+    await pageHandler(mockReq({ query: { token: raw } }), res);
+    assert.equal(res._status, 410);
+    assert.ok(res._html.includes('revoked'));
+  });
+
+  it('cross-case session cookie does not bypass gate', async () => {
+    seedCase(client, 'PGA', { postcode: { value: 'SW1A1AA', source: 'intake' } });
+    seedCase(client, 'PGB', { postcode: { value: 'EC2R8AH', source: 'intake' } });
+    const tokenB = seedToken(client, 'PGB');
+    const sessionA = signSession('PGA');
+    const res = mockRes();
+    await pageHandler(mockReq({ query: { token: tokenB.raw }, headers: { cookie: `smartlink_session=${sessionA}` } }), res);
+    assert.equal(res._status, 403, 'Cross-case session must show gate');
+    assert.ok(res._html.includes('Verify your identity'));
+  });
+
+  it('HTML contains no personal data in meta tags', async () => {
+    seedCase(client, 'PG6', {
+      postcode: { value: 'SW1A1AA', source: 'intake' },
+      first_name: { value: 'Alice', source: 'intake' },
+      email: { value: 'alice@secret.com', source: 'intake' },
+    });
+    const { raw } = seedToken(client, 'PG6');
+    const session = signSession('PG6');
+    const res = mockRes();
+    await pageHandler(mockReq({ query: { token: raw }, headers: { cookie: `smartlink_session=${session}` } }), res);
+    assert.equal(res._status, 200);
+    // Check meta tags don't leak data
+    const metaSection = res._html.split('</head>')[0];
+    assert.ok(!metaSection.includes('Alice'), 'Name must not appear in head');
+    assert.ok(!metaSection.includes('alice@secret.com'), 'Email must not appear in head');
+    // noindex is set
+    assert.ok(metaSection.includes('noindex'));
   });
 });
