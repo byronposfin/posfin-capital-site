@@ -531,12 +531,12 @@
       selectHtml('Is your mortgage up to date and still running?', 'firstChargeStatus', [['','Please select'],['ongoing','Up to date and still running'],['term_ending','Term ended or ending within 6 months'],['in_arrears','In arrears'],['not_sure','Not sure']], '')+
       selectHtml('Is there a second charge?', 'secondChargePresent', [['','Please select'],['yes','Yes'],['no','No']], '')+
       selectHtml('Are there any restrictions on the title?', 'restrictionsPresent', [['','Please select'],['yes','Yes'],['no','No'],['not_sure','Not sure']], '')+
-      (V.arrears === 'Yes' ? '<p style="background:#dff6f3;padding:16px;border-left:4px solid #008f8a">You told us there are arrears — enter the amount here, and confirm whether the mortgage balance includes them.</p>' : '')+
+      (V.arrears === 'Yes' ? '<p style="background:#dff6f3;padding:16px;border-left:4px solid #008f8a">You told us there are 1st mortgage arrears — enter the amount here and confirm whether your 1st mortgage balance includes them.</p>' : '')+
       greenSection('Existing borrowing',
-        carriedValueHtml('First charge lender', V.firstChargeLender, 'firstChargeLender', fieldHtml('First charge lender', '', 'firstChargeLender'))+
-        fieldHtml('First charge balance', V.firstChargeBalance ? '£' + Number(V.firstChargeBalance).toLocaleString('en-GB') : '', 'firstChargeBalance')+
-        fieldHtml('Approximate arrears amount (£)', V.arrearsAmount ? '£' + Number(V.arrearsAmount).toLocaleString('en-GB') : '', 'firstChargeArrearsAmount')+
-        selectHtml('Does the balance above include the arrears, or is it the clean balance?', 'firstChargeBalanceType', [['','Please select'],['clean_balance','Clean balance only — arrears separate'],['inclusive_balance','Balance includes arrears'],['unknown','Not sure']], '')+
+        carriedValueHtml('1st mortgage lender', V.firstChargeLender, 'firstChargeLender', fieldHtml('1st mortgage lender', '', 'firstChargeLender'))+
+        fieldHtml('1st mortgage balance (£)', V.firstChargeBalance ? '£' + Number(V.firstChargeBalance).toLocaleString('en-GB') : '', 'firstChargeBalance')+
+        fieldHtml('1st mortgage arrears amount (£)', V.arrearsAmount ? '£' + Number(V.arrearsAmount).toLocaleString('en-GB') : '', 'firstChargeArrearsAmount')+
+        selectHtml('Does your 1st mortgage balance include your 1st mortgage arrears?', 'firstChargeBalanceType', [['','Please select'],['inclusive_balance','Balance includes mortgage arrears'],['clean_balance','Clean balance — arrears are on top'],['unknown','Not sure']], '')+
         carriedValueHtml('Second charge / additional charge provider', V.secondChargeProvider, 'secondChargeProvider', fieldHtml('Second charge / additional charge provider', '', 'secondChargeProvider'))+
         fieldHtml('Second charge / additional charge balance', V.secondChargeBalance ? '£' + Number(V.secondChargeBalance).toLocaleString('en-GB') : '', 'secondChargeBalance'),
         'Capture arrears and second charges separately so mandatory redemptions can be calculated cleanly.')+
