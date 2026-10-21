@@ -119,15 +119,15 @@ function questionnaireHTML(caseData, gaps, token) {
 
   // Read-only view — no autosave script, no form inputs.
   // Autosave UI will be enabled after staging acceptance.
-  return page('Posfin SmartLink', `
+  return page('Posfin SmartLink — Incomplete', `
 <div class="sl-batch">
   <p class="eyebrow">YOUR CASE</p>
-  <h1>Your outstanding questions</h1>
-  <p>${gaps.progress.answered} of ${gaps.progress.total} answered${gaps.remaining > 0 ? ` &middot; ${gaps.remaining} more to discuss` : ''}</p>
+  <h1>Incomplete borrower journey</h1>
+  <p>This case has outstanding questions that need to be completed before it can progress. ${gaps.progress.answered} of ${gaps.progress.total} answered${gaps.remaining > 0 ? ` &middot; ${gaps.remaining} remaining` : ''}.</p>
   <div class="sl-progress"><div class="sl-progress-bar" style="width:${gaps.progress.pct}%"></div></div>
   <div class="sl-sections">${sectionPills}</div>
   ${fields}
-  <p style="margin-top:24px;color:#718096">Your broker will contact you to complete these questions. You do not need to do anything now.</p>
+  <p style="margin-top:24px;color:#718096">This is a read-only view. Online completion is not yet available. Your broker will contact you to work through these questions.</p>
 </div>`);
 }
 

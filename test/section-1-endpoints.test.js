@@ -590,7 +590,7 @@ describe('Borrower page — GET /s/:token', () => {
     assert.ok(!res._html.includes('Secret'), 'Must not leak personal data');
   });
 
-  it('shows read-only view after correct postcode — no autosave, no inputs', async () => {
+  it('shows read-only view labelled "Incomplete borrower journey" — no autosave, no inputs', async () => {
     seedCase(client, 'PG2', {
       postcode: { value: 'SW1A1AA', source: 'intake' },
       exit_strategy: { value: 'Sale', source: 'borrower' },
@@ -599,12 +599,12 @@ describe('Borrower page — GET /s/:token', () => {
     const res = mockRes();
     await pageHandler(mockReq({ query: { token: raw, postcode: 'sw1a 1aa' } }), res);
     assert.equal(res._status, 200);
-    assert.ok(res._html.includes('sl-batch'), 'Must show field list');
+    assert.ok(res._html.includes('Incomplete borrower journey'), 'Must label as incomplete');
+    assert.ok(res._html.includes('read-only view'), 'Must state read-only');
     assert.ok(res._html.includes('sl-progress'), 'Must show progress bar');
     assert.ok(!res._html.includes('<script>'), 'Must not include autosave script');
     assert.ok(!res._html.includes('<input'), 'Must not include form inputs');
     assert.ok(!res._html.includes('fetch('), 'Must not include fetch calls');
-    assert.ok(res._html.includes('broker will contact you'), 'Must tell borrower to wait');
     assert.ok(res._headers['Set-Cookie']?.includes('smartlink_session='));
   });
 
