@@ -113,7 +113,34 @@ create index if not exists verification_case_idx
 comment on table case_verification_codes is '6-digit verification codes. Hash only stored. Expires after 10 min.';
 
 -- ============================================================
--- 7. RLS — service-role only, deny all anon access
+-- 7. case_notifications — durable notification outbox
+-- ============================================================
+create table if not exists case_notifications (
+  id                bigint generated always as identity primary key,
+  case_id           text not null references case_completion(case_id),
+  channel           text not null,                             -- 'telegram'
+  recipient         text not null,                             -- chat_id or email
+  message           text not null,
+  status            text not null default 'pending',           -- pending, delivered, failed
+  attempts          integer not null default 0,
+  max_attempts      integer not null default 3,
+  last_attempt_at   timestamptz,
+  delivered_at      timestamptz,
+  last_error        text,
+  created_at        timestamptz not null default now()
+);
+
+create index if not exists notifications_pending_idx
+  on case_notifications (status, created_at)
+  where status in ('pending', 'failed');
+
+create index if not exists notifications_case_idx
+  on case_notifications (case_id);
+
+comment on table case_notifications is 'Durable notification outbox. Worker/cron processes pending and retries failed entries.';
+
+-- ============================================================
+-- 8. RLS — service-role only, deny all anon access
 -- ============================================================
 alter table case_completion         enable row level security;
 alter table case_completion_audit   enable row level security;
@@ -121,6 +148,7 @@ alter table case_tokens             enable row level security;
 alter table case_exports            enable row level security;
 alter table case_gate_attempts      enable row level security;
 alter table case_verification_codes enable row level security;
+alter table case_notifications      enable row level security;
 
 -- No policies for anon role → all access denied by default.
 -- Service-role key bypasses RLS. All access is server-side only.

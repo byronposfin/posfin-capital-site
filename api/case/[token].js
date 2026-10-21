@@ -14,7 +14,7 @@ import { hashToken, resolveToken, getCase, patchCase } from '../../lib/supabase.
 import { verifyPostcode, verifySession, signSession, normalisePostcode } from '../../lib/postcode-gate.js';
 import { issueCode, verifyCode } from '../../lib/verification-code.js';
 import { analyseGaps, borrowerAllowlist } from '../../lib/gap-engine.js';
-import { queueAlert, formatCaseAlert } from '../../lib/notify.js';
+import { enqueueAlert, formatCaseAlert } from '../../lib/notify.js';
 
 function parseCookies(header) {
   const cookies = {};
@@ -198,16 +198,12 @@ export default async function handler(req, res) {
       });
     }
 
-    // Queue broker notification
-    const alert = queueAlert({
-      caseId,
-      type: 'borrower_update',
-      message: formatCaseAlert(caseId, 'Borrower submitted answers', {
-        fieldsUpdated: Object.keys(filteredFields).join(', '),
-        version: result.version,
-      }),
+    // Persist broker notification to durable outbox
+    const alertMsg = formatCaseAlert(caseId, 'Borrower submitted answers', {
+      fieldsUpdated: Object.keys(filteredFields).join(', '),
+      version: result.version,
     });
-    // Note: delivery happens via outbox flush, not inline
+    await enqueueAlert(client, { caseId, message: alertMsg });
 
     // Return updated view
     const updated = await getCase(client, caseId);
@@ -215,7 +211,6 @@ export default async function handler(req, res) {
       ok: true,
       version: result.version,
       rejected: rejected.length ? rejected : undefined,
-      alert: alert.queuedAt ? true : undefined,
       ...borrowerView(updated, product),
     });
 

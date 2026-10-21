@@ -26,6 +26,7 @@ function createMockSupabase() {
     case_exports: [],
     case_gate_attempts: [],
     case_verification_codes: [],
+    case_notifications: [],
   };
 
   function makeQuery(tableName) {
@@ -41,6 +42,7 @@ function createMockSupabase() {
       select(cols) { selectCols = cols; return chain; },
       eq(col, val) { filters.push(r => r[col] === val); return chain; },
       is(col, val) { filters.push(r => r[col] === val); return chain; },
+      in(col, vals) { filters.push(r => vals.includes(r[col])); return chain; },
       gte(col, val) { filters.push(r => r[col] >= val); return chain; },
       order(col, opts) { orderCol = col; orderDir = opts?.ascending === false ? 'desc' : 'asc'; return chain; },
       limit(n) { limitN = n; return chain; },
@@ -64,11 +66,17 @@ function createMockSupabase() {
     return {
       insert(rows) {
         const arr = Array.isArray(rows) ? rows : [rows];
+        const inserted = [];
         for (const row of arr) {
           const id = tables[tableName].length + 1;
-          tables[tableName].push({ id, ...row });
+          const full = { id, ...row };
+          tables[tableName].push(full);
+          inserted.push(full);
         }
-        return { data: null, error: null, then(r) { r({ data: null, error: null }); } };
+        const result = { data: null, error: null };
+        result.select = () => ({ then(r) { r({ data: inserted, error: null }); } });
+        result.then = (r) => { r({ data: null, error: null }); };
+        return result;
       },
     };
   }
@@ -76,14 +84,17 @@ function createMockSupabase() {
   function makeUpdate(tableName) {
     let updateData = null;
     let filters = [];
+    let doSelect = false;
     const chain = {
       update(data) { updateData = data; return chain; },
       eq(col, val) { filters.push(r => r[col] === val); return chain; },
+      select() { doSelect = true; return chain; },
       then(resolve) {
+        const matched = [];
         for (const row of tables[tableName]) {
-          if (filters.every(f => f(row))) Object.assign(row, updateData);
+          if (filters.every(f => f(row))) { Object.assign(row, updateData); matched.push(row); }
         }
-        resolve({ data: null, error: null });
+        resolve({ data: doSelect ? matched : null, error: null });
       },
     };
     return chain;
@@ -110,7 +121,7 @@ import { generateToken, hashToken, getCase, patchCase, resolveToken, setClient }
 import { normalisePostcode, verifyPostcode, isLockedOut, signSession, verifySession } from '../lib/postcode-gate.js';
 import { generateCode, hashCode, issueCode, verifyCode } from '../lib/verification-code.js';
 import { analyseGaps, borrowerAllowlist } from '../lib/gap-engine.js';
-import { queueAlert, formatCaseAlert } from '../lib/notify.js';
+import { enqueueAlert, processOutbox, formatCaseAlert } from '../lib/notify.js';
 
 // ── Tests ────────────────────────────────────────────────────────────
 
@@ -255,6 +266,47 @@ describe('Section 1 — case_completion and SmartLink', () => {
       const updated = await getCase(client, 'CASE-CLAUDE');
       assert.equal(updated.fields.broker_notes.value, 'Claude assessment complete');
       assert.equal(updated.fields.broker_notes.source, 'claude');
+    });
+
+    it('CAS race: two writers read same version, exactly one wins, loser gets 409', async () => {
+      const client = createMockSupabase();
+      client._tables.case_completion.push({
+        case_id: 'CASE-RACE', version: 1, fields: {}, sections: {}, broker_only: {},
+        updated_at: new Date().toISOString(), updated_by: 'system',
+      });
+
+      // Writer A wins (version 1 still matches)
+      const resultA = await patchCase(client, 'CASE-RACE', {
+        expectedVersion: 1,
+        fields: { exit_strategy: 'Writer A' },
+        source: 'borrower',
+        actor: 'borrower',
+        idempotencyKey: 'race-a',
+      });
+      assert.equal(resultA.ok, true);
+      assert.equal(resultA.version, 2);
+
+      // Writer B tries with the same stale expectedVersion=1 — version is now 2
+      const resultB = await patchCase(client, 'CASE-RACE', {
+        expectedVersion: 1,
+        fields: { exit_strategy: 'Writer B' },
+        source: 'borrower',
+        actor: 'borrower',
+        idempotencyKey: 'race-b',
+      });
+      assert.equal(resultB.ok, false, 'Loser must get conflict, not false success');
+      assert.equal(resultB.conflict, true);
+      assert.equal(resultB.currentVersion, 2);
+
+      // Only Writer A's value persists
+      const final = await getCase(client, 'CASE-RACE');
+      assert.equal(final.fields.exit_strategy.value, 'Writer A');
+      assert.equal(final.version, 2);
+
+      // Only one audit row (Writer A); no phantom audit for the lost race
+      const audits = client._tables.case_completion_audit.filter(a => a.case_id === 'CASE-RACE');
+      assert.equal(audits.length, 1, 'Loser must not create an audit row');
+      assert.equal(audits[0].idempotency_key, 'race-a');
     });
   });
 
@@ -427,19 +479,67 @@ describe('Section 1 — case_completion and SmartLink', () => {
     });
   });
 
-  // ── Notifications ──────────────────────────────────────────────────
+  // ── Notifications (durable outbox) ──────────────────────────────────
   describe('notifications', () => {
-    it('queueAlert creates outbox entry for Byron and Chris', () => {
-      const entry = queueAlert({
+    it('enqueueAlert persists rows to case_notifications table', async () => {
+      const client = createMockSupabase();
+      client._tables.case_completion.push({ case_id: 'CASE-NOTIFY', version: 1 });
+      const result = await enqueueAlert(client, {
         caseId: 'CASE-NOTIFY',
-        type: 'borrower_update',
         message: 'Test alert',
       });
-      assert.equal(entry.recipients.length, 2);
-      assert.equal(entry.recipients[0].chatId, '1750758657'); // Byron
-      assert.equal(entry.recipients[1].chatId, '8634157536'); // Chris
-      assert.ok(entry.queuedAt);
-      assert.equal(entry.deliveredAt, null);
+      assert.equal(result.length, 2, 'One row per recipient (Byron + Chris)');
+      const rows = client._tables.case_notifications;
+      assert.equal(rows.length, 2);
+      assert.equal(rows[0].case_id, 'CASE-NOTIFY');
+      assert.equal(rows[0].status, 'pending');
+      assert.equal(rows[0].recipient, '1750758657'); // Byron
+      assert.equal(rows[1].recipient, '8634157536'); // Chris
+    });
+
+    it('processOutbox marks as failed when TELEGRAM_BOT_TOKEN is missing, retries on next run', async () => {
+      const client = createMockSupabase();
+      delete process.env.TELEGRAM_BOT_TOKEN;
+      // Pre-populate a pending notification
+      client._tables.case_notifications.push({
+        id: 1, case_id: 'CASE-RETRY', channel: 'telegram', recipient: '1750758657',
+        message: 'Test', status: 'pending', attempts: 0, max_attempts: 3,
+        last_attempt_at: null, delivered_at: null, last_error: null,
+        created_at: new Date().toISOString(),
+      });
+
+      // First attempt — fails (no token)
+      const run1 = await processOutbox(client);
+      assert.equal(run1.processed, 1);
+      const row = client._tables.case_notifications[0];
+      assert.equal(row.status, 'failed');
+      assert.equal(row.attempts, 1);
+      assert.ok(row.last_error.includes('TELEGRAM_BOT_TOKEN'));
+
+      // Second attempt — still fails but retries (attempts < max)
+      const run2 = await processOutbox(client);
+      assert.equal(run2.processed, 1);
+      assert.equal(client._tables.case_notifications[0].attempts, 2);
+      assert.equal(client._tables.case_notifications[0].status, 'failed');
+
+      // Third attempt — hits max, next run skips it
+      const run3 = await processOutbox(client);
+      assert.equal(client._tables.case_notifications[0].attempts, 3);
+
+      const run4 = await processOutbox(client);
+      assert.equal(run4.results[0].status, 'exhausted', 'Must not retry past max_attempts');
+    });
+
+    it('notification is not silently dropped: persists across request boundary', async () => {
+      const client = createMockSupabase();
+      client._tables.case_completion.push({ case_id: 'CASE-PERSIST', version: 1 });
+      await enqueueAlert(client, { caseId: 'CASE-PERSIST', message: 'Persisted alert' });
+
+      // Simulate a separate request/worker reading the outbox
+      const pending = client._tables.case_notifications.filter(r => r.status === 'pending');
+      assert.equal(pending.length, 2, 'Both recipients must be persisted');
+      assert.equal(pending[0].message, 'Persisted alert');
+      assert.equal(pending[1].message, 'Persisted alert');
     });
 
     it('formatCaseAlert includes case details', () => {
