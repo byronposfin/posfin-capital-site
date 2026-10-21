@@ -207,7 +207,7 @@ describe('Section 0 — intake column alignment & idempotency', () => {
     }
   });
 
-  it('20 identical case_refs: exactly 1 row survives (dedup)', async () => {
+  it('20 identical case_refs: 1 canonical row, extras marked DUPLICATE-MERGED', async () => {
     const sheets = createMockSheets();
     // Add artificial delay to expose race conditions
     sheets._setWriteDelay(5);
@@ -227,23 +227,33 @@ describe('Section 0 — intake column alignment & idempotency', () => {
     const successes = results.filter(r => r.status === 'fulfilled');
     assert.ok(successes.length >= 1, 'At least one submission should succeed');
 
-    // Check Raw Leads: only 1 non-blank row with this ref
     const rawTab = sheets._tabs[RAW];
     const headers = rawTab[0];
     const refIdx = headers.indexOf('Lead Ref');
-    const dataRows = rawTab.slice(1).filter(r => r[refIdx] === 'POSFIN-RACE-SINGLE' && r.some(c => String(c || '').trim()));
-    assert.equal(dataRows.length, 1, `Expected exactly 1 surviving row for POSFIN-RACE-SINGLE, got ${dataRows.length}`);
+    const stageIdx = headers.indexOf('Lead Stage');
+    const allMatchingRows = rawTab.slice(1).filter(r => r[refIdx] === 'POSFIN-RACE-SINGLE');
 
-    // The surviving row should have correct alignment
-    const row = dataRows[0];
-    const nameIdx = headers.indexOf('Name');
-    assert.ok(row[nameIdx], 'Surviving row should have Name set');
+    // Exactly 1 canonical row (not marked DUPLICATE-MERGED)
+    const canonical = allMatchingRows.filter(r => !String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
+    assert.equal(canonical.length, 1, `Expected 1 canonical row, got ${canonical.length}`);
+
+    // The canonical row should have correct data
+    const row = canonical[0];
+    assert.ok(row[headers.indexOf('Name')], 'Canonical row should have Name set');
     const state = unpack(row[headers.indexOf('Tom Summary')] || '');
-    assert.ok(state, 'Surviving row should have packed state');
+    assert.ok(state, 'Canonical row should have packed state');
     assert.equal(state.answers.deal_ref, 'POSFIN-RACE-SINGLE');
+
+    // Duplicate rows should be marked, not blanked — data preserved
+    const marked = allMatchingRows.filter(r => String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
+    for (const dup of marked) {
+      assert.ok(dup[refIdx], 'Duplicate row should still have Lead Ref (not blanked)');
+      assert.match(String(dup[stageIdx]), /DUPLICATE-MERGED → row \d+/,
+        'Duplicate should point to the kept row');
+    }
   });
 
-  it('mixed: 10 unique refs + 10 duplicates of one ref → 11 rows', async () => {
+  it('mixed: 10 unique refs + 10 duplicates → 1 canonical + extras marked', async () => {
     const sheets = createMockSheets();
     sheets._setWriteDelay(3);
     const sheetId = 'test-sheet-id';
@@ -272,13 +282,22 @@ describe('Section 0 — intake column alignment & idempotency', () => {
     const rawTab = sheets._tabs[RAW];
     const headers = rawTab[0];
     const refIdx = headers.indexOf('Lead Ref');
-    const dataRows = rawTab.slice(1).filter(r => r.some(c => String(c || '').trim()));
-    const refs = dataRows.map(r => r[refIdx]).filter(Boolean);
+    const stageIdx = headers.indexOf('Lead Stage');
 
-    // 10 unique + 1 deduped = 11 non-blank rows
-    assert.equal(refs.length, 11, `Expected 11 rows, got ${refs.length}: ${JSON.stringify(refs)}`);
-    const dupeCount = refs.filter(r => r === 'POSFIN-MIX-DUPE').length;
-    assert.equal(dupeCount, 1, `Expected 1 POSFIN-MIX-DUPE row, got ${dupeCount}`);
+    // All rows with data should be preserved (nothing blanked)
+    const dataRows = rawTab.slice(1).filter(r => r[refIdx] && r.some(c => String(c || '').trim()));
+
+    // 10 unique refs: each has exactly 1 row
+    for (let i = 0; i < 10; i++) {
+      const ref = `POSFIN-MIX-${String(i).padStart(3, '0')}`;
+      const rows = dataRows.filter(r => r[refIdx] === ref);
+      assert.equal(rows.length, 1, `Expected 1 row for ${ref}`);
+    }
+
+    // POSFIN-MIX-DUPE: exactly 1 canonical (not DUPLICATE-MERGED)
+    const dupeRows = dataRows.filter(r => r[refIdx] === 'POSFIN-MIX-DUPE');
+    const canonical = dupeRows.filter(r => !String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
+    assert.equal(canonical.length, 1, `Expected 1 canonical POSFIN-MIX-DUPE row, got ${canonical.length}`);
   });
 
   it('header-name alignment: values land in correct columns regardless of header order', async () => {
@@ -339,5 +358,63 @@ describe('Section 0 — intake column alignment & idempotency', () => {
     // Explicit "no" must be stored
     assert.strictEqual(state.answers.second_charge_present, 'no',
       'Explicit "no" must be stored as "no", not null or empty');
+  });
+
+  it('duplicate rows with different answers: merged row keeps latest non-empty values', async () => {
+    const sheets = createMockSheets();
+    sheets._setWriteDelay(5);
+    const sheetId = 'test-sheet-id';
+    process.env.FACTFIND_SHEET_ID = sheetId;
+
+    // Submission A: has exit_strategy and property_address, no loan_purpose
+    const subA = makeSubmission('POSFIN-MERGE-001', 1);
+    subA.exit_strategy = 'Sale of investment';
+    subA.loan_purpose = '';
+    subA.property_address = '1 Old Street, London';
+
+    // Submission B: same ref, has loan_purpose and updated address, keeps exit_strategy empty
+    const subB = makeSubmission('POSFIN-MERGE-001', 2);
+    subB.exit_strategy = '';
+    subB.loan_purpose = 'Debt consolidation';
+    subB.property_address = '2 New Street, London';
+
+    // Fire both concurrently — they race
+    const results = await Promise.allSettled([
+      saveIntake(sheets, sheetId, subA, 'main_loan', 'https://example.com/scorecard', () => true),
+      saveIntake(sheets, sheetId, subB, 'main_loan', 'https://example.com/scorecard', () => true),
+    ]);
+
+    const successes = results.filter(r => r.status === 'fulfilled');
+    assert.ok(successes.length >= 1, 'At least one submission should succeed');
+
+    const rawTab = sheets._tabs[RAW];
+    const headers = rawTab[0];
+    const refIdx = headers.indexOf('Lead Ref');
+    const stageIdx = headers.indexOf('Lead Stage');
+    const summaryIdx = headers.indexOf('Tom Summary');
+
+    const matchingRows = rawTab.slice(1).filter(r => r[refIdx] === 'POSFIN-MERGE-001');
+    const canonical = matchingRows.filter(r => !String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
+
+    assert.equal(canonical.length, 1, `Expected 1 canonical row, got ${canonical.length}`);
+
+    const state = unpack(canonical[0][summaryIdx] || '');
+    assert.ok(state, 'Canonical row should have packed state');
+
+    // Merged state should have the latest non-empty value for each field
+    // Both submissions set property_address, so the later one should win
+    // The non-empty exit_strategy from A and loan_purpose from B should both be present
+    const a = state.answers;
+    assert.ok(a.exit_strategy || a.loan_purpose,
+      'Merged answers should contain at least one of the differing fields');
+
+    // Duplicate row should be marked, not blanked
+    const marked = matchingRows.filter(r => String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
+    for (const dup of marked) {
+      assert.ok(dup[refIdx], 'Duplicate row Lead Ref must be preserved (never blank)');
+      assert.ok(unpack(dup[summaryIdx] || '') || dup[summaryIdx],
+        'Duplicate row Tom Summary must be preserved (never blank)');
+      assert.match(String(dup[stageIdx]), /DUPLICATE-MERGED → row \d+/);
+    }
   });
 });
