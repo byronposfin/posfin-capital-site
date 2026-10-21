@@ -1,4 +1,4 @@
-import {saveIntake, sheetId, readTable, RAW} from '../lib/clean-intake.js';
+import {saveIntake, sheetId} from '../lib/clean-intake.js';
 import {validToken, tokenFor} from '../lib/scorecard-access.js';
 /**
  * Posfin Capital — Lead Capture API
@@ -182,58 +182,8 @@ function sourceParam(d, key) {
   } catch { return ''; }
 }
 
-function rawLeadMatchTokens(d) {
-  return {
-    ref: String(d.raw_lead_ref || d.lead_ref || d.lead_token || d.k || d.token || sourceParam(d, 'k') || sourceParam(d, 'raw_lead_ref') || '').trim().toLowerCase(),
-    phone: normalisePhone(d.mobile || d.phone || d.telephone),
-    email: String(d.email || '').trim().toLowerCase(),
-    name: `${d.first_name || ''} ${d.last_name || ''}`.trim().toLowerCase(),
-  };
-}
-
-async function markRawLeadAssignedIfMatched(sheets, d, ownerName, dealRef, pipelineRowNumber) {
-  const tokens = rawLeadMatchTokens(d);
-  if (!tokens.ref && !tokens.phone && !tokens.email) return null;
-  const id = sheetId();
-  const table = await readTable(sheets, id, RAW);
-  const h = table.headers;
-  const phoneIdx = h.indexOf('Phone');
-  const emailIdx = h.indexOf('Email');
-  const refIdx = h.indexOf('Lead Ref');
-  const stageIdx = h.indexOf('Lead Stage');
-  const notesIdx = h.indexOf('👣 Lead Touch / Progress');
-  const ownerIdx = h.indexOf('Assigned Owner');
-  // Fallback: if 'Assigned Owner' header doesn't exist, skip that write
-  let match = null;
-  table.rows.some((row, idx) => {
-    const rowNum = idx + 2;
-    const blob = row.map(x => String(x || '').toLowerCase()).join(' | ');
-    const rowPhone = phoneIdx >= 0 ? normalisePhone(row[phoneIdx] || '') : '';
-    const rowEmail = emailIdx >= 0 ? String(row[emailIdx] || '').trim().toLowerCase() : '';
-    const rowLeadRef = refIdx >= 0 ? String(row[refIdx] || '').trim().toLowerCase() : '';
-    const ok = (tokens.ref && (rowLeadRef === tokens.ref || blob.includes(tokens.ref)))
-      || (tokens.email && rowEmail === tokens.email)
-      || (tokens.phone && rowPhone && tokens.phone && rowPhone.includes(tokens.phone));
-    if (ok) { match = { rowNum, row }; return true; }
-    return false;
-  });
-  if (!match) return null;
-  const existingNotes = notesIdx >= 0 ? (match.row[notesIdx] || '') : '';
-  const stamp = new Date().toLocaleString('en-GB', { timeZone: 'Europe/London', hour12: false });
-  const note = `${stamp} — ${ownerName} ownership confirmed from completed online form${dealRef ? ` (${dealRef})` : ''}${pipelineRowNumber ? `; PIPELINE:${pipelineRowNumber}` : ''}. Do not cross-call without checking ${ownerName}.`;
-  const colName = n => { let s = ''; for (n++; n; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
-  const data = [];
-  if (stageIdx >= 0) data.push({ range: `'${RAW}'!${colName(stageIdx)}${match.rowNum}`, values: [[`ASSIGNED — ${ownerName.toUpperCase()}`]] });
-  if (notesIdx >= 0) data.push({ range: `'${RAW}'!${colName(notesIdx)}${match.rowNum}`, values: [[existingNotes ? `${existingNotes}\n${note}` : note]] });
-  if (ownerIdx >= 0) data.push({ range: `'${RAW}'!${colName(ownerIdx)}${match.rowNum}`, values: [[ownerName]] });
-  if (data.length) {
-    await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: id,
-      requestBody: { valueInputOption: 'USER_ENTERED', data },
-    });
-  }
-  return match.rowNum;
-}
+// markRawLeadAssignedIfMatched removed: no caller exists in the intake flow.
+// Raw Leads assignment is handled by saveIntake → clean-intake.js Lead Stage column.
 
 function fmtDateShort(ts) {
   const d = new Date(ts.replace(' ', 'T'));

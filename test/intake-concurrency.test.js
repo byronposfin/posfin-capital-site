@@ -1,29 +1,28 @@
 /**
  * 20-submission concurrency regression test — Section 0
  *
- * Mocks the Google Sheets API with an in-memory store, then fires 20
- * concurrent saveIntake calls and asserts:
- *   1. No duplicate rows for the same case_ref (cross-instance idempotency)
- *   2. No data loss for distinct case_refs
- *   3. Correct header-name-based column alignment on every row
+ * Tests cross-instance idempotency by using independent module imports
+ * (cache-busting query params) that each have their own serialisation queue,
+ * sharing the same in-memory mock sheet. This exercises real overlapping
+ * reads and appends — not serialised same-instance calls.
  *
  * Uses node:test (zero external deps).
  *
  * Run: node --test test/intake-concurrency.test.js
  */
 
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-// ── Bootstrap globals that factfind-contract.js expects ──────────────
-// Import the config files that set up globalThis.PosfinIntakeConfig etc.
+// ── Bootstrap globals ────────────────────────────────────────────────
 await import('../intake-config.js');
 await import('../land-schema.js');
 await import('../land-core.js');
 await import('../factfind-core.js');
 
-// Now import the module under test
-const { saveIntake, readTable, findRaw, unpack, RAW, CLEAN } = await import('../lib/clean-intake.js');
+// Primary module import (for readCase, readTable, unpack, findRaw)
+const primary = await import('../lib/clean-intake.js');
+const { readTable, findRaw, unpack, RAW, CLEAN } = primary;
 
 // ── In-memory Sheets mock ────────────────────────────────────────────
 
@@ -41,83 +40,54 @@ const CLEAN_HEADERS = [
 ];
 
 function createMockSheets() {
-  // In-memory storage: tab name → array of row arrays
   const tabs = {
-    [RAW]: [RAW_HEADERS],
-    [CLEAN]: [CLEAN_HEADERS],
+    [RAW]: [RAW_HEADERS.slice()],
+    [CLEAN]: [CLEAN_HEADERS.slice()],
   };
-
-  // Configurable artificial delay (ms) to simulate network latency and expose races
   let writeDelay = 0;
+  const delay = ms => ms > 0 ? new Promise(r => setTimeout(r, ms)) : Promise.resolve();
 
-  function delay(ms) {
-    return ms > 0 ? new Promise(r => setTimeout(r, ms)) : Promise.resolve();
-  }
-
-  const sheets = {
+  return {
     _tabs: tabs,
     _setWriteDelay(ms) { writeDelay = ms; },
     spreadsheets: {
       values: {
-        async get({ spreadsheetId, range }) {
-          const tabMatch = range.match(/^'([^']+)'/);
-          const tab = tabMatch ? tabMatch[1] : range;
-          const rows = tabs[tab] || [];
-          return { data: { values: rows.map(r => [...r]) } };
+        async get({ range }) {
+          const tab = range.match(/^'([^']+)'/)?.[1] || range;
+          return { data: { values: (tabs[tab] || []).map(r => [...r]) } };
         },
-        async append({ spreadsheetId, range, requestBody }) {
-          const tabMatch = range.match(/^'([^']+)'/);
-          const tab = tabMatch ? tabMatch[1] : range;
+        async append({ range, requestBody }) {
+          const tab = range.match(/^'([^']+)'/)?.[1] || range;
           if (!tabs[tab]) tabs[tab] = [];
           await delay(writeDelay);
           const rowNum = tabs[tab].length + 1;
-          for (const row of requestBody.values) {
-            tabs[tab].push([...row]);
-          }
-          const endRow = tabs[tab].length;
-          return {
-            data: {
-              updates: {
-                updatedRange: `'${tab}'!A${rowNum}:AF${endRow}`,
-              },
-            },
-          };
+          for (const row of requestBody.values) tabs[tab].push([...row]);
+          return { data: { updates: { updatedRange: `'${tab}'!A${rowNum}:AF${tabs[tab].length}` } } };
         },
-        async update({ spreadsheetId, range, requestBody }) {
-          const tabMatch = range.match(/^'([^']+)'/);
-          const tab = tabMatch ? tabMatch[1] : range;
-          const rowMatch = range.match(/!.*?(\d+)/);
-          const rowNum = rowMatch ? Number(rowMatch[1]) : null;
+        async update({ range, requestBody }) {
+          const tab = range.match(/^'([^']+)'/)?.[1] || range;
+          const rowNum = Number(range.match(/!.*?(\d+)/)?.[1]);
           if (!tabs[tab]) tabs[tab] = [];
           await delay(writeDelay);
-          if (rowNum !== null && requestBody.values) {
-            const idx = rowNum - 1; // 0-indexed
+          if (rowNum && requestBody.values) {
+            const idx = rowNum - 1;
             while (tabs[tab].length <= idx) tabs[tab].push([]);
             const newRow = requestBody.values[0];
-            // Merge: update columns that are present in the range
             const headers = tabs[tab][0] || [];
-            tabs[tab][idx] = headers.map((_, ci) =>
-              ci < newRow.length ? newRow[ci] : (tabs[tab][idx]?.[ci] || '')
-            );
+            tabs[tab][idx] = headers.map((_, ci) => ci < newRow.length ? newRow[ci] : (tabs[tab][idx]?.[ci] || ''));
           }
           return { data: {} };
         },
-        async batchUpdate({ spreadsheetId, requestBody }) {
+        async batchUpdate({ requestBody }) {
           await delay(writeDelay);
           for (const d of requestBody.data || []) {
-            const tabMatch = d.range.match(/^'([^']+)'/);
-            const tab = tabMatch ? tabMatch[1] : '';
-            const rowMatch = d.range.match(/(\d+)$/);
-            const colMatch = d.range.match(/!([A-Z]+)/);
-            if (!tab || !rowMatch || !colMatch) continue;
-            const rowNum = Number(rowMatch[1]);
-            const colLetter = colMatch[1];
-            // Convert column letter to index
+            const tab = d.range.match(/^'([^']+)'/)?.[1] || '';
+            const rowNum = Number(d.range.match(/(\d+)$/)?.[1]);
+            const colLetter = d.range.match(/!([A-Z]+)/)?.[1];
+            if (!tab || !rowNum || !colLetter) continue;
             let colIdx = 0;
-            for (let i = 0; i < colLetter.length; i++) {
-              colIdx = colIdx * 26 + (colLetter.charCodeAt(i) - 64);
-            }
-            colIdx--; // 0-indexed
+            for (let i = 0; i < colLetter.length; i++) colIdx = colIdx * 26 + (colLetter.charCodeAt(i) - 64);
+            colIdx--;
             if (!tabs[tab]) tabs[tab] = [];
             while (tabs[tab].length <= rowNum - 1) tabs[tab].push([]);
             const row = tabs[tab][rowNum - 1];
@@ -129,11 +99,9 @@ function createMockSheets() {
       },
     },
   };
-
-  return sheets;
 }
 
-function makeSubmission(dealRef, idx) {
+function makeSubmission(dealRef, idx, overrides = {}) {
   return {
     deal_ref: dealRef,
     first_name: `Test${idx}`,
@@ -150,7 +118,16 @@ function makeSubmission(dealRef, idx) {
     second_charge_balance: 0,
     exit_strategy: 'Refinance',
     loan_purpose: 'Property purchase',
+    ...overrides,
   };
+}
+
+// Get an independent module instance with its own serialisation queue.
+// Each cache-busted import gives a fresh tail=Promise.resolve().
+let instanceCounter = 0;
+async function independentSaveIntake() {
+  const mod = await import(`../lib/clean-intake.js?instance=${++instanceCounter}&t=${Date.now()}`);
+  return mod.saveIntake;
 }
 
 // ── Tests ────────────────────────────────────────────────────────────
@@ -159,262 +136,377 @@ describe('Section 0 — intake column alignment & idempotency', () => {
 
   it('20 distinct case_refs: no data loss, correct column alignment', async () => {
     const sheets = createMockSheets();
-    const sheetId = 'test-sheet-id';
-    process.env.FACTFIND_SHEET_ID = sheetId;
+    const id = 'test-sheet-id';
+    process.env.FACTFIND_SHEET_ID = id;
 
-    const submissions = Array.from({ length: 20 }, (_, i) =>
-      makeSubmission(`POSFIN-TEST-${String(i).padStart(3, '0')}`, i)
-    );
-
-    const results = await Promise.all(
-      submissions.map(sub =>
-        saveIntake(sheets, sheetId, sub, 'main_loan', 'https://example.com/scorecard', () => true)
-      )
-    );
-
-    // All should succeed
-    for (const r of results) {
-      assert.equal(r.ok, true, `Submission failed: ${JSON.stringify(r)}`);
+    // Use independent instances for each submission
+    const tasks = [];
+    for (let i = 0; i < 20; i++) {
+      const save = await independentSaveIntake();
+      tasks.push(save(sheets, id, makeSubmission(`POSFIN-TEST-${String(i).padStart(3, '0')}`, i), 'main_loan', 'https://example.com/scorecard', () => true));
     }
+    const results = await Promise.all(tasks);
 
-    // Check Raw Leads tab
+    for (const r of results) assert.equal(r.ok, true);
+
     const rawTab = sheets._tabs[RAW];
     const headers = rawTab[0];
     const dataRows = rawTab.slice(1).filter(r => r.some(c => String(c || '').trim()));
     const refIdx = headers.indexOf('Lead Ref');
 
-    // Every submission should have exactly one row
-    const refs = dataRows.map(r => r[refIdx]).filter(Boolean);
-    assert.equal(refs.length, 20, `Expected 20 rows, got ${refs.length}`);
-    const uniqueRefs = new Set(refs);
-    assert.equal(uniqueRefs.size, 20, `Expected 20 unique refs, got ${uniqueRefs.size}`);
+    assert.equal(dataRows.length, 20, `Expected 20 rows, got ${dataRows.length}`);
+    const uniqueRefs = new Set(dataRows.map(r => r[refIdx]));
+    assert.equal(uniqueRefs.size, 20);
 
-    // Column alignment: every data row should have values in the correct columns
-    const nameIdx = headers.indexOf('Name');
-    const phoneIdx = headers.indexOf('Phone');
-    const emailIdx = headers.indexOf('Email');
     for (const row of dataRows) {
-      const ref = row[refIdx];
-      assert.ok(ref, 'Lead Ref should be set');
-      assert.ok(row[nameIdx], `Name should be set for ${ref}`);
-      assert.ok(row[phoneIdx], `Phone should be set for ${ref}`);
-      assert.ok(row[emailIdx], `Email should be set for ${ref}`);
-      // Tom Summary should contain packed state
-      const summaryIdx = headers.indexOf('Tom Summary');
-      const state = unpack(row[summaryIdx] || '');
-      assert.ok(state, `Tom Summary should contain packed state for ${ref}`);
-      assert.equal(state.answers.deal_ref, ref, `Packed deal_ref should match for ${ref}`);
+      assert.ok(row[headers.indexOf('Name')]);
+      assert.ok(row[headers.indexOf('Phone')]);
+      assert.ok(row[headers.indexOf('Email')]);
+      const state = unpack(row[headers.indexOf('Tom Summary')] || '');
+      assert.ok(state);
+      assert.equal(state.answers.deal_ref, row[refIdx]);
     }
   });
 
-  it('20 identical case_refs: 1 canonical row, extras marked DUPLICATE-MERGED', async () => {
+  it('forced overlapping appends: 1 canonical row, extras marked DUPLICATE-MERGED', async () => {
     const sheets = createMockSheets();
-    // Add artificial delay to expose race conditions
-    sheets._setWriteDelay(5);
-    const sheetId = 'test-sheet-id';
-    process.env.FACTFIND_SHEET_ID = sheetId;
+    sheets._setWriteDelay(10); // Delay writes to force overlapping reads
+    const id = 'test-sheet-id';
+    process.env.FACTFIND_SHEET_ID = id;
 
-    const submissions = Array.from({ length: 20 }, (_, i) =>
-      makeSubmission('POSFIN-RACE-SINGLE', i)
-    );
-
+    // Launch 5 independent instances concurrently for the same ref
+    const saves = await Promise.all(Array.from({ length: 5 }, () => independentSaveIntake()));
     const results = await Promise.allSettled(
-      submissions.map(sub =>
-        saveIntake(sheets, sheetId, sub, 'main_loan', 'https://example.com/scorecard', () => true)
-      )
+      saves.map((save, i) => save(sheets, id, makeSubmission('POSFIN-OVERLAP', i), 'main_loan', 'https://example.com/scorecard', () => true))
     );
 
     const successes = results.filter(r => r.status === 'fulfilled');
-    assert.ok(successes.length >= 1, 'At least one submission should succeed');
+    assert.ok(successes.length >= 1);
 
     const rawTab = sheets._tabs[RAW];
-    const headers = rawTab[0];
-    const refIdx = headers.indexOf('Lead Ref');
-    const stageIdx = headers.indexOf('Lead Stage');
-    const allMatchingRows = rawTab.slice(1).filter(r => r[refIdx] === 'POSFIN-RACE-SINGLE');
-
-    // Exactly 1 canonical row (not marked DUPLICATE-MERGED)
-    const canonical = allMatchingRows.filter(r => !String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
+    const h = rawTab[0];
+    const refIdx = h.indexOf('Lead Ref'), stageIdx = h.indexOf('Lead Stage');
+    const matching = rawTab.slice(1).filter(r => r[refIdx] === 'POSFIN-OVERLAP');
+    const canonical = matching.filter(r => !String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
     assert.equal(canonical.length, 1, `Expected 1 canonical row, got ${canonical.length}`);
 
-    // The canonical row should have correct data
-    const row = canonical[0];
-    assert.ok(row[headers.indexOf('Name')], 'Canonical row should have Name set');
-    const state = unpack(row[headers.indexOf('Tom Summary')] || '');
-    assert.ok(state, 'Canonical row should have packed state');
-    assert.equal(state.answers.deal_ref, 'POSFIN-RACE-SINGLE');
-
-    // Duplicate rows should be marked, not blanked — data preserved
-    const marked = allMatchingRows.filter(r => String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
+    const marked = matching.filter(r => String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
     for (const dup of marked) {
-      assert.ok(dup[refIdx], 'Duplicate row should still have Lead Ref (not blanked)');
-      assert.match(String(dup[stageIdx]), /DUPLICATE-MERGED → row \d+/,
-        'Duplicate should point to the kept row');
+      assert.ok(dup[refIdx], 'Duplicate row Lead Ref preserved');
+      assert.match(String(dup[stageIdx]), /DUPLICATE-MERGED → row \d+/);
     }
   });
 
-  it('mixed: 10 unique refs + 10 duplicates → 1 canonical + extras marked', async () => {
+  it('merge uses updated_at: later timestamp wins, both fields preserved exactly', async () => {
     const sheets = createMockSheets();
-    sheets._setWriteDelay(3);
-    const sheetId = 'test-sheet-id';
-    process.env.FACTFIND_SHEET_ID = sheetId;
+    const id = 'test-sheet-id';
+    process.env.FACTFIND_SHEET_ID = id;
+    const h = RAW_HEADERS;
+    const refIdx = h.indexOf('Lead Ref'), summaryIdx = h.indexOf('Tom Summary'), stageIdx = h.indexOf('Lead Stage');
 
-    const unique = Array.from({ length: 10 }, (_, i) =>
-      makeSubmission(`POSFIN-MIX-${String(i).padStart(3, '0')}`, i)
-    );
-    const dupes = Array.from({ length: 10 }, (_, i) =>
-      makeSubmission('POSFIN-MIX-DUPE', 100 + i)
-    );
+    // Manually pre-populate two rows simulating a cross-instance race.
+    // Row A (row 2): earlier updated_at, has exit_strategy, no loan_purpose
+    // Row B (row 3): later updated_at, has loan_purpose, no exit_strategy, arrears=0
+    const START = '[POSFIN_FACTFIND_V1]', END = '[/POSFIN_FACTFIND_V1]';
+    const stateA = {
+      version: 'factfind-v1', updated_at: '2026-10-20T10:00:00.000Z', created_at: '2026-10-20T10:00:00.000Z',
+      completed: true, declined: false, no_chase: false, progress: 'FACT_FIND_COMPLETE', product: 'main_loan',
+      answers: {
+        deal_ref: 'POSFIN-MERGE-TS', first_name: 'Alice', last_name: 'Earlier',
+        mobile: '07123450001', email: 'alice@example.com',
+        property_address: '1 Old Street, London', property_value: 500000, loan_amount: 250000,
+        first_charge_lender: 'TestBank', first_charge_balance: 200000,
+        first_charge_arrears_amount: 0, second_charge_present: 'no', second_charge_balance: 0,
+        exit_strategy: 'Sale of investment', loan_purpose: '',
+      },
+    };
+    const stateB = {
+      version: 'factfind-v1', updated_at: '2026-10-20T11:00:00.000Z', created_at: '2026-10-20T11:00:00.000Z',
+      completed: true, declined: false, no_chase: false, progress: 'FACT_FIND_COMPLETE', product: 'main_loan',
+      answers: {
+        deal_ref: 'POSFIN-MERGE-TS', first_name: 'Bob', last_name: 'Later',
+        mobile: '07123450002', email: 'bob@example.com',
+        property_address: '2 New Street, London', property_value: 500000, loan_amount: 250000,
+        first_charge_lender: 'TestBank', first_charge_balance: 200000,
+        first_charge_arrears_amount: 0, second_charge_present: 'no', second_charge_balance: 0,
+        exit_strategy: '', loan_purpose: 'Debt consolidation',
+      },
+    };
 
-    const all = [...unique, ...dupes];
-    // Shuffle to simulate real interleaving
-    for (let i = all.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [all[i], all[j]] = [all[j], all[i]];
-    }
+    const rowA = h.map(() => '');
+    rowA[h.indexOf('Lead Ref')] = 'POSFIN-MERGE-TS';
+    rowA[h.indexOf('Name')] = 'Alice Earlier';
+    rowA[h.indexOf('Phone')] = '447123450001';
+    rowA[h.indexOf('Email')] = 'alice@example.com';
+    rowA[summaryIdx] = START + JSON.stringify(stateA) + END;
+    rowA[stageIdx] = 'FACT FIND COMPLETE';
+    rowA[h.indexOf('👣 Lead Touch / Progress')] = 'FACT_FIND_COMPLETE';
 
-    const results = await Promise.allSettled(
-      all.map(sub =>
-        saveIntake(sheets, sheetId, sub, 'main_loan', 'https://example.com/scorecard', () => true)
-      )
-    );
+    const rowB = h.map(() => '');
+    rowB[h.indexOf('Lead Ref')] = 'POSFIN-MERGE-TS';
+    rowB[h.indexOf('Name')] = 'Bob Later';
+    rowB[h.indexOf('Phone')] = '447123450002';
+    rowB[h.indexOf('Email')] = 'bob@example.com';
+    rowB[summaryIdx] = START + JSON.stringify(stateB) + END;
+    rowB[stageIdx] = 'FACT FIND COMPLETE';
+    rowB[h.indexOf('👣 Lead Touch / Progress')] = 'FACT_FIND_COMPLETE';
 
+    sheets._tabs[RAW].push(rowA, rowB);
+
+    // Now call saveIntake — it should detect the duplicate, merge by updated_at,
+    // and drive qualification/Clean from the merged state.
+    // Keys not provided in input must not overwrite the merged values.
+    const save = await independentSaveIntake();
+    const sub = makeSubmission('POSFIN-MERGE-TS', 3, {
+      property_address: '3 Newest Street, London',
+    });
+    delete sub.exit_strategy;
+    delete sub.loan_purpose;
+    // This submission has the latest timestamp (now) and should merge with existing
+    const result = await save(sheets, id, sub, 'main_loan', 'https://example.com/scorecard', () => true);
+    assert.equal(result.ok, true);
+
+    // Find the canonical row
     const rawTab = sheets._tabs[RAW];
-    const headers = rawTab[0];
-    const refIdx = headers.indexOf('Lead Ref');
-    const stageIdx = headers.indexOf('Lead Stage');
+    const canonical = rawTab.slice(1).filter(r =>
+      r[refIdx] === 'POSFIN-MERGE-TS' && !String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED')
+    );
+    assert.equal(canonical.length, 1, `Expected 1 canonical row, got ${canonical.length}`);
 
-    // All rows with data should be preserved (nothing blanked)
-    const dataRows = rawTab.slice(1).filter(r => r[refIdx] && r.some(c => String(c || '').trim()));
+    const merged = unpack(canonical[0][summaryIdx] || '');
+    assert.ok(merged, 'Canonical row must have packed state');
 
-    // 10 unique refs: each has exactly 1 row
-    for (let i = 0; i < 10; i++) {
-      const ref = `POSFIN-MIX-${String(i).padStart(3, '0')}`;
-      const rows = dataRows.filter(r => r[refIdx] === ref);
-      assert.equal(rows.length, 1, `Expected 1 row for ${ref}`);
+    // The merged answers must have BOTH fields from the pre-populated rows:
+    // exit_strategy from stateA (the only non-empty source) and loan_purpose from stateB
+    assert.equal(merged.answers.exit_strategy, 'Sale of investment',
+      'exit_strategy must come from the row that had it (A)');
+    assert.equal(merged.answers.loan_purpose, 'Debt consolidation',
+      'loan_purpose must come from the row that had it (B)');
+
+    // Later updated_at fields win for shared fields
+    // stateB (11:00) is later than stateA (10:00), so Bob's name wins — but then
+    // the new submission (sub, with now timestamp) is even later, so Test3 wins
+    assert.equal(merged.answers.first_name, 'Test3', 'Latest submission first_name wins');
+    assert.equal(merged.answers.property_address, '3 Newest Street, London', 'Latest address wins');
+
+    // Explicit 0 must survive the merge
+    assert.strictEqual(merged.answers.first_charge_arrears_amount, 0,
+      'Explicit 0 must survive merge, not become null');
+    assert.strictEqual(merged.answers.second_charge_present, 'no',
+      'Explicit "no" must survive merge');
+
+    // Duplicate rows should be marked, data preserved
+    const marked = rawTab.slice(1).filter(r =>
+      r[refIdx] === 'POSFIN-MERGE-TS' && String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED')
+    );
+    assert.ok(marked.length >= 1, 'At least 1 duplicate row should be marked');
+    for (const dup of marked) {
+      assert.ok(dup[refIdx], 'Duplicate Lead Ref preserved');
+      assert.ok(unpack(dup[summaryIdx] || ''), 'Duplicate Tom Summary data preserved');
+    }
+  });
+
+  it('merged state drives Clean projection: both complementary fields qualify', async () => {
+    const sheets = createMockSheets();
+    const id = 'test-sheet-id';
+    process.env.FACTFIND_SHEET_ID = id;
+    const h = RAW_HEADERS;
+    const START = '[POSFIN_FACTFIND_V1]', END = '[/POSFIN_FACTFIND_V1]';
+
+    // Pre-populate two rows: A has exit but no purpose, B has purpose but no exit.
+    // Neither qualifies alone. Merged: both present → qualifies → Clean row written.
+    // Use property_value high enough for LTV ≤ 70% (200k+250k / 1M = 45%).
+    const base = {
+      deal_ref: 'POSFIN-CLEAN-MERGE', first_name: 'Qual', last_name: 'Test',
+      mobile: '07123459999', email: 'qual@example.com',
+      property_address: '10 Merge Lane, London', property_value: 1000000, loan_amount: 250000,
+      first_charge_lender: 'TestBank', first_charge_balance: 200000,
+      first_charge_arrears_amount: 0, second_charge_present: 'no', second_charge_balance: 0,
+    };
+    const stateA = {
+      version: 'factfind-v1', updated_at: '2026-10-20T09:00:00.000Z', created_at: '2026-10-20T09:00:00.000Z',
+      completed: true, declined: false, no_chase: false, progress: 'FACT_FIND_COMPLETE', product: 'main_loan',
+      answers: { ...base, exit_strategy: 'Refinance', loan_purpose: '' },
+    };
+    const stateB = {
+      version: 'factfind-v1', updated_at: '2026-10-20T09:01:00.000Z', created_at: '2026-10-20T09:01:00.000Z',
+      completed: true, declined: false, no_chase: false, progress: 'FACT_FIND_COMPLETE', product: 'main_loan',
+      answers: { ...base, exit_strategy: '', loan_purpose: 'Debt consolidation' },
+    };
+
+    for (const [st, name] of [[stateA, 'A'], [stateB, 'B']]) {
+      const row = h.map(() => '');
+      row[h.indexOf('Lead Ref')] = 'POSFIN-CLEAN-MERGE';
+      row[h.indexOf('Name')] = `Qual Test ${name}`;
+      row[h.indexOf('Tom Summary')] = START + JSON.stringify(st) + END;
+      row[h.indexOf('Lead Stage')] = 'FACT FIND COMPLETE';
+      sheets._tabs[RAW].push(row);
     }
 
-    // POSFIN-MIX-DUPE: exactly 1 canonical (not DUPLICATE-MERGED)
-    const dupeRows = dataRows.filter(r => r[refIdx] === 'POSFIN-MIX-DUPE');
-    const canonical = dupeRows.filter(r => !String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
-    assert.equal(canonical.length, 1, `Expected 1 canonical POSFIN-MIX-DUPE row, got ${canonical.length}`);
+    // Save triggers merge → qualification → Clean write.
+    // Don't send exit/purpose — those must come from the merged state.
+    const save = await independentSaveIntake();
+    const sub = makeSubmission('POSFIN-CLEAN-MERGE', 99, { property_value: 1000000 });
+    delete sub.exit_strategy;
+    delete sub.loan_purpose;
+    const result = await save(sheets, id, sub, 'main_loan', 'https://example.com/scorecard', () => true);
+    assert.equal(result.ok, true);
+
+    // Clean tab must have a row
+    const cleanTab = sheets._tabs[CLEAN];
+    const cleanHeaders = cleanTab[0];
+    const caseIdIdx = cleanHeaders.indexOf('🔖 Case ID');
+    const cleanRows = cleanTab.slice(1).filter(r => r[caseIdIdx] === 'POSFIN-CLEAN-MERGE');
+    assert.equal(cleanRows.length, 1, 'Merged state should qualify and produce exactly 1 Clean row');
+
+    // Clean row should reflect merged data
+    const exitIdx = cleanHeaders.indexOf('🏠 Security address');
+    assert.ok(cleanRows[0][exitIdx], 'Clean row should have security address from merged data');
+  });
+
+  it('readCase and resume work after dedup: no Ambiguous error', async () => {
+    const sheets = createMockSheets();
+    const id = 'test-sheet-id';
+    process.env.FACTFIND_SHEET_ID = id;
+    const h = RAW_HEADERS;
+    const START = '[POSFIN_FACTFIND_V1]', END = '[/POSFIN_FACTFIND_V1]';
+
+    // Set up: 1 canonical row + 1 DUPLICATE-MERGED row
+    const state1 = {
+      version: 'factfind-v1', updated_at: '2026-10-20T10:00:00.000Z', created_at: '2026-10-20T10:00:00.000Z',
+      completed: true, declined: false, no_chase: false, progress: 'FACT_FIND_COMPLETE', product: 'main_loan',
+      answers: {
+        deal_ref: 'POSFIN-RESUME-TEST', first_name: 'Resume', last_name: 'User',
+        mobile: '07111111111', email: 'resume@example.com',
+        property_address: '1 Resume Road', property_value: 600000, loan_amount: 300000,
+        first_charge_lender: 'ResumeBank', first_charge_balance: 250000,
+        first_charge_arrears_amount: 0, second_charge_present: 'no', second_charge_balance: 0,
+        exit_strategy: 'Sale', loan_purpose: 'Purchase',
+      },
+    };
+
+    const canonicalRow = h.map(() => '');
+    canonicalRow[h.indexOf('Lead Ref')] = 'POSFIN-RESUME-TEST';
+    canonicalRow[h.indexOf('Name')] = 'Resume User';
+    canonicalRow[h.indexOf('Tom Summary')] = START + JSON.stringify(state1) + END;
+    canonicalRow[h.indexOf('Lead Stage')] = 'FACT FIND COMPLETE';
+
+    const dupeRow = h.map(() => '');
+    dupeRow[h.indexOf('Lead Ref')] = 'POSFIN-RESUME-TEST';
+    dupeRow[h.indexOf('Name')] = 'Resume User Dupe';
+    dupeRow[h.indexOf('Tom Summary')] = START + JSON.stringify({ ...state1, updated_at: '2026-10-20T09:00:00.000Z' }) + END;
+    dupeRow[h.indexOf('Lead Stage')] = 'DUPLICATE-MERGED → row 2';
+
+    sheets._tabs[RAW].push(canonicalRow, dupeRow);
+
+    // readCase must return the canonical row, not throw
+    const { readCase } = await import(`../lib/clean-intake.js?rc=${++instanceCounter}`);
+    const hit = await readCase(sheets, id, 'POSFIN-RESUME-TEST');
+    assert.ok(hit, 'readCase must return the canonical row');
+    assert.equal(hit.state.answers.deal_ref, 'POSFIN-RESUME-TEST');
+    assert.equal(hit.state.answers.first_name, 'Resume');
+
+    // A subsequent save (resume) must succeed — no "Ambiguous" error
+    const save = await independentSaveIntake();
+    const result = await save(sheets, id,
+      makeSubmission('POSFIN-RESUME-TEST', 5, { exit_strategy: 'Refinance instead' }),
+      'main_loan', 'https://example.com/scorecard', () => true
+    );
+    assert.equal(result.ok, true);
+
+    // The canonical row should now have the updated exit_strategy
+    const hit2 = await readCase(sheets, id, 'POSFIN-RESUME-TEST');
+    assert.ok(hit2);
+    assert.equal(hit2.state.answers.exit_strategy, 'Refinance instead',
+      'Resume should update canonical row');
   });
 
   it('header-name alignment: values land in correct columns regardless of header order', async () => {
-    // Use a tab with reordered headers to prove we aren't writing by index
     const reorderedHeaders = [
       'Lead Stage', 'Tom Summary', 'Email', 'Lead Ref', 'Name', 'Phone',
       'Submitted At', '👣 Lead Touch / Progress',
     ];
     const sheets = createMockSheets();
     sheets._tabs[RAW] = [reorderedHeaders];
-    const sheetId = 'test-sheet-id';
-    process.env.FACTFIND_SHEET_ID = sheetId;
+    const id = 'test-sheet-id';
+    process.env.FACTFIND_SHEET_ID = id;
 
-    const sub = makeSubmission('POSFIN-REORDER-001', 1);
-    const result = await saveIntake(
-      sheets, sheetId, sub, 'main_loan', 'https://example.com/scorecard', () => true
+    const save = await independentSaveIntake();
+    const result = await save(sheets, id,
+      makeSubmission('POSFIN-REORDER-001', 1),
+      'main_loan', 'https://example.com/scorecard', () => true
     );
-
     assert.equal(result.ok, true);
 
     const rawTab = sheets._tabs[RAW];
     const headers = rawTab[0];
     const dataRow = rawTab[1];
 
-    // Verify each value is in the correct column position
     assert.equal(dataRow[headers.indexOf('Lead Ref')], 'POSFIN-REORDER-001');
     assert.equal(dataRow[headers.indexOf('Name')], 'Test1 User1');
-    assert.ok(dataRow[headers.indexOf('Phone')], 'Phone should be set');
+    assert.ok(dataRow[headers.indexOf('Phone')]);
     assert.equal(dataRow[headers.indexOf('Email')], 'test1@example.com');
     assert.equal(dataRow[headers.indexOf('Lead Stage')], 'NEW — FACT FIND');
-    assert.ok(unpack(dataRow[headers.indexOf('Tom Summary')]), 'Tom Summary should have packed state');
+    assert.ok(unpack(dataRow[headers.indexOf('Tom Summary')]));
   });
 
-  it('explicit zero and "no" are stored as values, not null', async () => {
+  it('explicit zero and false survive merge and storage', async () => {
     const sheets = createMockSheets();
-    const sheetId = 'test-sheet-id';
-    process.env.FACTFIND_SHEET_ID = sheetId;
+    const id = 'test-sheet-id';
+    process.env.FACTFIND_SHEET_ID = id;
 
-    const sub = makeSubmission('POSFIN-ZERO-001', 1);
-    sub.first_charge_arrears_amount = 0;
-    sub.second_charge_present = 'no';
-
-    const result = await saveIntake(
-      sheets, sheetId, sub, 'main_loan', 'https://example.com/scorecard', () => true
-    );
-
+    const save = await independentSaveIntake();
+    const sub = makeSubmission('POSFIN-ZERO-001', 1, {
+      first_charge_arrears_amount: 0,
+      second_charge_present: 'no',
+    });
+    const result = await save(sheets, id, sub, 'main_loan', 'https://example.com/scorecard', () => true);
     assert.equal(result.ok, true);
 
     const rawTab = sheets._tabs[RAW];
     const headers = rawTab[0];
-    const summaryIdx = headers.indexOf('Tom Summary');
-    const state = unpack(rawTab[1][summaryIdx] || '');
+    const state = unpack(rawTab[1][headers.indexOf('Tom Summary')] || '');
     assert.ok(state);
 
-    // Explicit zero must be stored as 0, not null
     assert.strictEqual(state.answers.first_charge_arrears_amount, 0,
-      'Explicit 0 must be stored as 0, not null or empty');
-    // Explicit "no" must be stored
+      'Explicit 0 must be stored as 0');
     assert.strictEqual(state.answers.second_charge_present, 'no',
-      'Explicit "no" must be stored as "no", not null or empty');
-  });
+      'Explicit "no" must be stored');
 
-  it('duplicate rows with different answers: merged row keeps latest non-empty values', async () => {
-    const sheets = createMockSheets();
-    sheets._setWriteDelay(5);
-    const sheetId = 'test-sheet-id';
-    process.env.FACTFIND_SHEET_ID = sheetId;
+    // Now merge with another row that has the same ref — 0 and "no" must survive
+    const h = RAW_HEADERS;
+    const START = '[POSFIN_FACTFIND_V1]', END = '[/POSFIN_FACTFIND_V1]';
+    const laterState = {
+      version: 'factfind-v1', updated_at: new Date(Date.now() + 60000).toISOString(),
+      created_at: state.created_at, completed: true, declined: false, no_chase: false,
+      progress: 'FACT_FIND_COMPLETE', product: 'main_loan',
+      answers: { ...state.answers, exit_strategy: 'Updated exit' },
+    };
+    const dupeRow = h.map(() => '');
+    dupeRow[h.indexOf('Lead Ref')] = 'POSFIN-ZERO-001';
+    dupeRow[h.indexOf('Name')] = 'Test1 User1';
+    dupeRow[h.indexOf('Tom Summary')] = START + JSON.stringify(laterState) + END;
+    dupeRow[h.indexOf('Lead Stage')] = 'FACT FIND COMPLETE';
+    rawTab.push(dupeRow);
 
-    // Submission A: has exit_strategy and property_address, no loan_purpose
-    const subA = makeSubmission('POSFIN-MERGE-001', 1);
-    subA.exit_strategy = 'Sale of investment';
-    subA.loan_purpose = '';
-    subA.property_address = '1 Old Street, London';
+    // Trigger merge via another save — don't send exit_strategy so merged value survives
+    const save2 = await independentSaveIntake();
+    const mergeSub = makeSubmission('POSFIN-ZERO-001', 1, { first_charge_arrears_amount: 0, second_charge_present: 'no' });
+    delete mergeSub.exit_strategy; // Let merge preserve 'Updated exit' from the later row
+    const result2 = await save2(sheets, id, mergeSub, 'main_loan', 'https://example.com/scorecard', () => true);
+    assert.equal(result2.ok, true);
 
-    // Submission B: same ref, has loan_purpose and updated address, keeps exit_strategy empty
-    const subB = makeSubmission('POSFIN-MERGE-001', 2);
-    subB.exit_strategy = '';
-    subB.loan_purpose = 'Debt consolidation';
-    subB.property_address = '2 New Street, London';
-
-    // Fire both concurrently — they race
-    const results = await Promise.allSettled([
-      saveIntake(sheets, sheetId, subA, 'main_loan', 'https://example.com/scorecard', () => true),
-      saveIntake(sheets, sheetId, subB, 'main_loan', 'https://example.com/scorecard', () => true),
-    ]);
-
-    const successes = results.filter(r => r.status === 'fulfilled');
-    assert.ok(successes.length >= 1, 'At least one submission should succeed');
-
-    const rawTab = sheets._tabs[RAW];
-    const headers = rawTab[0];
-    const refIdx = headers.indexOf('Lead Ref');
-    const stageIdx = headers.indexOf('Lead Stage');
-    const summaryIdx = headers.indexOf('Tom Summary');
-
-    const matchingRows = rawTab.slice(1).filter(r => r[refIdx] === 'POSFIN-MERGE-001');
-    const canonical = matchingRows.filter(r => !String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
-
-    assert.equal(canonical.length, 1, `Expected 1 canonical row, got ${canonical.length}`);
-
-    const state = unpack(canonical[0][summaryIdx] || '');
-    assert.ok(state, 'Canonical row should have packed state');
-
-    // Merged state should have the latest non-empty value for each field
-    // Both submissions set property_address, so the later one should win
-    // The non-empty exit_strategy from A and loan_purpose from B should both be present
-    const a = state.answers;
-    assert.ok(a.exit_strategy || a.loan_purpose,
-      'Merged answers should contain at least one of the differing fields');
-
-    // Duplicate row should be marked, not blanked
-    const marked = matchingRows.filter(r => String(r[stageIdx] || '').startsWith('DUPLICATE-MERGED'));
-    for (const dup of marked) {
-      assert.ok(dup[refIdx], 'Duplicate row Lead Ref must be preserved (never blank)');
-      assert.ok(unpack(dup[summaryIdx] || '') || dup[summaryIdx],
-        'Duplicate row Tom Summary must be preserved (never blank)');
-      assert.match(String(dup[stageIdx]), /DUPLICATE-MERGED → row \d+/);
-    }
+    const canonical = rawTab.slice(1).filter(r =>
+      r[h.indexOf('Lead Ref')] === 'POSFIN-ZERO-001' &&
+      !String(r[h.indexOf('Lead Stage')] || '').startsWith('DUPLICATE-MERGED')
+    );
+    assert.equal(canonical.length, 1);
+    const mergedState = unpack(canonical[0][h.indexOf('Tom Summary')] || '');
+    assert.strictEqual(mergedState.answers.first_charge_arrears_amount, 0,
+      'Explicit 0 must survive merge');
+    assert.strictEqual(mergedState.answers.second_charge_present, 'no',
+      'Explicit "no" must survive merge');
+    assert.equal(mergedState.answers.exit_strategy, 'Updated exit',
+      'Later exit_strategy must win in merge');
   });
 });
