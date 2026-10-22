@@ -51,6 +51,20 @@ function createMockSheets() {
     _tabs: tabs,
     _setWriteDelay(ms) { writeDelay = ms; },
     spreadsheets: {
+      async get() {
+        return { data: { sheets: Object.keys(tabs).map((title, sheetId) => ({ properties: { sheetId, title } })) } };
+      },
+      // AppendCellsRequest: after the last row with data, starting at column A.
+      async batchUpdate({ requestBody }) {
+        for (const { appendCells } of requestBody.requests) {
+          const tab = Object.keys(tabs)[appendCells.sheetId];
+          await delay(writeDelay);
+          for (const row of appendCells.rows) {
+            tabs[tab].push(row.values.map(c => { const v = c.userEnteredValue || {}; return v.stringValue ?? v.numberValue ?? v.boolValue ?? ''; }));
+          }
+        }
+        return { data: {} };
+      },
       values: {
         async get({ range }) {
           const tab = range.match(/^'([^']+)'/)?.[1] || range;
