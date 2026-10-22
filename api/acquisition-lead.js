@@ -6,8 +6,11 @@
  */
 
 import { google } from 'googleapis';
+import { guardSheets, previewWriteDenial, resolveWriteTarget } from '../lib/sheets-guard.js';
 
 const SHEET_ID = '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
+// Production keeps SHEET_ID; Preview resolves to the approved staging sheet or throws.
+const sheetTarget = () => resolveWriteTarget(SHEET_ID);
 const TAB = 'Acquisition Leads';
 const TELE_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const BYRON_CHAT_ID = '1750758657';
@@ -34,15 +37,15 @@ async function getSheets() {
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
-  return google.sheets({ version: 'v4', auth });
+  return guardSheets(google.sheets({ version: 'v4', auth }));
 }
 
 async function ensureTab(sheets) {
-  const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: sheetTarget() });
   const exists = (meta.data.sheets || []).some((s) => s.properties?.title === TAB);
   if (!exists) {
     await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: sheetTarget(),
       requestBody: { requests: [{ addSheet: { properties: { title: TAB, gridProperties: { rowCount: 1000, columnCount: 20 } } } }] },
     });
   }
@@ -52,10 +55,10 @@ async function ensureTab(sheets) {
     'Notes', 'Ack: docs once mandated', 'Ack: indicative only', 'Source', 'Status',
     'Assigned Broker', 'Last Action', 'Next Step', 'Raw Payload', 'Lead Ref',
   ];
-  const current = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'${TAB}'!A1:T1` });
+  const current = await sheets.spreadsheets.values.get({ spreadsheetId: sheetTarget(), range: `'${TAB}'!A1:T1` });
   if (!current.data.values?.[0]?.some(Boolean)) {
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: sheetTarget(),
       range: `'${TAB}'!A1:T1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [headers] },
@@ -95,6 +98,8 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  const denied = previewWriteDenial();
+  if (denied) return res.status(503).json({ ok: false, error: 'Sheets writes are disabled in this Preview deployment', reason: denied });
 
   try {
     const d = req.body || {};
@@ -134,7 +139,7 @@ export default async function handler(req, res) {
     ];
 
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: sheetTarget(),
       range: `'${TAB}'!A:T`,
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
