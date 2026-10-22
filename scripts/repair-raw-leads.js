@@ -13,11 +13,13 @@
  *
  * Environment:
  *   GOOGLE_SA_B64        — base64-encoded Google service account JSON
- *   FACTFIND_SHEET_ID    — target sheet ID (MUST be staging, never production master)
+ *   FACTFIND_SHEET_ID    — must be exactly the approved staging sheet (lib/sheets-guard.js)
+ *   FACTFIND_STAGING_WRITES — must be exactly "true" for --apply
  */
 
 import { google } from 'googleapis';
-import { readTable, unpack, RAW, MASTER } from '../lib/clean-intake.js';
+import { readTable, unpack, RAW } from '../lib/clean-intake.js';
+import { STAGING_SHEET_ID } from '../lib/sheets-guard.js';
 
 const APPLY = process.argv.includes('--apply');
 const rowsArg = process.argv.find((a, i) => i > 0 && process.argv[i - 1] === '--rows');
@@ -26,11 +28,10 @@ const TARGET_ROWS = (rowsArg || '408,409,410').split(',').map(Number).filter(n =
 const col = n => { let s = ''; for (n++; n; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s; };
 
 async function main() {
+  // Exact match only: no trimming, no allowlist, no fallback.
   const sheetId = process.env.FACTFIND_SHEET_ID;
-  if (!sheetId) { console.error('FACTFIND_SHEET_ID is required (must be staging)'); process.exit(1); }
-  const allowlist = (process.env.REPAIR_STAGING_ALLOWLIST || '').split(',').map(s => s.trim()).filter(Boolean);
-  if (!allowlist.length) { console.error('REPAIR_STAGING_ALLOWLIST is required: comma-separated list of confirmed staging sheet IDs'); process.exit(1); }
-  if (!allowlist.includes(sheetId)) { console.error(`Sheet ${sheetId} is not in REPAIR_STAGING_ALLOWLIST. Refusing to run.`); process.exit(1); }
+  if (sheetId !== STAGING_SHEET_ID) { console.error('FACTFIND_SHEET_ID must be exactly the approved staging sheet. Refusing to run.'); process.exit(1); }
+  if (APPLY && process.env.FACTFIND_STAGING_WRITES !== 'true') { console.error('--apply requires FACTFIND_STAGING_WRITES=true. Refusing to run.'); process.exit(1); }
 
   const saB64 = process.env.GOOGLE_SA_B64;
   if (!saB64) { console.error('GOOGLE_SA_B64 is required'); process.exit(1); }
