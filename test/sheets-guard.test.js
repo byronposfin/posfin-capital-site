@@ -62,8 +62,18 @@ function mockSheets() {
   const tabOf = range => range.match(/^'([^']+)'/)?.[1] || range;
   return {
     tabs, calls,
-    writes: () => calls.filter(c => c.method !== 'values.get'),
-    spreadsheets: { values: {
+    writes: () => calls.filter(c => c.method !== 'values.get' && c.method !== 'get'),
+    spreadsheets: {
+      async get({ spreadsheetId }) { calls.push({ method: 'get', spreadsheetId }); return { data: { sheets: Object.keys(tabs).map((title, sheetId) => ({ properties: { sheetId, title } })) } }; },
+      async batchUpdate({ spreadsheetId, requestBody }) {
+        calls.push({ method: 'batchUpdate', spreadsheetId });
+        for (const { appendCells } of requestBody.requests) {
+          const t = tabs[Object.keys(tabs)[appendCells.sheetId]];
+          for (const row of appendCells.rows) t.push(row.values.map(c => { const v = c.userEnteredValue || {}; return v.stringValue ?? v.numberValue ?? v.boolValue ?? ''; }));
+        }
+        return { data: {} };
+      },
+      values: {
       async get({ spreadsheetId, range }) { calls.push({ method: 'values.get', spreadsheetId }); return { data: { values: (tabs[tabOf(range)] || []).map(r => [...r]) } }; },
       async append({ spreadsheetId, range, requestBody }) {
         calls.push({ method: 'values.append', spreadsheetId });

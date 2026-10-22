@@ -51,7 +51,10 @@ const client = {
     },
     async batchUpdate(p) {
       record('batchUpdate', p);
-      for (const r of p.requestBody.requests || []) if (r.addSheet) tabs[r.addSheet.properties.title] = [];
+      for (const r of p.requestBody.requests || []) {
+        if (r.addSheet) tabs[r.addSheet.properties.title] = [];
+        if (r.appendCells) for (const row of r.appendCells.rows) tabs[Object.keys(tabs)[r.appendCells.sheetId]].push(row.values.map(c => { const v = c.userEnteredValue || {}; return v.stringValue ?? v.numberValue ?? v.boolValue ?? ''; }));
+      }
       return { data: {} };
     },
     values: {
