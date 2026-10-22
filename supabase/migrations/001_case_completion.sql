@@ -199,3 +199,15 @@ alter table case_notifications      enable row level security;
 
 -- No policies for anon role → all access denied by default.
 -- Service-role key bypasses RLS. All access is server-side only.
+
+-- Grant service_role explicit privileges (required when tables are
+-- created by the migration system rather than by service_role itself).
+grant all on case_completion to service_role;
+grant all on case_completion_audit to service_role;
+grant all on case_tokens to service_role;
+grant all on case_exports to service_role;
+grant all on case_gate_attempts to service_role;
+grant all on case_verification_codes to service_role;
+grant all on case_notifications to service_role;
+grant usage on all sequences in schema public to service_role;
+grant execute on function patch_case_atomic to service_role;
