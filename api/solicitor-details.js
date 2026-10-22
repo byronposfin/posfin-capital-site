@@ -1,6 +1,9 @@
 import { google } from 'googleapis';
+import { guardSheets, previewWriteDenial, resolveWriteTarget } from '../lib/sheets-guard.js';
 
 const SHEET_ID = '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
+// Production keeps SHEET_ID; Preview resolves to the approved staging sheet or throws.
+const sheetTarget = () => resolveWriteTarget(SHEET_ID);
 
 function columnName(n) {
   let s = '';
@@ -14,7 +17,7 @@ function columnName(n) {
 
 async function appendRowAtFirstEmpty(sheets, tabName, row) {
   const colA = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'${tabName}'!A:A`,
   });
   const values = colA.data.values || [];
@@ -25,7 +28,7 @@ async function appendRowAtFirstEmpty(sheets, tabName, row) {
   const nextRow = Math.max(last + 1, 2);
   const endCol = columnName(row.length);
   await sheets.spreadsheets.values.update({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'${tabName}'!A${nextRow}:${endCol}${nextRow}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [row] },
@@ -74,7 +77,7 @@ function websiteFormRow(d, ts) {
 
 async function findPipelineRow(sheets, d) {
   const resp = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'PIPELINE'!A2:T`,
   });
   const rows = resp.data.values || [];
@@ -107,7 +110,7 @@ async function updatePipeline(sheets, d, ts) {
   ].join('\n');
   if (rowNumber) {
     const current = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: sheetTarget(),
       range: `'PIPELINE'!A${rowNumber}:L${rowNumber}`,
     });
     const values = current.data.values?.[0] || [];
@@ -118,7 +121,7 @@ async function updatePipeline(sheets, d, ts) {
       : [existingSummary, solicitorSummary].filter(Boolean).join('\n\n');
     const nextNotes = [existingNotes, notes].filter(Boolean).join('\n\n---\n');
     await sheets.spreadsheets.values.batchUpdate({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: sheetTarget(),
       requestBody: {
         valueInputOption: 'USER_ENTERED',
         data: [
@@ -158,6 +161,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
+  const denied = previewWriteDenial();
+  if (denied) { res.status(503).json({ error: 'Sheets writes are disabled in this Preview deployment', reason: denied }); return; }
 
   try {
     const d = req.body || {};
@@ -183,7 +188,7 @@ export default async function handler(req, res) {
       credentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
-    const sheets = google.sheets({ version: 'v4', auth });
+    const sheets = guardSheets(google.sheets({ version: 'v4', auth }));
     const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
     const websiteRow = await appendRowAtFirstEmpty(sheets, 'Website Form', websiteFormRow(d, ts));

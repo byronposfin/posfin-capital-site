@@ -14,9 +14,12 @@ import {validToken, tokenFor} from '../lib/scorecard-access.js';
 
 import { scorecardLink } from '../lib/scorecard-access.js';
 import { google } from 'googleapis';
+import { guardSheets, previewWriteDenial, resolveWriteTarget } from '../lib/sheets-guard.js';
 import { normalise, pipelineRecord, mapPipelineHeaders, REQUIRED_KEYS } from '../lib/factfind-contract.js';
 
 const SHEET_ID = process.env.FACTFIND_SHEET_ID || '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
+// Production keeps SHEET_ID; Preview resolves to the approved staging sheet or throws.
+const sheetTarget = () => resolveWriteTarget(SHEET_ID);
 
 const TAB_MAP = {
   pa_land: 'Raw Leads',
@@ -182,50 +185,8 @@ function sourceParam(d, key) {
   } catch { return ''; }
 }
 
-function rawLeadMatchTokens(d) {
-  return {
-    ref: String(d.raw_lead_ref || d.lead_ref || d.lead_token || d.k || d.token || sourceParam(d, 'k') || sourceParam(d, 'raw_lead_ref') || '').trim().toLowerCase(),
-    phone: normalisePhone(d.mobile || d.phone || d.telephone),
-    email: String(d.email || '').trim().toLowerCase(),
-    name: `${d.first_name || ''} ${d.last_name || ''}`.trim().toLowerCase(),
-  };
-}
-
-async function markRawLeadAssignedIfMatched(sheets, d, ownerName, dealRef, pipelineRowNumber) {
-  const tokens = rawLeadMatchTokens(d);
-  if (!tokens.ref && !tokens.phone && !tokens.email) return null;
-  const resp = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'Raw Leads'!A2:AD1200` });
-  const rows = resp.data.values || [];
-  let match = null;
-  rows.some((row, idx) => {
-    const rowNum = idx + 2;
-    const blob = row.map(x => String(x || '').toLowerCase()).join(' | ');
-    const rowPhone = normalisePhone(row[2] || blob);
-    const rowEmail = String(row[3] || '').trim().toLowerCase();
-    const rowLeadRef = String(row[13] || '').trim().toLowerCase();
-    const ok = (tokens.ref && (rowLeadRef === tokens.ref || blob.includes(tokens.ref)))
-      || (tokens.email && rowEmail === tokens.email)
-      || (tokens.phone && rowPhone && tokens.phone && rowPhone.includes(tokens.phone));
-    if (ok) { match = { rowNum, row }; return true; }
-    return false;
-  });
-  if (!match) return null;
-  const existingNotes = match.row[7] || '';
-  const stamp = new Date().toLocaleString('en-GB', { timeZone: 'Europe/London', hour12: false });
-  const note = `${stamp} — ${ownerName} ownership confirmed from completed online form${dealRef ? ` (${dealRef})` : ''}${pipelineRowNumber ? `; PIPELINE:${pipelineRowNumber}` : ''}. Do not cross-call without checking ${ownerName}.`;
-  await sheets.spreadsheets.values.batchUpdate({
-    spreadsheetId: SHEET_ID,
-    requestBody: {
-      valueInputOption: 'USER_ENTERED',
-      data: [
-        { range: `'Raw Leads'!F${match.rowNum}`, values: [[`ASSIGNED — ${ownerName.toUpperCase()}`]] },
-        { range: `'Raw Leads'!H${match.rowNum}`, values: [[existingNotes ? `${existingNotes}\n${note}` : note]] },
-        { range: `'Raw Leads'!AC${match.rowNum}`, values: [[ownerName]] },
-      ],
-    },
-  });
-  return match.rowNum;
-}
+// markRawLeadAssignedIfMatched removed: no caller exists in the intake flow.
+// Raw Leads assignment is handled by saveIntake → clean-intake.js Lead Stage column.
 
 function fmtDateShort(ts) {
   const d = new Date(ts.replace(' ', 'T'));
@@ -478,7 +439,7 @@ function columnName(n) {
 
 async function ensureSheetHasRow(sheets, tabName, rowNumber) {
   const meta = await sheets.spreadsheets.get({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     fields: 'sheets(properties(sheetId,title,gridProperties(rowCount)))',
   });
   const sheet = (meta.data.sheets || []).find(s => s.properties?.title === tabName);
@@ -486,7 +447,7 @@ async function ensureSheetHasRow(sheets, tabName, rowNumber) {
   const currentRows = sheet.properties?.gridProperties?.rowCount || 0;
   if (currentRows >= rowNumber) return;
   await sheets.spreadsheets.batchUpdate({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     requestBody: {
       requests: [{
         appendDimension: {
@@ -501,7 +462,7 @@ async function ensureSheetHasRow(sheets, tabName, rowNumber) {
 
 async function appendRowAtFirstEmpty(sheets, tabName, row) {
   const colA = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'${tabName}'!A:A`,
   });
   const values = colA.data.values || [];
@@ -513,7 +474,7 @@ async function appendRowAtFirstEmpty(sheets, tabName, row) {
   await ensureSheetHasRow(sheets, tabName, nextRow);
   const endCol = columnName(row.length);
   await sheets.spreadsheets.values.update({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'${tabName}'!A${nextRow}:${endCol}${nextRow}`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
@@ -524,7 +485,7 @@ async function appendRowAtFirstEmpty(sheets, tabName, row) {
 async function upsertPipelineV2Row(sheets, rowValues, key = 'case_id') {
   if (!rowValues) return null;
   const range = `'PIPELINE_v2'!A:ZZ`;
-  const result = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range });
+  const result = await sheets.spreadsheets.values.get({ spreadsheetId: sheetTarget(), range });
   const rows = result.data.values || [];
   const headers = rows[0] || [];
   const keyIndex = headers.findIndex(h => String(h || '').trim() === key);
@@ -542,7 +503,7 @@ async function upsertPipelineV2Row(sheets, rowValues, key = 'case_id') {
   const row = headers.map(h => cell(rowValues[h]));
   const endCol = columnName(headers.length);
   await sheets.spreadsheets.values.update({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'PIPELINE_v2'!A${rowNumber}:${endCol}${rowNumber}`,
     valueInputOption: 'RAW',
     requestBody: { values: [row] },
@@ -765,10 +726,14 @@ export default async function handler(req, res) {
 
     // Healthcheck-safe path: validate product mapping and row formatting without
     // writing fake leads to Google Sheets. Used by Tom's scheduled page checks.
-    if (data.dry_run === true || data.dry_run === 'true' || (process.env.VERCEL_ENV === 'preview' && process.env.FACTFIND_STAGING_WRITES !== 'true')) {
+    // Preview without the exact staging sheet + FACTFIND_STAGING_WRITES=true is
+    // forced down this path too, before any Sheets or Telegram side effect.
+    const stagingDenial = previewWriteDenial();
+    if (data.dry_run === true || data.dry_run === 'true' || stagingDenial) {
       res.status(200).json({
         ok: true,
         dryRun: true,
+        ...(stagingDenial ? { stagingWritesDenied: stagingDenial } : {}),
         product,
         tab: tabName,
         rowColumns: row.length,
@@ -804,7 +769,7 @@ export default async function handler(req, res) {
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
-    const sheets = google.sheets({ version: 'v4', auth });
+    const sheets = guardSheets(google.sheets({ version: 'v4', auth }));
     const id=sheetId();
     const BASE_URL = process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL ? 'https://'+process.env.VERCEL_URL : (process.env.NEXT_PUBLIC_BASE_URL || 'https://posfincapital.com');
     const scorecardUrl = scorecardLink(BASE_URL, data.deal_ref);
