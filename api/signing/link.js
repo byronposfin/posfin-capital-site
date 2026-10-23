@@ -1,3 +1,4 @@
+import {resolveSigner} from '../../lib/signing-identity.js';
 import { supabase, resolveToken, hashToken } from '../../lib/supabase.js';
 import { verifySession } from '../../lib/postcode-gate.js';
 import { stagingConfig, provider, freshSigningLink } from '../../lib/dropbox-sign.js';
@@ -14,8 +15,11 @@ export default async function handler(req,res) {
     const cookie = String(req.headers.cookie || '').split(';').map(x=>x.trim()).find(x=>x.startsWith('smartlink_session='))?.slice(18);
     const session = verifySession(cookie);
     if (!token || token.revoked || !session || session.caseId !== token.case_id) return res.status(403).end();
-    const document = await signingStore(db).findDocument(req.body?.documentId);
-    const link = await freshSigningLink({document,caseId:token.case_id,clientId:config.clientId,api:provider(config)});
+    const store=signingStore(db);
+    const document = await store.findDocument(req.body?.documentId);
+    if(!document || document.case_id!==token.case_id)return res.status(403).end();
+    const signatureId=await resolveSigner({document,token:req.body?.signerToken,store});
+    const link = await freshSigningLink({document,signatureId,caseId:token.case_id,clientId:config.clientId,api:provider(config)});
     return res.status(200).json(link);
   } catch { return res.status(409).json({error:'Signing is not available for this document.'}); }
 }
