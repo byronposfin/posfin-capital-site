@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Posfin test signing</title></head><body>
+<h1>Test document signing</h1><p id="status">Open this page from your verified private case link.</p><button id="sign">Open document</button>
+<script type="module">
+import HelloSign from 'https://cdn.skypack.dev/hellosign-embedded@2.12.3';
+const status=document.getElementById('status'), button=document.getElementById('sign');
+button.onclick=async()=>{button.disabled=true;try{
+ const args=new URLSearchParams(location.hash.slice(1));
+ const res=await fetch('/api/signing/link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:args.get('token'),documentId:args.get('document')})});
+ if(!res.ok)throw new Error('Please return to your case link and verify access.');
+ const data=await res.json();const client=new HelloSign({clientId:data.clientId});
+ client.on('sign',()=>{status.textContent='Signature submitted. Completion and document storage are being confirmed.';});
+ client.open(data.signUrl,{skipDomainVerification:true}); // staging-only server gate; not production configuration
+}catch(e){status.textContent=e.message;}finally{button.disabled=false;}};
+</script></body></html>
