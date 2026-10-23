@@ -18,6 +18,7 @@ def check(pdf,kind,signers=1,annex=None):
       for span in line['spans']:
        for m in TAG.finditer(span['text']):
         tags.append((m.group(1),int(m.group(3)),n,span['color']))
+        if m.group(1) in ('sig','date') and m.group(2)!='req': errors.append('Execution field must be required')
     for raw in re.findall(r'\[[^\[\]\n]*[|│][^\[\]\n]*\]',page.get_text()):
      if not TAG.fullmatch(raw): errors.append('Unsupported or malformed tag')
    for signer in range(1,signers+1):
