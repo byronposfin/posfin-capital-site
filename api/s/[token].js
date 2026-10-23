@@ -99,7 +99,7 @@ function renderField(f, currentValue) {
   </div>`;
 }
 
-function questionnaireHTML(caseData, gaps, token) {
+function questionnaireHTML(caseData, gaps, token, signing = '') {
   const sectionPills = Object.entries(gaps.sections).map(([name, s]) =>
     `<span class="sl-section-pill ${s.status}">${esc(name)} ${s.answered}/${s.total}</span>`
   ).join('');
@@ -109,6 +109,7 @@ function questionnaireHTML(caseData, gaps, token) {
   const done = gaps.batch.length === 0 && gaps.remaining === 0;
   if (done) {
     return page('Posfin SmartLink — Complete', `
+${signing}
 <div class="sl-done">
   <h2>All questions answered</h2>
   <p>Thank you. Your broker will review your answers and confirm the next steps.</p>
@@ -120,6 +121,7 @@ function questionnaireHTML(caseData, gaps, token) {
   // Read-only view — no autosave script, no form inputs.
   // Autosave UI will be enabled after staging acceptance.
   return page('Posfin SmartLink — Incomplete', `
+${signing}
 <div class="sl-batch">
   <p class="eyebrow">YOUR CASE</p>
   <h1>Incomplete borrower journey</h1>
@@ -184,7 +186,18 @@ export default async function handler(req, res) {
     const product = caseData.fields?.product_route?.value || 'main_loan';
     const gaps = analyseGaps(caseData, product);
 
-    return res.status(200).send(questionnaireHTML(caseData, gaps, rawToken));
+    let signing = '';
+    if (process.env.SIGNING_ENABLED === 'staging') {
+      const { stagingConfig } = await import('../../lib/dropbox-sign.js');
+      stagingConfig();
+      const { data: documents, error } = await client.from('case_signing_documents')
+        .select('id,kind,status').eq('case_id',caseId).eq('approved',true).eq('test_mode',true);
+      if (error) throw error;
+      signing = '<section class="sl-batch"><h2>Your documents</h2>' + (documents || []).map(d =>
+        '<p>' + esc(d.kind) + ' — ' + esc(d.status.replace(/_/g,' ')) +
+        (d.status === 'awaiting_signature' ? ' <a href="/signing-test.html#token=' + encodeURIComponent(rawToken) + '&amp;document=' + encodeURIComponent(d.id) + '">Review and sign test document</a>' : '') + '</p>').join('') + '</section>';
+    }
+    return res.status(200).send(questionnaireHTML(caseData, gaps, rawToken, signing));
 
   } catch (err) {
     console.error('[SmartLink Page]', err.message);
