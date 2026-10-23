@@ -140,11 +140,21 @@ create index if not exists notifications_case_idx
 comment on table case_notifications is 'Durable notification outbox. Worker/cron processes pending and retries failed entries.';
 
 -- ============================================================
--- 8. Atomic CAS update + audit — Postgres RPC function
+-- 8. Notification event identity — prevents duplicate intent on replay
 -- ============================================================
--- Wraps the version-gated case update and audit insert in a single
--- transaction. If either fails, both roll back. Returns the number
--- of rows updated (0 = version conflict, 1 = success).
+create unique index if not exists notifications_event_identity_idx
+  on case_notifications (case_id, channel, recipient, status, attempts)
+  where status = 'pending' and attempts = 0;
+-- Note: the unique index prevents INSERT of an identical pending row for the
+-- same case+channel+recipient. ON CONFLICT DO NOTHING makes replay safe.
+
+-- ============================================================
+-- 9. Atomic CAS update + audit + notification intent
+-- ============================================================
+-- Wraps case update, audit insert AND notification intent insert in a
+-- single transaction. If ANY of these fails, ALL roll back. Returns
+-- the number of rows updated (0 = version conflict, 1 = success).
+-- Notification rows use ON CONFLICT DO NOTHING so replay is safe.
 create or replace function patch_case_atomic(
   p_case_id text,
   p_expected_version integer,
@@ -156,10 +166,13 @@ create or replace function patch_case_atomic(
   p_audit_actor text,
   p_audit_source text,
   p_audit_idempotency_key text,
-  p_audit_diff jsonb
+  p_audit_diff jsonb,
+  p_notify_message text default null,
+  p_notify_recipients text[] default null
 ) returns integer language plpgsql as $$
 declare
   affected integer;
+  r text;
 begin
   -- CAS update: only if version matches
   update case_completion
@@ -177,10 +190,20 @@ begin
     return 0;  -- Version conflict — caller should return 409
   end if;
 
-  -- Audit row — same transaction, rolls back if this fails
+  -- Audit row — same transaction
   insert into case_completion_audit (case_id, version, actor, source, idempotency_key, diff)
   values (p_case_id, p_new_version, p_audit_actor, p_audit_source,
           nullif(p_audit_idempotency_key, ''), p_audit_diff);
+
+  -- Notification intent — same transaction. ON CONFLICT DO NOTHING
+  -- makes this safe on replay (duplicate pending row is a no-op).
+  if p_notify_message is not null and p_notify_recipients is not null then
+    foreach r in array p_notify_recipients loop
+      insert into case_notifications (case_id, channel, recipient, message, status, attempts, max_attempts)
+      values (p_case_id, 'telegram', r, p_notify_message, 'pending', 0, 3)
+      on conflict do nothing;
+    end loop;
+  end if;
 
   return 1;
 end;
