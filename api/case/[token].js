@@ -14,7 +14,7 @@ import { hashToken, resolveToken, getCase, patchCase } from '../../lib/supabase.
 import { verifyPostcode, verifySession, signSession, normalisePostcode } from '../../lib/postcode-gate.js';
 import { issueCode, verifyCode } from '../../lib/verification-code.js';
 import { analyseGaps, borrowerAllowlist } from '../../lib/gap-engine.js';
-import { enqueueAlert, formatCaseAlert } from '../../lib/notify.js';
+import { formatCaseAlert } from '../../lib/notify.js';
 
 function parseCookies(header) {
   const cookies = {};
@@ -178,12 +178,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No valid borrower-owned fields in request', rejected });
     }
 
+    // Notification intent committed atomically with case+audit via RPC.
+    // No separate enqueueAlert call — if the RPC succeeds, notification
+    // rows exist. If it fails, nothing is committed.
+    const alertMsg = formatCaseAlert(caseId, 'Borrower submitted answers', {
+      fieldsUpdated: Object.keys(filteredFields).join(', '),
+      version: expected_version + 1,
+    });
+
     const result = await patchCase(client, caseId, {
       expectedVersion: expected_version,
       fields: filteredFields,
       source: 'borrower',
       actor: 'borrower',
       idempotencyKey: idempotency_key,
+      notifyMessage: alertMsg,
+      notifyRecipients: ['1750758657', '8634157536'],
     });
 
     if (result.replayed) {
@@ -197,13 +207,6 @@ export default async function handler(req, res) {
         ...borrowerView({ ...caseData, version: result.currentVersion, fields: result.currentFields }, product),
       });
     }
-
-    // Persist broker notification to durable outbox
-    const alertMsg = formatCaseAlert(caseId, 'Borrower submitted answers', {
-      fieldsUpdated: Object.keys(filteredFields).join(', '),
-      version: result.version,
-    });
-    await enqueueAlert(client, { caseId, message: alertMsg });
 
     // Return updated view
     const updated = await getCase(client, caseId);

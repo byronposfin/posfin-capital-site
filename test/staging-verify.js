@@ -99,8 +99,8 @@ async function run() {
   const { data: failedAttempts } = await client.from('case_gate_attempts').select('id').eq('case_id', CASE_ID).eq('success', false);
   assert(failedAttempts?.length === 5, '5 failed attempts recorded for lockout');
 
-  // ── 4. Atomic CAS via RPC — the critical test ─────────────────────
-  console.log('4. Atomic CAS+audit via RPC');
+  // ── 4. Atomic CAS+audit+notification via RPC ────────────────────────
+  console.log('4. Atomic CAS+audit+notification via RPC');
   const now = new Date().toISOString();
   const winFields = {
     ...readCase.fields,
@@ -118,9 +118,18 @@ async function run() {
     p_audit_source: 'borrower',
     p_audit_idempotency_key: 'staging-idem-001',
     p_audit_diff: { loan_purpose: { old: null, new: 'Purchase' } },
+    p_notify_message: 'Staging test alert',
+    p_notify_recipients: ['1750758657', '8634157536'],
   });
   assert(!rpcWinErr, 'RPC call succeeded');
   assert(rpcWin === 1, 'RPC returned 1 (CAS success)');
+
+  // Notification intent committed atomically
+  const { data: notifs } = await client.from('case_notifications').select('*').eq('case_id', CASE_ID).eq('status', 'pending');
+  assert(notifs?.length === 2, 'Two notification rows committed atomically with case+audit');
+  assert(notifs?.[0]?.message === 'Staging test alert', 'Notification message correct');
+  assert(notifs?.[0]?.recipient === '1750758657', 'Byron notification present');
+  assert(notifs?.[1]?.recipient === '8634157536', 'Chris notification present');
 
   // Verify case updated
   const { data: afterWin } = await client.from('case_completion').select('version, fields').eq('case_id', CASE_ID).single();
@@ -132,7 +141,7 @@ async function run() {
   assert(audits1?.length === 1, 'Exactly 1 audit row');
   assert(audits1?.[0]?.idempotency_key === 'staging-idem-001', 'Audit has correct idempotency_key');
 
-  // CAS conflict: same expected_version=1, should return 0
+  // CAS conflict: same expected_version=1, should return 0 AND commit no notifications
   const { data: rpcLose, error: rpcLoseErr } = await client.rpc('patch_case_atomic', {
     p_case_id: CASE_ID,
     p_expected_version: 1,  // stale
@@ -145,9 +154,15 @@ async function run() {
     p_audit_source: 'attacker',
     p_audit_idempotency_key: 'staging-idem-002',
     p_audit_diff: { exit_strategy: { old: 'Refinance', new: 'SHOULD NOT PERSIST' } },
+    p_notify_message: 'SHOULD NOT EXIST',
+    p_notify_recipients: ['9999999999'],
   });
   assert(!rpcLoseErr, 'Conflict RPC call did not error');
   assert(rpcLose === 0, 'RPC returned 0 (CAS conflict)');
+
+  // Conflict must not have created any notification for the attacker recipient
+  const { data: attackerNotifs } = await client.from('case_notifications').select('*').eq('case_id', CASE_ID).eq('recipient', '9999999999');
+  assert(attackerNotifs?.length === 0, 'Conflict creates zero notification rows');
 
   // Verify no orphan audit from the loser
   const { data: audits2 } = await client.from('case_completion_audit').select('*').eq('case_id', CASE_ID);
@@ -169,7 +184,11 @@ async function run() {
   // Actually: the RPC will try to INSERT and hit the unique constraint, causing rollback
   // So the case version should NOT have changed to 3
   const { data: afterReplay } = await client.from('case_completion').select('version').eq('case_id', CASE_ID).single();
-  assert(afterReplay?.version === 2, 'Idempotency: duplicate key rolled back CAS + audit atomically');
+  assert(afterReplay?.version === 2, 'Idempotency: duplicate key rolled back CAS + audit + notifications atomically');
+
+  // Notification count unchanged after replay rollback — still exactly 2 from the original write
+  const { data: notifsAfterReplay } = await client.from('case_notifications').select('id').eq('case_id', CASE_ID);
+  assert(notifsAfterReplay?.length === 2, 'Replay rollback creates zero additional notification rows');
 
   // ── 5. Notification outbox ─────────────────────────────────────────
   console.log('5. Notification outbox: enqueue, process, retry, starvation');
@@ -237,7 +256,7 @@ async function run() {
     p_case_id: CASE_ID, p_expected_version: 2, p_new_version: 3,
     p_fields: afterConflict.fields, p_updated_at: now, p_updated_by: 'service-role-test',
     p_broker_only: null, p_audit_actor: 'test', p_audit_source: 'test',
-    p_audit_idempotency_key: 'staging-rls-test',
+    p_audit_idempotency_key: 'staging-rls-' + Date.now(),
     p_audit_diff: {},
   });
   assert(rlsCheck === 1, 'Service-role can write (RLS bypassed for service role)');
