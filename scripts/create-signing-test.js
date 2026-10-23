@@ -27,7 +27,7 @@ else {
  const {data:caseRow,error:caseError}=await db.from('case_completion').select('case_id').eq('case_id',manifest.case_id).single();
  if(caseError||!caseRow)throw Error('Test case unavailable');
  // Verify migration exists before any provider create. This does not prove hosted acceptance.
- const {error:schemaError}=await db.from('case_signing_documents').select('id,packet_manifest').limit(1);
+ const {error:schemaError}=await db.from('case_signing_documents').select('id,packet_manifest,signers').limit(1);
  if(schemaError)throw Error('Signing migration unavailable');
  const journalDir=resolve(root,'signing-operations');await mkdir(journalDir,{recursive:true,mode:0o700});
  const journal=join(journalDir,prepared.packetHash+'.json');
@@ -35,7 +35,7 @@ else {
  // An existing reserved record deliberately blocks retry after timeout/crash. Reconcile first.
  const request=await submitPrepared({prepared,config:cfg});
  await writeFile(journal,JSON.stringify({state:'provider_created',request,packet:prepared.entries}),{mode:0o600});
- const {error}=await db.from('case_signing_documents').insert({case_id:manifest.case_id,request_id:request.signature_request_id,signature_id:request.signatures[0].signature_id,signer_email:prepared.signer.email,client_id:cfg.clientId,kind:prepared.entries[0].kind,template_sha256:prepared.packetHash,packet_manifest:prepared.entries,approved:true,test_mode:true});
+ const {error}=await db.from('case_signing_documents').insert({case_id:manifest.case_id,request_id:request.signature_request_id,signature_id:request.signatures[0].signature_id,signer_email:prepared.signer.email,signers:request.signatures.map(s=>({signature_id:s.signature_id,email:s.signer_email_address})),client_id:cfg.clientId,kind:prepared.entries[0].kind,template_sha256:prepared.packetHash,packet_manifest:prepared.entries,approved:true,test_mode:true});
  if(error)throw Error('Request exists; register saved journal without recreating');
  await writeFile(journal,JSON.stringify({state:'registered',request_id:request.signature_request_id,packet:prepared.entries}),{mode:0o600});
  console.log('Test request registered; no borrower send or production change.');
