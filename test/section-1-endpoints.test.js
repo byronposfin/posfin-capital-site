@@ -96,6 +96,8 @@ function createMockSupabase() {
     const chain = {
       update(data) { updateData = data; return chain; },
       eq(col, val) { filters.push(r => r[col] === val); return chain; },
+      in(col, vals) { filters.push(r => vals.includes(r[col])); return chain; },
+      lt(col, val) { filters.push(r => r[col] < val); return chain; },
       select() { doSelect = true; return chain; },
       then(resolve) {
         const matched = [];
