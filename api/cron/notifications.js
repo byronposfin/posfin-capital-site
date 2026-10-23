@@ -12,9 +12,14 @@ import { processOutbox } from '../../lib/notify.js';
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Verify cron secret — Vercel sets this header on scheduled invocations
+  // Verify cron secret — required, not optional. Vercel sets the
+  // Authorization header on scheduled invocations. Without CRON_SECRET
+  // configured, the endpoint refuses all requests (fail closed).
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
+  if (!cronSecret) {
+    return res.status(503).json({ error: 'CRON_SECRET not configured' });
+  }
+  if (req.headers.authorization !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
