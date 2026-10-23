@@ -118,10 +118,11 @@ comment on table case_verification_codes is '6-digit verification codes. Hash on
 create table if not exists case_notifications (
   id                bigint generated always as identity primary key,
   case_id           text not null references case_completion(case_id),
+  event_version     integer not null,                          -- the case version that triggered this notification (immutable)
   channel           text not null,                             -- 'telegram'
   recipient         text not null,                             -- chat_id or email
   message           text not null,
-  status            text not null default 'pending',           -- pending, delivered, failed
+  status            text not null default 'pending',           -- pending, delivered, failed, processing, exhausted
   attempts          integer not null default 0,
   max_attempts      integer not null default 3,
   last_attempt_at   timestamptz,
@@ -140,13 +141,14 @@ create index if not exists notifications_case_idx
 comment on table case_notifications is 'Durable notification outbox. Worker/cron processes pending and retries failed entries.';
 
 -- ============================================================
--- 8. Notification event identity — prevents duplicate intent on replay
+-- 8. Notification event identity — immutable, prevents duplicate on replay
 -- ============================================================
+-- Uses case_id + event_version + channel + recipient as the immutable
+-- identity. These fields never change after insertion, so ON CONFLICT
+-- DO NOTHING correctly prevents duplicates regardless of the notification's
+-- delivery status (pending/delivered/failed/exhausted).
 create unique index if not exists notifications_event_identity_idx
-  on case_notifications (case_id, channel, recipient, status, attempts)
-  where status = 'pending' and attempts = 0;
--- Note: the unique index prevents INSERT of an identical pending row for the
--- same case+channel+recipient. ON CONFLICT DO NOTHING makes replay safe.
+  on case_notifications (case_id, event_version, channel, recipient);
 
 -- ============================================================
 -- 9. Atomic CAS update + audit + notification intent
@@ -205,8 +207,8 @@ begin
   -- makes this safe on replay (duplicate pending row is a no-op).
   if p_notify_message is not null and p_notify_recipients is not null then
     foreach r in array p_notify_recipients loop
-      insert into case_notifications (case_id, channel, recipient, message, status, attempts, max_attempts)
-      values (p_case_id, 'telegram', r, p_notify_message, 'pending', 0, 3)
+      insert into case_notifications (case_id, event_version, channel, recipient, message, status, attempts, max_attempts)
+      values (p_case_id, p_new_version, 'telegram', r, p_notify_message, 'pending', 0, 3)
       on conflict do nothing;
     end loop;
   end if;

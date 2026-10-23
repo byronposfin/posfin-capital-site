@@ -190,13 +190,25 @@ async function run() {
   const { data: notifsAfterReplay } = await client.from('case_notifications').select('id').eq('case_id', CASE_ID);
   assert(notifsAfterReplay?.length === 2, 'Replay rollback creates zero additional notification rows');
 
+  // Dedup after delivery: mark existing notifications as delivered, then
+  // try to re-insert the same event identity — should be blocked by unique index
+  await client.from('case_notifications').update({ status: 'delivered' }).eq('case_id', CASE_ID).eq('event_version', 2);
+  const { data: dedupAttempt, error: dedupErr } = await client.from('case_notifications').insert({
+    case_id: CASE_ID, event_version: 2, channel: 'telegram', recipient: '1750758657',
+    message: 'Duplicate attempt', status: 'pending', attempts: 0, max_attempts: 3,
+  }).select('id');
+  // Unique index should block this — Supabase returns error or empty data
+  const dedupBlocked = dedupErr || !dedupAttempt || dedupAttempt.length === 0;
+  assert(dedupBlocked, 'Immutable unique index blocks duplicate after delivery (not just while pending)');
+
   // ── 5. Notification outbox ─────────────────────────────────────────
   console.log('5. Notification outbox: enqueue, process, retry, starvation');
 
   // Enqueue
+  // Use event_version=99 so these don't collide with the RPC-inserted rows (event_version=2)
   await client.from('case_notifications').insert([
-    { case_id: CASE_ID, channel: 'telegram', recipient: '1750758657', message: 'Test alert 1', status: 'pending', attempts: 0, max_attempts: 3 },
-    { case_id: CASE_ID, channel: 'telegram', recipient: '8634157536', message: 'Test alert 2', status: 'pending', attempts: 0, max_attempts: 3 },
+    { case_id: CASE_ID, event_version: 99, channel: 'telegram', recipient: '1750758657', message: 'Test alert 1', status: 'pending', attempts: 0, max_attempts: 3 },
+    { case_id: CASE_ID, event_version: 99, channel: 'telegram', recipient: '8634157536', message: 'Test alert 2', status: 'pending', attempts: 0, max_attempts: 3 },
   ]);
   const { data: enqueued } = await client.from('case_notifications').select('*').eq('case_id', CASE_ID).eq('status', 'pending');
   assert(enqueued?.length === 2, 'Two notifications enqueued as pending');
@@ -214,9 +226,9 @@ async function run() {
     await client.from('case_notifications').update({ attempts: 3 }).eq('id', row.id);
   }
 
-  // Add a new pending notification
+  // Add a new pending notification (event_version=100 to avoid unique conflict)
   await client.from('case_notifications').insert({
-    case_id: CASE_ID, channel: 'telegram', recipient: '1750758657',
+    case_id: CASE_ID, event_version: 100, channel: 'telegram', recipient: '1750758657',
     message: 'Fresh alert after exhaustion', status: 'pending', attempts: 0, max_attempts: 3,
   });
 
