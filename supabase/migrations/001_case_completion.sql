@@ -209,7 +209,7 @@ begin
     foreach r in array p_notify_recipients loop
       insert into case_notifications (case_id, event_version, channel, recipient, message, status, attempts, max_attempts)
       values (p_case_id, p_new_version, 'telegram', r, p_notify_message, 'pending', 0, 3)
-      on conflict do nothing;
+      on conflict (case_id, event_version, channel, recipient) do nothing;
     end loop;
   end if;
 
