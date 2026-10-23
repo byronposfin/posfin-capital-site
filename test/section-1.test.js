@@ -425,6 +425,80 @@ describe('Section 1 — case_completion and SmartLink', () => {
       // mock limitation — real dedup is verified in staging-verify.js.
       assert.ok(countAfter >= countBefore, 'Mock may add a row; real DB deduplicates via unique index');
     });
+
+    it('replay with failed notification repair throws, does not return replayed:true', async () => {
+      const client = createMockSupabase();
+      client._tables.case_completion.push({
+        case_id: 'CASE-REPAIR-FAIL', version: 1, fields: {}, sections: {}, broker_only: {},
+        updated_at: new Date().toISOString(), updated_by: 'system',
+      });
+
+      // First write succeeds
+      await patchCase(client, 'CASE-REPAIR-FAIL', {
+        expectedVersion: 1,
+        fields: { exit_strategy: 'Sale' },
+        source: 'borrower', actor: 'borrower',
+        idempotencyKey: 'repair-fail-001',
+        notifyMessage: 'Alert',
+        notifyRecipients: ['1750758657'],
+      });
+
+      // Simulate legacy gap: remove notifications
+      client._tables.case_notifications.length = 0;
+
+      // Sabotage the insert: make the mock return an error for case_notifications.
+      // patchCase calls .insert({...}) without .select(), so the error must be
+      // on the base thenable, not behind .select().
+      const originalFrom = client.from.bind(client);
+      client.from = (table) => {
+        if (table === 'case_notifications') {
+          return {
+            ...originalFrom(table),
+            insert: () => ({
+              then: (r) => r({ data: null, error: { code: 'PGRST301', message: 'Simulated DB outage' } }),
+              select: () => ({ then: (r) => r({ data: null, error: { code: 'PGRST301', message: 'Simulated DB outage' } }) }),
+            }),
+          };
+        }
+        return originalFrom(table);
+      };
+
+      // Replay should throw, not silently return replayed:true
+      await assert.rejects(
+        () => patchCase(client, 'CASE-REPAIR-FAIL', {
+          expectedVersion: 1,
+          fields: { exit_strategy: 'Ignored' },
+          source: 'borrower', actor: 'borrower',
+          idempotencyKey: 'repair-fail-001',
+          notifyMessage: 'Alert',
+          notifyRecipients: ['1750758657'],
+        }),
+        (err) => {
+          assert.ok(err.message.includes('Replay notification repair failed'), `Expected repair failure error, got: ${err.message}`);
+          return true;
+        },
+        'Replay must throw on repair failure, not return 200/replayed'
+      );
+
+      // Restore original client
+      client.from = originalFrom;
+
+      // Healthy retry after repair failure should succeed
+      const retry = await patchCase(client, 'CASE-REPAIR-FAIL', {
+        expectedVersion: 1,
+        fields: { exit_strategy: 'Ignored' },
+        source: 'borrower', actor: 'borrower',
+        idempotencyKey: 'repair-fail-001',
+        notifyMessage: 'Alert',
+        notifyRecipients: ['1750758657'],
+      });
+      assert.equal(retry.ok, true);
+      assert.equal(retry.replayed, true);
+
+      // Notification now exists
+      const notifs = client._tables.case_notifications.filter(n => n.case_id === 'CASE-REPAIR-FAIL');
+      assert.equal(notifs.length, 1, 'Healthy retry restores notification');
+    });
   });
 
   // ── Gap engine ─────────────────────────────────────────────────────
