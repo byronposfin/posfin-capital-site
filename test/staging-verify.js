@@ -238,8 +238,14 @@ async function run() {
   // The audit unique constraint violation should roll back everything
   const { data: afterFailCase } = await client.from('case_completion').select('version').eq('case_id', CASE_ID).single();
   assert(afterFailCase.version === preFailVersion, 'Audit constraint failure rolls back case update');
+  const { data: failAudits } = await client.from('case_completion_audit').select('idempotency_key').eq('case_id', CASE_ID).eq('version', preFailVersion + 1);
+  assert(failAudits?.length === 0, 'Audit constraint failure rolls back audit insert at new version');
   const { data: failNotifs } = await client.from('case_notifications').select('id').eq('case_id', CASE_ID).eq('event_version', preFailVersion + 1);
   assert(failNotifs?.length === 0, 'Audit constraint failure also rolls back notification insert');
+  // Note: this test uses audit idempotency_key collision to trigger the failure.
+  // A notification-specific failure cannot trigger rollback because ON CONFLICT
+  // DO NOTHING silently skips rather than erroring. This is by design: duplicate
+  // notifications are expected on replay and must not cause transaction failure.
 
   // Sequential updates at different versions must each produce distinct notifications.
   // Version 2 notifications already exist (from the winning RPC above). Now do a
