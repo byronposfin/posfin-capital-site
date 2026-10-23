@@ -151,6 +151,12 @@ create unique index if not exists notifications_event_identity_idx
 -- ============================================================
 -- 9. Atomic CAS update + audit + notification intent
 -- ============================================================
+-- STANDING RULE: always DROP prior overloads by exact signature before
+-- CREATE OR REPLACE, to prevent PostgREST ambiguity when parameter
+-- counts change. This avoids the 11-vs-13 parameter collision that
+-- required manual intervention on staging.
+drop function if exists patch_case_atomic(text, integer, integer, jsonb, timestamptz, text, jsonb, text, text, text, jsonb);
+
 -- Wraps case update, audit insert AND notification intent insert in a
 -- single transaction. If ANY of these fails, ALL roll back. Returns
 -- the number of rows updated (0 = version conflict, 1 = success).
