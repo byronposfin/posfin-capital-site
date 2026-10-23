@@ -195,7 +195,7 @@ export default async function handler(req, res) {
       if (error) throw error;
       signing = '<section class="sl-batch"><h2>Your documents</h2>' + (documents || []).map(d =>
         '<p>' + esc(d.kind) + ' — ' + esc(d.status.replace(/_/g,' ')) +
-        (d.status === 'awaiting_signature' ? ' <a href="/signing-test.html#token=' + encodeURIComponent(rawToken) + '&amp;document=' + encodeURIComponent(d.id) + '">Review and sign test document</a>' : '') + '</p>').join('') + '</section>';
+        (d.status === 'awaiting_signature' ? ' <a href="/signing-test.html#token=' + encodeURIComponent(rawToken) + '&amp;document=' + encodeURIComponent(d.id) + '">Review and sign test document</a>' : d.status === 'archived' ? ' <a href="/signing-test.html#token=' + encodeURIComponent(rawToken) + '&amp;document=' + encodeURIComponent(d.id) + '">Download signed document</a>' : '') + '</p>').join('') + '</section>';
     }
     return res.status(200).send(questionnaireHTML(caseData, gaps, rawToken, signing));
 

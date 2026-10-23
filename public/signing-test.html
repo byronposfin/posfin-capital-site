@@ -1,14 +1,39 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Posfin test signing</title></head><body>
-<h1>Test document signing</h1><p id="status">Open this page from your verified private case link.</p><button id="sign">Open document</button>
+<h1>Test document signing</h1><p id="status">Open this page from your verified private case link.</p><button id="sign">Open document</button><button id="download" hidden>Download signed PDF</button>
 <script type="module">
-import HelloSign from 'https://cdn.skypack.dev/hellosign-embedded@2.12.3';
 const status=document.getElementById('status'), button=document.getElementById('sign');
+const args=new URLSearchParams(location.hash.slice(1));
+const body={token:args.get('token'),documentId:args.get('document')};
+const download=document.getElementById('download');
+async function documentRequest(extra={}) {
+ const res=await fetch('/api/signing/document',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...extra})});
+ if(!res.ok)throw new Error('Document access unavailable. Return to your private case link.');
+ return res;
+}
+let attempts=0, timer;
+async function refresh(){
+ try {
+  const d=await (await documentRequest()).json();
+  download.hidden=!d.downloadable;
+  button.hidden=d.status!=='awaiting_signature';
+  if(d.downloadable){status.textContent='Signing complete. Your signed PDF is ready.';return;}
+  if(d.status==='declined'){status.textContent='This signing request was declined.';return;}
+  if(++attempts<60)timer=setTimeout(refresh,5000);
+  else status.textContent='Confirmation is still pending. Return to this page to check again.';
+ } catch(e){status.textContent=e.message;}
+}
+download.onclick=async()=>{download.disabled=true;try{
+ const blob=await (await documentRequest({download:true})).blob();
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='signed-document.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}catch(e){status.textContent=e.message;}finally{download.disabled=false;}};
+addEventListener('pagehide',()=>clearTimeout(timer));
+refresh();
 button.onclick=async()=>{button.disabled=true;try{
  const args=new URLSearchParams(location.hash.slice(1));
  const res=await fetch('/api/signing/link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:args.get('token'),documentId:args.get('document')})});
  if(!res.ok)throw new Error('Please return to your case link and verify access.');
- const data=await res.json();const client=new HelloSign({clientId:data.clientId});
- client.on('sign',()=>{status.textContent='Signature submitted. Completion and document storage are being confirmed.';});
+ const data=await res.json();const {default:HelloSign}=await import('https://cdn.skypack.dev/hellosign-embedded@2.12.3');const client=new HelloSign({clientId:data.clientId});
+ client.on('sign',()=>{status.textContent='Signature submitted. Completion and document storage are being confirmed.';clearTimeout(timer);attempts=0;refresh();});
  client.open(data.signUrl,{skipDomainVerification:true}); // staging-only server gate; not production configuration
 }catch(e){status.textContent=e.message;}finally{button.disabled=false;}};
 </script></body></html>
