@@ -686,3 +686,24 @@ describe('Borrower page — GET /s/:token', () => {
     assert.ok(metaSection.includes('noindex'));
   });
 });
+
+
+describe('Interactive intake privacy and feature gate', () => {
+ let client;
+ beforeEach(() => { client=createMockSupabase();setClient(client);process.env.SMARTLINK_TOKEN_SECRET='test-secret'; });
+ it('excludes unflagged staff/unknown fields from borrower GET',async()=>{
+  seedCase(client,'PRIVATE',{first_name:{value:'Alex'},proc_fee:{value:2000},assigned_broker:{value:'Chris'},internal_secret:{value:'private'}});
+  const {raw}=seedToken(client,'PRIVATE'); const res=mockRes();
+  await borrowerHandler(authedReq('GET',raw,'PRIVATE'),res);
+  assert.equal(res._status,200); assert.deepEqual(Object.keys(res._json.fields),['first_name']);
+ });
+ it('interactive page is staging opt-in and retains access gate',async()=>{
+  seedCase(client,'UI',{postcode:{value:'SW1A1AA'}}); const {raw}=seedToken(client,'UI');
+  process.env.SMARTLINK_INTERACTIVE='staging';
+  try {
+   const gate=mockRes(); await pageHandler(mockReq({query:{token:raw}}),gate);assert.equal(gate._status,403);
+   const page=mockRes(); await pageHandler(authedReq('GET',raw,'UI'),page);
+   assert.equal(page._status,200);assert.match(page._html,/smartlink-questionnaire.js/);
+  } finally {delete process.env.SMARTLINK_INTERACTIVE;}
+ });
+});
