@@ -32,8 +32,8 @@ function borrowerView(caseData, product) {
   const gaps = analyseGaps(caseData, product || 'main_loan');
   const borrowerFields = {};
   for (const [key, entry] of Object.entries(caseData.fields || {})) {
-    // Exclude broker-only fields from borrower view
-    if (entry.source === 'broker' && entry._broker_only) continue;
+    // Strict borrower allowlist: source flags are not an access boundary.
+    if (!borrowerAllowlist(product || 'main_loan').has(key) || entry?._broker_only) continue;
     borrowerFields[key] = { value: entry.value, confirmed: !!entry.confirmed_at };
   }
   return {

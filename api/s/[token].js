@@ -100,6 +100,13 @@ function renderField(f, currentValue) {
 }
 
 function questionnaireHTML(caseData, gaps, token, signing = '') {
+  if (process.env.SMARTLINK_INTERACTIVE === 'staging') {
+    return page('Posfin SmartLink', `${signing}
+<div id="smartlink-questionnaire" class="sl-batch" data-endpoint="/api/case/${esc(encodeURIComponent(token))}">
+<h1>Your next steps</h1><p role="status">Loading your saved information…</p>
+</div><script type="module" src="/smartlink-questionnaire.js"></script>`);
+  }
+
   const sectionPills = Object.entries(gaps.sections).map(([name, s]) =>
     `<span class="sl-section-pill ${s.status}">${esc(name)} ${s.answered}/${s.total}</span>`
   ).join('');
