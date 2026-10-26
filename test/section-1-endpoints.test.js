@@ -24,7 +24,7 @@ await import('../factfind-core.js');
 import { setClient, generateToken, hashToken } from '../lib/supabase.js';
 import { signSession } from '../lib/postcode-gate.js';
 import borrowerHandler from '../api/case/[token].js';
-import staffTokenHandler from '../api/case/[id]/token.js';
+import staffTokenHandler from '../api/case/[token]/token.js';
 import mcpHandler from '../api/case-completion.js';
 import pageHandler from '../api/s/[token].js';
 
