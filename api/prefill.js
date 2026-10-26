@@ -1,7 +1,10 @@
 import crypto from 'crypto';
 import { google } from 'googleapis';
+import { guardSheets, previewWriteDenial, resolveWriteTarget } from '../lib/sheets-guard.js';
 
 const SHEET_ID = '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
+// Production keeps SHEET_ID; Preview resolves to the approved staging sheet or throws.
+const sheetTarget = () => resolveWriteTarget(SHEET_ID);
 const TAB = 'Prefill_Tokens';
 const HEADERS = [
   'Token','Created_At','Expires_At','Status','First_Name','Mobile','Email','Source_Channel','Note','Case_Ref','Route_Hint','Resolved_At','Last_Submitted_At'
@@ -35,26 +38,26 @@ async function sheetsClient() {
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
-  return google.sheets({ version: 'v4', auth });
+  return guardSheets(google.sheets({ version: 'v4', auth }));
 }
 
 async function ensurePrefillSheet(sheets) {
   const meta = await sheets.spreadsheets.get({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     fields: 'sheets(properties(sheetId,title,gridProperties(rowCount,columnCount)))',
   });
   const existing = (meta.data.sheets || []).find(s => s.properties?.title === TAB);
   if (!existing) {
     await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: sheetTarget(),
       requestBody: { requests: [{ addSheet: { properties: { title: TAB, gridProperties: { rowCount: 1000, columnCount: HEADERS.length } } } }] },
     });
   }
-  const current = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'${TAB}'!A1:${columnName(HEADERS.length)}1` });
+  const current = await sheets.spreadsheets.values.get({ spreadsheetId: sheetTarget(), range: `'${TAB}'!A1:${columnName(HEADERS.length)}1` });
   const firstRow = current.data.values?.[0] || [];
   if (HEADERS.some((h, i) => firstRow[i] !== h)) {
     await sheets.spreadsheets.values.update({
-      spreadsheetId: SHEET_ID,
+      spreadsheetId: sheetTarget(),
       range: `'${TAB}'!A1:${columnName(HEADERS.length)}1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [HEADERS] },
@@ -64,14 +67,14 @@ async function ensurePrefillSheet(sheets) {
 
 async function getRows(sheets) {
   await ensurePrefillSheet(sheets);
-  const r = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `'${TAB}'!A:${columnName(HEADERS.length)}` });
+  const r = await sheets.spreadsheets.values.get({ spreadsheetId: sheetTarget(), range: `'${TAB}'!A:${columnName(HEADERS.length)}` });
   return r.data.values || [];
 }
 
 async function appendTokenRow(sheets, row) {
   await ensurePrefillSheet(sheets);
   await sheets.spreadsheets.values.append({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'${TAB}'!A1`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
@@ -83,7 +86,7 @@ async function stamp(sheets, rowNumber, header, value) {
   const idx = HEADERS.indexOf(header);
   if (idx < 0) return;
   await sheets.spreadsheets.values.update({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'${TAB}'!${columnName(idx + 1)}${rowNumber}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [[value]] },
@@ -109,6 +112,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Prefill-Admin-Token');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+  // GET writes too (tab/header bootstrap and Resolved_At stamp), so gate every method.
+  const denied = previewWriteDenial();
+  if (denied) { res.status(503).json({ error: 'Sheets writes are disabled in this Preview deployment', reason: denied }); return; }
 
   try {
     const sheets = await sheetsClient();
