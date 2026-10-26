@@ -134,6 +134,10 @@
     {
       "source": "/s/:token",
       "destination": "/api/s/:token"
+    },
+    {
+      "source": "/smartlink-questionnaire.js",
+      "destination": "/public/smartlink-questionnaire.js"
     }
   ],
   "crons": [
