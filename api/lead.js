@@ -1,3 +1,4 @@
+import {stagingTestDelivery} from '../lib/staging-test-delivery.js';
 import {saveIntake, sheetId} from '../lib/clean-intake.js';
 import {validToken, tokenFor} from '../lib/scorecard-access.js';
 /**
@@ -768,6 +769,10 @@ export default async function handler(req, res) {
     const scorecardUrl = scorecardLink(BASE_URL, data.deal_ref);
     const saved=await saveIntake(sheets,id,submitted,product,scorecardUrl,ref=>validToken(ref,submitted.resume_token));
     const owner=explicitBrokerOwner(data);
+    if(process.env.FACTFIND_TEST_DELIVERY==='byron-only'){
+      saved.testDelivery=await stagingTestDelivery(data,saved,scorecardUrl);
+      return res.status(200).json({...saved,resumeToken:tokenFor(saved.leadRef)});
+    }
     if(saved.declined || saved.partial || !saved.firstCompletion) return res.status(200).json({...saved,resumeToken:tokenFor(saved.leadRef)});
 
     // ── Telegram broker alert ──────────────────────────────────────────
