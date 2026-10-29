@@ -496,6 +496,14 @@
 
 
 <!-- Consent uses the native React-controlled checkbox. Do not insert a proxy control. -->
+<style id="posfin-native-consent-layout">
+  label:has(> input[type="checkbox"]) > input[type="checkbox"] {
+    width:22px; height:22px; min-width:22px; flex-shrink:0;
+  }
+  label:has(> input[type="checkbox"]) > span {
+    min-width:0; flex-shrink:1 !important; white-space:normal; overflow-wrap:anywhere;
+  }
+</style>
 
 <script id="posfin-scorecard-contrast-hotfix-20260923">
 (function(){
