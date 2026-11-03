@@ -1,10 +1,23 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {money,calculate,renderScorecard} from '../lib/ff-finance.js';import {validate} from '../lib/ff-schema.js';
 const base={loan_amount:200000,property_value:700000,first_charge_balance:100000,arrears:'Yes',first_charge_arrears_amount:5000,arrears_included_in_balance:'Balance includes arrears',second_charges:'Yes',second_charge_balance:40000,charge_position:'Second charge — current mortgage stays in place',redemption_structure:'Add on top of requested amount',legal_buffer:'2000',contingency_buffer:'0'};
-test('45k redemptions on top / within 200k; legal and contingency separate',()=>{
- let c=calculate(base);assert.equal(c.mandatory,45000);assert.equal(c.cash,200000);assert.equal(c.facility,247000);assert.equal(c.retainedFirst,95000);
- c=calculate({...base,redemption_structure:'Deduct within requested amount',contingency_buffer:'5000'});assert.equal(c.cash,155000);assert.equal(c.facility,207000);assert.equal(c.mandatory,45000);
- c=calculate({...base,contingency_buffer:'10000'});assert.equal(c.facility,257000);
+test('declared redemptions remain itemised, never derive available cash/gross/net/LTV',()=>{
+ for(const loan_basis of ['Net funds I want to receive','Gross borrowing amount','Not sure — discuss on call',undefined])
+ for(const redemption_structure of ['Add on top of requested amount','Deduct within requested amount']){
+  const a={...base,loan_basis,redemption_structure,contingency_buffer:'5000'};const c=calculate(a);
+  assert.equal(c.mandatory,45000);assert.equal(c.cash,null);assert.equal(c.facility,null);assert.equal(c.ltv,null);
+  const html=renderScorecard(a);assert.match(html,/£200,000/);assert.match(html,/£45,000/);assert.match(html,/Lender terms still required/);
+  assert.doesNotMatch(html,/£207,000|£155,000|£252,000|Estimated cash|Estimated funding requirement|Indicative net LTV/);
+  if(loan_basis)assert.ok(html.includes(loan_basis));else assert.match(html,/Not yet specified/);
+ }
+});
+test('request basis persists unchanged, unsupported lender terms are never inferred or trusted',()=>{
+ for(const loan_basis of ['Net funds I want to receive','Gross borrowing amount','Not sure — discuss on call']){
+  const clean=validate(JSON.parse(JSON.stringify({...base,loan_basis,gross_loan:207000,net_advance:155000})),false,false).clean;
+  assert.equal(clean.loan_basis,loan_basis);assert.equal(clean.gross_loan,undefined);assert.equal(clean.net_advance,undefined);
+  assert.equal(calculate(clean).cash,null);assert.equal(calculate(clean).facility,null);
+ }
+ assert.equal(validate(base,false,false).clean.loan_basis,undefined);
 });
 test('arrears inside/outside mortgage counted once, first mortgage replacement explicit',()=>{
  assert.equal(calculate({...base,arrears_included_in_balance:'Balance excludes arrears'}).retainedFirst,100000);
@@ -36,5 +49,5 @@ test('negative/range debt rejected, not silently converted; insufficient request
 test('explicit no mortgage supersedes stale arrears consistently with persisted normalisation',()=>{
  const a={...base,first_charge_status:'No mortgage',second_charges:'No'};
  assert.deepEqual(calculate(a),calculate(validate(a,false,false).clean));assert.equal(calculate(a).mandatory,0);
- assert.match(renderScorecard(a),/Estimated funding requirement/);assert.doesNotMatch(renderScorecard(a),/Indicative facility/);
+ assert.match(renderScorecard(a),/Your legal allowance choice/);assert.doesNotMatch(renderScorecard(a),/Estimated funding requirement|Indicative facility/);
 });

@@ -19,7 +19,7 @@ import crypto from "node:crypto";
 import { drainAlerts } from "../lib/ff-alert-outbox.js";
 import { validate } from "../lib/ff-schema.js";
 
-export const VERSION = "uk-v003-preview-waterfall";
+export const VERSION = "uk-v004-declared-requirements";
 export const CONSENT_VERSION = "uk-consent-v1-2026-11-03"; // bump whenever the consent wording on /fact-find changes
 const BACKENDS = {
   leads:    { prefix: "web_lead_", ref: "POSFIN-WEB-",  test: false, meta: true, testRef: "TEST-WEB-" },

@@ -1,5 +1,5 @@
-import { money, renderScorecard } from "/lib/ff-finance.js";
-import * as S from "/lib/ff-schema.js";
+import { money, renderScorecard } from "/lib/ff-finance.js?v=20261104-lender-gate";
+import * as S from "/lib/ff-schema.js?v=20261104-lender-gate";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
 if(!a){a={landing_path:location.pathname,referrer:document.referrer&&new URL(document.referrer).host!==location.host?document.referrer:""};}
@@ -18,7 +18,7 @@ const STEPS = [
   ["asset_type","Security type *",{}],["residential_type","Residential type",{}],
   ["security_address","Security address (first line)",{full:1,ph:"e.g. 1 High Street"}],["security_postcode","Security postcode *",{ph:"SW1A 1AA"}],["property_value","Estimated property value *",{ph:"£500,000"}]]},
  {t:"The loan", s:"Amount, purpose and how soon you need the funds.", f:[
-  ["loan_amount","Loan amount *",{ph:"£250,000"}],["purpose","Purpose *",{}],["timescale","When do you need the funds? *",{}],["charge_position","Charge position *",{}],
+  ["loan_amount","Amount requested *",{ph:"£250,000"}],["loan_basis","What does this amount mean?",{full:1}],["purpose","Purpose *",{}],["timescale","When do you need the funds? *",{}],["charge_position","Charge position *",{}],
   ["exit_plan","How will the loan be repaid? (your exit)",{full:1,ph:"e.g. sale of the property, or refinance"}]]},
  {t:"Existing borrowing", s:"Any mortgages or charges already in place.", f:[
   ["first_charge_lender","First-charge lender *",{ph:"Lender name, or \u201cNo mortgage\u201d"}],["first_charge_balance","First-charge balance",{ph:"£150,000"}],
@@ -29,8 +29,8 @@ const STEPS = [
   ["redemption_structure","Mandatory redemptions: within or on top of your request? *",{full:1}],
   ["first_charge_status","First-charge status",{}],["arrears","Any arrears?",{}],["second_charges","Any second charges?",{}],["restrictions","Any title restrictions?",{}]]},
  {t:"Credit & consent", s:"Your credit profile and the best time to contact you.", f:[
-  ["legal_buffer","Legal allowance — added separately *",{}],
-  ["contingency_buffer","Contingency — added separately *",{}],
+  ["legal_buffer","Your legal allowance choice *",{}],
+  ["contingency_buffer","Your contingency choice *",{}],
   ["panel_solicitor_opt_in","Solicitor preference *",{full:1}],
   ["credit_profile","Credit profile *",{}],["credit_events","Any credit or insolvency issues?",{}],["missed_payments","Missed mortgage payments in the last 12 months",{}],
   ["contact_pref","Best time to contact you",{}],["notes","Anything else (optional)",{full:1}],

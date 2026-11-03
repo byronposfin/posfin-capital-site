@@ -1,4 +1,4 @@
-import { renderScorecard } from "../lib/ff-finance.js";
+import { renderScorecard } from "../lib/ff-finance.js?v=20261104-lender-gate";
 // Staff dashboard for pipeline.web_leads. Uses ONLY the Supabase publishable key + the signed-in staff user's session.
 // All data access goes through SECURITY INVOKER RPCs (public.staff_*), so Row Level Security decides what each user sees.
 // No keys are stored in this file: the URL and publishable key come from GET /api/factfind?client=admin (env vars).
@@ -54,7 +54,7 @@ async function list() {
   $("#lcount").textContent = `${LIST.length} lead${LIST.length === 1 ? "" : "s"}${LIST.length >= 500 ? " (first 500, narrow the filters or export)" : ""}`;
   $("#rows").innerHTML = LIST.map(l => `<tr class="row ${CUR === l.id ? "sel" : ""}" data-id="${l.id}"><td>${uk(l.created_at)}</td><td>${esc(l.reference)}${l.is_test ? '<span class="tag">TEST</span>' : ""}${l.form_stage === "partial" ? '<span class="tag">partial</span>' : ""}${l.possible_duplicate_of ? '<span class="tag">dup?</span>' : ""}</td>
     <td><span class="pill ${l.status}">${LABEL[l.status]}</span></td><td>${esc(l.full_name)}</td><td>${esc(l.phone)}</td><td>${esc(l.purpose)}</td><td>${esc(l.security_postcode)}</td>
-    <td class="num">${money(l.loan_amount)}</td><td class="num">${l.ltv_pct ?? ""}</td><td>${esc([l.broker_tag, l.utm_source].filter(Boolean).join(" · ") || l.source)}</td><td>${l.notes_count || ""}</td></tr>`).join("") || `<tr><td colspan="11" class="muted">No leads match these filters.</td></tr>`;
+    <td class="num">${money(l.loan_amount)}</td><td class="num">Await lender terms</td><td>${esc([l.broker_tag, l.utm_source].filter(Boolean).join(" · ") || l.source)}</td><td>${l.notes_count || ""}</td></tr>`).join("") || `<tr><td colspan="11" class="muted">No leads match these filters.</td></tr>`;
   document.querySelectorAll("tr.row").forEach(tr => tr.onclick = () => detail(tr.dataset.id));
 }
 async function refresh() { try { await Promise.all([counts(), list()]); if (CUR) await detail(CUR); } catch (e) { alert(e.message); } }
@@ -65,7 +65,7 @@ async function detail(id) {
   const F = [["Status", `<span class="pill ${l.status}">${LABEL[l.status]}</span> · form ${esc(l.form_stage)}`], ["Created", uk(l.created_at)], ["Submitted", uk(l.submitted_at)], ["Contacted", uk(l.contacted_at)],
     ["Name", esc(l.full_name)], ["Phone", l.phone ? `<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>` : ""], ["Email", l.email ? `<a href="mailto:${esc(l.email)}">${esc(l.email)}</a>` : ""], ["Best time", esc(l.best_time_to_contact)],
     ["Borrower", esc(l.borrower_type)], ["Purpose", esc(l.purpose)], ["Property", esc(l.property_type)], ["Postcode", esc(l.security_postcode)],
-    ["Loan / value", `£${money(l.loan_amount)} / £${money(l.property_value)} · Request/value ${l.ltv_pct ?? "–"}% (not total secured LTV)`], ["Urgency", esc(l.urgency)], ["Charge", esc(l.charge_position)], ["Credit", esc(l.credit_profile)], ["Exit", esc(l.exit_strategy)],
+    ["Loan / value", `£${money(l.loan_amount)} / £${money(l.property_value)} · lender terms pending`], ["Urgency", esc(l.urgency)], ["Charge", esc(l.charge_position)], ["Credit", esc(l.credit_profile)], ["Exit", esc(l.exit_strategy)],
     ["Consent", l.contact_consent ? `Yes · ${uk(l.contact_consent_at)} · ${esc(l.consent_text_version)}` : "No"],
     ["Source", esc([l.source, l.broker_tag && "broker " + l.broker_tag, l.utm_source, l.utm_medium, l.utm_campaign].filter(Boolean).join(" · "))],
     ["Duplicate?", l.possible_duplicate_of ? "Same email or phone as an earlier lead (last 90 days)" : "No"]];
@@ -87,7 +87,7 @@ async function detail(id) {
 async function exportCsv() {
   const rows = await rpc("staff_web_leads", filters(2000));
   const cols = ["reference","status","form_stage","is_test","created_at","submitted_at","contacted_at","full_name","email","phone","best_time_to_contact","source","broker_tag","utm_source","utm_medium","utm_campaign",
-    "purpose","property_type","borrower_type","security_postcode","loan_amount","property_value","ltv_pct","urgency","charge_position","credit_profile","exit_strategy","contact_consent","contact_consent_at","consent_text_version","notes_count","possible_duplicate_of"];
+    "purpose","property_type","borrower_type","security_postcode","loan_amount","property_value","urgency","charge_position","credit_profile","exit_strategy","contact_consent","contact_consent_at","consent_text_version","notes_count","possible_duplicate_of"];
   // Prefix formula-looking cells so spreadsheets do not execute them (CSV injection guard).
   const cell = v => { let s = v == null ? "" : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
   const csv = [cols.join(","), ...rows.map(r => cols.map(c => cell(r[c])).join(","))].join("\r\n");
