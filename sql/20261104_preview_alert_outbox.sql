@@ -28,7 +28,8 @@ revoke all on pipeline.web_lead_alert_control,pipeline.web_lead_alert_outbox fro
 create function pipeline.web_lead_enqueue_preview_alert() returns trigger
 language plpgsql security definer set search_path='' as $$
 begin
- if new.is_test and new.form_stage='submitted' and new.reference ~ '^TEST-WEB-[A-Z2-9]{6}$' then
+ if new.is_test and new.form_stage='submitted' and new.reference ~ '^TEST-WEB-[A-Z2-9]{6}$'
+ and (tg_op='INSERT' or old.form_stage is distinct from 'submitted') then
   insert into pipeline.web_lead_alert_outbox(lead_id,reference) values(new.id,new.reference) on conflict(lead_id) do nothing;
  end if;
  return null;
