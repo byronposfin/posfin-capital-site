@@ -33,3 +33,8 @@ test('negative/range debt rejected, not silently converted; insufficient request
  for(const n of ['-5000','40000-50000'])assert.ok(validate({...base,second_charge_balance:n},false,false).errors.second_charge_balance);
  const c=calculate({...base,loan_amount:20000,redemption_structure:'Deduct within requested amount'});assert.equal(c.cash,null);assert.equal(c.facility,null);
 });
+test('explicit no mortgage supersedes stale arrears consistently with persisted normalisation',()=>{
+ const a={...base,first_charge_status:'No mortgage',second_charges:'No'};
+ assert.deepEqual(calculate(a),calculate(validate(a,false,false).clean));assert.equal(calculate(a).mandatory,0);
+ assert.match(renderScorecard(a),/Estimated funding requirement/);assert.doesNotMatch(renderScorecard(a),/Indicative facility/);
+});
