@@ -1,3 +1,4 @@
+import { money, renderScorecard } from "/lib/ff-finance.js";
 import * as S from "/lib/ff-schema.js";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
@@ -21,35 +22,46 @@ const STEPS = [
   ["exit_plan","How will the loan be repaid? (your exit)",{full:1,ph:"e.g. sale of the property, or refinance"}]]},
  {t:"Existing borrowing", s:"Any mortgages or charges already in place.", f:[
   ["first_charge_lender","First-charge lender *",{ph:"Lender name, or \u201cNo mortgage\u201d"}],["first_charge_balance","First-charge balance",{ph:"£150,000"}],
+  ["first_charge_arrears_amount","Mortgage arrears amount (or Not sure)",{}],
+  ["arrears_included_in_balance","Does the mortgage balance include those arrears?",{}],
+  ["second_charge_balance","Second charge / restriction balance (or Not sure)",{}],
+  ["second_charge_provider","Second-charge lender (if known)",{}],
+  ["redemption_structure","Mandatory redemptions: within or on top of your request? *",{full:1}],
   ["first_charge_status","First-charge status",{}],["arrears","Any arrears?",{}],["second_charges","Any second charges?",{}],["restrictions","Any title restrictions?",{}]]},
  {t:"Credit & consent", s:"Your credit profile and the best time to contact you.", f:[
+  ["legal_buffer","Legal allowance — added separately *",{}],
+  ["contingency_buffer","Contingency — added separately *",{}],
+  ["panel_solicitor_opt_in","Solicitor preference *",{full:1}],
   ["credit_profile","Credit profile *",{}],["credit_events","Any credit or insolvency issues?",{}],["missed_payments","Missed mortgage payments in the last 12 months",{}],
   ["contact_pref","Best time to contact you",{}],["notes","Anything else (optional)",{full:1}],
   ["ai_call_consent","I am happy for an AI assistant to handle the initial call with me before connecting me to a broker",{full:1}],
   ["contact_consent","I agree to be contacted by Posfin Capital about my fact find *",{full:1}]]}
 ];
-const OPT = {ownership:O.ownership,asset_type:O.asset_type,residential_type:O.residential_type,purpose:O.purpose,timescale:O.timescale,charge_position:O.charge_position,
+const OPT = {...O,ownership:O.ownership,asset_type:O.asset_type,residential_type:O.residential_type,purpose:O.purpose,timescale:O.timescale,charge_position:O.charge_position,
   first_charge_status:O.first_charge_status,arrears:O.yns,second_charges:O.yns,restrictions:O.restrictions,credit_profile:O.credit_profile,credit_events:O.credit_events,missed_payments:O.missed_payments,contact_pref:O.contact_pref};
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let step = 0, code = "", mode = "server", busy = false;
-const fmt = v => { const n = String(v||"").replace(/[^0-9]/g,""); return n ? "£" + Number(n).toLocaleString("en-GB") : ""; };
+const fmt = v => { const n=money(v); return n===null ? "Not sure" : Number.isFinite(n) ? "£"+n.toLocaleString("en-GB") : String(v??""); };
 
 // render
 $("#steps").innerHTML = STEPS.map((st,i)=>`<section class="step" data-i="${i}"><h2>${st.t}</h2><p class="sub">${st.s}</p><div class="grid">`+
  st.f.map(([k,l,o])=>{ const f=F[k]; const cls=((o.full||f.t==="textarea"||f.t==="bool")?"full":"")+(o.test?" test-only":""); let inp;
-  if(f.t==="select") inp=`<select id="${k}" name="${k}"><option value="">Please select</option>${OPT[k].map(x=>`<option>${esc(x)}</option>`).join("")}</select>`;
+  if(f.t==="select") inp=`<select id="${k}" name="${k}"><option value="">Please select</option>${OPT[k].map(x=>`<option value="${esc(x)}">${esc(["legal_buffer","contingency_buffer"].includes(k)&&x!=="Not sure"?"£"+Number(x).toLocaleString("en-GB"):x)}</option>`).join("")}</select>`;
   else if(f.t==="textarea") inp=`<textarea id="${k}" name="${k}" maxlength="${f.max}" placeholder="${esc(o.ph||"")}"></textarea>`;
   else if(f.t==="bool") return `<div class="${cls}"><label class="chk"><input type="checkbox" id="${k}" name="${k}"><span>${esc(l)}</span></label><div class="err" id="e_${k}"></div></div>`;
   else { const ty=f.t==="email"?"email":f.t==="tel"?"tel":"text"; const im=f.t==="money"?' inputmode="numeric"':''; inp=`<input type="${ty}" id="${k}" name="${k}"${im} maxlength="${f.max||14}" placeholder="${esc(o.ph||"")}" autocomplete="off">`; }
   return `<div class="${cls}"><label class="l" for="${k}">${esc(l)}</label>${inp}<div class="err" id="e_${k}"></div></div>`; }).join("")+`</div></section>`).join("");
-document.querySelectorAll('input[inputmode=numeric]').forEach(i=>i.addEventListener("input",()=>{i.value=fmt(i.value)}));
+// Never strip signs/ranges/TBC while typing: shared validation preserves meaning.
+const financialReview=document.createElement("div");financialReview.id="financialReview";$("#steps").after(financialReview);
+function updateFinancialReview(){financialReview.innerHTML=renderScorecard(collect());financialReview.classList.toggle("hide",step<3);}
+$("#ff").addEventListener("input",updateFinancialReview);$("#ff").addEventListener("change",updateFinancialReview);
 
 function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return a; }
 function fill(a){ for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } }
 function show(i){ step=Math.max(0,Math.min(4,i)); document.querySelectorAll(".step").forEach(s=>s.classList.toggle("hide",+s.dataset.i!==step));
   document.querySelectorAll("#rail div").forEach((d,j)=>{d.classList.toggle("on",j===step);d.classList.toggle("done",j<step)});
-  $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; }
+  $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; updateFinancialReview(); }
 function setStatus(t,c){ const s=$("#status"); s.textContent=t; s.className="status "+(c||""); }
 function clearErr(){ document.querySelectorAll(".err").forEach(e=>e.textContent=""); document.querySelectorAll(".bad").forEach(e=>e.classList.remove("bad")); }
 function showErr(errs){ clearErr(); let first=null; for(const [k,m] of Object.entries(errs||{})){ const e=document.getElementById("e_"+k), el=document.getElementById(k); if(e) e.textContent=m; if(el){el.classList.add("bad"); if(first===null) first=k;} } return first; }
@@ -64,7 +76,7 @@ let lastHealth=0;
 async function checkHealth(){
   lastHealth=Date.now();
   try{ const r=await fetch("/api/factfind",{method:"GET",cache:"no-store"}); const h=await r.json();
-    setTestMode(h.testMode!==false);
+    setTestMode(h.testMode===true || h.testRun===true);
     if(h.ready){ setMode("server"); return true; }
     setMode("local", h.reason||h.db||"not_ready"); return false;
   }catch(e){ setMode("local","health_unreachable"); return false; }
@@ -121,7 +133,10 @@ async function submit(){
       const {status,j}=await api({action:"submit",code,answers:collect()});
       if(down(status)){ setMode("local", j.error); $("#next").disabled=false; return submit(); }
       if(!j.ok){ if(j.fieldErrors) showErr(j.fieldErrors); setStatus(j.message||"Could not submit. Please check your answers.","bad"); return; }
-      location.href="/thank-you?ref="+encodeURIComponent(j.reference)+"&m="+(testMode?"test":"db");
+      const summary=renderScorecard(collect());
+      $("#ff").innerHTML='<h2>Your fact find is saved</h2><p id="submittedReference"></p><p>Thank you. We will review your declared figures and confirm the outstanding details together.</p>'+summary+'<p><a href="/">Back to the home page</a></p>';
+      $("#submittedReference").textContent="Reference: "+j.reference+(testMode?" — synthetic preview test":"");
+      window.scrollTo({top:0,behavior:"smooth"});
     } else {
       // Never pretend a local-only submit reached us. Re-check the server once, else show the not-sent panel.
       if(await checkHealth()){ $("#next").disabled=false; code=""; if(await save(true)) return submit(); }
@@ -129,7 +144,7 @@ async function submit(){
       setStatus("Not sent. Your answers are saved on this device only. Please call us or book a 15-minute call, or try again in a few minutes.","bad");
       const fb=$("#fallback"); fb.classList.remove("hide"); fb.classList.add("urgent"); fb.scrollIntoView({behavior:"smooth",block:"center"});
     }
-  } finally { $("#next").disabled=false; }
+  } finally { if($("#next")) $("#next").disabled=false; }
 }
 $("#next").addEventListener("click",async()=>{ if(step===4) return submit(); const e=stepErrors(step); if(Object.keys(e).length){ showErr(e); setStatus("Please check the highlighted answers.","bad"); return; } clearErr(); const ok=await save(true); if(ok!==false) show(step+1); window.scrollTo({top:0,behavior:"smooth"}); });
 $("#back").addEventListener("click",()=>{ clearErr(); show(step-1); });
