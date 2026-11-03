@@ -18,7 +18,7 @@
 import crypto from "node:crypto";
 import { validate } from "../lib/ff-schema.js";
 
-export const VERSION = "uk-v001";
+export const VERSION = "uk-v001-preview-alert-v1";
 export const CONSENT_VERSION = "uk-consent-v1-2026-11-03"; // bump whenever the consent wording on /fact-find changes
 const BACKENDS = {
   leads:    { prefix: "web_lead_", ref: "POSFIN-WEB-",  test: false, meta: true, testRef: "TEST-WEB-" },
@@ -205,7 +205,8 @@ export default async function handler(req, res) {
     const rows = await rpc(cfg, "submit", { p_resume_hash: sha(code), p_answers: clean, ...meta });
     const r = rows && rows[0];
     if (!r || r.status !== "submitted") throw new BackendError("submit_failed", 502);
-    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode });
+    const alert = await previewSubmitAlert(cfg, r.reference);
+    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";
     const status = e instanceof BackendError ? e.status : 500;
@@ -213,4 +214,21 @@ export default async function handler(req, res) {
     if (status >= 500) return unavailable(res, code);
     return send(res, status, { ok: false, error: code });
   }
+}
+
+// Preview trace only. Never send applicant data or resume credentials to Telegram.
+// This synchronous transport is not a durable outbox; delivery failure is exposed for review.
+export async function previewSubmitAlert(cfg, reference, env = process.env) {
+  if (env.FF_SUBMIT_ALERT !== "true") return { status: "disabled" };
+  if (env.VERCEL_ENV !== "preview" || !cfg.testRun || cfg.url !== "https://imcqwhccwsuglkzaxazg.supabase.co" || !/^TEST-WEB-[A-Z2-9]{6}$/.test(reference)) return { status: "blocked" };
+  const token = env.FF_ALERT_BOT_TOKEN, chat = env.FF_ALERT_CHAT_ID;
+  if (!token || !chat) return { status: "unconfigured" };
+  try {
+    const response = await timedFetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chat, text: `PREVIEW TEST — fact find submitted\nReference: ${reference}\nIntake: landing-preview / pipeline.web_leads\nSynthetic test only. Ads remain on hold.` })
+    }, 5000);
+    const result = await response.json();
+    return response.ok && result.ok ? { status: "sent", messageId: result.result.message_id } : { status: "failed" };
+  } catch { return { status: "unknown" }; }
 }
