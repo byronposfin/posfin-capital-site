@@ -2,7 +2,7 @@
  * PropertyData AVM proxy — /api/propertydata?postcode=SW1A1AA
  * Proxies to PropertyData API to avoid CORS issues from browser.
  */
-const PROPERTYDATA_KEY = '9UB2ZJQ1BD';
+const PROPERTYDATA_KEY = process.env.PROPERTYDATA_KEY;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
