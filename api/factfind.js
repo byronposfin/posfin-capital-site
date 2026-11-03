@@ -3,8 +3,8 @@
 // Credentials come from environment variables ONLY. Request bodies and personal values are never logged.
 //
 // Env vars (names only; values are set in Vercel, never in files):
-//   FF_BACKEND       "leads" (default)   -> web_lead_* RPCs -> pipeline.web_leads on the main Supabase project
-//                                           (migration web_leads_intake_20261103, sql/20261103_web_leads_intake.sql, APPLIED 3 Nov 2026)
+//   FF_BACKEND       "leads" (default)   -> web_lead_* RPCs -> pipeline.web_leads on the configured Supabase project
+//                                           (this branch is pinned operationally to landing-preview; supplied migration is reference only)
 //                    "preview"           -> ff_test_* RPCs in the posfin-landing-preview Supabase project (test database)
 //                    "pipeline"          -> ff_web_* RPCs (old proposal sql/pipeline_web_factfind_PROPOSED.sql, superseded, NOT applied)
 //   FF_SUPABASE_URL  https://<project-ref>.supabase.co
@@ -16,6 +16,7 @@
 // Leads backend also sends p_meta: salted SHA-256 of IP and user agent (never raw), utm_*, broker tag (?b=bh|chris),
 // landing path, referrer host, consent text version and form version.
 import crypto from "node:crypto";
+import { drainAlerts } from "../lib/ff-alert-outbox.js";
 import { validate } from "../lib/ff-schema.js";
 
 export const VERSION = "uk-v003-preview-waterfall";
@@ -205,7 +206,13 @@ export default async function handler(req, res) {
     const rows = await rpc(cfg, "submit", { p_resume_hash: sha(code), p_answers: clean, ...meta });
     const r = rows && rows[0];
     if (!r || r.status !== "submitted") throw new BackendError("submit_failed", 502);
-    const alert = await previewSubmitAlert(cfg, r.reference);
+    // Enqueue is a DB trigger in the same transaction as submit. Worker failure
+    // must not misrepresent the already-saved application as unsent.
+    let alert;
+    if (process.env.FF_ALERT_DURABLE === "true") {
+      try { const result = await drainAlerts(); alert = {status: result.ok ? "queued" : "recovery_required"}; }
+      catch { alert = {status: "recovery_required"}; }
+    } else alert = await previewSubmitAlert(cfg, r.reference);
     return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";

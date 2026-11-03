@@ -1,3 +1,4 @@
+import { renderScorecard } from "../lib/ff-finance.js";
 // Staff dashboard for pipeline.web_leads. Uses ONLY the Supabase publishable key + the signed-in staff user's session.
 // All data access goes through SECURITY INVOKER RPCs (public.staff_*), so Row Level Security decides what each user sees.
 // No keys are stored in this file: the URL and publishable key come from GET /api/factfind?client=admin (env vars).
@@ -64,7 +65,7 @@ async function detail(id) {
   const F = [["Status", `<span class="pill ${l.status}">${LABEL[l.status]}</span> · form ${esc(l.form_stage)}`], ["Created", uk(l.created_at)], ["Submitted", uk(l.submitted_at)], ["Contacted", uk(l.contacted_at)],
     ["Name", esc(l.full_name)], ["Phone", l.phone ? `<a href="tel:${esc(l.phone)}">${esc(l.phone)}</a>` : ""], ["Email", l.email ? `<a href="mailto:${esc(l.email)}">${esc(l.email)}</a>` : ""], ["Best time", esc(l.best_time_to_contact)],
     ["Borrower", esc(l.borrower_type)], ["Purpose", esc(l.purpose)], ["Property", esc(l.property_type)], ["Postcode", esc(l.security_postcode)],
-    ["Loan / value", `£${money(l.loan_amount)} / £${money(l.property_value)} · LTV ${l.ltv_pct ?? "–"}%`], ["Urgency", esc(l.urgency)], ["Charge", esc(l.charge_position)], ["Credit", esc(l.credit_profile)], ["Exit", esc(l.exit_strategy)],
+    ["Loan / value", `£${money(l.loan_amount)} / £${money(l.property_value)} · Request/value ${l.ltv_pct ?? "–"}% (not total secured LTV)`], ["Urgency", esc(l.urgency)], ["Charge", esc(l.charge_position)], ["Credit", esc(l.credit_profile)], ["Exit", esc(l.exit_strategy)],
     ["Consent", l.contact_consent ? `Yes · ${uk(l.contact_consent_at)} · ${esc(l.consent_text_version)}` : "No"],
     ["Source", esc([l.source, l.broker_tag && "broker " + l.broker_tag, l.utm_source, l.utm_medium, l.utm_campaign].filter(Boolean).join(" · "))],
     ["Duplicate?", l.possible_duplicate_of ? "Same email or phone as an earlier lead (last 90 days)" : "No"]];
@@ -74,7 +75,7 @@ async function detail(id) {
       <button class="pri" id="dSave">Save status</button><button id="dMine">${l.assigned_to === ME.user_id ? "Assigned to me" : "Assign to me"}</button></div></div>
     <div class="sec"><b>Add note</b><textarea id="dNote" maxlength="4000" placeholder="Call notes, next steps…"></textarea><button class="pri" id="dAdd" style="margin-top:6px">Add note</button></div>` : `<p class="muted sec">Read-only access.</p>`}
     <div class="sec"><b>Notes</b>${d.notes.map(n => `<div class="note">${esc(n.body).replace(/\n/g, "<br>")}<br><small>${uk(n.created_at)}</small></div>`).join("") || '<p class="muted">No notes yet.</p>'}</div>
-    <div class="sec"><b>All answers</b><dl>${other}</dl></div>
+    ${renderScorecard(a)}<div class="sec"><b>All answers</b><dl>${other}</dl></div>
     <div class="sec"><b>History</b>${d.events.map(e => `<div class="ev">${esc(e.type.replace(/_/g, " "))}${e.to ? `: ${esc(e.from ? LABEL[e.from] + " → " : "")}${esc(LABEL[e.to])}` : ""} <small>${uk(e.at)}${e.actor_role ? " · " + esc(e.actor_role) : ""}</small></div>`).join("")}</div>`;
   if (canWrite()) {
     $("#dSave").onclick = async () => { try { await rpc("staff_web_lead_update", { p_id: id, p_status: $("#dStatus").value }); await refresh(); } catch (e) { alert(e.message); } };
@@ -102,7 +103,7 @@ $("#lf").onsubmit = async e => { e.preventDefault(); msg("Signing in…");
   try { if (!$("#pw").value) throw new Error("Enter your password, or use the sign-in link."); saveSession(await auth("token?grant_type=password", { email: $("#em").value.trim(), password: $("#pw").value })); $("#pw").value = ""; msg(""); await enter(); }
   catch (err) { msg(err.message, "bad"); } };
 $("#magic").onclick = async () => { const em = $("#em").value.trim(); if (!em) return msg("Enter your email first.", "bad");
-  try { await auth("otp", { email: em, create_user: false, options: { email_redirect_to: location.origin + "/admin/leads" } }); msg("If that email belongs to a staff account, a sign-in link is on its way.", "ok"); } catch (err) { msg(err.message, "bad"); } };
+  try { await auth("otp?redirect_to=" + encodeURIComponent(location.origin + "/admin/leads"), { email: em, create_user: false }); msg("If that email belongs to a staff account, a sign-in link is on its way.", "ok"); } catch (err) { msg(err.message, "bad"); } };
 
 (async () => {
   try { await loadCfg(); } catch (e) { msg(e.message, "bad"); $("#lf").querySelectorAll("button,input").forEach(x => x.disabled = true); return; }

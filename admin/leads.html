@@ -29,6 +29,7 @@ tr.row{cursor:pointer}tr.row:hover{background:#f7fafc}tr.sel{background:#e6fffb!
 #detail .sec{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}#detail textarea{width:100%;min-height:70px}
 .note{border-left:3px solid var(--teal);padding:4px 8px;margin:6px 0;background:#f8fafc}.note small,.ev small{color:var(--mut)}.ev{font-size:12px;margin:3px 0}
 .muted{color:var(--mut)}.scroll{overflow:auto}
+.fund-card{margin-top:20px;padding:16px;border:1px solid var(--line);border-radius:12px}.fund-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--line)}.fund-row strong{white-space:nowrap}.cash-highlight{background:var(--navy);color:white;padding:16px;border-radius:8px;display:grid;gap:8px}.cash-highlight strong{font-size:26px}.fund-total{font-weight:bold}.fund-note{font-size:12px;color:var(--mut)}.fund-pending{background:#fff4e5;padding:10px}
 </style>
 </head><body>
 <header><b>Posfin · Web leads</b><small>Staff only</small><span class="sp"></span><small id="who"></small><button class="lnk hide" id="out">Sign out</button></header>
@@ -52,7 +53,7 @@ tr.row{cursor:pointer}tr.row:hover{background:#f7fafc}tr.sel{background:#e6fffb!
       <button class="pri" id="apply">Apply</button><button id="csv">Export CSV</button><span class="muted" id="lcount"></span>
     </div>
     <div class="wrap">
-      <div class="scroll"><table><thead><tr><th>Created (UK)</th><th>Reference</th><th>Status</th><th>Name</th><th>Phone</th><th>Purpose</th><th>Postcode</th><th class="num">Loan £</th><th class="num">LTV %</th><th>Source</th><th>Notes</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <div class="scroll"><table><thead><tr><th>Created (UK)</th><th>Reference</th><th>Status</th><th>Name</th><th>Phone</th><th>Purpose</th><th>Postcode</th><th class="num">Loan £</th><th class="num">Request/value %</th><th>Source</th><th>Notes</th></tr></thead><tbody id="rows"></tbody></table></div>
       <aside id="detail" class="card"><p class="muted">Select a lead to see the details, notes and history.</p></aside>
     </div>
   </section>
