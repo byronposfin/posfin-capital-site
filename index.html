@@ -214,7 +214,7 @@ h2{font-size:48px;line-height:1.05}
 .aiblock .tag-ai{background:rgba(47,214,238,.14);color:#9BEFFA;border-color:rgba(47,214,238,.5)}
 .aiblock h3{font-size:30px;margin-top:10px}
 .aiblock .top p{max-width:520px;color:#B6C7DD;font-size:14.5px;margin:8px 0 0}
-.ai-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:28px;position:relative}
+.ai-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:28px;position:relative}
 .ai{display:flex;gap:16px;align-items:center;padding:16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(166,241,250,.18)}
 .ai img{width:76px;height:76px;border-radius:16px;object-fit:cover;object-position:50% 20%}
 .ai img.orb{border-radius:50%}
@@ -470,7 +470,8 @@ footer .accred .txt p:last-child{margin-bottom:0}
     <span class="tag tag-ai" style="white-space:nowrap">Clearly labelled AI</span></div>
     <div class="ai-grid">
       <div class="ai"><img src="assets/portrait-pending.svg" alt="Tom Reginald, AI"><div><b>Tom Reginald</b><span>Chief Operations (AI)</span><span class="tag tag-ai">AI persona</span></div></div>
-      <div class="ai"><img src="assets/portrait-pending.svg" alt="Geri Langford, AI"><div><b>Geri Langford</b><span>Business Development | Triage (AI)</span><span class="tag tag-ai">AI persona</span></div></div>
+      <div class="ai"><img src="assets/geri-ai.jpg" alt="Geri Langford, AI"><div><b>Geri Langford</b><span>Business Development | Triage (AI)</span><span class="tag tag-ai">AI persona</span></div></div>
+      <div class="ai"><img src="assets/lizzie.jpg" alt="Lizzie, AI"><div><b>Lizzie</b><span>Chief of Staff (AI)</span><span class="tag tag-ai">AI persona</span></div></div>
       <div class="ai"><img class="orb" src="assets/liora-orb.jpg" alt="Liora, AI assistant (abstract orb)"><div><b>Liora</b><span>AI assistant · Questions and updates</span><span class="tag tag-ai">AI assistant</span></div></div>
     </div>
   </div>
@@ -532,7 +533,7 @@ footer .accred .txt p:last-child{margin-bottom:0}
 
 <script>
 /* Single source for the team member shown in the theme image. */
-const AADI = { full: "Aaditya Verma", short: "Aadi", title: "Senior Operations" };
+const AADI = { full: "Aadi Verma", short: "Aadi", title: "Senior Operations | Broker" };
 document.querySelectorAll('[data-person-name="aadi"]').forEach(e => e.textContent = AADI.full);
 document.querySelectorAll('[data-person-title="aadi"]').forEach(e => e.textContent = AADI.title);
 document.querySelectorAll('img[data-person-alt="aadi"]').forEach(e => e.alt = AADI.full);
