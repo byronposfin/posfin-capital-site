@@ -52,6 +52,22 @@ $("#steps").innerHTML = STEPS.map((st,i)=>`<section class="step" data-i="${i}"><
   else if(f.t==="bool") return `<div class="${cls}"><label class="chk"><input type="checkbox" id="${k}" name="${k}"><span>${esc(l)}</span></label><div class="err" id="e_${k}"></div></div>`;
   else { const ty=f.t==="email"?"email":f.t==="tel"?"tel":"text"; const im=f.t==="money"?' inputmode="numeric"':''; inp=`<input type="${ty}" id="${k}" name="${k}"${im} maxlength="${f.max||14}" placeholder="${esc(o.ph||"")}" autocomplete="off">`; }
   return `<div class="${cls}"><label class="l" for="${k}">${esc(l)}</label>${inp}<div class="err" id="e_${k}"></div></div>`; }).join("")+`</div></section>`).join("");
+// Format valid money on leaving the field; preserve unknown/invalid answers for validation.
+// While editing use ungrouped digits, retaining the mobile numeric keyboard.
+for (const [key, field] of Object.entries(F)) {
+  if (field.t !== "money") continue;
+  const input = document.getElementById(key);
+  if (!input) continue;
+  input.addEventListener("focus", () => {
+    const value = money(input.value);
+    if (Number.isFinite(value) && value >= 0) input.value = String(value);
+  });
+  input.addEventListener("blur", () => {
+    const value = money(input.value);
+    if (input.value.trim() && Number.isFinite(value) && value >= 0) input.value = fmt(value);
+    updateFinancialReview();
+  });
+}
 // Never strip signs/ranges/TBC while typing: shared validation preserves meaning.
 const financialReview=document.createElement("div");financialReview.id="financialReview";$("#steps").after(financialReview);
 function updateFinancialReview(){financialReview.innerHTML=renderScorecard(collect());financialReview.classList.toggle("hide",step<3);}
