@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en-GB"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Web leads · Posfin staff</title>
+<style>
+:root{--navy:#0b1f3a;--navy2:#13305a;--teal:#14b8a6;--bg:#f4f6fa;--line:#dde3ec;--mut:#5b6b82;--bad:#b42318;--ok:#067647}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#0f172a}
+header{background:var(--navy);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px}header b{font-size:16px}header .sp{flex:1}header small{opacity:.8}
+button,select,input,textarea{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px}
+button.pri{background:var(--navy2);color:#fff;border-color:var(--navy2)}button.lnk{border:0;background:none;color:#fff;text-decoration:underline;padding:0}
+input,select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff}
+main{padding:18px 20px;max-width:1500px;margin:0 auto}.hide{display:none!important}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}
+#login{max-width:380px;margin:60px auto}#login h1{font-size:20px;margin:0 0 6px}#login label{display:block;margin:10px 0 4px;font-weight:600}#login input{width:100%}
+.msg{margin-top:10px;font-size:13px}.msg.bad{color:var(--bad)}.msg.ok{color:var(--ok)}
+.counts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.cnt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:110px;cursor:pointer}
+.cnt b{display:block;font-size:20px}.cnt span{color:var(--mut);font-size:12px}.cnt.on{outline:2px solid var(--teal)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px}.filters label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:14px}@media(max-width:1100px){.wrap{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;white-space:nowrap}th{background:#eef2f8;font-size:12px;color:var(--mut)}
+tr.row{cursor:pointer}tr.row:hover{background:#f7fafc}tr.sel{background:#e6fffb!important}td.num{text-align:right}
+.pill{display:inline-block;border-radius:99px;padding:1px 8px;font-size:12px;background:#eef2f8}.pill.new{background:#fff4e5}.pill.contacted{background:#e0f2fe}.pill.qualified{background:#ede9fe}
+.pill.fact_find_complete{background:#dcfce7}.pill.referred{background:#cffafe}.pill.closed_won{background:#bbf7d0}.pill.closed_lost{background:#fee2e2}.pill.spam{background:#e5e7eb}
+.tag{font-size:11px;color:#9a3412;background:#ffedd5;border-radius:6px;padding:0 5px;margin-left:4px}
+#detail h2{margin:0 0 4px;font-size:18px}#detail dl{display:grid;grid-template-columns:150px 1fr;gap:4px 10px;margin:10px 0}#detail dt{color:var(--mut)}#detail dd{margin:0;word-break:break-word}
+#detail .sec{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}#detail textarea{width:100%;min-height:70px}
+.note{border-left:3px solid var(--teal);padding:4px 8px;margin:6px 0;background:#f8fafc}.note small,.ev small{color:var(--mut)}.ev{font-size:12px;margin:3px 0}
+.muted{color:var(--mut)}.scroll{overflow:auto}
+.fund-card{margin-top:20px;padding:16px;border:1px solid var(--line);border-radius:12px}.fund-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--line)}.fund-row strong{white-space:nowrap}.cash-highlight{background:var(--navy);color:white;padding:16px;border-radius:8px;display:grid;gap:8px}.cash-highlight strong{font-size:26px}.fund-total{font-weight:bold}.fund-note{font-size:12px;color:var(--mut)}.fund-pending{background:#fff4e5;padding:10px}
+</style>
+</head><body>
+<header><b>Posfin · Web leads</b><small>Staff only</small><span class="sp"></span><small id="who"></small><button class="lnk hide" id="out">Sign out</button></header>
+<main>
+  <section id="login" class="card">
+    <h1>Staff sign-in</h1>
+    <p class="muted">Use your Posfin staff account. Access is limited to people listed as staff in Supabase.</p>
+    <form id="lf"><label for="em">Email</label><input id="em" type="email" autocomplete="username" required>
+      <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password">
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="pri" type="submit">Sign in</button><button type="button" id="magic">Email me a sign-in link</button></div></form>
+    <div id="lmsg" class="msg"></div>
+  </section>
+  <section id="app" class="hide">
+    <div class="counts" id="counts"></div>
+    <div class="filters">
+      <label>Status<select id="fStatus"><option value="">All</option></select></label>
+      <label>Source / broker<select id="fSource"><option value="">All</option><option value="web_landing_uk">web_landing_uk</option><option value="bh">Broker: Byron (bh)</option><option value="chris">Broker: Chris</option></select></label>
+      <label>From<input type="date" id="fFrom"></label><label>To<input type="date" id="fTo"></label>
+      <label>Search<input id="fQ" placeholder="Ref, name, email, phone, postcode"></label>
+      <label style="flex-direction:row;align-items:center;gap:5px"><input type="checkbox" id="fTest">Include test rows</label>
+      <button class="pri" id="apply">Apply</button><button id="csv">Export CSV</button><span class="muted" id="lcount"></span>
+    </div>
+    <div class="wrap">
+      <div class="scroll"><table><thead><tr><th>Created (UK)</th><th>Reference</th><th>Status</th><th>Name</th><th>Phone</th><th>Purpose</th><th>Postcode</th><th class="num">Loan £</th><th class="num">Lender terms</th><th>Source</th><th>Notes</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <aside id="detail" class="card"><p class="muted">Select a lead to see the details, notes and history.</p></aside>
+    </div>
+  </section>
+</main>
+<script type="module" src="/admin/leads.js?v=20261104-lender-gate"></script>
+</body></html>

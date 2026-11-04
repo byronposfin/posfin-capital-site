@@ -3,6 +3,17 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/apply",
+      "has": [
+        {
+          "type": "host",
+          "value": ".*\\.vercel\\.app"
+        }
+      ],
+      "destination": "/fact-find",
+      "permanent": false
+    },
+    {
       "source": "/get-options",
       "destination": "/get-your-options",
       "permanent": false
