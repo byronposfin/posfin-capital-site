@@ -1,3 +1,4 @@
+import { renderProperties } from "../lib/ff-properties.js?v=20261104-properties";
 import { renderScorecard } from "../lib/ff-finance.js?v=20261104-lender-gate";
 // Staff dashboard for pipeline.web_leads. Uses ONLY the Supabase publishable key + the signed-in staff user's session.
 // All data access goes through SECURITY INVOKER RPCs (public.staff_*), so Row Level Security decides what each user sees.
@@ -69,13 +70,13 @@ async function detail(id) {
     ["Consent", l.contact_consent ? `Yes · ${uk(l.contact_consent_at)} · ${esc(l.consent_text_version)}` : "No"],
     ["Source", esc([l.source, l.broker_tag && "broker " + l.broker_tag, l.utm_source, l.utm_medium, l.utm_campaign].filter(Boolean).join(" · "))],
     ["Duplicate?", l.possible_duplicate_of ? "Same email or phone as an earlier lead (last 90 days)" : "No"]];
-  const other = Object.entries(a).filter(([k]) => !["full_name","phone","email","contact_consent","ai_call_consent","test_mode_ack"].includes(k)).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+  const other = Object.entries(a).filter(([k]) => !["full_name","phone","email","contact_consent","ai_call_consent","test_mode_ack","additional_properties","total_properties_owned"].includes(k)).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
   $("#detail").innerHTML = `<h2>${esc(l.reference)} ${l.is_test ? '<span class="tag">TEST</span>' : ""}</h2><dl>${F.map(([k, v]) => `<dt>${k}</dt><dd>${v || '<span class="muted">–</span>'}</dd>`).join("")}</dl>
     ${canWrite() ? `<div class="sec"><b>Update</b><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><select id="dStatus">${STATUSES.map(s => `<option value="${s}" ${s === l.status ? "selected" : ""}>${LABEL[s]}</option>`).join("")}</select>
       <button class="pri" id="dSave">Save status</button><button id="dMine">${l.assigned_to === ME.user_id ? "Assigned to me" : "Assign to me"}</button></div></div>
     <div class="sec"><b>Add note</b><textarea id="dNote" maxlength="4000" placeholder="Call notes, next steps…"></textarea><button class="pri" id="dAdd" style="margin-top:6px">Add note</button></div>` : `<p class="muted sec">Read-only access.</p>`}
     <div class="sec"><b>Notes</b>${d.notes.map(n => `<div class="note">${esc(n.body).replace(/\n/g, "<br>")}<br><small>${uk(n.created_at)}</small></div>`).join("") || '<p class="muted">No notes yet.</p>'}</div>
-    ${renderScorecard(a)}<div class="sec"><b>All answers</b><dl>${other}</dl></div>
+    ${renderScorecard(a)}${renderProperties(a)}<div class="sec"><b>All answers</b><dl>${other}</dl></div>
     <div class="sec"><b>History</b>${d.events.map(e => `<div class="ev">${esc(e.type.replace(/_/g, " "))}${e.to ? `: ${esc(e.from ? LABEL[e.from] + " → " : "")}${esc(LABEL[e.to])}` : ""} <small>${uk(e.at)}${e.actor_role ? " · " + esc(e.actor_role) : ""}</small></div>`).join("")}</div>`;
   if (canWrite()) {
     $("#dSave").onclick = async () => { try { await rpc("staff_web_lead_update", { p_id: id, p_status: $("#dStatus").value }); await refresh(); } catch (e) { alert(e.message); } };

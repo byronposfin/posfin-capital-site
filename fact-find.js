@@ -1,7 +1,9 @@
+import { createPropertyEditor } from "/lib/ff-properties-ui.js?v=20261104-properties";
+import { renderProperties } from "/lib/ff-properties.js?v=20261104-properties";
 import { BRANCH_FIELDS, branchVisible, cleanBranches, routeCard } from "/lib/ff-routing.js?v=20261104-live";
 import { bindMoneyInput, bindPostcode } from "/lib/ff-inputs.js?v=20261104-live";
 import { money, renderScorecard } from "/lib/ff-finance.js?v=20261104-lender-gate";
-import * as S from "/lib/ff-schema.js?v=20261104-live";
+import * as S from "/lib/ff-schema.js?v=20261104-properties";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
 if(!a){a={landing_path:location.pathname,referrer:document.referrer&&new URL(document.referrer).host!==location.host?document.referrer:""};}
@@ -55,6 +57,8 @@ $("#steps").innerHTML = STEPS.map((st,i)=>`<section class="step" data-i="${i}"><
   else if(f.t==="bool") return `<div class="${cls}"><label class="chk"><input type="checkbox" id="${k}" name="${k}"><span>${esc(l)}</span></label><div class="err" id="e_${k}"></div></div>`;
   else { const ty=f.t==="email"?"email":f.t==="tel"?"tel":"text"; const im=f.t==="money"?' inputmode="numeric"':''; inp=`<input type="${ty}" id="${k}" name="${k}"${im} maxlength="${f.max||14}" placeholder="${esc(o.ph||"")}" autocomplete="off">`; }
   return `<div class="${cls}"><label class="l" for="${k}">${esc(l)}</label>${inp}<div class="err" id="e_${k}"></div></div>`; }).join("")+`</div></section>`).join("");
+const propertiesHost=document.createElement('div');propertiesHost.id='propertiesEditor';document.querySelector('.step[data-i="1"]').append(propertiesHost);
+const propertyEditor=createPropertyEditor(propertiesHost);
 // Live formatting retains caret position, numeric keyboard and unresolved answers.
 for (const [key, field] of Object.entries(F)) {
   const input=document.getElementById(key);
@@ -94,15 +98,15 @@ const financialReview=document.createElement("div");financialReview.id="financia
 function updateFinancialReview(){productReview.innerHTML=routeCard(collect());productReview.classList.toggle("hide",step<2);financialReview.innerHTML=renderScorecard(collect());financialReview.classList.toggle("hide",step<3);}
 $("#ff").addEventListener("input",updateFinancialReview);$("#ff").addEventListener("change",updateFinancialReview);
 
-function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return cleanBranches(a); }
-function fill(a){ for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } syncBranches(); }
+function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return cleanBranches({...a,...propertyEditor.collect()}); }
+function fill(a){ for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } propertyEditor.fill(a);syncBranches(); }
 function show(i){ step=Math.max(0,Math.min(4,i)); document.querySelectorAll(".step").forEach(s=>s.classList.toggle("hide",+s.dataset.i!==step));
   document.querySelectorAll("#rail div").forEach((d,j)=>{d.classList.toggle("on",j===step);d.classList.toggle("done",j<step)});
   $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; updateFinancialReview(); }
 function setStatus(t,c){ const s=$("#status"); s.textContent=t; s.className="status "+(c||""); }
 function clearErr(){ document.querySelectorAll(".err").forEach(e=>e.textContent=""); document.querySelectorAll(".bad").forEach(e=>e.classList.remove("bad")); }
 function showErr(errs){ clearErr(); let first=null; for(const [k,m] of Object.entries(errs||{})){ const e=document.getElementById("e_"+k), el=document.getElementById(k); if(e) e.textContent=m; if(el){el.classList.add("bad"); if(first===null) first=k;} } return first; }
-function stepErrors(i){ const a=collect(), {errors}=S.validate(a,true,testMode); const keys=STEPS[i].f.map(x=>x[0]); const out={}; for(const k of keys) if(errors[k]) out[k]=errors[k]; return out; }
+function stepErrors(i){ const a=collect(), {errors}=S.validate(a,true,testMode); const keys=STEPS[i].f.map(x=>x[0]);if(i===1)keys.push("total_properties_owned","additional_properties"); const out={}; for(const k of keys) if(errors[k]) out[k]=errors[k]; return out; }
 function setMode(m, why){ mode=m; const el=$("#mode");
   el.textContent = m==="server" ? (testMode?"Preview · saved to test database":"Saved securely") : "Saved on this device only";
   el.className="mode"+(m==="local"?" local":"");
@@ -162,7 +166,7 @@ async function resume(c){
   }catch(e){ if(mode==="server"){ setMode("local"); return resume(c);} rs.textContent="Could not open that draft."; rs.className="status bad"; }
 }
 async function submit(){
-  const all=S.validate(collect(),true,testMode).errors; if(Object.keys(all).length){ const k=showErr(all); const si=STEPS.findIndex(s=>s.f.some(x=>x[0]===k)); if(si>=0) show(si); setStatus("Please check the highlighted answers.","bad"); return; }
+  const all=S.validate(collect(),true,testMode).errors; if(Object.keys(all).length){ const k=showErr(all); const si=["total_properties_owned","additional_properties"].includes(k)?1:STEPS.findIndex(s=>s.f.some(x=>x[0]===k)); if(si>=0) show(si); setStatus("Please check the highlighted answers.","bad"); return; }
   if(!code && !(await save(true))) return;
   $("#next").disabled=true; setStatus("Submitting…");
   try{
@@ -170,7 +174,7 @@ async function submit(){
       const {status,j}=await api({action:"submit",code,answers:collect()});
       if(down(status)){ setMode("local", j.error); $("#next").disabled=false; return submit(); }
       if(!j.ok){ if(j.fieldErrors) showErr(j.fieldErrors); setStatus(j.message||"Could not submit. Please check your answers.","bad"); return; }
-      const summary=routeCard(collect())+renderScorecard(collect());
+      const summary=routeCard(collect())+renderScorecard(collect())+renderProperties(collect());
       $("#ff").innerHTML='<h2>Your fact find is saved</h2><p id="submittedReference"></p><p>Thank you. We will review your declared figures and confirm the outstanding details together.</p>'+summary+'<p><a href="/">Back to the home page</a></p>';
       $("#submittedReference").textContent="Reference: "+j.reference+(testMode?" — synthetic preview test":"");
       window.scrollTo({top:0,behavior:"smooth"});
