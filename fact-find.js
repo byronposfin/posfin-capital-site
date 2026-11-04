@@ -1,5 +1,7 @@
+import { BRANCH_FIELDS, branchVisible, cleanBranches, routeCard } from "/lib/ff-routing.js?v=20261104-live";
+import { bindMoneyInput, bindPostcode } from "/lib/ff-inputs.js?v=20261104-live";
 import { money, renderScorecard } from "/lib/ff-finance.js?v=20261104-lender-gate";
-import * as S from "/lib/ff-schema.js?v=20261104-lender-gate";
+import * as S from "/lib/ff-schema.js?v=20261104-live";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
 if(!a){a={landing_path:location.pathname,referrer:document.referrer&&new URL(document.referrer).host!==location.host?document.referrer:""};}
@@ -16,7 +18,7 @@ const STEPS = [
   ["test_mode_ack","I understand this is a PREVIEW form and I am using made-up details only *",{full:1,test:1}]]},
  {t:"The property", s:"The security, its value and how it is used.", f:[
   ["asset_type","Security type *",{}],["residential_type","Residential type",{}],
-  ["security_address","Security address (first line)",{full:1,ph:"e.g. 1 High Street"}],["security_postcode","Security postcode *",{ph:"SW1A 1AA"}],["property_value","Estimated property value *",{ph:"£500,000"}]]},
+  ["security_postcode","Security postcode *",{full:1,ph:"SW1A 1AA"}],["security_address","Security address",{full:1,ph:"Select an address above or enter it manually"}],["property_value","Estimated property value *",{ph:"£500,000"}]]},
  {t:"The loan", s:"Amount, purpose and how soon you need the funds.", f:[
   ["loan_amount","Amount requested *",{ph:"£250,000"}],["loan_basis","What does this amount mean?",{full:1}],["purpose","Purpose *",{}],["timescale","When do you need the funds? *",{}],["charge_position","Charge position *",{}],
   ["exit_plan","How will the loan be repaid? (your exit)",{full:1,ph:"e.g. sale of the property, or refinance"}]]},
@@ -37,6 +39,7 @@ const STEPS = [
   ["ai_call_consent","I am happy for an AI assistant to handle the initial call with me before connecting me to a broker",{full:1}],
   ["contact_consent","I agree to be contacted by Posfin Capital about my fact find *",{full:1}]]}
 ];
+STEPS[1].f.push(...BRANCH_FIELDS.map(f=>[f.key,f.label,{full:1}]));
 const OPT = {...O,ownership:O.ownership,asset_type:O.asset_type,residential_type:O.residential_type,purpose:O.purpose,timescale:O.timescale,charge_position:O.charge_position,
   first_charge_status:O.first_charge_status,arrears:O.yns,second_charges:O.yns,restrictions:O.restrictions,credit_profile:O.credit_profile,credit_events:O.credit_events,missed_payments:O.missed_payments,contact_pref:O.contact_pref};
 const $ = s => document.querySelector(s);
@@ -52,29 +55,47 @@ $("#steps").innerHTML = STEPS.map((st,i)=>`<section class="step" data-i="${i}"><
   else if(f.t==="bool") return `<div class="${cls}"><label class="chk"><input type="checkbox" id="${k}" name="${k}"><span>${esc(l)}</span></label><div class="err" id="e_${k}"></div></div>`;
   else { const ty=f.t==="email"?"email":f.t==="tel"?"tel":"text"; const im=f.t==="money"?' inputmode="numeric"':''; inp=`<input type="${ty}" id="${k}" name="${k}"${im} maxlength="${f.max||14}" placeholder="${esc(o.ph||"")}" autocomplete="off">`; }
   return `<div class="${cls}"><label class="l" for="${k}">${esc(l)}</label>${inp}<div class="err" id="e_${k}"></div></div>`; }).join("")+`</div></section>`).join("");
-// Format valid money on leaving the field; preserve unknown/invalid answers for validation.
-// While editing use ungrouped digits, retaining the mobile numeric keyboard.
+// Live formatting retains caret position, numeric keyboard and unresolved answers.
 for (const [key, field] of Object.entries(F)) {
-  if (field.t !== "money") continue;
-  const input = document.getElementById(key);
-  if (!input) continue;
-  input.addEventListener("focus", () => {
-    const value = money(input.value);
-    if (Number.isFinite(value) && value >= 0) input.value = String(value);
-  });
-  input.addEventListener("blur", () => {
-    const value = money(input.value);
-    if (input.value.trim() && Number.isFinite(value) && value >= 0) input.value = fmt(value);
-    updateFinancialReview();
-  });
+  const input=document.getElementById(key);
+  if (input && field.t === "money") bindMoneyInput(input);
 }
+const postcode=$("#security_postcode"); bindPostcode(postcode);
+postcode.insertAdjacentHTML("afterend", '<button type="button" id="findAddress" style="margin-top:10px">Find address</button><label class="l" for="addressChoices" style="margin-top:10px">Choose your address</label><select id="addressChoices" disabled><option>Enter postcode, then Find address</option></select><div id="addressMessage" role="status" aria-live="polite"></div>');
+let addressRows=[], lookupVersion=0;
+postcode.addEventListener("input",()=>{lookupVersion++;addressRows=[];$("#addressChoices").disabled=true;$("#addressChoices").innerHTML='<option>Find addresses for this postcode</option>';$("#addressMessage").textContent='';});
+$("#findAddress").onclick=async()=>{
+  const pc=postcode.value.trim().toUpperCase(), version=++lookupVersion;
+  const button=$("#findAddress"), choices=$("#addressChoices"), message=$("#addressMessage");
+  button.disabled=true;choices.disabled=true;message.textContent="Finding addresses…";
+  try {
+    const response=await fetch('/api/address-lookup?postcode='+encodeURIComponent(pc));const result=await response.json();
+    if(version!==lookupVersion)return;
+    if(!response.ok)throw new Error(result.error||'Address search unavailable. Please enter your address manually.');
+    addressRows=result.addresses||[];
+    choices.innerHTML='<option value="">Select your address</option>'+addressRows.map((a,i)=>`<option value="${i}">${esc(a.address)}</option>`).join('');
+    choices.disabled=!addressRows.length;
+    message.textContent=addressRows.length?'Choose from the list, or enter your address manually below.':'No addresses found. Please enter your address manually below.';
+  }catch(e){if(version===lookupVersion)message.textContent=e.message;}
+  finally{button.disabled=false;}
+};
+$("#addressChoices").onchange=()=>{const selected=addressRows[$("#addressChoices").value];if(!selected)return;$("#security_address").value=selected.address;$("#security_address").dispatchEvent(new Event('input',{bubbles:true}));};
+$("#asset_type").value="Residential";
+function syncBranches(){
+  const a={};for(const key of Object.keys(F)){const el=document.getElementById(key);if(el)a[key]=el.value;}
+  const res=$("#residential_type");res.disabled=a.asset_type!=="Residential";res.parentElement.classList.toggle('hide',res.disabled);
+  for(const f of BRANCH_FIELDS){const el=document.getElementById(f.key),visible=branchVisible(f,a);el.disabled=!visible;el.parentElement.classList.toggle('hide',!visible);}
+}
+$("#ff").addEventListener('change',e=>{if(['asset_type','includes_farmland','farm_business','planning_status','consent_implemented','planning_intent','income_present','occupancy_present','cil_s106'].includes(e.target.id)){syncBranches();updateFinancialReview();}});
+syncBranches();
+const productReview=document.createElement('div');productReview.id='productReview';$("#steps").after(productReview);
 // Never strip signs/ranges/TBC while typing: shared validation preserves meaning.
 const financialReview=document.createElement("div");financialReview.id="financialReview";$("#steps").after(financialReview);
-function updateFinancialReview(){financialReview.innerHTML=renderScorecard(collect());financialReview.classList.toggle("hide",step<3);}
+function updateFinancialReview(){productReview.innerHTML=routeCard(collect());productReview.classList.toggle("hide",step<2);financialReview.innerHTML=renderScorecard(collect());financialReview.classList.toggle("hide",step<3);}
 $("#ff").addEventListener("input",updateFinancialReview);$("#ff").addEventListener("change",updateFinancialReview);
 
-function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return a; }
-function fill(a){ for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } }
+function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return cleanBranches(a); }
+function fill(a){ for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } syncBranches(); }
 function show(i){ step=Math.max(0,Math.min(4,i)); document.querySelectorAll(".step").forEach(s=>s.classList.toggle("hide",+s.dataset.i!==step));
   document.querySelectorAll("#rail div").forEach((d,j)=>{d.classList.toggle("on",j===step);d.classList.toggle("done",j<step)});
   $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; updateFinancialReview(); }
@@ -149,7 +170,7 @@ async function submit(){
       const {status,j}=await api({action:"submit",code,answers:collect()});
       if(down(status)){ setMode("local", j.error); $("#next").disabled=false; return submit(); }
       if(!j.ok){ if(j.fieldErrors) showErr(j.fieldErrors); setStatus(j.message||"Could not submit. Please check your answers.","bad"); return; }
-      const summary=renderScorecard(collect());
+      const summary=routeCard(collect())+renderScorecard(collect());
       $("#ff").innerHTML='<h2>Your fact find is saved</h2><p id="submittedReference"></p><p>Thank you. We will review your declared figures and confirm the outstanding details together.</p>'+summary+'<p><a href="/">Back to the home page</a></p>';
       $("#submittedReference").textContent="Reference: "+j.reference+(testMode?" — synthetic preview test":"");
       window.scrollTo({top:0,behavior:"smooth"});
@@ -173,6 +194,7 @@ show(0); setMode("server"); await checkHealth();
 const q=new URLSearchParams(location.search);
 const p=q.get("purpose"); if(p && O.purpose.includes(p)) document.getElementById("purpose").value=p;
 const pt=q.get("asset"); if(pt && O.asset_type.includes(pt)) document.getElementById("asset_type").value=pt;
+syncBranches();
 if(q.get("resume")){ $("#resbox").open=true; $("#resumeCode").value=q.get("resume"); resume(q.get("resume")); }
 $("#retryBtn").addEventListener("click",async()=>{ setStatus("Checking…"); const ok=await checkHealth(); setStatus(ok?"Connected. You can save and submit as normal.":"Still unavailable. Please call us or book a 15-minute call.", ok?"ok":"bad"); });
 
