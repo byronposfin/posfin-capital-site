@@ -51,7 +51,7 @@ const fmt = v => { const n=money(v); return n===null ? "Not sure" : Number.isFin
 
 // render
 $("#steps").innerHTML = STEPS.map((st,i)=>`<section class="step" data-i="${i}"><h2>${st.t}</h2><p class="sub">${st.s}</p><div class="grid">`+
- st.f.map(([k,l,o])=>{ const f=F[k]; const cls=((o.full||f.t==="textarea"||f.t==="bool")?"full":"")+(o.test?" test-only":""); let inp;
+ st.f.map(([k,l,o])=>{ const f=F[k]; const cls=((o.full||f.t==="textarea"||f.t==="bool")?"full":"")+(o.test?" test-only hide":""); let inp;
   if(f.t==="select") inp=`<select id="${k}" name="${k}"><option value="">Please select</option>${OPT[k].map(x=>`<option value="${esc(x)}">${esc(["legal_buffer","contingency_buffer"].includes(k)&&x!=="Not sure"?"£"+Number(x).toLocaleString("en-GB"):x)}</option>`).join("")}</select>`;
   else if(f.t==="textarea") inp=`<textarea id="${k}" name="${k}" maxlength="${f.max}" placeholder="${esc(o.ph||"")}"></textarea>`;
   else if(f.t==="bool") return `<div class="${cls}"><label class="chk"><input type="checkbox" id="${k}" name="${k}"><span>${esc(l)}</span></label><div class="err" id="e_${k}"></div></div>`;
@@ -112,7 +112,11 @@ function setMode(m, why){ mode=m; const el=$("#mode");
   el.className="mode"+(m==="local"?" local":"");
   const fb=$("#fallback"); if(fb) fb.classList.toggle("hide", m!=="local");
   if(m==="local" && why) console.warn("factfind fallback:", why); }
-function setTestMode(t){ testMode=!!t; document.querySelectorAll(".test-only").forEach(e=>e.classList.toggle("hide",!testMode)); }
+function setTestMode(t){ testMode=!!t;
+ const banner=$("#previewBanner"), notice=$("#previewNotice");
+ if(banner) banner.textContent=testMode?"PREVIEW · TEST DATABASE · DO NOT ENTER REAL PERSONAL DETAILS":"";
+ if(notice) notice.textContent=testMode?"PREVIEW: do not enter real personal details. Use made-up test data only. Test submissions are stored in the preview database and send a reference-only test alert to Byron. No personal details are included in that alert and nothing is sent to a lender.":"";
+ document.querySelectorAll(".test-only").forEach(e=>e.classList.toggle("hide",!testMode)); }
 let lastHealth=0;
 async function checkHealth(){
   lastHealth=Date.now();
@@ -120,7 +124,7 @@ async function checkHealth(){
     setTestMode(h.testMode===true || h.testRun===true);
     if(h.ready){ setMode("server"); return true; }
     setMode("local", h.reason||h.db||"not_ready"); return false;
-  }catch(e){ setMode("local","health_unreachable"); return false; }
+  }catch(e){ setTestMode(testMode); setMode("local","health_unreachable"); return false; }
 }
 function showCode(c){ code=c; $("#codeOut").textContent=c; $("#linkOut").value=location.origin+"/fact-find?resume="+encodeURIComponent(c); $("#resume").classList.add("show"); try{history.replaceState(null,"","/fact-find?resume="+encodeURIComponent(c));}catch(e){} }
 
@@ -194,7 +198,7 @@ $("#resumeBtn").addEventListener("click",()=>resume($("#resumeCode").value));
 $("#linkOut").addEventListener("focus",e=>e.target.select());
 
 // init
-show(0); setMode("server"); await checkHealth();
+show(0); await checkHealth(); $("#ff").inert=false;
 const q=new URLSearchParams(location.search);
 const p=q.get("purpose"); if(p && O.purpose.includes(p)) document.getElementById("purpose").value=p;
 const pt=q.get("asset"); if(pt && O.asset_type.includes(pt)) document.getElementById("asset_type").value=pt;

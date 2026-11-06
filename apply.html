@@ -58,12 +58,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
 </style>
 </head>
 <body>
-<div class="testbar test-only">PREVIEW · TEST DATABASE · DO NOT ENTER REAL PERSONAL DETAILS</div>
+<div class="testbar test-only hide" id="previewBanner"></div>
 <header><div class="in"><a class="brand" href="/"><img src="/assets/logo-mark.png" alt="Posfin Capital"><span>POSFIN<small>CAPITAL</small></span></a><div class="fca">FCA authorised · FRN 913022<br>Credit broker, not a lender</div></div></header>
 <main>
   <h1>Your fact find <span id="mode" class="mode">Checking…</span></h1>
   <p class="intro">Five short steps. Rounded figures and best estimates are fine. You can save and come back later.</p>
-  <p class="notice test-only" role="alert">PREVIEW: do not enter real personal details. Use made-up test data only. Test submissions are stored in the preview database and send a reference-only test alert to Byron. No personal details are included in that alert and nothing is sent to a lender.</p>
+  <p class="notice test-only hide" id="previewNotice" role="alert"></p>
   <div class="fallback hide" id="fallback" role="alert"><b>Our secure online save is temporarily unavailable.</b>You can keep going: your answers are saved on this device only and have <u>not</u> been sent to us yet. To reach us now, call <a href="tel:+447446950389">+44 7446 950 389</a> or book a 15-minute call.
     <div class="row"><a class="btn btn-primary" href="https://calendly.com/byron-hill/posfin-bridging-finance-consultation-30-min-byron" target="_blank" rel="noopener" data-calendly>Book a 15-minute call</a><a class="btn btn-ghost" href="tel:+447446950389">Call +44 7446 950 389</a><button class="btn btn-ghost" type="button" id="retryBtn">Try again</button></div></div>
   <p class="honest">Our fact find is a fact-finding form only. Nothing is sent to a lender and no credit search is made.</p>
@@ -73,7 +73,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
     <div class="status" id="resumeStatus"></div>
   </details>
 
-  <form class="card" id="ff" novalidate>
+  <noscript><p class="notice">Please enable JavaScript to use this secure form, or contact Posfin for help.</p></noscript>
+  <form class="card" id="ff" novalidate inert>
     <div class="rail" id="rail"><div>01 You</div><div>02 Property</div><div>03 Loan</div><div>04 Existing borrowing</div><div>05 Credit &amp; consent</div></div>
     <p class="fund-support">There are no wrong answers. If a figure is not known, type <strong>Not sure</strong> — we will confirm it together. Please do not enter zero unless you know the balance is zero.</p><div id="steps"></div>
     <div class="actions">
@@ -90,5 +91,5 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
   </form>
   <p class="risk">Your home may be repossessed if you do not keep up repayments on a mortgage or any other debt secured on it. Posfin Capital Limited is an authorised credit broker and not a lender. An enquiry is not an application or an offer of finance.</p>
 </main>
-<script type="module" src="/fact-find.js?v=20261106-resume"></script>
+<script type="module" src="/fact-find.js?v=20261107-mode-check"></script>
 </body></html>
