@@ -108,6 +108,10 @@
   ],
   "rewrites": [
     {
+      "source": "/apply",
+      "destination": "/fact-find.html"
+    },
+    {
       "source": "/apply/bh",
       "destination": "/apply?b=bh"
     },
@@ -130,6 +134,12 @@
     {
       "source": "/apply1",
       "destination": "/apply?b=chris"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/factfind-alert-worker",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
