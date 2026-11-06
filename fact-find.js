@@ -99,7 +99,7 @@ function updateFinancialReview(){productReview.innerHTML=routeCard(collect());pr
 $("#ff").addEventListener("input",updateFinancialReview);$("#ff").addEventListener("change",updateFinancialReview);
 
 function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return cleanBranches({...a,...propertyEditor.collect()}); }
-function fill(a){ for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } propertyEditor.fill(a);syncBranches(); }
+function fill(a){ for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el || !F[k]) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } propertyEditor.fill(a);syncBranches(); }
 function show(i){ step=Math.max(0,Math.min(4,i)); document.querySelectorAll(".step").forEach(s=>s.classList.toggle("hide",+s.dataset.i!==step));
   document.querySelectorAll("#rail div").forEach((d,j)=>{d.classList.toggle("on",j===step);d.classList.toggle("done",j<step)});
   $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; updateFinancialReview(); }
