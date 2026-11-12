@@ -87,7 +87,7 @@ $("#findAddress").onclick=async()=>{
 };
 $("#addressChoices").onchange=()=>{const selected=addressRows[$("#addressChoices").value];if(!selected)return;$("#security_address").value=selected.address;$("#security_address").dispatchEvent(new Event('input',{bubbles:true}));};
 const landHost=document.createElement('section');landHost.className='card';landHost.id='landJourney';landHost.hidden=true;$('#ff').before(landHost);
-const landJourney=createLandJourney({host:landHost,request:api,getCode:()=>code,setCode:c=>{code=c;},testMode:()=>testMode,onReturn:a=>{landArchive={...a,asset_type:'Land'};landJourney.stop();$('#ff').classList.remove('hide');a.asset_type=a.asset_type==='Land'?'Residential':a.asset_type;fill(a);show(1);}});
+const landJourney=createLandJourney({host:landHost,request:api,getCode:()=>code,setCode:c=>{code=c;},testMode:()=>testMode,onReturn:a=>{landArchive={...a,asset_type:'Land'};landJourney.stop();$('#ff').classList.remove('hide');a.asset_type=isLand(a)?'Residential':a.asset_type;fill(a);show(1);}});
 function startLand(a){a={...(landArchive||{}),...a};$('#ff').classList.add('hide');document.querySelector('.intro').textContent='Your Land Fact Find. Save and finish later on any device.';landJourney.start(a);}
 $('#asset_type').addEventListener('change',()=>{if(isLand({asset_type:$('#asset_type').value}))startLand(collect());});
 $('#asset_type').value="Residential";

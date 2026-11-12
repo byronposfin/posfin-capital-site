@@ -18,3 +18,7 @@ test('no planning is not decline; hidden fields clear; forged score never surviv
  const a=validate({...base,planning_references:'stale',land_scorecard:{score:100,lender_ready:true},secured_lending:'No, it’s unencumbered',charges:[{balance:999}]},false).clean;
  assert.equal(a.no_chase,false);assert.equal(a.planning_references,undefined);assert.deepEqual(a.charges,[]);assert.equal(a.land_scorecard.lender_ready,false);assert.match(renderLandScorecard(a),/Independent valuation/);
 });
+test('carry-forward preserves gross request meaning instead of relabelling it net',()=>{
+ const a=validate({...base,loan_basis:'Gross borrowing amount',purpose:'Business / working capital'},false).clean;
+ assert.equal(a.loan_basis,'Gross borrowing amount');assert.equal(a.purpose,'Business / working capital');assert.match(renderLandScorecard(a),/Gross amount requested/);assert.doesNotMatch(renderLandScorecard(a),/Net cash requested/);
+});
