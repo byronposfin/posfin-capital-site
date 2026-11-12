@@ -57,3 +57,10 @@ test('main production worker uses the main database and existing production bot'
  });assert.match(text,/main CRM/);assert.doesNotMatch(text,/Ads|PREVIEW/);
  assert.equal(alertConfig({...e,FF_TEST_RUN:'true'}).ok,false);
 });
+
+test('LAND recipients have separate delivery receipts; preview never sends to production staff',async()=>{
+ const e={...env,VERCEL_ENV:'production',FF_TEST_RUN:'false',FF_SUPABASE_URL:'https://vgflcrfaudrvrdmxjdtl.supabase.co'};
+ const sent=[],finished=[];let index=0;
+ const fetcher=async(url,o)=>{if(url.endsWith('_claim')){const recipient=['1750758657','8634157536'][index++];return response(200,[{...row,id:recipient,recipient_chat_id:recipient}]);}if(url.endsWith('_finish')){finished.push(JSON.parse(o.body));return response(200,true);}sent.push(JSON.parse(o.body).chat_id);return response(200,{ok:true,result:{message_id:100+sent.length}});};
+ await drainAlerts(e,fetcher);await drainAlerts(e,fetcher);assert.deepEqual(sent,['1750758657','8634157536']);assert.notEqual(finished[0].p_id,finished[1].p_id);assert.notEqual(finished[0].p_message_id,finished[1].p_message_id);
+});

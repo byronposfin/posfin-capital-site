@@ -1,3 +1,4 @@
+import {isLand,belowMinimum} from '../lib/ff-land.js';
 // POST/GET /api/factfind: UK landing fact find (save / load / submit, plus GET health check).
 // ES module (the posfin-capital-site repo uses "type": "module").
 // Credentials come from environment variables ONLY. Request bodies and personal values are never logged.
@@ -19,7 +20,7 @@ import crypto from "node:crypto";
 import { drainAlerts } from "../lib/ff-alert-outbox.js";
 import { validate } from "../lib/ff-schema.js";
 
-export const VERSION = "uk-v004-declared-requirements";
+export const VERSION = "uk-v005-land-v12";
 export const CONSENT_VERSION = "uk-consent-v1-2026-11-03"; // bump whenever the consent wording on /fact-find changes
 const BACKENDS = {
   leads:    { prefix: "web_lead_", ref: "POSFIN-WEB-",  test: false, meta: true, testRef: "TEST-WEB-" },
@@ -202,6 +203,7 @@ export default async function handler(req, res) {
     const code = normCode(body.code);
     if (!codeOk(code)) return send(res, 400, { ok: false, error: "bad_code" });
     const { clean, errors } = validate(body.answers, true, testMode);
+    if(isLand(clean)&&belowMinimum(clean))return send(res,422,{ok:false,error:"below_minimum",message:"Below minimum value",no_chase:true});
     if (Object.keys(errors).length) return send(res, 422, { ok: false, error: "validation", fieldErrors: errors, message: "Please check the highlighted answers." });
     await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg) + rand(6), p_step: 5, p_answers: clean, ...meta });
     const rows = await rpc(cfg, "submit", { p_resume_hash: sha(code), p_answers: clean, ...meta });
@@ -214,7 +216,7 @@ export default async function handler(req, res) {
       try { const result = await drainAlerts(); alert = {status: result.ok ? "queued" : "recovery_required"}; }
       catch { alert = {status: "recovery_required"}; }
     } else alert = await previewSubmitAlert(cfg, r.reference);
-    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert });
+    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";
     const status = e instanceof BackendError ? e.status : 500;

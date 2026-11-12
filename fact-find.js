@@ -1,3 +1,5 @@
+import {createLandJourney} from '/lib/ff-land-ui.js';
+import {isLand} from '/lib/ff-land.js';
 import { createPropertyEditor } from "/lib/ff-properties-ui.js?v=20261104-properties";
 import { renderProperties } from "/lib/ff-properties.js?v=20261104-properties";
 import { BRANCH_FIELDS, branchVisible, cleanBranches, routeCard } from "/lib/ff-routing.js?v=20261104-live";
@@ -16,10 +18,10 @@ let testMode = true; // until /api/factfind health says otherwise
 const STEPS = [
  {t:"About you", s:"Your contact details and who owns the property.", f:[
   ["full_name","Full name *",{ac:"off",ph:""}],["phone","Phone *",{ph:"07700 900000"}],["email","Email *",{ph:"name@example.com",full:1}],
-  ["ownership","Who owns the property? *",{}],["company_name","Company name (if a company owns it)",{}],
+  ["asset_type","Security type *",{}],["ownership","Who owns the property? *",{}],["company_name","Company name (if a company owns it)",{}],
   ["test_mode_ack","I understand this is a PREVIEW form and I am using made-up details only *",{full:1,test:1}]]},
  {t:"The property", s:"The security, its value and how it is used.", f:[
-  ["asset_type","Security type *",{}],["residential_type","Residential type",{}],
+  ["residential_type","Residential type",{}],
   ["security_postcode","Security postcode *",{full:1,ph:"SW1A 1AA"}],["security_address","Security address",{full:1,ph:"Select an address above or enter it manually"}],["property_value","Estimated property value *",{ph:"£500,000"}]]},
  {t:"The loan", s:"Amount, purpose and how soon you need the funds.", f:[
   ["loan_amount","Amount requested *",{ph:"£250,000"}],["loan_basis","What does this amount mean?",{full:1}],["purpose","Purpose *",{}],["timescale","When do you need the funds? *",{}],["charge_position","Charge position *",{}],
@@ -46,7 +48,7 @@ const OPT = {...O,ownership:O.ownership,asset_type:O.asset_type,residential_type
   first_charge_status:O.first_charge_status,arrears:O.yns,second_charges:O.yns,restrictions:O.restrictions,credit_profile:O.credit_profile,credit_events:O.credit_events,missed_payments:O.missed_payments,contact_pref:O.contact_pref};
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let step = 0, code = "", mode = "server", busy = false;
+let step = 0, code = "", mode = "server", busy = false, landArchive = null;
 const fmt = v => { const n=money(v); return n===null ? "Not sure" : Number.isFinite(n) ? "£"+n.toLocaleString("en-GB") : String(v??""); };
 
 // render
@@ -84,7 +86,11 @@ $("#findAddress").onclick=async()=>{
   finally{button.disabled=false;}
 };
 $("#addressChoices").onchange=()=>{const selected=addressRows[$("#addressChoices").value];if(!selected)return;$("#security_address").value=selected.address;$("#security_address").dispatchEvent(new Event('input',{bubbles:true}));};
-$("#asset_type").value="Residential";
+const landHost=document.createElement('section');landHost.className='card';landHost.id='landJourney';landHost.hidden=true;$('#ff').before(landHost);
+const landJourney=createLandJourney({host:landHost,request:api,getCode:()=>code,setCode:c=>{code=c;},testMode:()=>testMode,onReturn:a=>{landArchive={...a,asset_type:'Land'};landJourney.stop();$('#ff').classList.remove('hide');a.asset_type=a.asset_type==='Land'?'Residential':a.asset_type;fill(a);show(1);}});
+function startLand(a){a={...(landArchive||{}),...a};$('#ff').classList.add('hide');document.querySelector('.intro').textContent='Your Land Fact Find. Save and finish later on any device.';landJourney.start(a);}
+$('#asset_type').addEventListener('change',()=>{if(isLand({asset_type:$('#asset_type').value}))startLand(collect());});
+$('#asset_type').value="Residential";
 function syncBranches(){
   const a={};for(const key of Object.keys(F)){const el=document.getElementById(key);if(el)a[key]=el.value;}
   const res=$("#residential_type");res.disabled=a.asset_type!=="Residential";res.parentElement.classList.toggle('hide',res.disabled);
@@ -98,8 +104,8 @@ const financialReview=document.createElement("div");financialReview.id="financia
 function updateFinancialReview(){productReview.innerHTML=routeCard(collect());productReview.classList.toggle("hide",step<2);financialReview.innerHTML=renderScorecard(collect());financialReview.classList.toggle("hide",step<3);}
 $("#ff").addEventListener("input",updateFinancialReview);$("#ff").addEventListener("change",updateFinancialReview);
 
-function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return cleanBranches({...a,...propertyEditor.collect()}); }
-function fill(a){ for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el || !F[k]) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } propertyEditor.fill(a);syncBranches(); }
+function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return cleanBranches({...a,...propertyEditor.collect(),...(landArchive?{inactive_land_answers:landArchive}:{})}); }
+function fill(a){ landArchive=a?.inactive_land_answers||landArchive; for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el || !F[k]) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } propertyEditor.fill(a);syncBranches(); }
 function show(i){ step=Math.max(0,Math.min(4,i)); document.querySelectorAll(".step").forEach(s=>s.classList.toggle("hide",+s.dataset.i!==step));
   document.querySelectorAll("#rail div").forEach((d,j)=>{d.classList.toggle("on",j===step);d.classList.toggle("done",j<step)});
   $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; updateFinancialReview(); }
@@ -162,7 +168,7 @@ async function resume(c){
       if(down(status)) { setMode("local", j.error); return resume(c); }
       if(!j.ok){ rs.textContent=j.message||"Could not open that draft."; rs.className="status bad"; return; }
       if(j.status==="submitted"){ rs.textContent="That fact find has already been submitted (ref "+j.reference+")."; rs.className="status ok"; return; }
-      fill(j.answers); showCode(c); show((j.step||1)-1); rs.textContent="Draft "+j.reference+" opened."; rs.className="status ok"; $("#resbox").open=false; setStatus("Welcome back. Your saved answers are filled in.","ok");
+      fill(j.answers); showCode(c); if(isLand(j.answers))startLand(j.answers);else show((j.step||1)-1); rs.textContent="Draft "+j.reference+" opened."; rs.className="status ok"; $("#resbox").open=false; setStatus("Welcome back. Your saved answers are filled in.","ok");
     } else {
       const d=lget()[c]; if(!d){ rs.textContent="No draft with that code on this device."; rs.className="status bad"; return; }
       fill(d.answers); showCode(c); show((d.step||1)-1); rs.textContent="Draft opened from this device."; rs.className="status ok";
@@ -203,6 +209,7 @@ const q=new URLSearchParams(location.search);
 const p=q.get("purpose"); if(p && O.purpose.includes(p)) document.getElementById("purpose").value=p;
 const pt=q.get("asset"); if(pt && O.asset_type.includes(pt)) document.getElementById("asset_type").value=pt;
 syncBranches();
+if(!q.get("resume")&&(isLand({asset_type:pt})||q.get("lane")==="land"))startLand({...collect(),asset_type:pt||"Land"});
 if(q.get("resume")){ $("#resbox").open=true; $("#resumeCode").value=q.get("resume"); resume(q.get("resume")); }
 $("#retryBtn").addEventListener("click",async()=>{ setStatus("Checking…"); const ok=await checkHealth(); setStatus(ok?"Connected. You can save and submit as normal.":"Still unavailable. Please call us or book a 15-minute call.", ok?"ok":"bad"); });
 
