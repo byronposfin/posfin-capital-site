@@ -31,9 +31,9 @@ language plpgsql security definer set search_path='' as $$
 begin
  if new.form_stage='submitted' and coalesce(new.answers->>'no_chase','false')<>'true' and new.reference ~ '^(TEST-WEB-|POSFIN-WEB-)[A-Z2-9]{6}$'
  and (tg_op='INSERT' or old.form_stage is distinct from 'submitted') then
-  insert into pipeline.web_lead_alert_outbox(lead_id,reference) values(new.id,new.reference) on conflict(lead_id,recipient_chat_id) do nothing;
+  insert into pipeline.web_lead_alert_outbox(lead_id,reference) values(new.id,new.reference) on conflict on constraint web_lead_alert_recipient_key do nothing;
   if new.answers->>'intake_type'='pa_land' then
-   insert into pipeline.web_lead_alert_outbox(lead_id,reference,recipient_chat_id) values(new.id,new.reference,'8634157536') on conflict(lead_id,recipient_chat_id) do nothing;
+   insert into pipeline.web_lead_alert_outbox(lead_id,reference,recipient_chat_id) values(new.id,new.reference,'8634157536') on conflict on constraint web_lead_alert_recipient_key do nothing;
   end if;
  end if;
  return null;
@@ -50,12 +50,12 @@ begin
  select l.id,l.reference from pipeline.web_leads l
  where l.form_stage='submitted' and coalesce(l.answers->>'no_chase','false')<>'true' and l.reference ~ '^(TEST-WEB-|POSFIN-WEB-)[A-Z2-9]{6}$'
  and l.submitted_at >= (select c.armed_at from pipeline.web_lead_alert_control c where c.id=true)
- on conflict(lead_id,recipient_chat_id) do nothing;
+ on conflict on constraint web_lead_alert_recipient_key do nothing;
  insert into pipeline.web_lead_alert_outbox(lead_id,reference,recipient_chat_id)
  select l.id,l.reference,'8634157536' from pipeline.web_leads l
  where l.form_stage='submitted' and l.answers->>'intake_type'='pa_land' and coalesce(l.answers->>'no_chase','false')<>'true'
- and l.submitted_at >= (select armed_at from pipeline.web_lead_land_control where id=true)
- on conflict(lead_id,recipient_chat_id) do nothing;
+ and l.submitted_at >= (select c.armed_at from pipeline.web_lead_land_control c where c.id=true)
+ on conflict on constraint web_lead_alert_recipient_key do nothing;
  -- A crashed sender may already have delivered. Never automatically replay an expired lease.
  update pipeline.web_lead_alert_outbox o set state='unknown',last_error='expired_lease',updated_at=now()
  where o.state='sending' and o.lease_until < now();
