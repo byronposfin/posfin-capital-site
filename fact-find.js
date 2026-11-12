@@ -5,7 +5,7 @@ import { renderProperties } from "/lib/ff-properties.js?v=20261104-properties";
 import { BRANCH_FIELDS, branchVisible, cleanBranches, routeCard } from "/lib/ff-routing.js?v=20261104-live";
 import { bindMoneyInput, bindPostcode } from "/lib/ff-inputs.js?v=20261104-live";
 import { money, renderScorecard } from "/lib/ff-finance.js?v=20261104-lender-gate";
-import * as S from "/lib/ff-schema.js?v=20261104-properties";
+import * as S from "/lib/ff-schema.js?v=20261112-acquisition";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
 if(!a){a={landing_path:location.pathname,referrer:document.referrer&&new URL(document.referrer).host!==location.host?document.referrer:""};}
@@ -105,7 +105,7 @@ function updateFinancialReview(){productReview.innerHTML=routeCard(collect());pr
 $("#ff").addEventListener("input",updateFinancialReview);$("#ff").addEventListener("change",updateFinancialReview);
 
 function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=el.value; } return cleanBranches({...a,...propertyEditor.collect(),...(landArchive?{inactive_land_answers:landArchive}:{})}); }
-function fill(a){ landArchive=a?.inactive_land_answers||landArchive; for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el || !F[k]) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } propertyEditor.fill(a);syncBranches(); }
+function fill(a){ a={...a,purpose:S.normalisePurpose(a?.purpose ?? a?.loanPurpose ?? a?.loan_purpose)}; landArchive=a?.inactive_land_answers||landArchive; for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el || !F[k]) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):v; } propertyEditor.fill(a);syncBranches(); }
 function show(i){ step=Math.max(0,Math.min(4,i)); document.querySelectorAll(".step").forEach(s=>s.classList.toggle("hide",+s.dataset.i!==step));
   document.querySelectorAll("#rail div").forEach((d,j)=>{d.classList.toggle("on",j===step);d.classList.toggle("done",j<step)});
   $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; updateFinancialReview(); }
@@ -206,7 +206,7 @@ $("#linkOut").addEventListener("focus",e=>e.target.select());
 // init
 show(0); await checkHealth(); $("#ff").inert=false;
 const q=new URLSearchParams(location.search);
-const p=q.get("purpose"); if(p && O.purpose.includes(p)) document.getElementById("purpose").value=p;
+const p=S.normalisePurpose(q.get("purpose") ?? q.get("loanPurpose") ?? q.get("loan_purpose")); if(p && O.purpose.includes(p)) document.getElementById("purpose").value=p;
 const pt=q.get("asset"); if(pt && O.asset_type.includes(pt)) document.getElementById("asset_type").value=pt;
 syncBranches();
 if(!q.get("resume")&&(isLand({asset_type:pt})||q.get("lane")==="land"))startLand({...collect(),asset_type:pt||"Land"});

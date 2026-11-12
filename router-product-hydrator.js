@@ -265,7 +265,11 @@
     // Step 1's submit includes contact permission; AI consent remains separate.
     var contact=consentInput();if(contact){setOption(contact,true);contact.closest('label').hidden=true;contact.closest('label').style.setProperty('display','none','important');}
     ['first name','last name','mobile','email'].forEach(function(k){var e=byLabel(k);if(e)e.readOnly=true;});
-    var purposeInput=document.querySelector('input[name="loanPurpose"]');if(purposeInput&&V.loanPurpose)purposeInput.closest('.mb-5').hidden=true;
+    var purposeInput=document.querySelector('input[name="loanPurpose"]');if(purposeInput){
+      var purposeGroup=purposeInput.closest('.mb-5');
+      // Never conceal an unmatched required choice. The carried summary preserves original context.
+      if(purposeGroup)purposeGroup.hidden=!!checkedValue('loanPurpose');
+    }
     didInitialHydrate = true;
     return true;
   }
