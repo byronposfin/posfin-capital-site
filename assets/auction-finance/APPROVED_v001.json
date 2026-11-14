@@ -1,0 +1,9 @@
+{
+  "approval": "Byron via Lizzy, Telegram81634, 14 November 2026",
+  "version": "v001",
+  "scope": "Approved offer card; website release requires preview approval",
+  "sha256": {
+    "AUCTION_FINANCE_v001.html": "6deec5f5623c6d5532dff92f152939fba98ca614829ebfab2de2f8f79d09bdbf",
+    "AUCTION_FINANCE_v001.jpg": "3a479a388e7113d05dcbf0f9874204d685f3e80da65fc2574d983ccc5a32a02b"
+  }
+}
