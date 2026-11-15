@@ -2,10 +2,10 @@ import {createLandJourney} from '/lib/ff-land-ui.js';
 import {isLand} from '/lib/ff-land.js';
 import { createPropertyEditor } from "/lib/ff-properties-ui.js?v=20261104-properties";
 import { renderProperties } from "/lib/ff-properties.js?v=20261104-properties";
-import { BRANCH_FIELDS, branchVisible, cleanBranches, routeCard } from "/lib/ff-routing.js?v=20261104-live";
+import { BRANCH_FIELDS, branchVisible, cleanBranches, routeCard } from "/lib/ff-routing.js?v=20261114-auction";
 import { bindMoneyInput, bindPostcode } from "/lib/ff-inputs.js?v=20261104-live";
 import { money, renderScorecard } from "/lib/ff-finance.js?v=20261104-lender-gate";
-import * as S from "/lib/ff-schema.js?v=20261112-acquisition";
+import * as S from "/lib/ff-schema.js?v=20261114-auction";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
 if(!a){a={landing_path:location.pathname,referrer:document.referrer&&new URL(document.referrer).host!==location.host?document.referrer:""};}
@@ -25,6 +25,7 @@ const STEPS = [
   ["security_postcode","Security postcode *",{full:1,ph:"SW1A 1AA"}],["security_address","Security address",{full:1,ph:"Select an address above or enter it manually"}],["property_value","Estimated property value *",{ph:"£500,000"}]]},
  {t:"The loan", s:"Amount, purpose and how soon you need the funds.", f:[
   ["loan_amount","Amount requested *",{ph:"£250,000"}],["loan_basis","What does this amount mean?",{full:1}],["purpose","Purpose *",{}],["timescale","When do you need the funds? *",{}],["charge_position","Charge position *",{}],
+  ["auction_date","Auction date * (YYYY-MM-DD)",{ph:"2026-12-01"}],["auction_guide_price","Guide price (£) — or enter maximum bid",{}],["auction_max_bid","Maximum bid (£) — or enter guide price",{}],["auction_completion_deadline","Completion deadline * (YYYY-MM-DD)",{ph:"2026-12-29"}],
   ["exit_plan","How will the loan be repaid? (your exit)",{full:1,ph:"e.g. sale of the property, or refinance"}]]},
  {t:"Existing borrowing", s:"Any mortgages or charges already in place.", f:[
   ["first_charge_lender","First-charge lender *",{ph:"Lender name, or \u201cNo mortgage\u201d"}],["first_charge_balance","First-charge balance",{ph:"£150,000"}],
@@ -93,10 +94,11 @@ $('#asset_type').addEventListener('change',()=>{if(isLand({asset_type:$('#asset_
 $('#asset_type').value="Residential";
 function syncBranches(){
   const a={};for(const key of Object.keys(F)){const el=document.getElementById(key);if(el)a[key]=el.value;}
+  for(const key of ["auction_date","auction_guide_price","auction_max_bid","auction_completion_deadline"]){const el=document.getElementById(key);el.disabled=a.purpose!=="Auction finance";el.parentElement.classList.toggle("hide",el.disabled);}
   const res=$("#residential_type");res.disabled=a.asset_type!=="Residential";res.parentElement.classList.toggle('hide',res.disabled);
   for(const f of BRANCH_FIELDS){const el=document.getElementById(f.key),visible=branchVisible(f,a);el.disabled=!visible;el.parentElement.classList.toggle('hide',!visible);}
 }
-$("#ff").addEventListener('change',e=>{if(['asset_type','includes_farmland','farm_business','planning_status','consent_implemented','planning_intent','income_present','occupancy_present','cil_s106'].includes(e.target.id)){syncBranches();updateFinancialReview();}});
+$("#ff").addEventListener('change',e=>{if(['purpose','asset_type','includes_farmland','farm_business','planning_status','consent_implemented','planning_intent','income_present','occupancy_present','cil_s106'].includes(e.target.id)){syncBranches();updateFinancialReview();}});
 syncBranches();
 const productReview=document.createElement('div');productReview.id='productReview';$("#steps").after(productReview);
 // Never strip signs/ranges/TBC while typing: shared validation preserves meaning.
