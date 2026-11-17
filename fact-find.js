@@ -94,9 +94,13 @@ $('#asset_type').value="Residential";
 function syncBranches(){
   const a={};for(const key of Object.keys(F)){const el=document.getElementById(key);if(el)a[key]=el.value;}
   const res=$("#residential_type");res.disabled=a.asset_type!=="Residential";res.parentElement.classList.toggle('hide',res.disabled);
+  const companyName=$("#company_name"), companyOwned=a.ownership==="Company";
+  companyName.disabled=!companyOwned;
+  companyName.parentElement.classList.toggle('hide',!companyOwned);
+  if(!companyOwned) companyName.value="";
   for(const f of BRANCH_FIELDS){const el=document.getElementById(f.key),visible=branchVisible(f,a);el.disabled=!visible;el.parentElement.classList.toggle('hide',!visible);}
 }
-$("#ff").addEventListener('change',e=>{if(['asset_type','includes_farmland','farm_business','planning_status','consent_implemented','planning_intent','income_present','occupancy_present','cil_s106'].includes(e.target.id)){syncBranches();updateFinancialReview();}});
+$("#ff").addEventListener('change',e=>{if(['asset_type','ownership','includes_farmland','farm_business','planning_status','consent_implemented','planning_intent','income_present','occupancy_present','cil_s106'].includes(e.target.id)){syncBranches();updateFinancialReview();}});
 syncBranches();
 const productReview=document.createElement('div');productReview.id='productReview';$("#steps").after(productReview);
 // Never strip signs/ranges/TBC while typing: shared validation preserves meaning.
