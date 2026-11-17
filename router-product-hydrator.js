@@ -422,10 +422,8 @@
   }
   function fieldHtml(label, value, name) {
     var moneyField = isMoneyName(name);
-    var uppercaseField = name === 'firstChargeLender' || name === 'secondChargeProvider';
     var safeVal = moneyField ? formatMoneyDisplay(value) : String(value || '');
-    if (uppercaseField) safeVal = safeVal.toLocaleUpperCase('en-GB');
-    return '<div class="mb-5"><label style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><input name="'+name+'" value="'+safeVal.replace(/"/g,'&quot;')+'" '+(moneyField?'data-posfin-money="1" inputmode="numeric" autocomplete="off" ':'')+(uppercaseField?'oninput="this.value=this.value.toLocaleUpperCase(\'en-GB\')" ':'')+'style="width:100%;height:54px;padding:0 18px;font-family:Arial,Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none'+(uppercaseField?';text-transform:uppercase':'')+'"/></div>';
+    return '<div class="mb-5"><label style="font-family:Arial,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#1C184F;margin-bottom:8px;display:block">'+label+'</label><input name="'+name+'" value="'+safeVal.replace(/"/g,'&quot;')+'" '+(moneyField?'data-posfin-money="1" inputmode="numeric" autocomplete="off" ':'')+'style="width:100%;height:54px;padding:0 18px;font-family:Arial,Arial,sans-serif;font-size:16px;color:#1A1A2E;background:#fff;border:1px solid #E5E1D6;border-radius:0;outline:none"/></div>';
   }
   function escapeHtml(v) {
     return String(v || '').replace(/[&<>\"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]); });
