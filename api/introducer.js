@@ -14,8 +14,11 @@ import { google } from 'googleapis';
 import docusign from 'docusign-esign';
 import { SignJWT } from 'jose';
 import crypto from 'crypto';
+import { guardSheets, previewWriteDenial, resolveWriteTarget } from '../lib/sheets-guard.js';
 
 const SHEET_ID   = '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
+// Production keeps SHEET_ID; Preview resolves to the approved staging sheet or throws.
+const sheetTarget = () => resolveWriteTarget(SHEET_ID);
 const DS_INTEGRATION_KEY = '87b0a588-6156-418c-8f2e-a01de79c3d9a';
 const DS_ACCOUNT_ID      = '4276c59c-df78-46b3-8814-a930b0a29a37';
 const DS_USER_ID         = process.env.DS_USER_ID || '';
@@ -184,13 +187,13 @@ async function saveToSheets(d, ref, envelopeId) {
   if (!saB64) return null;
   const credentials = JSON.parse(Buffer.from(saB64, 'base64').toString('utf8'));
   const auth = new google.auth.GoogleAuth({ credentials, scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
-  const sheets = google.sheets({ version: 'v4', auth });
-  const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const sheets = guardSheets(google.sheets({ version: 'v4', auth }));
+  const ts =new Date().toISOString().replace('T', ' ').slice(0, 19);
   const row = [ts, ref, 'PENDING SIGNATURE', d.full_name, d.company || '', d.email, d.mobile, d.fca_status || '', d.case_type || '', d.has_live_case || '', d.network || '', envelopeId, '', ts];
-  const colA = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: "'Introducers'!A:A" });
+  const colA = await sheets.spreadsheets.values.get({ spreadsheetId: sheetTarget(), range: "'Introducers'!A:A" });
   const nextRow = Math.max((colA.data.values || []).length + 1, 2);
   await sheets.spreadsheets.values.update({
-    spreadsheetId: SHEET_ID,
+    spreadsheetId: sheetTarget(),
     range: `'Introducers'!A${nextRow}:N${nextRow}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: { values: [row] },
@@ -232,6 +235,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
+  // Checked before DocuSign so a denied Preview has no side effects at all.
+  const denied = previewWriteDenial();
+  if (denied) { res.status(503).json({ error: 'Sheets writes are disabled in this Preview deployment', reason: denied }); return; }
 
   try {
     const b = req.body;
