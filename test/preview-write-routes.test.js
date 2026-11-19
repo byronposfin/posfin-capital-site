@@ -200,7 +200,7 @@ const CASES = {
   },
   'POST /api/prefill': {
     handler: 'prefill', denyStatus: 503,
-    req: () => ({ method: 'POST', body: { first_name: 'Ada', mobile: '07700900000' } }),
+    req: () => ({ method: 'POST', headers: { 'x-prefill-admin-token': 'test-prefill-admin-token' }, body: { first_name: 'Ada', mobile: '07700900000' } }),
     wrote: () => tabs['Prefill_Tokens']?.length === 2,
   },
   'GET /api/prefill': {
@@ -249,7 +249,7 @@ for (const [name, c] of Object.entries(CASES)) {
     }
 
     it('Preview with exact staging ID + flag true: writes land only on staging', async () => {
-      setEnv({ VERCEL_ENV: 'preview', FACTFIND_SHEET_ID: STAGING, FACTFIND_STAGING_WRITES: 'true' });
+      setEnv({ VERCEL_ENV: 'preview', FACTFIND_SHEET_ID: STAGING, FACTFIND_STAGING_WRITES: 'true', ...(name === 'POST /api/prefill' ? { PREFILL_ADMIN_TOKEN: 'test-prefill-admin-token' } : {}) });
       c.seed?.();
       const res = await call(routes[c.handler], c.req());
       assert.equal(res.statusCode, 200, JSON.stringify(res.body));
@@ -260,7 +260,7 @@ for (const [name, c] of Object.entries(CASES)) {
 
     it('production regression: unchanged, writes reach the production sheet', async () => {
       // Deliberately "wrong" Preview settings must be irrelevant in production.
-      setEnv({ VERCEL_ENV: 'production', FACTFIND_STAGING_WRITES: 'false' });
+      setEnv({ VERCEL_ENV: 'production', FACTFIND_STAGING_WRITES: 'false', ...(name === 'POST /api/prefill' ? { PREFILL_ADMIN_TOKEN: 'test-prefill-admin-token' } : {}) });
       c.seed?.();
       const res = await call(routes[c.handler], c.req());
       assert.equal(res.statusCode, 200, JSON.stringify(res.body));
@@ -285,5 +285,16 @@ describe('production regression: /api/lead honours FACTFIND_SHEET_ID override', 
     assert.equal(res.body.dryRun, true);
     assert.equal(res.body.stagingWritesDenied, undefined);
     assert.equal(log.clients, 0);
+  });
+});
+
+describe('prefill admin authentication fails closed', () => {
+  it('does not issue a link or initialize Sheets when PREFILL_ADMIN_TOKEN is unset', async () => {
+    setEnv({ VERCEL_ENV: 'preview', FACTFIND_SHEET_ID: STAGING, FACTFIND_STAGING_WRITES: 'true' });
+    const res = await call(routes.prefill, { method: 'POST', body: { first_name: 'Ada', mobile: '07700900000' } });
+    assert.equal(res.statusCode, 503);
+    assert.equal(res.body.error, 'Prefill administration is not configured');
+    assert.equal(log.clients, 0);
+    assert.deepEqual(log.sheets, []);
   });
 });

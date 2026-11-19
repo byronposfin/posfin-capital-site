@@ -2,8 +2,8 @@
  * PropertyData AVM proxy — /api/propertydata?postcode=SW1A1AA
  * Proxies to PropertyData API to avoid CORS issues from browser.
  */
-const PROPERTYDATA_KEY = process.env.PROPERTYDATA_KEY;
-
+// PROPERTYDATA_API_KEY is the configured Vercel secret. Keep the older
+// PROPERTYDATA_KEY name as a compatibility fallback for existing deployments.
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -14,11 +14,12 @@ export default async function handler(req, res) {
   if (!postcode) return res.status(400).json({ error: 'postcode required' });
 
   const clean = postcode.replace(/\s+/g, '').toUpperCase();
+  const propertyDataKey = process.env.PROPERTYDATA_KEY || process.env.PROPERTYDATA_API_KEY;
 
   try {
     // Try sold-prices for AVM estimate
     const r = await fetch(
-      `https://api.propertydata.co.uk/sold-prices?key=${PROPERTYDATA_KEY}&postcode=${clean}`,
+      `https://api.propertydata.co.uk/sold-prices?key=${propertyDataKey}&postcode=${clean}`,
       { headers: { 'Accept': 'application/json' } }
     );
     const data = await r.json();

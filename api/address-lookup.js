@@ -6,7 +6,10 @@ export default async function handler(req,res){
   
   const postcode=String(req.query.postcode||'').toUpperCase().replace(/\s/g,'');
   if(!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(postcode))return res.status(400).json({error:'Enter a full UK postcode.'});
-  const key=process.env.PROPERTYDATA_API_KEY;
+  // PROPERTYDATA_KEY is the established project variable used by the AVM
+  // endpoint. Keep the newer, endpoint-specific name as an override, but
+  // allow existing deployments to serve address search without a second copy.
+  const key=process.env.PROPERTYDATA_API_KEY || process.env.PROPERTYDATA_KEY;
   if(!key)return res.status(503).json({error:'Address search unavailable. Please enter your address manually.'});
   const ip=String(req.headers['x-forwarded-for']||'unknown').split(',')[0],now=Date.now();
   for(const [k,v] of attempts)if(now-v.start>60000)attempts.delete(k);

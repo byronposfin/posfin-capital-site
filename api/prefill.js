@@ -116,15 +116,19 @@ export default async function handler(req, res) {
   const denied = previewWriteDenial();
   if (denied) { res.status(503).json({ error: 'Sheets writes are disabled in this Preview deployment', reason: denied }); return; }
 
+  // Link issuance is an administrative operation in every environment. A
+  // missing secret must disable it, never silently turn authentication off.
+  if (req.method === 'POST') {
+    const adminToken = process.env.PREFILL_ADMIN_TOKEN;
+    if (!adminToken) { res.status(503).json({ error: 'Prefill administration is not configured' }); return; }
+    const supplied = String(req.headers['x-prefill-admin-token'] || '').trim() || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+    if (supplied !== adminToken) { res.status(401).json({ error: 'Unauthorized' }); return; }
+  }
+
   try {
     const sheets = await sheetsClient();
 
     if (req.method === 'POST') {
-      const adminToken = process.env.PREFILL_ADMIN_TOKEN;
-      if (adminToken) {
-        const supplied = String(req.headers['x-prefill-admin-token'] || '').trim() || String(req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-        if (supplied !== adminToken) { res.status(401).json({ error: 'Unauthorized' }); return; }
-      }
       const b = req.body || {};
       const token = crypto.randomBytes(18).toString('base64url');
       const now = new Date();
