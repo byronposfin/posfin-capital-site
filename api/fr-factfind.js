@@ -63,10 +63,10 @@ async function rpc(cfg, fn, body) {
   return payload;
 }
 
-function adminSecret(req, cfg) {
+function suppliedAdminSecret(req) {
   const header = String(req.headers?.["x-fr-admin-token"] || req.headers?.["x-prefill-admin-token"] || "").trim();
   const bearer = String(req.headers?.authorization || "").replace(/^Bearer\s+/i, "").trim();
-  return header || bearer || cfg.adminToken;
+  return header || bearer;
 }
 
 function staffPayload(row, origin) {
@@ -131,7 +131,8 @@ export default async function handler(req, res) {
         p_consent_lang: body.lang === "en" ? "en" : "fr",
       });
       if (!saved?.ok) return send(res, saved?.error === "not_found" ? 404 : 422, { ok: false, error: saved?.error || "save_failed", fieldErrors: saved?.fieldErrors });
-      return send(res, 200, saved);
+      await rpc(cfg, "fr_factfind_set_lang", { p_token: String(body.token || ""), p_lang: body.lang === "en" ? "en" : "fr" }).catch(() => {});
+      return send(res, 200, { ...saved, lang: body.lang === "en" ? "en" : "fr" });
     }
 
     if (action === "upload") {
@@ -180,7 +181,7 @@ export default async function handler(req, res) {
       if (!origin) return send(res, 400, { ok: false, error: "bad_origin" });
       const row = await rpc(cfg, "fr_factfind_staff", {
         p_lead_id: body.lead_id,
-        p_admin_secret: adminSecret(req, cfg),
+        p_admin_secret: suppliedAdminSecret(req),
       });
       if (!row?.ok) return send(res, row?.error === "unauthorized" ? 401 : 404, { ok: false, error: row?.error || "not_found" });
       const view = staffPayload(row, origin);

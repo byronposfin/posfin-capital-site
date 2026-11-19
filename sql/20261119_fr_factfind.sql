@@ -127,7 +127,6 @@ begin
     and coalesce(nullif(v_lead.company_name, ''), v_raw->>'company_name', '') <> '';
   v_step := case
     when v_raw->>'_fr_completed_at' is not null then 4
-    when v_business and v_stmt and coalesce(v_raw->>'role', '') <> '' and v_raw ? 'ownership_pct' and coalesce(v_raw->>'date_of_birth', '') <> '' then 4
     when v_business and v_stmt then 3
     when v_stmt then 2
     else 1
@@ -138,6 +137,7 @@ begin
     'is_test', coalesce(v_raw->>'_is_test', '') in ('true', 't') or v_lead.source = 'fr_factfind_test',
     'reference', v_raw->>'_factfind_reference',
     'step', v_step,
+    'lang', case when v_raw->>'ui_lang' in ('en', 'fr') then v_raw->>'ui_lang' else null end,
     'locked', jsonb_build_object(
       'first_name', coalesce(nullif(v_raw->>'first_name', ''), split_part(v_lead.full_name, ' ', 1)),
       'last_name', coalesce(nullif(v_raw->>'last_name', ''), nullif(btrim(substr(v_lead.full_name, length(split_part(v_lead.full_name, ' ', 1)) + 1)), '')),
@@ -376,6 +376,9 @@ begin
     );
   elsif coalesce(p_strict, false) and p_stage = 2 then
     v_merged := v_merged || jsonb_build_object('_fr_step', greatest(coalesce((v_raw->>'_fr_step')::int, 1), 3));
+  end if;
+  if p_consent_lang in ('en', 'fr') then
+    v_merged := v_merged || jsonb_build_object('ui_lang', p_consent_lang);
   end if;
 
   update public.leads set
@@ -638,6 +641,31 @@ revoke all on function public.fr_factfind_mint(uuid, text, text) from public, an
 revoke all on function public.fr_factfind_store_links(text, text, text, text) from public, anon, authenticated;
 
 grant execute on function public.fr_factfind_load(text) to anon, service_role;
+
+create or replace function public.fr_factfind_set_lang(p_token text, p_lang text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  v_hash text;
+  v_link public.fr_factfind_links%rowtype;
+begin
+  if p_lang not in ('en', 'fr') then return jsonb_build_object('ok', true); end if;
+  if p_token is null or length(p_token) < 20 then return jsonb_build_object('ok', false, 'error', 'bad_token'); end if;
+  v_hash := encode(extensions.digest(convert_to(p_token, 'UTF8'), 'sha256'), 'hex');
+  select * into v_link from public.fr_factfind_links
+    where token_hash = v_hash and revoked_at is null and expires_at > now();
+  if not found then return jsonb_build_object('ok', false, 'error', 'not_found'); end if;
+  update public.leads
+    set raw_answers = coalesce(raw_answers, '{}'::jsonb) || jsonb_build_object('ui_lang', p_lang)
+    where id = v_link.lead_id;
+  return jsonb_build_object('ok', true);
+end
+$fn$;
+revoke all on function public.fr_factfind_set_lang(text, text) from public, anon, authenticated;
+grant execute on function public.fr_factfind_set_lang(text, text) to anon, service_role;
 grant execute on function public.fr_factfind_save(text, int, jsonb, boolean, text, text, text) to anon, service_role;
 grant execute on function public.fr_factfind_prepare_upload(text, text, text, int, text) to anon, service_role;
 grant execute on function public.fr_factfind_record_upload(text, text, text, text, int, text) to anon, service_role;

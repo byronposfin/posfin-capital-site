@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import handler from "../api/fr-factfind.js";
 import {
-  FIELDS, LOCKED_KEYS, applyLocked, buildStaffView, buildWhatsApp, luhnOk, normaliseFrPhone,
-  parsePostcode, parseRegistration, prefillFromLead, questionsFor, validateStage, whatsappMessage,
+  FIELDS, LOCKED_KEYS, applyLocked, buildStaffView, buildWhatsApp, langStorageKey, langSwitchState, luhnOk, normaliseFrPhone,
+  parsePostcode, parseRegistration, prefillFromLead, questionsFor, resolveLang, toggleLang, validateStage, whatsappMessage,
 } from "../lib/fr-factfind.js";
 
 const NOW = new Date("2026-11-19T12:00:00Z");
@@ -104,6 +104,55 @@ test("WhatsApp link is click-to-chat only and uses the French welcome", () => {
   const view = buildStaffView({ firstName: "Vanessa", phone: "06 01 02 03 04", token: "abcdefghijklmnopqrstuvwxyz12", origin: "https://preview.example" });
   assert.equal(view.smart_url, smartUrl);
   assert.equal(view.whatsapp_url, link.url);
+});
+
+test("FR / EN switch defaults to French and toggles both ways", () => {
+  assert.equal(resolveLang({}), "fr");
+  assert.equal(resolveLang({ stored: "en" }), "en");
+  assert.equal(resolveLang({ stored: "en", saved: "fr" }), "fr");
+  assert.equal(toggleLang("fr"), "en");
+  assert.equal(toggleLang("en"), "fr");
+  assert.equal(toggleLang(toggleLang("fr")), "fr");
+  const fr = langSwitchState("fr");
+  const en = langSwitchState("en");
+  assert.equal(fr.active, "FR");
+  assert.equal(fr.ariaChecked, false);
+  assert.equal(en.active, "EN");
+  assert.equal(en.ariaChecked, true);
+  assert.equal(langStorageKey("36c9eced1f3e7bc145974f73dafe61ec8524"), "posfin_fr_lang:36c9eced1f3e7bc145974f73dafe61ec8524");
+});
+
+test("staff lookup does not send the server admin token unless the caller supplied it", async () => {
+  const saved = { ...process.env };
+  Object.assign(process.env, {
+    FR_SUPABASE_URL: "http://127.0.0.1:9999",
+    FR_SUPABASE_KEY: "anon-test",
+    FR_FACTFIND_ADMIN_TOKEN: "staff-secret",
+  });
+  delete process.env.VERCEL;
+  delete process.env.VERCEL_ENV;
+  const calls = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url, opts) => {
+    calls.push(JSON.parse(opts.body));
+    return { ok: true, json: async () => ({ ok: false, error: "not_found" }) };
+  };
+  try {
+    let out;
+    const res = { setHeader() {}, end(s) { out = JSON.parse(s); } };
+    await handler({
+      method: "POST",
+      headers: { host: "preview.example", "x-forwarded-proto": "https" },
+      body: { action: "staff", lead_id: "11111111-1111-4111-8111-111111111111" },
+    }, res);
+    assert.equal(out.ok, false);
+    assert.equal(calls[0].p_admin_secret, "");
+    assert.notEqual(calls[0].p_admin_secret, "staff-secret");
+  } finally {
+    globalThis.fetch = original;
+    for (const key of Object.keys(process.env)) if (!(key in saved)) delete process.env[key];
+    Object.assign(process.env, saved);
+  }
 });
 
 test("mint requires the admin token, prefills the lead, and never calls WhatsApp", async () => {

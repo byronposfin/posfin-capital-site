@@ -1,9 +1,10 @@
-import { CONSENT, COPY, FIELDS, formAnswers, questionsFor } from "/lib/fr-factfind.js?v=20261119-fr1";
+import { CONSENT, COPY, formAnswers, langStorageKey, langSwitchState, questionsFor, resolveLang, toggleLang } from "/lib/fr-factfind.js?v=20261119-fr2";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-let lang = localStorage.getItem("posfin_fr_lang") === "en" ? "en" : "fr";
 let token = new URLSearchParams(location.search).get("k") || "";
+let lang = "fr";
+try { lang = resolveLang({ stored: localStorage.getItem(langStorageKey(token)) }); } catch { lang = "fr"; }
 let payload = null;
 let stage = 1;
 let answers = {};
@@ -14,14 +15,27 @@ let busy = false;
 const t = () => COPY[lang];
 const label = (field) => field.label[lang] || field.label.fr;
 
-function setLang(next) {
-  readForm();
-  lang = next;
-  localStorage.setItem("posfin_fr_lang", lang);
+function paintLang() {
+  const state = langSwitchState(lang);
+  const button = $("lang");
+  button.setAttribute("aria-checked", state.ariaChecked ? "true" : "false");
+  button.setAttribute("aria-label", state.label);
+  button.querySelectorAll("[data-side]").forEach((el) => el.classList.toggle("on", el.dataset.side === state.lang));
   document.documentElement.lang = t().htmlLang;
-  $("lang").textContent = t().lang;
+  document.title = lang === "en" ? "Financing request · Posfin France" : "Demande de financement · Posfin France";
   $("title").textContent = t().title;
   $("intro").textContent = t().intro;
+}
+
+function rememberLang() {
+  try { localStorage.setItem(langStorageKey(token), lang); } catch { /* private mode */ }
+}
+
+function setLang(next) {
+  if (document.getElementById("ff")) readForm();
+  lang = next === "en" ? "en" : "fr";
+  rememberLang();
+  paintLang();
   render();
 }
 
@@ -190,6 +204,7 @@ async function uploadFiles(list, docType) {
   }
   busy = false;
   const keep = status ? status.textContent : "";
+  readForm();
   render();
   const again = $("status");
   if (again && keep) { again.textContent = keep; again.className = "status ok"; }
@@ -225,11 +240,8 @@ async function save(strict) {
 }
 
 async function openToken() {
-  document.documentElement.lang = t().htmlLang;
-  $("lang").textContent = t().lang;
-  $("title").textContent = t().title;
-  $("intro").textContent = t().intro;
-  $("lang").addEventListener("click", () => setLang(lang === "fr" ? "en" : "fr"));
+  paintLang();
+  $("lang").addEventListener("click", () => setLang(toggleLang(lang)));
   if (!token) { render(); return; }
   render();
   const { json } = await api({ action: "load", token });
@@ -238,11 +250,14 @@ async function openToken() {
     return;
   }
   payload = json;
+  lang = resolveLang({ stored: lang, saved: json.lang });
+  rememberLang();
   answers = formAnswers(json.answers);
   files = json.files || [];
   stage = json.step >= 4 ? 4 : json.step || 1;
   if (stage === 4) done = true;
   else if (stage < 1 || stage > 3) stage = 1;
+  paintLang();
   render();
 }
 
