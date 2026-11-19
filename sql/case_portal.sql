@@ -261,6 +261,12 @@ begin
   if cid is null then
     return jsonb_build_object('ok', false, 'error', 'not_found');
   end if;
+  if exists (
+    select 1 from public.case_portal
+     where case_id = cid and facts->>'ask_client' = 'false'
+  ) then
+    return jsonb_build_object('ok', false, 'error', 'closed');
+  end if;
   if p_gap_id is not null and p_gap_id not in (
     'solicitor', 'court_papers', 'redemption', 'occupancy', 'exit', 'property',
     'kyc_id', 'kyc_poa', 'kyc_credit', 'income', 'debts', 'insurance'
@@ -555,8 +561,16 @@ begin
         'postcode', p.facts->'postcode',
         'client_value', p.facts->'client_value',
         'loan_amount', p.facts->'loan_amount',
-        'equity_known', p.facts->'equity_known'
+        'equity_known', p.facts->'equity_known',
+        'ask_client', p.facts->'ask_client',
+        'offer_issued', p.facts->'offer_issued'
       ),
+      'staff_open', coalesce((
+        select jsonb_array_length(c.broker_only->'staff_items')
+          from public.case_completion c
+         where c.case_id = p.case_id
+           and jsonb_typeof(c.broker_only->'staff_items') = 'array'
+      ), 0),
       'stage', p.stage,
       'answered', coalesce((
         select jsonb_agg(distinct s.gap_id)

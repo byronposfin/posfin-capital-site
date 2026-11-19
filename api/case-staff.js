@@ -47,12 +47,14 @@ export default async function handler(req, res) {
     const cases = rows.map((row) => {
       const facts = presentFacts(row.facts || {});
       const stage = resolveStage(facts, row.stage);
+      const quiet = facts.ask_client === false;
       return {
         caseId: row.case_id,
         clientName: row.client_name,
         address: [facts.property_address, facts.postcode].filter(Boolean).join(', '),
-        stageLabel: STAGE_LABEL[stage],
-        openCount: openCountFromAnswered(row.answered || []),
+        stageLabel: quiet && facts.offer_issued === true ? 'Offer issued' : STAGE_LABEL[stage],
+        openCount: quiet ? Number(row.staff_open) || 0 : openCountFromAnswered(row.answered || []),
+        openLabel: quiet ? 'internal items' : 'still to answer',
       };
     });
     return sendHtml(res, 200, renderStaffList(cases));

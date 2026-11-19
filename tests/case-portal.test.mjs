@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildModel, ltv, resolveStage, tokenOk, validateSubmission } from '../lib/case-portal.js';
-import { renderDocument, renderExport, renderPortal } from '../lib/case-portal-html.js';
+import { renderDocument, renderExport, renderPortal, renderStaffCase } from '../lib/case-portal-html.js';
 import { parseMultipart } from '../lib/case-http.js';
 import handler from '../api/case-portal.js';
 import submit from '../api/case-submit.js';
@@ -257,9 +257,54 @@ test('text, photo and voice submissions show on the page and reduce the gap coun
   }
 });
 
+test('a terms case shows the offer and documents, and asks the client nothing', () => {
+  const model = buildModel({
+    case_id: 'PC-EXAMPLE',
+    client_name: 'Offer Client',
+    stage: 'applied',
+    facts: {
+      ask_client: false,
+      offer_issued: true,
+      lender_name: 'Example Lender',
+      reference: 'PC-EXAMPLE',
+      property_address: '1 Example Close',
+      postcode: 'AB1 2CD',
+      terms: [{ label: 'Gross loan', value: '£185,000' }, { label: 'Net on day one', value: '£140,455' }],
+      use_of_funds: [{ label: 'Lease extension premium', value: '£45,500' }],
+      staff_only_note: 'Joe Cash desktop 60%',
+    },
+    submissions: [{
+      id: '66666666-6666-4666-8666-666666666666',
+      gap_id: null,
+      kind: 'file',
+      text: 'Redemption statement',
+      filename: 'redemption-statement.pdf',
+      mime: 'application/pdf',
+      created_at: '2026-11-19T18:00:00Z',
+    }],
+  });
+  assert.equal(model.gaps.length, 0);
+  assert.equal(model.openCount, 0);
+  const html = renderDocument(model, TOKEN);
+  assert.match(html, /Offer issued/);
+  assert.match(html, /Example Lender has issued terms/);
+  assert.match(html, /Gross loan/);
+  assert.match(html, /£185,000/);
+  assert.match(html, /Use of funds/);
+  assert.match(html, /£45,500/);
+  assert.match(html, /Documents/);
+  assert.match(html, /Redemption statement/);
+  assert.ok(html.includes(`/case/${TOKEN}/file/66666666-6666-4666-8666-666666666666`));
+  assert.doesNotMatch(html, /Still to answer|Just tell us|capture="environment"|Anything else|<textarea|Joe Cash|desktop 60%/);
+  const staff = renderStaffCase(model, { staff_items: [{ title: 'Sizing', detail: 'Joe Cash desktop 60% route' }] });
+  assert.match(staff, /Internal items/);
+  assert.match(staff, /Joe Cash desktop 60% route/);
+  assert.match(staff, /No questions are sent to the client/);
+});
+
 test('public source does not contain the seeded client record', () => {
   const roots = ['lib', 'api', 'sql'];
-  const needles = ['Cooden', 'Williamson', 'K00HS552', '1A550111', 'TN39'];
+  const needles = ['Cooden', 'Williamson', 'K00HS552', '1A550111', 'TN39', 'Northdown', 'McDonald', 'HA4 6JZ'];
   const files = [];
   for (const root of roots) {
     for (const name of readdirSync(root)) {
