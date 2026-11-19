@@ -1,4 +1,4 @@
-import { CONSENT, COPY, formAnswers, langStorageKey, langSwitchState, questionsFor, resolveLang, toggleLang } from "/lib/fr-factfind.js?v=20261119-fr2";
+import { CONSENT, COPY, formAnswers, formatMoney, formatNumber, langStorageKey, langSwitchState, questionsFor, resolveLang, toggleLang } from "/lib/fr-factfind.js?v=20261119-fr3";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -96,9 +96,16 @@ function knownCard() {
   return `<div class="known"><b>${esc(t().known)}</b><p>${lines.map(esc).join("<br>")}</p></div>`;
 }
 
+function shownAmount(field, value) {
+  if (value === "" || value === undefined || value === null) return "";
+  if (field.type === "money") return formatMoney(value, lang) || String(value);
+  if (field.type === "pct") return formatNumber(value, lang) || String(value);
+  return value;
+}
+
 function fieldHtml(field) {
   const id = field.key;
-  const value = answers[id] ?? "";
+  const value = field.type === "money" || field.type === "pct" ? shownAmount(field, answers[id]) : (answers[id] ?? "");
   let control;
   if (field.type === "select") {
     control = `<select id="${id}" name="${id}"><option value="">${esc(t().select)}</option>${field.options.map((option) => `<option value="${esc(option)}"${option === value ? " selected" : ""}>${esc(option)}</option>`).join("")}</select>`;
@@ -108,8 +115,9 @@ function fieldHtml(field) {
     return `<div class="field"><label class="chk"><input type="checkbox" id="${id}" name="${id}"${value === true ? " checked" : ""}><span>${esc(label(field))}</span></label><p class="note">${esc(t().consentNote)}</p><div class="err" id="e_${id}"></div></div>`;
   } else {
     const type = field.type === "date" ? "date" : field.type === "tel" ? "tel" : "text";
-    const mode = field.inputmode ? ` inputmode="${field.inputmode}"` : "";
-    control = `<input type="${type}" id="${id}" name="${id}"${mode} maxlength="${field.max || 80}" value="${esc(value)}" autocomplete="off">`;
+    const mode = field.type === "money" || field.type === "pct" ? ` inputmode="decimal" data-amount="1"` : (field.inputmode ? ` inputmode="${field.inputmode}"` : "");
+    const max = field.type === "money" ? 32 : (field.max || 80);
+    control = `<input type="${type}" id="${id}" name="${id}"${mode} maxlength="${max}" value="${esc(value)}" autocomplete="off">`;
   }
   return `<div class="field"><label class="l" for="${id}">${esc(label(field))}</label>${control}<div class="err" id="e_${id}"></div></div>`;
 }
@@ -158,6 +166,14 @@ function bind() {
   $("poaBtn")?.addEventListener("click", () => $("poaFile").click());
   $("idFile")?.addEventListener("change", (event) => uploadFiles(event.target.files, "id"));
   $("poaFile")?.addEventListener("change", (event) => uploadFiles(event.target.files, "proof_of_address"));
+  document.querySelectorAll("[data-amount]").forEach((input) => {
+    input.addEventListener("blur", () => {
+      const field = questionsFor(payload?.locked).find((item) => item.key === input.id);
+      if (!field) return;
+      const shown = shownAmount(field, input.value);
+      if (shown) input.value = shown;
+    });
+  });
   $("back")?.addEventListener("click", () => { readForm(); stage = Math.max(1, stage - 1); render(); });
   $("draft")?.addEventListener("click", () => save(false));
   $("next")?.addEventListener("click", async () => {

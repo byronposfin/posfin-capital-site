@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import handler from "../api/fr-factfind.js";
 import {
-  FIELDS, LOCKED_KEYS, applyLocked, buildStaffView, buildWhatsApp, langStorageKey, langSwitchState, luhnOk, normaliseFrPhone,
-  parsePostcode, parseRegistration, prefillFromLead, questionsFor, resolveLang, toggleLang, validateStage, whatsappMessage,
+  FIELDS, LOCKED_KEYS, applyLocked, buildStaffView, buildWhatsApp, formatMoney, formatNumber, langStorageKey, langSwitchState, luhnOk, normaliseFrPhone,
+  parseFrAmount, parsePostcode, parseRegistration, prefillFromLead, questionsFor, resolveLang, toggleLang, validateStage, whatsappMessage,
 } from "../lib/fr-factfind.js";
 
 const NOW = new Date("2026-11-19T12:00:00Z");
@@ -84,12 +84,38 @@ test("stage validation accepts French legal forms, comma amounts and rejects a c
   assert.equal(stage2.clean["fr.siret"], SIRET);
   assert.equal(stage2.clean["fr.legal_form"], "SAS");
   assert.equal(stage2.clean.monthly_revenue_eur, 12000.5);
+  assert.equal(typeof stage2.clean.monthly_revenue_eur, "number");
+  assert.equal(typeof stage2.clean.loan_amount, "number");
   assert.equal(stage2.clean.currency, "EUR");
   assert.equal(stage2.clean.referrer, "OuiCap");
   const tooYoung = validateStage(3, { date_of_birth: "2015-01-01", role: "Gérant", ownership_pct: "50,5", home_street: "1 rue", home_town: "Lyon", home_postcode: "69001", phone_landline: "04 72 00 00 00", consent: true }, { strict: true, hasStatements: true, locked, now: NOW });
   assert.equal(tooYoung.errors.date_of_birth, "dob");
   const llc = validateStage(2, { legal_form: "LLC" }, { strict: false, locked, now: NOW });
   assert.equal(llc.errors.legal_form, "select");
+});
+
+test("French amounts use a narrow space, a comma and a trailing euro; English keeps 12,000", () => {
+  const frWhole = formatMoney(12000, "fr");
+  const frNear = formatMoney(12050, "fr");
+  const frCents = formatMoney(25000.5, "fr");
+  assert.equal(frWhole, `12\u202f000\u00a0€`);
+  assert.equal(frNear, `12\u202f050\u00a0€`);
+  assert.equal(frCents, `25\u202f000,50\u00a0€`);
+  assert.equal(formatMoney(12000, "en"), "€12,000");
+  assert.equal(formatMoney(25000.5, "en"), "€25,000.50");
+  assert.equal(formatNumber(50.5, "fr"), "50,5");
+  assert.equal(formatNumber(50.5, "en"), "50.5");
+  for (const typed of ["12 000", "12\u202f000", "12\u00a0000", "12 000 €", "12 000,00 €", "12000", "12,000", "12.000"]) {
+    assert.equal(parseFrAmount(typed), 12000, typed);
+  }
+  assert.equal(parseFrAmount("25 000,50 €"), 25000.5);
+  assert.equal(parseFrAmount("25,000.50"), 25000.5);
+  assert.equal(parseFrAmount("25.000,50"), 25000.5);
+  assert.equal(parseFrAmount("12000.50"), 12000.5);
+  const saved = validateStage(2, { loan_amount: frCents, monthly_revenue_eur: "12 050 €" }, { strict: false, locked: { company_name: "Vanessa Test SAS" }, now: NOW });
+  assert.equal(saved.clean.loan_amount, 25000.5);
+  assert.equal(saved.clean.monthly_revenue_eur, 12050);
+  assert.equal(typeof saved.clean.loan_amount, "number");
 });
 
 test("WhatsApp link is click-to-chat only and uses the French welcome", () => {
