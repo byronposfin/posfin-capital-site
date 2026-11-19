@@ -1,5 +1,5 @@
 import { setPrivate, sendHtml, redirect, readCookie, writeStaffCookie, readFields } from '../lib/case-http.js';
-import { buildModel, openCountFromAnswered, presentFacts, resolveStage, STAGE_LABEL } from '../lib/case-portal.js';
+import { buildModel, cardLtvs, openCountFromAnswered, presentFacts, resolveStage, STAGE_LABEL } from '../lib/case-portal.js';
 import { renderStaffLogin, renderStaffList, renderStaffCase, renderMessage } from '../lib/case-portal-html.js';
 import { staffLogin, staffLogout, staffList, staffCase, staffStage, staffKyc } from '../lib/case-store.js';
 
@@ -55,6 +55,7 @@ export default async function handler(req, res) {
       const facts = presentFacts(row.facts || {});
       const stage = resolveStage(facts, row.stage);
       const quiet = facts.ask_client === false;
+      const ltvs = cardLtvs(row.facts || {});
       return {
         caseId: row.case_id,
         clientName: row.client_name,
@@ -63,6 +64,9 @@ export default async function handler(req, res) {
         openCount: quiet ? Number(row.staff_open) || 0 : openCountFromAnswered(row.answered || []),
         openLabel: quiet ? 'internal items' : 'still to answer',
         kycStatus: row.kyc_status || 'not_started',
+        currentLtv: ltvs && ltvs.current,
+        requestedLtv: ltvs && ltvs.requested,
+        ltvOver: !!(ltvs && ltvs.over),
       };
     });
     return sendHtml(res, 200, renderStaffList(cases));
