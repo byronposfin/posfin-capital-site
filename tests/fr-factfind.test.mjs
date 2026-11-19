@@ -122,7 +122,9 @@ test("handoff links use the public origin and never localhost", async () => {
   assert.equal(publicSiteOrigin({}, "http://127.0.0.1:4173"), PUBLIC_SITE_ORIGIN);
   assert.equal(publicSiteOrigin({}, "http://localhost:3000"), PUBLIC_SITE_ORIGIN);
   assert.equal(publicSiteOrigin({ PUBLIC_BASE_URL: "http://127.0.0.1:4173" }, "http://127.0.0.1:4173"), PUBLIC_SITE_ORIGIN);
+  assert.equal(publicSiteOrigin({ PUBLIC_SITE_URL: "https://posfincapital.com/" }), "https://posfincapital.com");
   assert.equal(publicSiteOrigin({ NEXT_PUBLIC_SITE_URL: "https://posfincapital.com/" }), "https://posfincapital.com");
+  assert.equal(publicSiteOrigin({ PUBLIC_SITE_URL: "https://links.example", PUBLIC_BASE_URL: "https://other.example" }), "https://links.example");
   assert.equal(publicSiteOrigin({ PUBLIC_BASE_URL: "https://links.example" }, "https://ignored.example"), "https://links.example");
   assert.equal(publicSiteOrigin({ VERCEL_ENV: "preview" }, "https://posfin-capital-site-abc.vercel.app"), "https://posfin-capital-site-abc.vercel.app");
   assert.equal(publicSiteOrigin({ VERCEL_ENV: "preview", PUBLIC_BASE_URL: "https://posfincapital.com" }, "https://posfin-capital-site-abc.vercel.app"), "https://posfincapital.com");
@@ -133,6 +135,7 @@ test("handoff links use the public origin and never localhost", async () => {
   Object.assign(process.env, { FR_SUPABASE_URL: "http://127.0.0.1:9999", FR_SUPABASE_KEY: "anon-test", FR_FACTFIND_ADMIN_TOKEN: "staff-secret" });
   delete process.env.VERCEL;
   delete process.env.VERCEL_ENV;
+  delete process.env.PUBLIC_SITE_URL;
   delete process.env.PUBLIC_BASE_URL;
   delete process.env.NEXT_PUBLIC_SITE_URL;
   const original = globalThis.fetch;
