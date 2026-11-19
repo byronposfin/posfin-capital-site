@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildModel, ltv, resolveStage, tokenOk, validateSubmission, poaDateStatus, kycPackErrors } from '../lib/case-portal.js';
+import { buildModel, ltv, resolveStage, tokenOk, validateSubmission, poaDateStatus, kycPackErrors, servedFile } from '../lib/case-portal.js';
 import { renderDocument, renderExport, renderPortal, renderStaffCase } from '../lib/case-portal-html.js';
 import { parseMultipart } from '../lib/case-http.js';
 import handler from '../api/case-portal.js';
@@ -309,6 +309,10 @@ test('identity check dates and the pack rules', () => {
   assert.equal(poaDateStatus('2026-08-20', '2026-11-19'), 'stale');
   assert.equal(poaDateStatus('2026-11-20', '2026-11-19'), 'future');
   assert.equal(poaDateStatus('', '2026-11-19'), 'missing');
+  assert.equal(servedFile('image/svg+xml').inline, false);
+  assert.equal(servedFile('image/svg+xml').mime, 'application/octet-stream');
+  assert.equal(servedFile('image/jpeg').inline, true);
+  assert.equal(servedFile('text/html').inline, false);
   const passport = kycPackErrors({
     idType: 'passport', fullName: 'Alex Example', address: '1 Example Street', today: '2026-11-19',
     docs: [
@@ -339,6 +343,8 @@ test('the portal stays locked until the identity check is passed', () => {
   assert.match(html, /capture="environment"/);
   assert.match(html, /send your details to lenders and ask for terms/);
   assert.doesNotMatch(html, /Still to answer|We're getting terms now|SOMO|£185,000|RBS/);
+  assert.doesNotMatch(html, /type="date"[^>]*required/);
+  assert.match(html, /el\.disabled = hide/);
   const waiting = renderDocument(buildModel({ ...record(), kyc: { status: 'submitted' } }), TOKEN);
   assert.match(waiting, /We've got your identity check/);
   assert.doesNotMatch(waiting, /Still to answer/);

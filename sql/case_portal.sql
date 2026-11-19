@@ -177,6 +177,39 @@ begin
 end;
 $$;
 
+create or replace function public.case_portal_client_payload(p_case_id text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, extensions
+as $$
+declare
+  payload jsonb := public.case_portal_payload(p_case_id, false);
+  status text := coalesce(payload->'kyc'->>'status', 'not_started');
+begin
+  if payload is null or status = 'passed' then
+    return payload;
+  end if;
+  return jsonb_build_object(
+    'case_id', payload->'case_id',
+    'client_name', payload->'client_name',
+    'stage', payload->'stage',
+    'kyc', payload->'kyc',
+    'facts', jsonb_build_object(
+      'property_address', payload->'facts'->'property_address',
+      'postcode', payload->'facts'->'postcode',
+      'reference', payload->'facts'->'reference'
+    ),
+    'submissions', coalesce((
+      select jsonb_agg(item)
+        from jsonb_array_elements(coalesce(payload->'submissions', '[]'::jsonb)) item
+       where item->>'gap_id' in ('reg_passport', 'reg_licence', 'reg_poa', 'reg_note')
+    ), '[]'::jsonb)
+  );
+end;
+$$;
+
 create or replace function public.case_portal_touch(p_case_id text, p_gap_id text, p_value text, p_client_ref text, p_kind text)
 returns void
 language plpgsql
@@ -229,7 +262,7 @@ begin
   if cid is null then
     return null;
   end if;
-  return public.case_portal_payload(cid, false);
+  return public.case_portal_client_payload(cid);
 end;
 $$;
 
@@ -267,6 +300,9 @@ begin
     select 1 from public.case_portal
      where case_id = cid and facts->>'ask_client' = 'false'
   ) then
+    return jsonb_build_object('ok', false, 'error', 'closed');
+  end if;
+  if coalesce((select kyc->>'status' from public.case_portal where case_id = cid), 'not_started') <> 'passed' then
     return jsonb_build_object('ok', false, 'error', 'closed');
   end if;
   if p_gap_id is not null and p_gap_id not in (
@@ -308,7 +344,7 @@ begin
         'ok', true,
         'duplicate', true,
         'submission_id', existing.id,
-        'record', public.case_portal_payload(cid, false)
+        'record', public.case_portal_client_payload(cid)
       );
     end if;
     insert into public.case_upload_grants (object_path, case_id, op, expires_at)
@@ -318,7 +354,7 @@ begin
       'pending', true,
       'submission_id', existing.id,
       'storage_path', existing.storage_path,
-      'record', public.case_portal_payload(cid, false)
+      'record', public.case_portal_client_payload(cid)
     );
   end if;
 
@@ -358,7 +394,7 @@ begin
   return jsonb_build_object(
     'ok', true,
     'submission_id', sid,
-    'record', public.case_portal_payload(cid, false)
+    'record', public.case_portal_client_payload(cid)
   );
 end;
 $$;
@@ -387,12 +423,16 @@ begin
   if row.id is null then
     return jsonb_build_object('ok', false, 'error', 'not_found');
   end if;
+  if coalesce(row.gap_id, '') not in ('reg_passport', 'reg_licence', 'reg_poa', 'reg_note')
+     and coalesce((select kyc->>'status' from public.case_portal where case_id = cid), 'not_started') <> 'passed' then
+    return jsonb_build_object('ok', false, 'error', 'closed');
+  end if;
   if row.status = 'stored' then
     return jsonb_build_object(
       'ok', true,
       'duplicate', true,
       'submission_id', row.id,
-      'record', public.case_portal_payload(cid, false)
+      'record', public.case_portal_client_payload(cid)
     );
   end if;
   update public.case_submissions
@@ -414,7 +454,7 @@ begin
   return jsonb_build_object(
     'ok', true,
     'submission_id', row.id,
-    'record', public.case_portal_payload(cid, false)
+    'record', public.case_portal_client_payload(cid)
   );
 end;
 $$;
@@ -471,6 +511,10 @@ begin
      and status = 'stored'
      and storage_path is not null;
   if row.id is null then
+    return null;
+  end if;
+  if coalesce(row.gap_id, '') not in ('reg_passport', 'reg_licence', 'reg_poa', 'reg_note')
+     and coalesce((select kyc->>'status' from public.case_portal where case_id = cid), 'not_started') <> 'passed' then
     return null;
   end if;
   insert into public.case_upload_grants (object_path, case_id, op, expires_at)
@@ -674,6 +718,7 @@ $$;
 revoke all on function public.case_portal_hash(text) from public, anon, authenticated;
 revoke all on function public.case_portal_case_id(text) from public, anon, authenticated;
 revoke all on function public.case_portal_payload(text, boolean) from public, anon, authenticated;
+revoke all on function public.case_portal_client_payload(text) from public, anon, authenticated;
 revoke all on function public.case_portal_touch(text, text, text, text, text) from public, anon, authenticated;
 revoke all on function public.case_portal_session_ok(text) from public, anon, authenticated;
 
@@ -803,6 +848,9 @@ begin
   if coalesce(p_bytes, 0) < 1 or coalesce(p_bytes, 0) > 4194304 then
     return jsonb_build_object('ok', false, 'error', 'bad_file');
   end if;
+  if lower(split_part(coalesce(p_mime, ''), ';', 1)) in ('image/svg+xml', 'text/html', 'application/xhtml+xml', 'image/svg') then
+    return jsonb_build_object('ok', false, 'error', 'bad_file');
+  end if;
   if p_part = 'passport' then
     gap := 'reg_passport'; kind := 'photo';
   elsif p_part = 'licence' then
@@ -857,7 +905,6 @@ declare
   licence_id integer;
   licence_poa integer;
   poa_count integer;
-  bad_dates integer;
 begin
   cid := public.case_portal_case_id(p_token);
   if cid is null then return jsonb_build_object('ok', false, 'error', 'not_found'); end if;
@@ -880,11 +927,6 @@ begin
   select count(*) into poa_count from public.case_submissions
     where case_id = cid and status = 'stored' and gap_id = 'reg_poa' and filename is not null
       and public.case_portal_kyc_date_status(text_value) = 'ok';
-  select count(*) into bad_dates from public.case_submissions
-    where case_id = cid and status = 'stored' and filename is not null
-      and ((gap_id = 'reg_poa') or (gap_id = 'reg_licence' and choice_value = 'driving_licence'))
-      and public.case_portal_kyc_date_status(text_value) <> 'ok';
-  if bad_dates > 0 then return jsonb_build_object('ok', false, 'error', 'stale_date'); end if;
   if p_id_type = 'passport' and (passport_count < 1 or licence_poa < 1 or poa_count < 1) then
     return jsonb_build_object('ok', false, 'error', 'kyc_incomplete');
   end if;
@@ -900,7 +942,7 @@ begin
        'submitted_at', to_jsonb(now())
      )
    where case_id = cid;
-  return jsonb_build_object('ok', true, 'record', public.case_portal_payload(cid, false));
+  return jsonb_build_object('ok', true, 'record', public.case_portal_client_payload(cid));
 end;
 $$;
 
@@ -928,3 +970,24 @@ revoke all on function public.case_portal_staff_kyc(text, text, text) from publi
 grant execute on function public.case_portal_kyc_file(text, text, text, text, text, text, integer, text) to anon, authenticated, service_role;
 grant execute on function public.case_portal_kyc_finish(text, text, text, text) to anon, authenticated, service_role;
 grant execute on function public.case_portal_staff_kyc(text, text, text) to anon, authenticated, service_role;
+
+create or replace function public.case_portal_guard_answer()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if coalesce(new.gap_id, '') in ('reg_passport', 'reg_licence', 'reg_poa', 'reg_note') then
+    return new;
+  end if;
+  if coalesce((select kyc->>'status' from public.case_portal where case_id = new.case_id), 'not_started') <> 'passed' then
+    raise exception 'kyc_required' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists case_portal_guard_answer on public.case_submissions;
+create trigger case_portal_guard_answer
+before insert on public.case_submissions
+for each row execute function public.case_portal_guard_answer();
