@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildModel, ltv, resolveStage, tokenOk, validateSubmission } from '../lib/case-portal.js';
+import { buildModel, ltv, resolveStage, tokenOk, validateSubmission, poaDateStatus, kycPackErrors } from '../lib/case-portal.js';
 import { renderDocument, renderExport, renderPortal, renderStaffCase } from '../lib/case-portal-html.js';
 import { parseMultipart } from '../lib/case-http.js';
 import handler from '../api/case-portal.js';
@@ -45,6 +45,7 @@ function record(submissions = [], extraFacts = {}) {
     client_name: 'Alex Example',
     facts: facts(extraFacts),
     stage: null,
+    kyc: { status: 'passed' },
     submissions,
   };
 }
@@ -262,6 +263,7 @@ test('a terms case shows the offer and documents, and asks the client nothing', 
     case_id: 'PC-EXAMPLE',
     client_name: 'Offer Client',
     stage: 'applied',
+    kyc: { status: 'passed' },
     facts: {
       ask_client: false,
       offer_issued: true,
@@ -300,6 +302,46 @@ test('a terms case shows the offer and documents, and asks the client nothing', 
   assert.match(staff, /Internal items/);
   assert.match(staff, /Joe Cash desktop 60% route/);
   assert.match(staff, /No questions are sent to the client/);
+});
+
+test('identity check dates and the pack rules', () => {
+  assert.equal(poaDateStatus('2026-08-21', '2026-11-19'), 'ok');
+  assert.equal(poaDateStatus('2026-08-20', '2026-11-19'), 'stale');
+  assert.equal(poaDateStatus('2026-11-20', '2026-11-19'), 'future');
+  assert.equal(poaDateStatus('', '2026-11-19'), 'missing');
+  const passport = kycPackErrors({
+    idType: 'passport', fullName: 'Alex Example', address: '1 Example Street', today: '2026-11-19',
+    docs: [
+      { gapId: 'reg_passport', filename: 'passport.jpg', text: '', choice: '' },
+      { gapId: 'reg_licence', filename: 'licence.jpg', text: '2026-11-01', choice: 'driving_licence' },
+      { gapId: 'reg_poa', filename: 'bill.jpg', text: '2026-10-01', choice: 'utility_bill' },
+    ],
+  });
+  assert.deepEqual(passport, []);
+  const noPassport = kycPackErrors({
+    idType: 'driving_licence', fullName: 'Alex Example', address: '1 Example Street', today: '2026-11-19',
+    docs: [
+      { gapId: 'reg_licence', filename: 'licence.jpg', text: '', choice: 'photo_id' },
+      { gapId: 'reg_poa', filename: 'bill.jpg', text: '2026-05-01', choice: 'utility_bill' },
+      { gapId: 'reg_poa', filename: 'tax.jpg', text: '2026-11-01', choice: 'council_tax' },
+    ],
+  });
+  assert.deepEqual(noPassport, ['poa']);
+});
+
+test('the portal stays locked until the identity check is passed', () => {
+  const locked = buildModel({ ...record(), kyc: { status: 'not_started' }, facts: { ...facts(), lender_name: 'SOMO', terms: [{ label: 'Gross loan', value: '£185,000' }] } });
+  const html = renderDocument(locked, TOKEN);
+  assert.match(html, /Open your Posfin portal/);
+  assert.match(html, /Do you have a passport/);
+  assert.match(html, /last 90 days/);
+  assert.match(html, /Just tell us in a voice note/);
+  assert.match(html, /capture="environment"/);
+  assert.match(html, /send your details to lenders and ask for terms/);
+  assert.doesNotMatch(html, /Still to answer|We're getting terms now|SOMO|£185,000|RBS/);
+  const waiting = renderDocument(buildModel({ ...record(), kyc: { status: 'submitted' } }), TOKEN);
+  assert.match(waiting, /We've got your identity check/);
+  assert.doesNotMatch(waiting, /Still to answer/);
 });
 
 test('public source does not contain the seeded client record', () => {

@@ -35,7 +35,8 @@ create table if not exists public.case_submissions (
   constraint case_submissions_gap_chk check (
     gap_id is null or gap_id in (
       'solicitor', 'court_papers', 'redemption', 'occupancy', 'exit', 'property',
-      'kyc_id', 'kyc_poa', 'kyc_credit', 'income', 'debts', 'insurance'
+      'kyc_id', 'kyc_poa', 'kyc_credit', 'income', 'debts', 'insurance',
+      'reg_passport', 'reg_licence', 'reg_poa', 'reg_note'
     )
   )
 );
@@ -149,6 +150,7 @@ begin
     'client_name', p.client_name,
     'facts', p.facts,
     'stage', p.stage,
+    'kyc', coalesce(p.kyc, '{"status":"not_started"}'::jsonb),
     'broker', case when p_broker then c.broker_only else null end,
     'submissions', coalesce((
       select jsonb_agg(jsonb_build_object(
@@ -571,6 +573,7 @@ begin
          where c.case_id = p.case_id
            and jsonb_typeof(c.broker_only->'staff_items') = 'array'
       ), 0),
+      'kyc_status', coalesce(p.kyc->>'status', 'not_started'),
       'stage', p.stage,
       'answered', coalesce((
         select jsonb_agg(distinct s.gap_id)
@@ -738,3 +741,190 @@ with check (
   bucket_id = 'case-portal'
   and public.case_portal_grant_open(name, 'write')
 );
+
+alter table public.case_portal add column if not exists kyc jsonb not null default '{"status":"not_started"}'::jsonb;
+
+alter table public.case_submissions drop constraint if exists case_submissions_gap_chk;
+alter table public.case_submissions add constraint case_submissions_gap_chk check (
+  gap_id is null or gap_id in (
+    'solicitor', 'court_papers', 'redemption', 'occupancy', 'exit', 'property',
+    'kyc_id', 'kyc_poa', 'kyc_credit', 'income', 'debts', 'insurance',
+    'reg_passport', 'reg_licence', 'reg_poa', 'reg_note'
+  )
+);
+
+create or replace function public.case_portal_kyc_date_status(p_date text)
+returns text
+language plpgsql
+stable
+set search_path = public, extensions
+as $$
+declare
+  today date := (now() at time zone 'Europe/London')::date;
+  doc date;
+begin
+  if p_date is null or p_date !~ '^\d{4}-\d{2}-\d{2}$' then return 'missing'; end if;
+  doc := p_date::date;
+  if doc > today then return 'future'; end if;
+  if doc < today - 90 then return 'stale'; end if;
+  return 'ok';
+end;
+$$;
+
+create or replace function public.case_portal_kyc_file(
+  p_token text,
+  p_part text,
+  p_doc_type text,
+  p_doc_date text,
+  p_filename text,
+  p_mime text,
+  p_bytes integer,
+  p_client_ref text
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  cid text;
+  gap text;
+  kind text;
+  date_state text;
+  sid uuid;
+  v_name text;
+  v_path text;
+  v_ref text := nullif(left(coalesce(p_client_ref, ''), 80), '');
+begin
+  cid := public.case_portal_case_id(p_token);
+  if cid is null then return jsonb_build_object('ok', false, 'error', 'not_found'); end if;
+  if coalesce((select kyc->>'status' from public.case_portal where case_id = cid), 'not_started') = 'passed' then
+    return jsonb_build_object('ok', false, 'error', 'passed');
+  end if;
+  if coalesce(p_bytes, 0) < 1 or coalesce(p_bytes, 0) > 4194304 then
+    return jsonb_build_object('ok', false, 'error', 'bad_file');
+  end if;
+  if p_part = 'passport' then
+    gap := 'reg_passport'; kind := 'photo';
+  elsif p_part = 'licence' then
+    gap := 'reg_licence'; kind := 'photo';
+    if p_doc_type = 'driving_licence' then
+      date_state := public.case_portal_kyc_date_status(p_doc_date);
+      if date_state <> 'ok' then return jsonb_build_object('ok', false, 'error', date_state || '_date'); end if;
+    elsif p_doc_type is distinct from 'photo_id' then
+      return jsonb_build_object('ok', false, 'error', 'bad_choice');
+    end if;
+  elsif p_part = 'poa' then
+    gap := 'reg_poa'; kind := 'file';
+    if p_doc_type not in ('utility_bill', 'council_tax', 'bank_statement', 'other') then
+      return jsonb_build_object('ok', false, 'error', 'bad_choice');
+    end if;
+    date_state := public.case_portal_kyc_date_status(p_doc_date);
+    if date_state <> 'ok' then return jsonb_build_object('ok', false, 'error', date_state || '_date'); end if;
+  elsif p_part = 'note' then
+    gap := 'reg_note'; kind := 'voice';
+  else
+    return jsonb_build_object('ok', false, 'error', 'bad_gap');
+  end if;
+  if v_ref is not null and v_ref !~ '^[A-Za-z0-9_-]+$' then
+    return jsonb_build_object('ok', false, 'error', 'bad_ref');
+  end if;
+  v_name := left(regexp_replace(coalesce(p_filename, 'file'), '[^A-Za-z0-9._-]', '_', 'g'), 80);
+  if v_name is null or v_name = '' then v_name := 'file'; end if;
+  insert into public.case_submissions (case_id, gap_id, kind, status, text_value, choice_value, filename, mime, bytes, client_ref)
+  values (cid, gap, kind, 'pending', nullif(left(coalesce(p_doc_date, ''), 40), ''), nullif(left(coalesce(p_doc_type, ''), 40), ''), v_name, left(coalesce(p_mime, ''), 120), p_bytes, v_ref)
+  returning id into sid;
+  v_path := 'cases/' || cid || '/' || sid::text || '/' || v_name;
+  update public.case_submissions set storage_path = v_path where id = sid;
+  insert into public.case_upload_grants (object_path, case_id, op, expires_at)
+  values (v_path, cid, 'write', now() + interval '10 minutes');
+  return jsonb_build_object('ok', true, 'pending', true, 'submission_id', sid, 'storage_path', v_path);
+end;
+$$;
+
+create or replace function public.case_portal_kyc_finish(
+  p_token text,
+  p_full_name text,
+  p_address text,
+  p_id_type text
+) returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  cid text;
+  passport_count integer;
+  licence_id integer;
+  licence_poa integer;
+  poa_count integer;
+  bad_dates integer;
+begin
+  cid := public.case_portal_case_id(p_token);
+  if cid is null then return jsonb_build_object('ok', false, 'error', 'not_found'); end if;
+  if coalesce((select kyc->>'status' from public.case_portal where case_id = cid), 'not_started') = 'passed' then
+    return jsonb_build_object('ok', false, 'error', 'passed');
+  end if;
+  if length(btrim(coalesce(p_full_name, ''))) < 3 or length(btrim(coalesce(p_address, ''))) < 8 then
+    return jsonb_build_object('ok', false, 'error', 'kyc_incomplete');
+  end if;
+  if p_id_type not in ('passport', 'driving_licence') then
+    return jsonb_build_object('ok', false, 'error', 'kyc_incomplete');
+  end if;
+  select count(*) into passport_count from public.case_submissions
+    where case_id = cid and status = 'stored' and gap_id = 'reg_passport' and filename is not null;
+  select count(*) into licence_id from public.case_submissions
+    where case_id = cid and status = 'stored' and gap_id = 'reg_licence' and choice_value = 'photo_id' and filename is not null;
+  select count(*) into licence_poa from public.case_submissions
+    where case_id = cid and status = 'stored' and gap_id = 'reg_licence' and choice_value = 'driving_licence' and filename is not null
+      and public.case_portal_kyc_date_status(text_value) = 'ok';
+  select count(*) into poa_count from public.case_submissions
+    where case_id = cid and status = 'stored' and gap_id = 'reg_poa' and filename is not null
+      and public.case_portal_kyc_date_status(text_value) = 'ok';
+  select count(*) into bad_dates from public.case_submissions
+    where case_id = cid and status = 'stored' and filename is not null
+      and ((gap_id = 'reg_poa') or (gap_id = 'reg_licence' and choice_value = 'driving_licence'))
+      and public.case_portal_kyc_date_status(text_value) <> 'ok';
+  if bad_dates > 0 then return jsonb_build_object('ok', false, 'error', 'stale_date'); end if;
+  if p_id_type = 'passport' and (passport_count < 1 or licence_poa < 1 or poa_count < 1) then
+    return jsonb_build_object('ok', false, 'error', 'kyc_incomplete');
+  end if;
+  if p_id_type = 'driving_licence' and (licence_id < 1 or poa_count < 2) then
+    return jsonb_build_object('ok', false, 'error', 'kyc_incomplete');
+  end if;
+  update public.case_portal
+     set kyc = jsonb_build_object(
+       'status', 'submitted',
+       'full_name', left(btrim(p_full_name), 160),
+       'address', left(btrim(p_address), 300),
+       'id_type', p_id_type,
+       'submitted_at', to_jsonb(now())
+     )
+   where case_id = cid;
+  return jsonb_build_object('ok', true, 'record', public.case_portal_payload(cid, false));
+end;
+$$;
+
+create or replace function public.case_portal_staff_kyc(p_session text, p_case_id text, p_status text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if not public.case_portal_session_ok(p_session) then return null; end if;
+  if p_status not in ('passed', 'failed', 'not_started') then return jsonb_build_object('ok', false, 'error', 'bad_stage'); end if;
+  update public.case_portal
+     set kyc = coalesce(kyc, '{}'::jsonb) || jsonb_build_object('status', p_status, 'reviewed_at', to_jsonb(now()))
+   where case_id = p_case_id;
+  if not found then return jsonb_build_object('ok', false, 'error', 'not_found'); end if;
+  return jsonb_build_object('ok', true, 'record', public.case_portal_payload(p_case_id, true));
+end;
+$$;
+
+revoke all on function public.case_portal_kyc_date_status(text) from public, anon, authenticated;
+revoke all on function public.case_portal_kyc_file(text, text, text, text, text, text, integer, text) from public;
+revoke all on function public.case_portal_kyc_finish(text, text, text, text) from public;
+revoke all on function public.case_portal_staff_kyc(text, text, text) from public;
+grant execute on function public.case_portal_kyc_file(text, text, text, text, text, text, integer, text) to anon, authenticated, service_role;
+grant execute on function public.case_portal_kyc_finish(text, text, text, text) to anon, authenticated, service_role;
+grant execute on function public.case_portal_staff_kyc(text, text, text) to anon, authenticated, service_role;

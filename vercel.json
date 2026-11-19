@@ -125,6 +125,7 @@
   "rewrites": [
     { "source": "/case/:token/file/:submission", "destination": "/api/case-file?token=:token&submission=:submission" },
     { "source": "/case/:token/submit", "destination": "/api/case-submit?token=:token" },
+    { "source": "/case/:token/kyc", "destination": "/api/case-kyc?token=:token" },
     { "source": "/case/:token", "destination": "/api/case-portal?token=:token" },
     { "source": "/staff/cases/:caseId/file/:submission", "destination": "/api/case-file?caseId=:caseId&submission=:submission&staff=1" },
     { "source": "/staff/cases/:caseId/export", "destination": "/api/case-export?caseId=:caseId" },

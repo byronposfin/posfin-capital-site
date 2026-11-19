@@ -1,7 +1,7 @@
 import { setPrivate, sendHtml, redirect, readCookie, writeStaffCookie, readFields } from '../lib/case-http.js';
 import { buildModel, openCountFromAnswered, presentFacts, resolveStage, STAGE_LABEL } from '../lib/case-portal.js';
 import { renderStaffLogin, renderStaffList, renderStaffCase, renderMessage } from '../lib/case-portal-html.js';
-import { staffLogin, staffLogout, staffList, staffCase, staffStage } from '../lib/case-store.js';
+import { staffLogin, staffLogout, staffList, staffCase, staffStage, staffKyc } from '../lib/case-store.js';
 
 function caseIdOk(id) {
   return /^[A-Za-z0-9-]{6,48}$/.test(id);
@@ -18,6 +18,13 @@ export default async function handler(req, res) {
         await staffLogout(session);
         writeStaffCookie(res, req, '', 0);
         return redirect(res, '/staff/cases');
+      }
+      if (fields.action === 'kyc') {
+        if (!session || !caseIdOk(caseId)) return sendHtml(res, 401, renderStaffLogin('Please sign in again.'));
+        const updated = await staffKyc(session, caseId, String(fields.status || ''));
+        if (!updated) return sendHtml(res, 401, renderStaffLogin('Please sign in again.'));
+        if (updated.ok === false) return sendHtml(res, 400, renderMessage('Not updated', 'That identity check status was not saved.'));
+        return redirect(res, `/staff/cases/${encodeURIComponent(caseId)}`);
       }
       if (fields.action === 'stage') {
         if (!session || !caseIdOk(caseId)) return sendHtml(res, 401, renderStaffLogin('Please sign in again.'));
@@ -55,6 +62,7 @@ export default async function handler(req, res) {
         stageLabel: quiet && facts.offer_issued === true ? 'Offer issued' : STAGE_LABEL[stage],
         openCount: quiet ? Number(row.staff_open) || 0 : openCountFromAnswered(row.answered || []),
         openLabel: quiet ? 'internal items' : 'still to answer',
+        kycStatus: row.kyc_status || 'not_started',
       };
     });
     return sendHtml(res, 200, renderStaffList(cases));
