@@ -1,7 +1,7 @@
 // French fact find API. Writes raw_answers on the main CRM with market FR.
 // Never calls WhatsApp, lenders, or the statement-analysis webhook.
 import crypto from "node:crypto";
-import { buildStaffView, CONSENT_VERSION, DOC_TYPES, isTestLead, MAX_UPLOAD_BYTES, safeFileName, sniffUpload, validateStage } from "../lib/fr-factfind.js";
+import { buildStaffView, CONSENT_VERSION, DOC_TYPES, isTestLead, MAX_UPLOAD_BYTES, publicSiteOrigin, safeFileName, sniffUpload, validateStage } from "../lib/fr-factfind.js";
 
 export const MAIN_URL = "https://vgflcrfaudrvrdmxjdtl.supabase.co";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -177,8 +177,7 @@ export default async function handler(req, res) {
 
     if (action === "staff") {
       if (!UUID.test(String(body.lead_id || ""))) return send(res, 400, { ok: false, error: "bad_lead" });
-      const origin = requestOrigin(req);
-      if (!origin) return send(res, 400, { ok: false, error: "bad_origin" });
+      const origin = publicSiteOrigin(process.env, requestOrigin(req));
       const row = await rpc(cfg, "fr_factfind_staff", {
         p_lead_id: body.lead_id,
         p_admin_secret: suppliedAdminSecret(req),
@@ -194,8 +193,7 @@ export default async function handler(req, res) {
       const secret = String(req.headers?.["x-fr-admin-token"] || req.headers?.["x-prefill-admin-token"] || "").trim()
         || String(req.headers?.authorization || "").replace(/^Bearer\s+/i, "").trim();
       if (!cfg.adminToken || secret !== cfg.adminToken) return send(res, 401, { ok: false, error: "unauthorized" });
-      const origin = requestOrigin(req);
-      if (!origin) return send(res, 400, { ok: false, error: "bad_origin" });
+      const origin = publicSiteOrigin(process.env, requestOrigin(req));
       const token = crypto.randomBytes(24).toString("base64url");
       const minted = await rpc(cfg, "fr_factfind_mint", {
         p_lead_id: body.lead_id,

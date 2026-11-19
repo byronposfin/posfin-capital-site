@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import handler from "../api/fr-factfind.js";
 import {
-  FIELDS, LOCKED_KEYS, applyLocked, buildStaffView, buildWhatsApp, formatMoney, formatNumber, langStorageKey, langSwitchState, luhnOk, normaliseFrPhone,
+  FIELDS, LOCKED_KEYS, PUBLIC_SITE_ORIGIN, applyLocked, buildStaffView, buildWhatsApp, formatMoney, formatNumber, langStorageKey, langSwitchState, luhnOk, normaliseFrPhone, publicSiteOrigin,
   parseFrAmount, parsePostcode, parseRegistration, prefillFromLead, questionsFor, resolveLang, toggleLang, validateStage, whatsappMessage,
 } from "../lib/fr-factfind.js";
 
@@ -118,6 +118,41 @@ test("French amounts use a narrow space, a comma and a trailing euro; English ke
   assert.equal(typeof saved.clean.loan_amount, "number");
 });
 
+test("handoff links use the public origin and never localhost", async () => {
+  assert.equal(publicSiteOrigin({}, "http://127.0.0.1:4173"), PUBLIC_SITE_ORIGIN);
+  assert.equal(publicSiteOrigin({}, "http://localhost:3000"), PUBLIC_SITE_ORIGIN);
+  assert.equal(publicSiteOrigin({ PUBLIC_BASE_URL: "http://127.0.0.1:4173" }, "http://127.0.0.1:4173"), PUBLIC_SITE_ORIGIN);
+  assert.equal(publicSiteOrigin({ NEXT_PUBLIC_SITE_URL: "https://posfincapital.com/" }), "https://posfincapital.com");
+  assert.equal(publicSiteOrigin({ PUBLIC_BASE_URL: "https://links.example" }, "https://ignored.example"), "https://links.example");
+  assert.equal(publicSiteOrigin({ VERCEL_ENV: "preview" }, "https://posfin-capital-site-abc.vercel.app"), "https://posfin-capital-site-abc.vercel.app");
+  assert.equal(publicSiteOrigin({ VERCEL_ENV: "preview", PUBLIC_BASE_URL: "https://posfincapital.com" }, "https://posfin-capital-site-abc.vercel.app"), "https://posfincapital.com");
+  assert.equal(publicSiteOrigin({ VERCEL_ENV: "preview" }, "http://127.0.0.1:4173"), PUBLIC_SITE_ORIGIN);
+  assert.equal(publicSiteOrigin({ VERCEL_ENV: "production" }, "https://some-preview.vercel.app"), PUBLIC_SITE_ORIGIN);
+
+  const saved = { ...process.env };
+  Object.assign(process.env, { FR_SUPABASE_URL: "http://127.0.0.1:9999", FR_SUPABASE_KEY: "anon-test", FR_FACTFIND_ADMIN_TOKEN: "staff-secret" });
+  delete process.env.VERCEL;
+  delete process.env.VERCEL_ENV;
+  delete process.env.PUBLIC_BASE_URL;
+  delete process.env.NEXT_PUBLIC_SITE_URL;
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ ok: true, lead_id: "fda2abbc-baaf-413d-a5ec-b24872454e5b", full_name: "Vanessa Test", company_name: "Vanessa Test SAS", first_name: "Vanessa", phone: "+33601020304", token: "36c9eced1f3e7bc145974f73dafe61ec8524", is_test: true }) });
+  try {
+    let out;
+    const res = { setHeader() {}, end(s) { out = JSON.parse(s); } };
+    await handler({ method: "POST", headers: { host: "127.0.0.1:4173", "x-forwarded-proto": "http" }, body: { action: "staff", lead_id: "fda2abbc-baaf-413d-a5ec-b24872454e5b" } }, res);
+    assert.equal(out.smart_url, "https://posfincapital.com/fr/fact-find?k=36c9eced1f3e7bc145974f73dafe61ec8524");
+    assert.equal(out.whatsapp_text.includes("https://posfincapital.com/fr/fact-find?k=36c9eced1f3e7bc145974f73dafe61ec8524"), true);
+    assert.equal(out.smart_url.includes("127.0.0.1"), false);
+    assert.equal(out.whatsapp_text.includes("localhost"), false);
+    assert.equal(out.whatsapp_url.includes("127.0.0.1"), false);
+  } finally {
+    globalThis.fetch = original;
+    for (const key of Object.keys(process.env)) if (!(key in saved)) delete process.env[key];
+    Object.assign(process.env, saved);
+  }
+});
+
 test("WhatsApp link is click-to-chat only and uses the French welcome", () => {
   const smartUrl = "https://preview.example/fr/fact-find?k=abcdefghijklmnopqrstuvwxyz12";
   const text = whatsappMessage("Vanessa", smartUrl);
@@ -217,7 +252,10 @@ test("mint requires the admin token, prefills the lead, and never calls WhatsApp
     assert.equal(minted.ok, true);
     assert.equal(minted.sends_message, false);
     assert.equal(minted.full_name, "Vanessa Test");
-    assert.match(minted.smart_url, /^https:\/\/preview\.example\/fr\/fact-find\?k=/);
+    assert.match(minted.smart_url, /^https:\/\/posfincapital\.com\/fr\/fact-find\?k=/);
+    assert.equal(minted.smart_url.includes("127.0.0.1"), false);
+    assert.equal(minted.whatsapp_text.includes("127.0.0.1"), false);
+    assert.equal(minted.whatsapp_text.includes("localhost"), false);
     assert.match(minted.whatsapp_url, /^https:\/\/wa\.me\/33601020304\?text=/);
     assert.match(decodeURIComponent(minted.whatsapp_url.split("text=")[1]), /Bonjour Vanessa, bienvenue chez Posfin France !/);
     assert.equal(calls.every((call) => call.url.startsWith("http://127.0.0.1:9999/rest/v1/rpc/")), true);
