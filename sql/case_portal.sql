@@ -607,6 +607,7 @@ begin
         'postcode', p.facts->'postcode',
         'client_value', p.facts->'client_value',
         'loan_amount', p.facts->'loan_amount',
+        'existing_balance', p.facts->'existing_balance',
         'equity_known', p.facts->'equity_known',
         'ask_client', p.facts->'ask_client',
         'offer_issued', p.facts->'offer_issued'
