@@ -80,6 +80,14 @@
       ]
     },
     {
+      "source": "/fr/fact-find",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/admin/fr",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
       "source": "/engine/(.*)",
       "headers": [
         {
