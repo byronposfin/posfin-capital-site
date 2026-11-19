@@ -14,7 +14,7 @@ import { analyseGaps } from '../lib/gap-engine.js';
 
 function authenticateService(req) {
   const key = process.env.SMARTLINK_SERVICE_KEY;
-  if (!key) throw new Error('SMARTLINK_SERVICE_KEY not configured');
+  if (!key) return null;
   const provided = String(req.headers['x-service-key'] || '');
   if (!provided || provided !== key) return false;
   return true;
@@ -27,7 +27,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!authenticateService(req)) {
+  const authenticated = authenticateService(req);
+  if (authenticated === null) {
+    return res.status(503).json({ error: 'SmartLink service endpoint is not configured' });
+  }
+  if (!authenticated) {
     return res.status(403).json({ error: 'Service authentication required' });
   }
 
