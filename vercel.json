@@ -127,6 +127,7 @@
     { "source": "/case/:token/submit", "destination": "/api/case-submit?token=:token" },
     { "source": "/case/:token/kyc", "destination": "/api/case-kyc?token=:token" },
     { "source": "/case/:token", "destination": "/api/case-portal?token=:token" },
+    { "source": "/staff/cockpit", "destination": "/api/staff-cockpit" },
     { "source": "/staff/france/:caseId", "destination": "/api/fr-staff?caseId=:caseId" },
     { "source": "/staff/france", "destination": "/api/fr-staff" },
     { "source": "/staff/cases/:caseId/file/:submission", "destination": "/api/case-file?caseId=:caseId&submission=:submission&staff=1" },
