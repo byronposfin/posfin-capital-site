@@ -383,14 +383,20 @@ test('staff list shows requested and current LTV and flags anything over 60 perc
 
 test('public source does not contain the seeded client record', () => {
   const roots = ['lib', 'api', 'sql'];
+  // The staff spine is the one place the Williamson pilot is allowed.
+  // Client portal modules stay clear of that record.
+  const staffPilot = new Set(['lib/case-spine.js', 'lib/case-spine-html.js', 'lib/case-spine-store.js']);
   const needles = ['Cooden', 'Williamson', 'K00HS552', '1A550111', 'TN39', 'Northdown', 'McDonald', 'HA4 6JZ'];
   const files = [];
   for (const root of roots) {
     for (const name of readdirSync(root)) {
       const path = join(root, name);
-      if (statSync(path).isFile()) files.push(path);
+      if (statSync(path).isFile() && !staffPilot.has(path)) files.push(path);
     }
   }
   const haystack = files.map((path) => readFileSync(path, 'utf8')).join('\n');
   for (const needle of needles) assert.equal(haystack.includes(needle), false, needle);
+  const client = readFileSync('lib/case-portal.js', 'utf8') + readFileSync('lib/case-portal-html.js', 'utf8') + readFileSync('api/case-portal.js', 'utf8');
+  assert.equal(client.includes('Cooden'), false);
+  assert.equal(client.includes('Williamson'), false);
 });

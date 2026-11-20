@@ -1,5 +1,7 @@
 -- Posfin staff operations cockpit.
 -- DO NOT APPLY to the live smartlink project. This file is for review only.
+-- Stage-2 case spine tables are proposed separately in sql/20261120_stage2_case_spine.sql.
+-- That file is also review-only and must not be applied until Tom approves it.
 -- The preview cockpit does not run this script and does not write these tables.
 -- Apply only after Tom has approved the schema.
 --
