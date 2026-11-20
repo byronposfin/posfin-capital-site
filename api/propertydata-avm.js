@@ -2,7 +2,7 @@
  * PropertyData AVM proxy — /api/propertydata?postcode=SW1A1AA
  * Proxies to PropertyData API to avoid CORS issues from browser.
  */
-const PROPERTYDATA_KEY = process.env.PROPERTYDATA_KEY;
+import { propertyDataKey } from "../lib/propertydata-env.js";
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,8 +17,9 @@ export default async function handler(req, res) {
 
   try {
     // Try sold-prices for AVM estimate
+    const propertyKey = propertyDataKey("PROPERTYDATA_KEY");
     const r = await fetch(
-      `https://api.propertydata.co.uk/sold-prices?key=${PROPERTYDATA_KEY}&postcode=${clean}`,
+      `https://api.propertydata.co.uk/sold-prices?key=${propertyKey}&postcode=${clean}`,
       { headers: { 'Accept': 'application/json' } }
     );
     const data = await r.json();
