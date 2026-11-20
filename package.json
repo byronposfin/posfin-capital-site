@@ -6,6 +6,10 @@
     "node": "24.x"
   },
   "dependencies": {
-    "googleapis": "^144.0.0"
+    "@supabase/supabase-js": "^2.119.1",
+    "exceljs": "^4.4.0",
+    "googleapis": "^144.0.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9"
   }
 }
