@@ -1,6 +1,6 @@
 import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCookie } from '../lib/case-http.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
-import { attachCalls, buildCases, groupColumns, loadMasterIndex, selectLeads, windowDays } from '../lib/pipeline.js';
+import { applyDeskMoves, attachCalls, buildCases, filterOwner, groupColumns, loadMasterIndex, selectLeads, windowDays } from '../lib/pipeline.js';
 import { readFileSync } from 'node:fs';
 import { renderConfirm, renderPipeline, renderPipelineLogin } from '../lib/pipeline-html.js';
 import { BROKA, confirmCopy, feeDraft, lenderChoices, nextLor, queueExternal, scrub } from '../lib/pipeline-actions.js';
@@ -35,12 +35,13 @@ function callNotes() {
   return JSON.parse(readFileSync(new URL('../data/call-notes.json', import.meta.url), 'utf8'));
 }
 
-export function boardFrom(leads, now, days) {
-  const cases = attachCalls(buildCases(loadMasterIndex()), callNotes());
+export function boardFrom(leads, now, days, owner = 'all') {
+  const state = globalThis.__posfinPipelineActions || { moves: [] };
+  const cases = applyDeskMoves(attachCalls(buildCases(loadMasterIndex()), callNotes()), state.moves);
   const intake = selectLeads(leads, now, days);
   const caseNames = new Set(cases.map((card) => card.name.toLowerCase()));
-  const leadsOnly = intake.filter((card) => !caseNames.has(String(card.name || '').toLowerCase()));
-  return stamp(groupColumns(cases.concat(leadsOnly)));
+  const leadsOnly = applyDeskMoves(intake.filter((card) => !caseNames.has(String(card.name || '').toLowerCase())), state.moves);
+  return stamp(groupColumns(filterOwner(cases.concat(leadsOnly), owner)));
 }
 
 function stamp(board) {
@@ -56,12 +57,35 @@ function stamp(board) {
 }
 
 function bag() {
-  if (!globalThis.__posfinPipelineActions) globalThis.__posfinPipelineActions = { lors: [], els: [], queue: [] };
+  if (!globalThis.__posfinPipelineActions) globalThis.__posfinPipelineActions = { lors: [], els: [], queue: [], moves: [] };
   return globalThis.__posfinPipelineActions;
 }
 
-function handleAction(fields, res, env) {
-  const board = boardFrom([], Date.now(), windowDays(env));
+function handleAction(fields, res, env, owner) {
+  const stages = new Set(['raw', 'opener', 'new', 'contacting', 'fact_find', 'lor_requested', 'el_issued', 'el_sent', 'el_signed', 'parked', 'completed']);
+  if (fields.action === 'move' || fields.action === 'route-chris') {
+    const board = boardFrom([], Date.now(), windowDays(env), owner);
+    const flat = board.columns.flatMap((column) => column.cards).concat(board.parked, board.completed);
+    const card = flat.find((item) => item.caseRef === fields.case || item.id === fields.case);
+    if (!card) return sendHtml(res, 404, renderPipeline(board, { owner, banner: 'That card is not on this board. Nothing was written.' }));
+    const now = new Date().toISOString();
+    const movedBy = ['Byron', 'Chris', 'Aadi', 'Lizzy'].includes(fields.moved_by) ? fields.moved_by : 'Byron';
+    const to = fields.action === 'route-chris' ? card.stage : fields.to;
+    if (!stages.has(to)) return sendHtml(res, 400, renderPipeline(board, { owner, banner: 'That stage is not on the board. Nothing was written.' }));
+    bag().moves.push({
+      caseRef: card.caseRef || card.id,
+      from: card.stage,
+      to,
+      owner: fields.action === 'route-chris' ? 'Chris' : undefined,
+      movedBy,
+      at: now,
+      note: fields.action === 'route-chris' ? 'Routed to Chris' : (to === 'parked' ? 'Parked from the desk' : 'Stage move on the preview'),
+    });
+    const next = boardFrom([], Date.now(), windowDays(env), owner);
+    const label = fields.action === 'route-chris' ? `${card.caseRef || card.name} is now on Chris.` : `${card.caseRef || card.name} moved from ${card.stage} to ${to}.`;
+    return sendHtml(res, 200, renderPipeline(next, { owner, banner: `${label} History is on this preview only. No lead, deal, or sheet row was changed.` }));
+  }
+  const board = boardFrom([], Date.now(), windowDays(env), owner);
   const flat = board.columns.flatMap((column) => column.cards).concat(board.parked, board.completed);
   const card = flat.find((item) => item.caseRef === fields.case || item.id === fields.case);
   if (!card) return sendHtml(res, 404, renderPipeline(board, { banner: 'That card is not on this board. Nothing was sent.' }));
@@ -72,13 +96,13 @@ function handleAction(fields, res, env) {
     const made = nextLor(bag().lors, card, actor, now);
     bag().lors.push(made.doc);
     card.history.push({ source: 'desk', stage: card.stage, note: `LOR v${made.doc.version} drafted. Prior versions kept: ${made.kept}. Not sent.` });
-    return sendHtml(res, 200, renderPipeline(board, { banner: `LOR v${made.doc.version} saved for ${card.caseRef}. It has not been sent. PLACED was not called.` }));
+    return sendHtml(res, 200, renderPipeline(board, { owner, banner: `LOR v${made.doc.version} saved for ${card.caseRef}. It has not been sent. PLACED was not called.` }));
   }
   if (fields.action === 'el') {
     const fees = feeDraft(card.loan, fields.proc, fields.broker);
     bag().els.push({ caseRef: card.caseRef, at: now, ...fees, status: 'draft' });
     const amounts = fees.loan == null ? 'Loan not confirmed, so the fee amounts are blank.' : `Proc ${fees.procPct}% and broker ${fees.brokerPct}%.`;
-    return sendHtml(res, 200, renderPipeline(board, { banner: `EL draft saved for ${card.caseRef}. ${amounts} Not sent for signature.` }));
+    return sendHtml(res, 200, renderPipeline(board, { owner, banner: `EL draft saved for ${card.caseRef}. ${amounts} Not sent for signature.` }));
   }
   const external = fields.action === 'title' || fields.action === 'send-lor';
   if (external && fields.confirm !== 'yes') {
@@ -104,7 +128,7 @@ function handleAction(fields, res, env) {
   });
   bag().queue.push(queued);
   card.history.push({ source: 'desk', stage: card.stage, note: `${queued.kind} queued as ${queued.status}. PLACED not called.` });
-  return sendHtml(res, 200, renderPipeline(board, { banner: `${queued.caseRef} is awaiting Byron approval. Recipients: ${queued.recipients.join(', ')}. Nothing was sent or charged.` }));
+  return sendHtml(res, 200, renderPipeline(board, { owner, banner: `${queued.caseRef} is awaiting Byron approval. Recipients: ${queued.recipients.join(', ')}. Nothing was sent or charged.` }));
 }
 
 export default async function handler(req, res) {
@@ -119,15 +143,10 @@ export default async function handler(req, res) {
         writeStaffCookie(res, req, login.session);
         return redirect(res, '/staff/cockpit/pipeline');
       }
-      if (fields.action === 'lor' || fields.action === 'el' || fields.action === 'title' || fields.action === 'send-lor') {
+      if (fields.action === 'lor' || fields.action === 'el' || fields.action === 'title' || fields.action === 'send-lor' || fields.action === 'move' || fields.action === 'route-chris') {
         const session = readCookie(req, 'pf_staff');
         if (!session || !await sessionAllows(session, { env })) return sendHtml(res, 401, renderPipelineLogin());
-        return handleAction(fields, res, env);
-      }
-      if (fields.action === 'move') {
-        return sendHtml(res, 409, renderPipeline(boardFrom([], Date.now(), windowDays(env)), {
-          banner: 'Move refused. pipeline_stage_history is not on the database. No lead, deal, or sheet row was changed.',
-        }));
+        return handleAction(fields, res, env, 'all');
       }
     }
     const session = readCookie(req, 'pf_staff');
@@ -135,12 +154,13 @@ export default async function handler(req, res) {
     const now = Date.now();
     const cfg = pipelineConfig(env);
     const loaded = await fetchLeads(cfg, fetch, now);
-    const board = boardFrom(loaded.rows, now, cfg.days);
+    const owner = new URL(req.url || '/', 'https://posfin.local').searchParams.get('owner') || 'all';
+    const board = boardFrom(loaded.rows, now, cfg.days, owner);
     const leadCount = board.columns.slice(0, 4).reduce((sum, column) => sum + column.cards.length, 0) + board.parked.filter((card) => card.source === 'supabase-leads').length;
     const banner = loaded.blocked
       ? `Lead rows were not read (${loaded.blocked}). Case cards are the 14 Nov index with the 20 Nov stage on top. Set PIPELINE_SUPABASE_KEY to the main project read key. Nothing was written.`
       : `${leadCount} intake cards from public.leads, last ${cfg.days} days plus older non-new leads. No rows were updated or deleted.`;
-    return sendHtml(res, 200, renderPipeline(board, { banner }));
+    return sendHtml(res, 200, renderPipeline(board, { owner, banner }));
   } catch (error) {
     console.error('[pipeline]', error.code || 'pipeline_failed');
     return sendHtml(res, 503, renderPipeline(boardFrom([], Date.now(), 60), { banner: 'The pipeline could not be read. Nothing was written.' }));

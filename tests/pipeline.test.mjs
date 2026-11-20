@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  assumedFee, attachCalls, buildCases, leadSelected, loadMasterIndex, parsePipelineCsv, selectLeads, stageFromIndex, stageFromPipelineStatus,
+  applyDeskMoves, assumedFee, attachCalls, buildCases, filterOwner, leadSelected, loadMasterIndex, parsePipelineCsv, selectLeads, stageFromIndex, stageFromPipelineStatus,
 } from '../lib/pipeline.js';
 import { feeDraft, lenderChoices, nextLor, queueExternal } from '../lib/pipeline-actions.js';
 
@@ -177,4 +177,21 @@ test('external actions queue for Byron and drop blocked names', () => {
   assert.equal(queued.placed.called, false);
   assert.deepEqual(queued.recipients, ['Together']);
   assert.equal(/bacs/i.test(JSON.stringify(queued)), false);
+});
+
+test('a desk move writes history and an owner filter keeps Chris', () => {
+  const [card] = buildCases(loadMasterIndex()).filter((item) => item.caseRef === 'PC-003');
+  const moved = applyDeskMoves([card], [{
+    caseRef: 'PC-003',
+    from: card.stage,
+    to: 'contacting',
+    owner: 'Chris',
+    movedBy: 'Lizzy',
+    note: 'Routed to Chris',
+  }]);
+  assert.equal(moved[0].stage, 'contacting');
+  assert.equal(moved[0].owner, 'Chris');
+  assert.match(moved[0].history.at(-1).note, /Lizzy/);
+  assert.equal(filterOwner(moved, 'Chris').length, 1);
+  assert.equal(filterOwner(moved, 'Aadi').length, 0);
 });
