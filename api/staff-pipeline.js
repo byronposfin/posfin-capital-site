@@ -1,7 +1,9 @@
 import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCookie } from '../lib/case-http.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
-import { buildCases, groupColumns, loadMasterIndex, selectLeads, windowDays } from '../lib/pipeline.js';
-import { renderPipeline, renderPipelineLogin } from '../lib/pipeline-html.js';
+import { attachCalls, buildCases, groupColumns, loadMasterIndex, selectLeads, windowDays } from '../lib/pipeline.js';
+import { readFileSync } from 'node:fs';
+import { renderConfirm, renderPipeline, renderPipelineLogin } from '../lib/pipeline-html.js';
+import { BROKA, confirmCopy, feeDraft, lenderChoices, nextLor, queueExternal, scrub } from '../lib/pipeline-actions.js';
 
 const MAIN = 'https://vgflcrfaudrvrdmxjdtl.supabase.co';
 
@@ -29,12 +31,80 @@ export async function fetchLeads(cfg, fetcher = fetch, now = Date.now()) {
   return { rows: Array.isArray(rows) ? rows : [], blocked: '' };
 }
 
+function callNotes() {
+  return JSON.parse(readFileSync(new URL('../data/call-notes.json', import.meta.url), 'utf8'));
+}
+
 export function boardFrom(leads, now, days) {
-  const cases = buildCases(loadMasterIndex());
+  const cases = attachCalls(buildCases(loadMasterIndex()), callNotes());
   const intake = selectLeads(leads, now, days);
   const caseNames = new Set(cases.map((card) => card.name.toLowerCase()));
   const leadsOnly = intake.filter((card) => !caseNames.has(String(card.name || '').toLowerCase()));
-  return groupColumns(cases.concat(leadsOnly));
+  return stamp(groupColumns(cases.concat(leadsOnly)));
+}
+
+function stamp(board) {
+  const state = globalThis.__posfinPipelineActions || { lors: [], els: [], queue: [] };
+  const cards = board.columns.flatMap((column) => column.cards).concat(board.parked, board.completed);
+  for (const card of cards) {
+    const versions = state.lors.filter((item) => item.caseRef === card.caseRef).map((item) => item.version);
+    if (versions.length) card.history.push({ source: 'desk', stage: card.stage, note: `LOR versions kept: ${versions.join(', ')}` });
+    const waiting = state.queue.filter((item) => item.caseRef === card.caseRef && item.status === 'awaiting Byron approval');
+    for (const item of waiting) card.history.push({ source: 'desk', stage: card.stage, note: `${item.kind} awaiting Byron approval` });
+  }
+  return board;
+}
+
+function bag() {
+  if (!globalThis.__posfinPipelineActions) globalThis.__posfinPipelineActions = { lors: [], els: [], queue: [] };
+  return globalThis.__posfinPipelineActions;
+}
+
+function handleAction(fields, res, env) {
+  const board = boardFrom([], Date.now(), windowDays(env));
+  const flat = board.columns.flatMap((column) => column.cards).concat(board.parked, board.completed);
+  const card = flat.find((item) => item.caseRef === fields.case || item.id === fields.case);
+  if (!card) return sendHtml(res, 404, renderPipeline(board, { banner: 'That card is not on this board. Nothing was sent.' }));
+  const now = new Date().toISOString();
+  const actor = 'Byron';
+  const lenders = lenderChoices([].concat(fields.lenders || []));
+  if (fields.action === 'lor') {
+    const made = nextLor(bag().lors, card, actor, now);
+    bag().lors.push(made.doc);
+    card.history.push({ source: 'desk', stage: card.stage, note: `LOR v${made.doc.version} drafted. Prior versions kept: ${made.kept}. Not sent.` });
+    return sendHtml(res, 200, renderPipeline(board, { banner: `LOR v${made.doc.version} saved for ${card.caseRef}. It has not been sent. PLACED was not called.` }));
+  }
+  if (fields.action === 'el') {
+    const fees = feeDraft(card.loan, fields.proc, fields.broker);
+    bag().els.push({ caseRef: card.caseRef, at: now, ...fees, status: 'draft' });
+    const amounts = fees.loan == null ? 'Loan not confirmed, so the fee amounts are blank.' : `Proc ${fees.procPct}% and broker ${fees.brokerPct}%.`;
+    return sendHtml(res, 200, renderPipeline(board, { banner: `EL draft saved for ${card.caseRef}. ${amounts} Not sent for signature.` }));
+  }
+  const external = fields.action === 'title' || fields.action === 'send-lor';
+  if (external && fields.confirm !== 'yes') {
+    const preview = queueExternal({
+      kind: fields.action,
+      caseRef: card.caseRef,
+      lenders,
+      chosen: [].concat(fields.lenders || [BROKA]),
+      cost: fields.action === 'title' ? 'HMLR official copies are a paid order. The price is not confirmed here.' : 'No send fee is charged from this page.',
+      actor,
+      now,
+    });
+    return sendHtml(res, 200, renderConfirm(scrub(confirmCopy(preview)), { ...fields, lenders: preview.recipients }));
+  }
+  const queued = queueExternal({
+    kind: fields.action,
+    caseRef: card.caseRef,
+    lenders,
+    chosen: [].concat(fields.lenders || [BROKA]),
+    cost: fields.action === 'title' ? 'HMLR official copies are a paid order. The price is not confirmed here.' : 'No send fee is charged from this page.',
+    actor,
+    now,
+  });
+  bag().queue.push(queued);
+  card.history.push({ source: 'desk', stage: card.stage, note: `${queued.kind} queued as ${queued.status}. PLACED not called.` });
+  return sendHtml(res, 200, renderPipeline(board, { banner: `${queued.caseRef} is awaiting Byron approval. Recipients: ${queued.recipients.join(', ')}. Nothing was sent or charged.` }));
 }
 
 export default async function handler(req, res) {
@@ -48,6 +118,11 @@ export default async function handler(req, res) {
         if (!login.ok) return sendHtml(res, 401, renderPipelineLogin());
         writeStaffCookie(res, req, login.session);
         return redirect(res, '/staff/cockpit/pipeline');
+      }
+      if (fields.action === 'lor' || fields.action === 'el' || fields.action === 'title' || fields.action === 'send-lor') {
+        const session = readCookie(req, 'pf_staff');
+        if (!session || !await sessionAllows(session, { env })) return sendHtml(res, 401, renderPipelineLogin());
+        return handleAction(fields, res, env);
       }
       if (fields.action === 'move') {
         return sendHtml(res, 409, renderPipeline(boardFrom([], Date.now(), windowDays(env)), {

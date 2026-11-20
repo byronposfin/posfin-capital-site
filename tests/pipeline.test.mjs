@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  assumedFee, buildCases, leadSelected, loadMasterIndex, parsePipelineCsv, selectLeads, stageFromIndex, stageFromPipelineStatus,
+  assumedFee, attachCalls, buildCases, leadSelected, loadMasterIndex, parsePipelineCsv, selectLeads, stageFromIndex, stageFromPipelineStatus,
 } from '../lib/pipeline.js';
+import { feeDraft, lenderChoices, nextLor, queueExternal } from '../lib/pipeline-actions.js';
 
 const NOW = Date.parse('2026-11-20T09:16:00Z');
 const DAY = 86400000;
@@ -113,6 +114,26 @@ test('20 Nov stage wins over the 14 Nov index and both stay in history', () => {
   assert.equal(mcdonald.feeAssumed, 9250);
 });
 
+test('call tabs attach by source row or name, and a new caller becomes an intake card', () => {
+  const cards = buildCases(loadMasterIndex());
+  const withCalls = attachCalls(cards, [
+    { date: '2026-11-17', name: 'Rod Sim', owner: 'Chris', sourceRow: '', email: 'rsimdevelopments@gmail.com', phone: '447515970811', note: 'He answered the questions yesterday and Byron asked further questions.' },
+    { date: '2026-10-22', name: 'Someone Else', owner: 'Chris', sourceRow: 'Pipeline:94 | META-31483305', email: '', phone: '', note: 'Router complete and fact find submitted.' },
+    { date: '2026-07-27', name: 'Edward Bromet', owner: 'Chris', sourceRow: 'Existing client came back', email: '', phone: '', note: 'Called again.' },
+  ]);
+  const rod = withCalls.find((card) => card.name === 'Rod Sim');
+  assert.equal(rod.stage, 'contacting');
+  assert.equal(rod.owner, 'Chris');
+  assert.equal(rod.flags.includes('Not on the Pipeline tab'), true);
+  const stratford = withCalls.find((card) => card.caseRef === 'META-31483305');
+  assert.equal(stratford.stage, 'fact_find');
+  assert.equal(stratford.callNotes[0].sourceRow.includes('META-31483305'), true);
+  const bromet = withCalls.find((card) => card.caseRef === 'PC-026');
+  assert.equal(bromet.stage, 'parked');
+  assert.equal(bromet.callNotes[0].owner, 'Chris');
+  assert.equal(bromet.owner, 'Chris');
+});
+
 test('pipeline CSV import uses case_id and does not require a sheet write', () => {
   const csv = 'case_id,borrower_name,status,owner_sales,next_step\nPOSFIN.26.0115,Elliot Hill,COMPLETED,Chris,Check the file\n';
   const rows = parsePipelineCsv(csv);
@@ -127,4 +148,33 @@ test('pipeline CSV import uses case_id and does not require a sheet write', () =
   assert.match(sql, /moved_at/);
   assert.equal(/update public\.leads/i.test(sql), false);
   assert.equal(/delete from public\.leads/i.test(sql), false);
+});
+
+test('external actions queue for Byron and drop blocked names', () => {
+  assert.deepEqual(lenderChoices(['Together', 'CIFAS', 'Neville Finance', 'KPC Investors']), ['BROKA (whole lender set)', 'Together']);
+  const card = { caseRef: 'PC-003', name: 'Example', loan: 185000 };
+  const first = nextLor([], card, 'Byron', '2026-11-20T09:00:00Z');
+  const second = nextLor([first.doc], card, 'Byron', '2026-11-20T10:00:00Z');
+  assert.equal(first.doc.version, 1);
+  assert.equal(second.doc.version, 2);
+  assert.equal(second.kept, 1);
+  assert.equal(first.doc.leavesPosfin, false);
+  const fees = feeDraft(100000, 2, 3);
+  assert.equal(fees.proc, 2000);
+  assert.equal(fees.broker, 3000);
+  const queued = queueExternal({
+    kind: 'send-lor',
+    caseRef: 'PC-003',
+    lenders: ['Together', 'CIFAS'],
+    chosen: ['CIFAS', 'Together'],
+    cost: 'No send fee is charged from this page.',
+    actor: 'Byron',
+    now: '2026-11-20T09:00:00Z',
+  });
+  assert.equal(queued.status, 'awaiting Byron approval');
+  assert.equal(queued.sent, false);
+  assert.equal(queued.charged, false);
+  assert.equal(queued.placed.called, false);
+  assert.deepEqual(queued.recipients, ['Together']);
+  assert.equal(/bacs/i.test(JSON.stringify(queued)), false);
 });
