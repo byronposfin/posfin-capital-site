@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  applyDeskMoves, assumedFee, attachCalls, buildCases, filterOwner, leadSelected, loadMasterIndex, parsePipelineCsv, selectLeads, stageFromIndex, stageFromPipelineStatus,
+  applyDeskMoves, assumedFee, attachCalls, attachCallsExport, buildCases, filterOwner, leadSelected, loadCrmBoard, loadMasterIndex, mergeCrmCards, parseCallsExport, parsePipelineCsv, selectLeads, stageFromIndex, stageFromPipelineStatus,
 } from '../lib/pipeline.js';
 import { feeDraft, lenderChoices, nextLor, queueExternal } from '../lib/pipeline-actions.js';
 
@@ -80,6 +80,12 @@ test('index and pipeline statuses land on the named columns', () => {
   assert.equal(stageFromPipelineStatus('COMPLETING').stage, 'el_signed');
   assert.equal(stageFromPipelineStatus('COMPLETED').stage, 'completed');
   assert.equal(stageFromPipelineStatus('EL SENT').stage, 'el_sent');
+  assert.equal(stageFromPipelineStatus('DEAD - CLIENT GHOSTING').stage, 'parked');
+  assert.equal(stageFromPipelineStatus('DEAD - CLIENT GHOSTING').reason, 'DEAD - CLIENT GHOSTING');
+  assert.equal(stageFromPipelineStatus('Website').stage, 'new_triage');
+  assert.equal(stageFromPipelineStatus('TRIAGE').stage, 'new_triage');
+  assert.equal(stageFromPipelineStatus('ARCHIVED — COMPLETED / SHADOW BOOK').stage, 'completed');
+  assert.equal(stageFromPipelineStatus('PROCESSING').stage, 'el_signed');
 });
 
 test('20 Nov stage wins over the 14 Nov index and both stay in history', () => {
@@ -194,4 +200,47 @@ test('a desk move writes history and an owner filter keeps Chris', () => {
   assert.match(moved[0].history.at(-1).note, /Lizzy/);
   assert.equal(filterOwner(moved, 'Chris').length, 1);
   assert.equal(filterOwner(moved, 'Aadi').length, 0);
+});
+
+test('crm exports keep messy rows and match by case id then name', () => {
+  const csv = [
+    'case_id,borrower_name,status,owner_sales,next_action',
+    'POSFIN-X,Ann Example,━━ DEAL STATUS — note COMPLETED on 10 Apr,Byron,Check',
+    ',Jean Michel BOUCHON,Website,Byron,Call',
+    'POSFIN-D,Pat Example,DEAD - CLIENT GHOSTING,Chris,Stop',
+  ].join('\n');
+  const rows = parsePipelineCsv(csv);
+  assert.equal(rows.length, 3);
+  const messy = rows.find((row) => row.caseRef === 'POSFIN-X');
+  assert.equal(messy.flags.includes('source data needs cleanup'), true);
+  assert.equal(messy.stage, 'completed');
+  assert.equal(rows.find((row) => row.name === 'Jean Michel BOUCHON').stage, 'new_triage');
+  const base = [{ caseRef: 'PC-001', name: 'Jean Michel BOUCHON', stage: 'raw_lead', owner: 'Lizzy', flags: [], history: [{ source: 'index', stage: 'raw_lead' }], callNotes: [] }];
+  const merged = mergeCrmCards(base, rows.filter((row) => row.name === 'Jean Michel BOUCHON'));
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].caseRef, 'PC-001');
+  assert.equal(merged[0].stage, 'new_triage');
+  assert.equal(merged[0].owner, 'Byron');
+  assert.match(merged[0].history.map((row) => row.note).join(' '), /Earlier stage raw_lead/);
+  const calls = parseCallsExport('owner_tab,date,lead_name,note_summary,case_id_matched,source_row_or_case_ref\nCHRIS CALLS,2026-11-17,Rod Sim,Further questions,,\nBYRON CALLS,2026-11-01,Pat Example,Spoke,POSFIN-D,PIPELINE\n');
+  const withCalls = attachCallsExport([{ caseRef: 'POSFIN-D', name: 'Pat Example', stage: 'parked', owner: 'Chris', flags: [], history: [], callNotes: [] }], calls);
+  assert.equal(withCalls.length, 2);
+  assert.equal(withCalls.find((card) => card.caseRef === 'POSFIN-D').callNotes.length, 1);
+  const rod = withCalls.find((card) => card.name === 'Rod Sim');
+  assert.equal(rod.owner, 'Chris');
+  assert.equal(rod.stage, 'contacting');
+  assert.equal(rod.flags.includes('Not on the Pipeline tab'), true);
+});
+
+test('committed crm fixtures keep every exported row', () => {
+  const pipeline = parsePipelineCsv(readFileSync(new URL('../data/pipeline-tab-20261120.csv', import.meta.url), 'utf8'));
+  const clean = parsePipelineCsv(readFileSync(new URL('../data/pipeline-clean-20261120.csv', import.meta.url), 'utf8'));
+  const calls = parseCallsExport(readFileSync(new URL('../data/calls-20261120.csv', import.meta.url), 'utf8'));
+  assert.equal(pipeline.length, 110);
+  assert.equal(clean.length, 79);
+  assert.equal(calls.length, 63);
+  assert.equal(calls.filter((call) => call.caseRef).length, 33);
+  const cards = loadCrmBoard();
+  assert.equal(cards.length > 110, true);
+  assert.equal(cards.some((card) => card.flags.includes('source data needs cleanup')), true);
 });

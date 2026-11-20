@@ -1,7 +1,6 @@
 import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCookie } from '../lib/case-http.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
-import { applyDeskMoves, attachCalls, buildCases, filterOwner, groupColumns, loadMasterIndex, selectLeads, windowDays } from '../lib/pipeline.js';
-import { readFileSync } from 'node:fs';
+import { applyDeskMoves, filterOwner, groupColumns, loadCrmBoard, selectLeads, windowDays } from '../lib/pipeline.js';
 import { renderConfirm, renderPipeline, renderPipelineLogin } from '../lib/pipeline-html.js';
 import { BROKA, confirmCopy, feeDraft, lenderChoices, nextLor, queueExternal, scrub } from '../lib/pipeline-actions.js';
 
@@ -31,13 +30,9 @@ export async function fetchLeads(cfg, fetcher = fetch, now = Date.now()) {
   return { rows: Array.isArray(rows) ? rows : [], blocked: '' };
 }
 
-function callNotes() {
-  return JSON.parse(readFileSync(new URL('../data/call-notes.json', import.meta.url), 'utf8'));
-}
-
 export function boardFrom(leads, now, days, owner = 'all') {
   const state = globalThis.__posfinPipelineActions || { moves: [] };
-  const cases = applyDeskMoves(attachCalls(buildCases(loadMasterIndex()), callNotes()), state.moves);
+  const cases = applyDeskMoves(loadCrmBoard(), state.moves);
   const intake = selectLeads(leads, now, days);
   const caseNames = new Set(cases.map((card) => card.name.toLowerCase()));
   const leadsOnly = applyDeskMoves(intake.filter((card) => !caseNames.has(String(card.name || '').toLowerCase())), state.moves);
