@@ -22,7 +22,8 @@ const server = http.createServer(async (req, res) => {
     res.end(logo);
     return;
   }
-  if (url.pathname !== '/staff/cockpit') {
+  const spinePath = url.pathname.match(/^\/staff\/cockpit\/spine\/([^/]+)$/);
+  if (url.pathname !== '/staff/cockpit' && !spinePath) {
     res.statusCode = 404;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.end('This preview server only serves /staff/cockpit.');
@@ -35,6 +36,7 @@ const server = http.createServer(async (req, res) => {
   if (raw && type.includes('application/x-www-form-urlencoded')) req.body = Object.fromEntries(new URLSearchParams(raw));
   else if (raw && type.includes('application/json')) req.body = JSON.parse(raw);
   req.query = Object.fromEntries(url.searchParams);
+  if (spinePath) req.query.spine = decodeURIComponent(spinePath[1]);
   req.url = url.pathname + url.search;
   try {
     await handleCockpit(req, res, { env: process.env });

@@ -2,13 +2,16 @@ import { randomBytes } from 'node:crypto';
 import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCookie } from '../lib/case-http.js';
 import { FILTERS, OWNERS, applyEdit, groupBoard, lizzyQueue } from '../lib/cockpit.js';
 import { renderBoard, renderLizzy, renderLogin, renderMessage } from '../lib/cockpit-html.js';
+import { PILOT_REF, presentSpine, spineRefStatus } from '../lib/case-spine.js';
+import { renderSpine, renderSpineLogin } from '../lib/case-spine-html.js';
+import { sharedSpineStore } from '../lib/case-spine-store.js';
 import {
   attachAudit, cockpitMode, endSession, establishSession, loadSupabaseBoard, saveSupabase, revertSupabase,
   sessionAllows, sharedPreviewStore, writePreviewFile,
 } from '../lib/cockpit-store.js';
 
 function queryOf(req) {
-  if (req.query && (req.query.filter || req.query.view || req.query.caseId)) return req.query;
+  if (req.query && (req.query.filter || req.query.view || req.query.caseId || req.query.spine || req.query.waiting)) return req.query;
   try {
     const url = new URL(req.url || '/', 'http://localhost');
     return Object.fromEntries(url.searchParams);
@@ -63,6 +66,54 @@ function persist(store, res) {
   const existing = res.getHeader && res.getHeader('Set-Cookie');
   if (existing) res.setHeader('Set-Cookie', [].concat(existing, cookie));
   else res.setHeader('Set-Cookie', cookie);
+}
+
+function safeNext(value) {
+  return value === `/staff/cockpit/spine/${PILOT_REF}` ? value : '';
+}
+
+function spineStoreOf(deps) {
+  return deps.spineStore || sharedSpineStore();
+}
+
+function spineBack(fields) {
+  const waiting = fields.waiting === 'preview' ? '?waiting=preview' : '';
+  const id = fields.id ? `#action-${encodeURIComponent(fields.id)}` : '';
+  return `/staff/cockpit/spine/${PILOT_REF}${waiting}${id}`;
+}
+
+function sendSpine(res, query, mode, deps, env) {
+  const status = spineRefStatus(query.spine);
+  if (status === 'wrong_case') {
+    return sendHtml(res, 404, renderMessage('Not this case', 'PC-004 is Winslade Park / Mark Edworthy. The Stage-2 pilot ref is POSFIN-WEB-EYCTQ6.'));
+  }
+  if (status !== 'pilot') return sendHtml(res, 404, renderMessage('Not on this pilot', 'The Stage-2 spine currently has one case, POSFIN-WEB-EYCTQ6.'));
+  const store = spineStoreOf(deps);
+  const spine = store.get();
+  const view = presentSpine(spine, env, query, mode, deps.now);
+  const auditByAction = {};
+  for (const item of spine.actions) auditByAction[item.id] = store.auditFor(item.id);
+  return sendHtml(res, 200, renderSpine(view, auditByAction));
+}
+
+function handleSpinePost(fields, res, deps, env, mode) {
+  if (fields.spine === 'PC-004' || fields.id === 'PC-004') {
+    return sendHtml(res, 404, renderMessage('Not this case', 'PC-004 is Winslade Park / Mark Edworthy. The Stage-2 pilot ref is POSFIN-WEB-EYCTQ6.'));
+  }
+  if (mode === 'supabase') {
+    return sendHtml(res, 503, renderMessage('Not written', 'The spine tables are not applied. This preview did not write to Supabase.'));
+  }
+  const actor = String(fields.actor || '');
+  const now = deps.now || new Date().toISOString();
+  const store = spineStoreOf(deps);
+  const action = String(fields.action || '');
+  let result;
+  if (action === 'spine-revert') result = store.revert(actor, now);
+  else if (action === 'spine-done') result = store.setDone(String(fields.id || ''), true, actor, now);
+  else if (action === 'spine-reopen') result = store.setDone(String(fields.id || ''), false, actor, now);
+  else return sendHtml(res, 400, renderMessage('Not available', 'That action is not on this spine.'));
+  if (!result || result.error) return sendHtml(res, 400, renderMessage('Not saved', 'That desk note was not saved. Nothing was sent.'));
+  return redirect(res, spineBack(fields));
 }
 
 function blank() {
@@ -173,9 +224,19 @@ export async function handleCockpit(req, res, deps = {}) {
         const login = await establishSession(String(fields.password || ''), depsEnv);
         if (!login.ok) return sendHtml(res, 401, renderLogin(login.error || 'password'));
         writeStaffCookie(res, req, login.session);
-        return redirect(res, '/staff/cockpit');
+        return redirect(res, safeNext(fields.next) || '/staff/cockpit');
       }
-      if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderLogin('password'));
+      if (!session || !await sessionAllows(session, depsEnv)) {
+        const next = safeNext(fields.next) || (fields.spine === PILOT_REF ? `/staff/cockpit/spine/${PILOT_REF}` : '');
+        if (next) return sendHtml(res, 401, renderSpineLogin('password', next));
+        return sendHtml(res, 401, renderLogin('password'));
+      }
+      if (action === 'send' || action === 'release' || action === 'notify') {
+        return sendHtml(res, 400, renderMessage('Not available', 'This cockpit does not send messages or release borrower links.'));
+      }
+      if (action === 'spine-done' || action === 'spine-reopen' || action === 'spine-revert') {
+        return handleSpinePost(fields, res, depsEnv, env, mode);
+      }
       if (mode === 'supabase') return handleLivePost(fields, session, res, depsEnv);
       return handlePreviewPost(fields, req, res, depsEnv, env);
     }
@@ -183,8 +244,14 @@ export async function handleCockpit(req, res, deps = {}) {
       return sendHtml(res, 405, renderMessage('Not available', 'Open the cockpit in a browser.'));
     }
     const session = readCookie(req, 'pf_staff');
-    if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderLogin(''));
     const query = queryOf(req);
+    if (!session || !await sessionAllows(session, depsEnv)) {
+      if (query.spine && spineRefStatus(query.spine) === 'pilot') {
+        return sendHtml(res, 401, renderSpineLogin('', `/staff/cockpit/spine/${PILOT_REF}`));
+      }
+      return sendHtml(res, 401, renderLogin(''));
+    }
+    if (query.spine) return sendSpine(res, query, mode, depsEnv, env);
     if (mode === 'supabase') {
       const loaded = await loadSupabaseBoard(session, depsEnv);
       if (loaded.denied) return sendHtml(res, 401, renderLogin('password'));
