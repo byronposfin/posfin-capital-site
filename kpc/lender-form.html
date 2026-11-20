@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KPC Lender Form — Internal Test Profile</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="Internal KPC lender form and first test profile. Local calculation only. No external sends." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./lender-form.css" />
+</head>
+<body data-verdict="PASS">
+  <div class="topbar">
+    <span><strong>INTERNAL TEST PROFILE — NO EXTERNAL SENDS</strong> · noindex · local preview only</span>
+    <div class="top-actions">
+      <button type="button" id="btn-copy">Copy JSON</button>
+      <button type="button" id="btn-download">Download JSON</button>
+      <button type="button" id="btn-print">Print</button>
+      <button type="button" id="btn-readback">Read-back</button>
+    </div>
+  </div>
+  <div class="mobile-strip" id="mobile-strip">
+    <span id="mobile-verdict">PASS</span>
+    <span id="mobile-ltv">LTV —</span>
+    <strong id="mobile-total">£—</strong>
+  </div>
+
+  <header class="page-head">
+    <div>
+      <p class="kicker">Kensington Private Credit · Posfin Capital</p>
+      <h1>Lender form &amp; first test profile</h1>
+      <p>Unregulated UK residential micro-bridge. £26,000–£100,000, up to 50% LTV, 3–12 months. Nothing on this page is submitted.</p>
+    </div>
+    <div class="page-badge" id="page-badge">SYNTHETIC TEST PROFILE</div>
+  </header>
+
+  <div class="preset-bar" id="preset-bar">
+    <button type="button" data-preset="synthetic_50k_pass" aria-pressed="true">£50k sweet spot<small>Synthetic pass</small></button>
+    <button type="button" data-preset="williamson_hard_decline" aria-pressed="false">Chris Williamson<small>Verified hard decline</small></button>
+    <button type="button" data-preset="synthetic_26k_floor" aria-pressed="false">£26k floor<small>Synthetic pass · 6 months</small></button>
+    <button type="button" data-preset="synthetic_41pct_trap" aria-pressed="false">41% debt trap<small>Synthetic hard decline</small></button>
+  </div>
+
+  <div class="layout">
+    <main id="kpc-form">
+      <section class="case-strip" id="case-strip" aria-live="polite"></section>
+
+      <section class="panel">
+        <h2>Borrower</h2>
+        <p class="section-note">Test contact details stay on this page. They are not emailed or dialled.</p>
+        <div class="fields">
+          <div class="span-2"><label for="f-borrower">Borrower / SPV name</label><input id="f-borrower" type="text" autocomplete="off" /></div>
+          <div><label for="f-entity">Entity type</label>
+            <select id="f-entity">
+              <option value="uk_ltd">UK Ltd SPV</option>
+              <option value="llp">LLP</option>
+              <option value="individual_business">Individual — business purpose</option>
+              <option value="individual_owner">Individual — owner occupier</option>
+            </select>
+          </div>
+          <div><label for="f-director">Director / guarantor</label><input id="f-director" type="text" autocomplete="off" /></div>
+          <div><label for="f-email">Email (test only)</label><input id="f-email" type="email" autocomplete="off" /></div>
+          <div><label for="f-mobile">Mobile (test only)</label><input id="f-mobile" type="tel" autocomplete="off" /></div>
+          <div><label for="f-resident">UK residency</label>
+            <select id="f-resident">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+              <option value="unknown">Unknown — not verified</option>
+            </select>
+          </div>
+          <div><label for="f-reference">Internal reference</label><input id="f-reference" type="text" autocomplete="off" /></div>
+          <div class="span-2"><label for="f-adverse">Adverse credit / insolvency notes</label><textarea id="f-adverse"></textarea></div>
+          <div class="span-2"><label class="check"><input id="f-unregulated" type="checkbox" /> Unregulated business-purpose declaration (FSMA Art. 60C / 60O). Required for KPC. Owner-occupied main residence is out of mandate.</label></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Loan amount &amp; LTV</h2>
+        <p class="section-note">Existing debt above 40% LTV is a hard stop. Day-1 and gross/exit combined LTV above 50% are hard stops. Term mandate is 3–12 months.</p>
+        <div class="fields">
+          <div><label for="f-value">Property value (OMV / AVM) £</label><input id="f-value" type="text" inputmode="decimal" data-kind="money" autocomplete="off" /></div>
+          <div><label for="f-debt">Current debt / prior charges £</label><input id="f-debt" type="text" inputmode="decimal" data-kind="money" autocomplete="off" /></div>
+          <div class="span-2"><label for="f-debt-note">Prior-charge note</label><textarea id="f-debt-note"></textarea></div>
+          <div><label for="f-net">New KPC loan £ (net release)</label><input id="f-net" type="text" inputmode="decimal" data-kind="money" autocomplete="off" /></div>
+          <div><label for="f-charge">Charge position</label>
+            <select id="f-charge">
+              <option value="2nd">2nd legal charge</option>
+              <option value="1st">1st legal charge</option>
+              <option value="unknown">Not verified</option>
+            </select>
+          </div>
+          <div class="span-2" data-keep-profile>
+            <label for="f-term">Term (months)</label>
+            <div class="term-pills" id="term-pills">
+              <button type="button" data-term="3">3</button>
+              <button type="button" data-term="6">6</button>
+              <button type="button" data-term="9">9</button>
+              <button type="button" data-term="12">12</button>
+            </div>
+            <input id="f-term" type="number" min="1" max="24" step="1" data-keep-profile />
+            <p class="hint">3, 6, 9 and 12 are the comparison columns. Any custom month from 3 to 12 is inside the mandate. Under 3 or over 12 hard-declines. 3 months is the typical quick turn.</p>
+          </div>
+          <div class="span-2"><label for="f-loan-note">Loan note</label><textarea id="f-loan-note"></textarea></div>
+        </div>
+      </section>
+
+      <section class="panel" id="property-panel">
+        <h2>Property &amp; title</h2>
+        <div class="fields">
+          <div class="span-2"><label for="f-address">Address</label><input id="f-address" type="text" autocomplete="off" /></div>
+          <div><label for="f-postcode">Postcode</label><input id="f-postcode" type="text" autocomplete="off" /></div>
+          <div><label for="f-title">HMLR title number</label><input id="f-title" type="text" autocomplete="off" /></div>
+          <div><label for="f-tenure">Tenure</label>
+            <select id="f-tenure"><option value="freehold">Freehold</option><option value="leasehold">Leasehold</option></select>
+          </div>
+          <div><label for="f-lease">Lease years remaining</label><input id="f-lease" type="number" min="0" max="999" step="1" /></div>
+          <div><label for="f-type">Property type</label>
+            <select id="f-type">
+              <option value="house">House</option>
+              <option value="flat">Flat</option>
+              <option value="bungalow">Bungalow</option>
+              <option value="hmo">HMO</option>
+              <option value="not_stated">Not stated</option>
+            </select>
+          </div>
+          <div><label for="f-occupancy">Occupancy</label>
+            <select id="f-occupancy">
+              <option value="tenanted_investment">Tenanted investment</option>
+              <option value="vacant_investment">Vacant investment</option>
+              <option value="owner_occupied">Owner-occupied main residence</option>
+            </select>
+          </div>
+          <div><label for="f-holder">1st charge holder</label><input id="f-holder" type="text" autocomplete="off" /></div>
+          <div><label for="f-consent">1st charge consent</label>
+            <select id="f-consent">
+              <option value="granted">Consent granted</option>
+              <option value="not_required">Not required</option>
+              <option value="missing">Missing</option>
+              <option value="restriction">Consent restriction</option>
+              <option value="unknown">Not verified</option>
+            </select>
+          </div>
+          <div><label for="f-valuation">Valuation basis</label>
+            <select id="f-valuation">
+              <option value="avm">AVM</option>
+              <option value="desktop">Desktop</option>
+              <option value="rics">RICS</option>
+              <option value="not_verified">Not verified</option>
+            </select>
+          </div>
+          <div><label for="f-legal-route">Legal / title insurance route</label>
+            <select id="f-legal-route">
+              <option value="ackroyds_nosearch">Ackroyds no-search indemnity</option>
+              <option value="standard_searches">Standard searches</option>
+              <option value="not_verified">Not verified</option>
+            </select>
+          </div>
+          <div class="span-2"><label for="f-valuation-note">Valuation note</label><textarea id="f-valuation-note"></textarea></div>
+          <div class="span-2"><label for="f-purchase-note">Purchase / title note</label><textarea id="f-purchase-note"></textarea></div>
+          <div class="span-2"><label class="check"><input id="f-charging-flag" type="checkbox" /> Interim charging order on title</label></div>
+          <div class="span-2"><label for="f-charging-note">Charging orders</label><textarea id="f-charging-note"></textarea></div>
+          <div class="span-2"><label class="check"><input id="f-restriction-flag" type="checkbox" /> Other restriction on title</label></div>
+          <div class="span-2"><label for="f-restriction-note">Restrictions</label><textarea id="f-restriction-note"></textarea></div>
+        </div>
+
+        <h2 style="margin-top:16px">AVM drawdown gate</h2>
+        <p class="section-note">AVM must be completed and verified before drawdown. A missing AVM blocks drawdown even when LTV, size, term and unregulated status all pass.</p>
+        <div class="fields">
+          <div class="span-2">
+            <label>AVM completed</label>
+            <div class="choice-row">
+              <label class="check"><input type="radio" name="avmCompleted" value="yes" /> Yes — required before drawdown</label>
+              <label class="check"><input type="radio" name="avmCompleted" value="no" /> No — blocked for drawdown</label>
+            </div>
+          </div>
+          <div><label for="f-avm-provider">AVM provider</label>
+            <input id="f-avm-provider" type="text" placeholder="Hometrack / Rightmove / PropertyData / Zoopla Desktop" autocomplete="off" />
+          </div>
+          <div><label for="f-avm-value">AVM value £</label><input id="f-avm-value" type="text" inputmode="decimal" data-kind="money" data-nullable="true" autocomplete="off" /></div>
+          <div><label for="f-avm-confidence">AVM confidence</label>
+            <select id="f-avm-confidence">
+              <option value="">Not stated</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div><label for="f-avm-date">AVM date</label><input id="f-avm-date" type="date" /></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Exit strategy</h2>
+        <div class="fields">
+          <div><label for="f-exit">Primary exit</label>
+            <select id="f-exit">
+              <option value="bridge_to_bridge">Bridge-to-bridge / main loan anchor</option>
+              <option value="sale">Property sale</option>
+              <option value="term_refinance">Term refinance</option>
+              <option value="dev_exit">Development exit</option>
+              <option value="">Unclear</option>
+            </select>
+          </div>
+          <div><label for="f-exit-fallback">Fallback exit</label>
+            <select id="f-exit-fallback">
+              <option value="term_refinance">Term refinance</option>
+              <option value="sale">Property sale</option>
+              <option value="bridge_to_bridge">Bridge-to-bridge / main loan anchor</option>
+              <option value="dev_exit">Development exit</option>
+              <option value="">None stated</option>
+            </select>
+          </div>
+          <div><label for="f-exit-month">Target exit month</label><input id="f-exit-month" type="number" min="1" max="24" step="1" /></div>
+          <div class="span-2"><label for="f-exit-evidence">Anchor main loan / buyer evidence</label><textarea id="f-exit-evidence"></textarea></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Income &amp; servicing</h2>
+        <p class="section-note" id="servicing-note"></p>
+        <div class="fields">
+          <div class="span-2" data-keep-profile><label for="f-interest">Interest structure</label>
+            <select id="f-interest" data-keep-profile>
+              <option value="rolled">Rolled-up / retained bullet at exit</option>
+              <option value="part_serviced">Part-serviced</option>
+              <option value="fully_serviced">Fully serviced</option>
+            </select>
+          </div>
+          <div><label for="f-income">Monthly rental or business income £</label><input id="f-income" type="text" inputmode="decimal" data-kind="money" autocomplete="off" /></div>
+          <div><label for="f-service">Existing monthly mortgage / debt service £</label><input id="f-service" type="text" inputmode="decimal" data-kind="money" autocomplete="off" /></div>
+          <div><label for="f-buffer">Liquid cash buffer £</label><input id="f-buffer" type="text" inputmode="decimal" data-kind="money" autocomplete="off" /></div>
+          <div><label>Servicing gap</label><p id="servicing-gap" class="hint"></p></div>
+          <div class="span-2"><label for="f-income-note">Income note</label><textarea id="f-income-note"></textarea></div>
+        </div>
+      </section>
+
+      <section class="panel" id="drawdown-panel">
+        <h2>Drawdown &amp; capital call</h2>
+        <p class="policy-badge" id="settlement-badge">Settlement rails policy — Faster Payments or CHAPS only. BACS prohibited.</p>
+        <p class="section-note">Allowed drawdown and capital-call rails are Faster Payments (same-day, typically seconds) and CHAPS (same-day, a fee applies, for larger sums). BACS is strictly off-limits for every KPC capital call and drawdown.</p>
+        <div class="choice-row rail-choices" data-keep-profile>
+          <label class="rail-option"><input type="radio" name="settlementRail" value="faster_payments" /> Faster Payments — same-day, typically seconds</label>
+          <label class="rail-option"><input type="radio" name="settlementRail" value="chaps" /> CHAPS — same-day, fee applies, for larger sums</label>
+          <label class="rail-option rail-option-banned"><input type="radio" name="settlementRail" value="bacs" /> BACS — prohibited</label>
+        </div>
+        <div><label for="f-rail-note">Rail note</label><textarea id="f-rail-note"></textarea></div>
+      </section>
+
+      <section class="panel" id="readback">
+        <h2>Deal pack read-back</h2>
+        <p class="section-note">Local preview. Copy, download and print stay on this computer.</p>
+        <dl class="readback" id="readback-list"></dl>
+        <p class="toast" id="toast" role="status"></p>
+      </section>
+    </main>
+
+    <aside class="rail">
+      <section class="verdict" id="verdict-banner" aria-live="polite">
+        <p class="verdict-kicker" id="verdict-kicker">KPC triage</p>
+        <p class="verdict-label" id="verdict-label">PASS — ELIGIBLE FOR KPC</p>
+        <p id="verdict-rail">Faster Payments or CHAPS only. BACS prohibited.</p>
+        <p id="verdict-detail"></p>
+      </section>
+
+      <section class="rail-card" id="price-snapshot">
+        <div class="price-hero"><span id="price-caption">Total repayment</span><strong id="price-total">—</strong></div>
+        <p class="hint" id="price-sub">Net release —</p>
+        <div class="term-strip" id="term-strip"></div>
+      </section>
+
+      <section class="rail-card">
+        <h2>Live LTV</h2>
+        <p class="legend">Black tick is the 40% existing-debt stop. Gold tick is the 50% combined cap.</p>
+        <div class="gauge"><div class="gauge-top"><span>Existing LTV vs 40%</span><strong id="g-existing-val">—</strong></div><div class="track"><div class="fill" id="g-existing-fill"></div><i class="marker m40"></i><i class="marker m50"></i></div></div>
+        <div class="gauge"><div class="gauge-top"><span>New loan LTV</span><strong id="g-new-val">—</strong></div><div class="track"><div class="fill" id="g-new-fill"></div><i class="marker m40"></i><i class="marker m50"></i></div></div>
+        <div class="gauge"><div class="gauge-top"><span>Day-1 combined vs 50%</span><strong id="g-day1-val">—</strong></div><div class="track"><div class="fill" id="g-day1-fill"></div><i class="marker m40"></i><i class="marker m50"></i></div></div>
+        <div class="gauge"><div class="gauge-top"><span>Gross / exit combined vs 50%</span><strong id="g-gross-val">—</strong></div><div class="track"><div class="fill" id="g-gross-fill"></div><i class="marker m40"></i><i class="marker m50"></i></div></div>
+        <div class="stats">
+          <div class="stat"><span>Equity cushion</span><strong id="equity-gbp">—</strong></div>
+          <div class="stat"><span>Equity %</span><strong id="equity-pct">—</strong></div>
+        </div>
+        <p class="hint" id="debt-echo"></p>
+      </section>
+
+      <section class="rail-card" id="pricing-card">
+        <h2>NHF pricing</h2>
+        <div class="model-toggle" data-keep-profile>
+          <button type="button" id="model-nhf" data-model="nhf_speed" aria-pressed="true">NHF Speed Loan</button>
+          <button type="button" id="model-book" data-model="kpc_workbook" aria-pressed="false">KPC workbook</button>
+        </div>
+        <table class="rows" id="price-rows"></table>
+        <div class="stats">
+          <div class="stat"><span>Total cost</span><strong id="cost-total">—</strong></div>
+          <div class="stat"><span>Effective monthly</span><strong id="cost-effective">—</strong></div>
+          <div class="stat"><span>Simple monthly</span><strong id="cost-simple">—</strong></div>
+          <div class="stat"><span>Legal budget</span><strong id="cost-legal">£1,400</strong></div>
+        </div>
+        <p class="hint" id="stress-line"></p>
+        <p class="warn" id="extrapolation" hidden></p>
+        <div class="fields" data-keep-profile style="margin-top:10px">
+          <div><label for="f-arr">Arrangement %</label><input id="f-arr" type="number" step="0.01" min="0" max="20" data-keep-profile /></div>
+          <div><label for="f-rate">Workbook rate % pm</label><input id="f-rate" type="number" step="0.01" min="0" max="15" data-keep-profile /></div>
+          <div><label for="f-default">Default stress % pm</label><input id="f-default" type="number" step="0.01" min="0" max="20" data-keep-profile /></div>
+          <div><label for="f-post">Post-term %</label><input id="f-post" type="number" step="0.01" min="0" max="20" data-keep-profile /></div>
+          <div><label for="f-ackroyds">Ackroyds £</label><input id="f-ackroyds" type="number" step="1" min="0" data-keep-profile /></div>
+          <div><label for="f-title-ins">Title insurance £</label><input id="f-title-ins" type="number" step="1" min="0" data-keep-profile /></div>
+        </div>
+        <details>
+          <summary>How the 3-month schedule reconciles</summary>
+          <p class="hint">At 3 months the published total is round(1.288 × net + £134). That matches pricing-guide.html from £26,000 (£33,622) through £100,000 (£128,934). The 1.288 slope is the KPC sub-total identity: 12% broker on net, plus 2.50% per month for 3 months charged as retained interest and again as a facility fee equal to that interest minus a fixed plug. The +£134 intercept is 0.15 × £893.33. Lines round to the pound and the facility-fee line holds any residual so they sum to the published total.</p>
+          <p class="hint">Each month after month 3 adds round(2.50% × net) once. Broker, facility fee and the £893 plug stay at the 3-month calibration. The £1,200 Ackroyds + £200 title insurance budget is £0 upfront and is not added on top of the published total. step5b uses net × 1.195 + £1,200, and calculator.js with £1,200 legals produces 1.288 × net + £180. Neither of those is the pricing-guide figure. The workbook model is the comparison: opening balance compounds at 2.50% pm, with 3.95% pm default stress for +3 and +6 months and a 5.0% pm post-term comparison.</p>
+        </details>
+      </section>
+
+      <section class="rail-card">
+        <h2>Hard-stop triage</h2>
+        <ul class="rules" id="rule-list"></ul>
+      </section>
+
+      <section class="rail-card">
+        <details>
+          <summary>KPC lender mandate profile</summary>
+          <ul class="mandate-list">
+            <li>Unregulated UK residential micro-bridging only. Owner-occupied main residence goes to the Posfin regulated panel.</li>
+            <li>Net release £26,000–£100,000. Sweet spot about £50,000 (£40,000–£65,000).</li>
+            <li>Existing debt at or under 40% LTV. Above 40% is a hard decline on its own.</li>
+            <li>Day-1 combined LTV and gross/exit combined LTV at or under 50%. Above 50% on either measure is a hard decline.</li>
+            <li>Term 3–12 months. 3 months is the typical quick turn. Under 3 or over 12 is a hard decline.</li>
+            <li>AVM must be completed and verified before drawdown. A missing AVM blocks drawdown even when every other rule passes.</li>
+            <li>Settlement rails for drawdown and capital calls are Faster Payments (same-day, typically seconds) or CHAPS (same-day, fee applies, for larger sums). BACS is a hard block.</li>
+            <li>Bridge-to-bridge, sale, term refinance or dev exit needs a short evidence note. Title flags (charging orders, restrictions, missing consent, lease under 70 years) go to Ackroyds Legal and do not silently clear a hard stop.</li>
+            <li>Standard rolled rate 2.50% per month. Default stress 3.95% per month. Post-term comparison 5.0% per month. Arrangement fee assumption 2%, editable. Legals £1,200 Ackroyds + £200 title insurance, £0 upfront.</li>
+            <li>Posfin Capital Limited is an authorised credit broker and not a lender. KPC is the introducer mandate on this test page, not a customer offer.</li>
+          </ul>
+        </details>
+      </section>
+    </aside>
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">Kensington <span>Private Credit</span></div>
+      <p>Kensington Private Credit Ltd, Company No. 16988655, operates as an introducer to Posfin Capital Limited, a company authorised and regulated by the Financial Conduct Authority (FRN: 913022). Registered in England and Wales (Company No. 12148846). Registered office: 96 Kensington High Street, London W8 4SG. This internal test page is not indexed and is not a financial promotion, an offer, or an invitation to invest. Capital is at risk.</p>
+      <p><strong style="color:rgba(255,255,255,0.92)">Posfin Capital Limited is an authorised credit broker and not a lender.</strong> We work with a panel of lenders whose particulars will be supplied upon request to find a potentially suitable option.</p>
+      <p>We will receive commission from lenders. Different lenders pay different amounts depending on different commission models. For transparency, we work with the following commission models where applicable: fixed fee, fixed rate of commission, percentage of the amount you borrow and rate for risk, based on the risk profile of the business. Further details of the commission model, calculation and amount will be disclosed to you throughout your customer journey.</p>
+      <p>Our Complaints Policy and Procedure is available <a href="/complaints.html">here</a>. Our Privacy Policy is available <a href="/privacy-policy.html">here</a>.</p>
+    </div>
+  </footer>
+  <script type="module" src="./lender-form.js"></script>
+</body>
+</html>
