@@ -1,6 +1,6 @@
 import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCookie } from '../lib/case-http.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
-import { applyDeskMoves, filterOwner, groupColumns, loadCrmBoard, selectLeads, windowDays } from '../lib/pipeline.js';
+import { applyDeskMoves, filterOwner, groupColumns, loadCrmBoard, selectLeads, summariseLeads, windowDays } from '../lib/pipeline.js';
 import { renderConfirm, renderPipeline, renderPipelineLogin } from '../lib/pipeline-html.js';
 import { BROKA, confirmCopy, feeDraft, lenderChoices, nextLor, queueExternal, scrub } from '../lib/pipeline-actions.js';
 
@@ -25,7 +25,7 @@ export async function fetchLeads(cfg, fetcher = fetch, now = Date.now()) {
   const res = await fetcher(`${cfg.url}/rest/v1/leads?${query}`, {
     headers: { apikey: cfg.key, Authorization: `Bearer ${cfg.key}` },
   });
-  if (!res.ok) return { rows: [], blocked: 'read_failed' };
+  if (!res.ok) return { rows: [], blocked: `read_failed_${res.status}` };
   const rows = await res.json();
   return { rows: Array.isArray(rows) ? rows : [], blocked: '' };
 }
@@ -34,9 +34,11 @@ export function boardFrom(leads, now, days, owner = 'all') {
   const state = globalThis.__posfinPipelineActions || { moves: [] };
   const cases = applyDeskMoves(loadCrmBoard(), state.moves);
   const intake = selectLeads(leads, now, days);
-  const caseNames = new Set(cases.map((card) => card.name.toLowerCase()));
-  const leadsOnly = applyDeskMoves(intake.filter((card) => !caseNames.has(String(card.name || '').toLowerCase())), state.moves);
-  return stamp(groupColumns(filterOwner(cases.concat(leadsOnly), owner)));
+  const caseNames = new Set(cases.map((card) => String(card.name || '').toLowerCase()).filter(Boolean));
+  const leadsOnly = applyDeskMoves(intake.filter((card) => !card.name || !caseNames.has(String(card.name).toLowerCase())), state.moves);
+  const board = stamp(groupColumns(filterOwner(cases.concat(leadsOnly), owner)));
+  board.intake = summariseLeads(leads, now, days, caseNames);
+  return board;
 }
 
 function stamp(board) {
@@ -151,11 +153,19 @@ export default async function handler(req, res) {
     const loaded = await fetchLeads(cfg, fetch, now);
     const owner = new URL(req.url || '/', 'https://posfin.local').searchParams.get('owner') || 'all';
     const board = boardFrom(loaded.rows, now, cfg.days, owner);
-    const leadCount = board.columns.slice(0, 4).reduce((sum, column) => sum + column.cards.length, 0) + board.parked.filter((card) => card.source === 'supabase-leads').length;
+    const lanes = board.columns.map((column) => [column.title, column.cards]).concat([['Parked / Declined', board.parked], ['Completed', board.completed]]);
+    const columns = lanes.map(([title, cards]) => ({
+      title,
+      total: cards.length,
+      supabase: cards.filter((card) => card.source === 'supabase-leads').length,
+      fixture: cards.filter((card) => card.source !== 'supabase-leads').length,
+    }));
+    const supabaseCards = columns.reduce((sum, column) => sum + column.supabase, 0);
+    const counts = { supabaseCards, columns, leads: board.intake || null, blocked: loaded.blocked || '' };
     const banner = loaded.blocked
-      ? `Lead rows were not read (${loaded.blocked}). Case cards are the 14 Nov index with the 20 Nov stage on top. Set PIPELINE_SUPABASE_KEY to the main project read key. Nothing was written.`
-      : `${leadCount} intake cards from public.leads, last ${cfg.days} days plus older non-new leads. No rows were updated or deleted.`;
-    return sendHtml(res, 200, renderPipeline(board, { owner, banner }));
+      ? `Lead rows were not read (${loaded.blocked}). Fixture cards are still shown. Nothing was written.`
+      : `${supabaseCards} Supabase cards from ${counts.leads.fetched} rows read. Last ${cfg.days} days, plus older leads that are not still new. No rows were updated or deleted.`;
+    return sendHtml(res, 200, renderPipeline(board, { owner, banner, counts }));
   } catch (error) {
     console.error('[pipeline]', error.code || 'pipeline_failed');
     return sendHtml(res, 503, renderPipeline(boardFrom([], Date.now(), 60), { banner: 'The pipeline could not be read. Nothing was written.' }));
