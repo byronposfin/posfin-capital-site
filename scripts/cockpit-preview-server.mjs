@@ -4,6 +4,7 @@
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { handleCockpit } from '../api/staff-cockpit.js';
+import pipeline from '../api/staff-pipeline.js';
 
 process.env.COCKPIT_SOURCE = 'preview';
 process.env.COCKPIT_AUTH = 'preview';
@@ -23,7 +24,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   const spinePath = url.pathname.match(/^\/staff\/cockpit\/spine\/([^/]+)$/);
-  if (url.pathname !== '/staff/cockpit' && !spinePath) {
+  const pipelinePath = url.pathname === '/staff/cockpit/pipeline';
+  if (url.pathname !== '/staff/cockpit' && !spinePath && !pipelinePath) {
     res.statusCode = 404;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.end('This preview server only serves /staff/cockpit.');
@@ -39,7 +41,8 @@ const server = http.createServer(async (req, res) => {
   if (spinePath) req.query.spine = decodeURIComponent(spinePath[1]);
   req.url = url.pathname + url.search;
   try {
-    await handleCockpit(req, res, { env: process.env });
+    if (pipelinePath) await pipeline(req, res);
+    else await handleCockpit(req, res, { env: process.env });
   } catch (error) {
     console.error('[cockpit-preview]', error.code || 'failed');
     if (!res.headersSent) {
