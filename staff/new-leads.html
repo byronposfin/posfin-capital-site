@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>New leads — Posfin Capital</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; font: 16px/1.45 "Segoe UI", sans-serif; background: #faf8f3; color: #1a1a2e; }
+  header, main { max-width: 880px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 1.8rem; margin: 0 0 8px; }
+  .broker { color: #5c5848; margin-top: 0; }
+  form, .card { background: white; border: 1px solid #e5e1d6; border-radius: 12px; padding: 16px; margin: 12px 0; }
+  label { display: block; font-weight: 650; margin: 8px 0 4px; }
+  input { width: 100%; max-width: 360px; box-sizing: border-box; padding: 8px; font: inherit; }
+  button { font: inherit; background: #13113a; color: white; border: 0; border-radius: 8px; padding: 8px 14px; margin-top: 12px; }
+  button.secondary { background: white; color: #13113a; border: 1px solid #13113a; }
+  button:disabled { opacity: 0.55; }
+  .row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .meta { color: #5c5848; }
+  .pill { display: inline-block; border-radius: 999px; padding: 2px 10px; font-weight: 700; }
+  .green { background: #e5f6e8; color: #135c24; }
+  .amber { background: #fff3d6; color: #6a4b00; }
+  .red { background: #fde8e6; color: #8a1f14; }
+  .done { background: #eceaf3; color: #13113a; }
+  .badge { display: inline-block; margin: 4px 6px 0 0; padding: 2px 8px; border-radius: 6px; background: #f3efe4; }
+  .warn { background: #fde8e6; }
+  a { color: #13113a; }
+  .error { color: #8a1f14; }
+</style>
+</head>
+<body>
+<header>
+  <p class="broker">Posfin Capital · credit broker, not a lender</p>
+  <h1>New leads</h1>
+  <p>Open fact finds, with the owner, how long they have been waiting, and whether the 15-minute contact clock has been met. Every staff seat can see every case. Mark contacted only after a person has actually been in touch. This page does not phone or email the applicant.</p>
+</header>
+<main>
+  <form id="signin">
+    <h2>Staff sign in</h2>
+    <label for="email">Work email</label>
+    <input id="email" name="email" type="email" autocomplete="username" required>
+    <button type="submit">Email me a sign-in code</button>
+    <div id="code-block" hidden>
+      <label for="code">Code from the email</label>
+      <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code">
+      <button type="button" id="verify">Sign in</button>
+    </div>
+    <p id="signin-msg" role="status"></p>
+  </form>
+  <section id="board" hidden>
+    <div class="row">
+      <h2>Open fact finds</h2>
+      <div>
+        <button type="button" class="secondary" id="refresh">Refresh</button>
+        <button type="button" class="secondary" id="signout">Sign out</button>
+      </div>
+    </div>
+    <p id="board-msg" role="status"></p>
+    <div id="list"></div>
+  </section>
+</main>
+<script>
+const signin = document.querySelector('#signin');
+const board = document.querySelector('#board');
+const list = document.querySelector('#list');
+const signinMsg = document.querySelector('#signin-msg');
+const boardMsg = document.querySelector('#board-msg');
+let session = null;
+
+function text(tag, value, className) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  node.textContent = value;
+  return node;
+}
+
+function showBoard(on) {
+  signin.hidden = on;
+  board.hidden = !on;
+}
+
+async function clientConfig() {
+  const response = await fetch('/api/factfind?client=admin');
+  const body = await response.json();
+  if (!body.ok) throw Error('config');
+  return body;
+}
+
+signin.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  signinMsg.textContent = '';
+  try {
+    const cfg = await clientConfig();
+    session = cfg;
+    const response = await fetch(cfg.supabaseUrl + '/auth/v1/otp', {
+      method: 'POST',
+      headers: { apikey: cfg.publishableKey, Authorization: 'Bearer ' + cfg.publishableKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: document.querySelector('#email').value.trim(), create_user: false })
+    });
+    document.querySelector('#code-block').hidden = false;
+    signinMsg.textContent = response.ok
+      ? 'If this work email can sign in, the code is on its way.'
+      : 'The sign-in email could not be sent. Supabase email auth may still be off.';
+  } catch {
+    signinMsg.textContent = 'The staff sign-in is not available on this server yet.';
+  }
+});
+
+document.querySelector('#verify').addEventListener('click', async () => {
+  signinMsg.textContent = '';
+  try {
+    const response = await fetch(session.supabaseUrl + '/auth/v1/verify', {
+      method: 'POST',
+      headers: { apikey: session.publishableKey, Authorization: 'Bearer ' + session.publishableKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'email', email: document.querySelector('#email').value.trim(), token: document.querySelector('#code').value.trim() })
+    });
+    const body = await response.json();
+    if (!response.ok || !body.access_token) { signinMsg.textContent = 'That code was not accepted.'; return; }
+    session.token = body.access_token;
+    showBoard(true);
+    await load();
+  } catch {
+    signinMsg.textContent = 'Sign-in could not be completed.';
+  }
+});
+
+function badge(label, warn) {
+  return text('span', label, warn ? 'badge warn' : 'badge');
+}
+
+function card(lead) {
+  const item = document.createElement('article');
+  item.className = 'card';
+  const top = document.createElement('div');
+  top.className = 'row';
+  top.append(text('strong', lead.reference || 'Fact find'));
+  top.append(text('span', lead.slaLabel, 'pill ' + (lead.slaColour || 'amber')));
+  item.append(top);
+  item.append(text('p', 'Owner: ' + (lead.ownerName || 'Unassigned') + (lead.ownerEmail ? ' (' + lead.ownerEmail + ')' : '')));
+  item.append(text('p', 'Waiting: ' + (lead.age || '—'), 'meta'));
+  item.append(text('p', lead.fullName || 'No name'));
+  if (lead.phone) {
+    const line = document.createElement('p');
+    const link = document.createElement('a');
+    link.href = 'tel:' + lead.phone.replace(/[^\d+]/g, '');
+    link.textContent = lead.phone;
+    line.append(link);
+    item.append(line);
+  }
+  if (lead.email) {
+    const line = document.createElement('p');
+    const link = document.createElement('a');
+    link.href = 'mailto:' + lead.email;
+    link.textContent = lead.email;
+    line.append(link);
+    item.append(line);
+  }
+  const flags = document.createElement('p');
+  if (lead.isTest) flags.append(badge('Synthetic test', true));
+  if (lead.noChase) flags.append(badge('Do not chase', true));
+  if (!lead.contactConsent) flags.append(badge('No contact consent', true));
+  if (!lead.aiCallConsent) flags.append(badge('No AI caller', true));
+  if (flags.childNodes.length) item.append(flags);
+  if (!lead.contactedAt) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Mark contacted';
+    button.addEventListener('click', () => mark(lead, button));
+    item.append(button);
+  } else item.append(text('p', 'Contacted.', 'meta'));
+  return item;
+}
+
+async function load() {
+  boardMsg.textContent = 'Loading…';
+  list.replaceChildren();
+  const response = await fetch('/api/staff-new-leads', { headers: { Authorization: 'Bearer ' + session.token } });
+  const body = await response.json();
+  if (response.status === 401) { session.token = ''; showBoard(false); signinMsg.textContent = 'Please sign in again.'; return; }
+  if (!response.ok) { boardMsg.textContent = 'The queue could not be loaded.'; return; }
+  boardMsg.textContent = body.leads.length ? (body.capped ? 'Showing the latest 100.' : '') : 'No open fact finds.';
+  list.append(...body.leads.map(card));
+}
+
+async function mark(lead, button) {
+  const warnings = [];
+  if (lead.noChase) warnings.push('This lead is marked do-not-chase.');
+  if (!lead.contactConsent) warnings.push('This person has not given contact consent.');
+  const prompt = (warnings.join(' ') + ' Mark contacted only if a person has actually spoken with them.').trim();
+  if (!window.confirm(prompt)) return;
+  button.disabled = true;
+  const response = await fetch('/api/staff-new-leads', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + session.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'mark_contacted', id: lead.id })
+  });
+  if (!response.ok) { button.disabled = false; boardMsg.textContent = 'Could not mark that lead contacted.'; return; }
+  await load();
+}
+
+document.querySelector('#refresh').addEventListener('click', load);
+document.querySelector('#signout').addEventListener('click', () => { session.token = ''; showBoard(false); });
+</script>
+</body>
+</html>

@@ -18,6 +18,7 @@ import {isLand,belowMinimum} from '../lib/ff-land.js';
 // landing path, referrer host, consent text version and form version.
 import crypto from "node:crypto";
 import { drainAlerts } from "../lib/ff-alert-outbox.js";
+import { drainLeadOps } from "../lib/lead-ops.js";
 import { validate } from "../lib/ff-schema.js";
 
 export const VERSION = "uk-v005-land-v12";
@@ -216,13 +217,26 @@ export default async function handler(req, res) {
       try { const result = await drainAlerts(); alert = {status: result.ok ? "queued" : "recovery_required"}; }
       catch { alert = {status: "recovery_required"}; }
     } else alert = await previewSubmitAlert(cfg, r.reference);
-    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
+    const emailAlert = await safeLeadEmail();
+    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, emailAlert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";
     const status = e instanceof BackendError ? e.status : 500;
     console.error("factfind_error", JSON.stringify({ code, status, detail: e && e.detail ? String(e.detail).slice(0, 60) : undefined, backend: cfg.backendName }));
     if (status >= 500) return unavailable(res, code);
     return send(res, status, { ok: false, error: code });
+  }
+}
+
+// Email drain is best-effort. The application is already saved. A miss is retried by the cron.
+async function safeLeadEmail() {
+  try {
+    const emailed = await drainLeadOps(process.env, fetch, { sla: false });
+    if (emailed.skipped) return { status: "disabled" };
+    if (!emailed.ok) return { status: "recovery_required" };
+    return { status: emailed.sent > 0 ? "sent" : "idle" };
+  } catch {
+    return { status: "recovery_required" };
   }
 }
 
