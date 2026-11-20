@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  applyDeskMoves, assumedFee, attachCalls, attachCallsExport, buildCases, filterOwner, leadSelected, loadCrmBoard, loadMasterIndex, mergeCrmCards, parseCallsExport, parsePipelineCsv, selectLeads, stageFromIndex, stageFromPipelineStatus,
+  applyDeskMoves, assumedFee, attachCalls, attachCallsExport, buildCases, filterOwner, leadSelected, loadCrmBoard, loadMasterIndex, mergeCrmCards, parseCallsExport, parsePipelineCsv, selectLeads, stageFromIndex, stageFromPipelineStatus, summariseLeads,
 } from '../lib/pipeline.js';
 import { feeDraft, lenderChoices, nextLor, queueExternal } from '../lib/pipeline-actions.js';
 
@@ -243,4 +243,22 @@ test('committed crm fixtures keep every exported row', () => {
   const cards = loadCrmBoard();
   assert.equal(cards.length > 110, true);
   assert.equal(cards.some((card) => card.flags.includes('source data needs cleanup')), true);
+});
+
+test('lead summary counts skips and contact dedupe without writing', () => {
+  const now = Date.parse('2026-11-20T12:00:00Z');
+  const rows = [
+    { id: 'a', full_name: 'Ada', email: 'ada@example.com', status: 'new', source: 'facebook', fb_created_time: '2026-11-01T00:00:00Z' },
+    { id: 'b', full_name: 'Ada older', email: 'ada@example.com', status: 'new', source: 'facebook', fb_created_time: '2026-10-01T00:00:00Z' },
+    { id: 'c', full_name: 'Test', email: 't@example.com', status: 'new', source: 'fr_factfind_test', created_at: '2026-11-01T00:00:00Z' },
+    { id: 'd', full_name: 'Old', email: 'old@example.com', status: 'new', source: 'facebook', created_at: '2026-01-01T00:00:00Z' },
+    { id: 'e', full_name: 'Roy', email: 'roy@example.com', status: 'contacted', source: 'facebook', created_at: '2026-11-02T00:00:00Z' },
+  ];
+  const summary = summariseLeads(rows, now, 60, new Set(['roy']));
+  assert.equal(summary.fetched, 5);
+  assert.equal(summary.skipped.test_source, 1);
+  assert.equal(summary.skipped.outside_window_still_new, 1);
+  assert.equal(summary.dedupedByContact, 1);
+  assert.equal(summary.nameClash, 1);
+  assert.equal(summary.cardsAdded, 1);
 });
