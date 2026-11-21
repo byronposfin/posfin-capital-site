@@ -1,6 +1,6 @@
 # Lead pipeline
 
-Staff alerts, the applicant reply, and the 15-minute clock are switched on in production. Facebook ads stay off until Tuesday or Wednesday.
+Facebook ads stay off until Byron has checked this pipeline. `sql/20261121_lead_pipeline_v1.sql` is not applied by the deploy. It changes the owner rule, the contact clock, and adds the Google Sheet queue. It does not send email by itself.
 
 Synthetic checks use `synthetic.verify@posfincapital.com` and `07700900000`, are stored with `is_test = true` and a `TEST-WEB-` reference, and are not emailed to a person. Real applicants are excluded from that path. `is_test` rows stay in the database and are left out of the staff new-leads queue and the SLA chase. CRM rows for them use source `web_factfind_test`.
 
@@ -18,10 +18,10 @@ Partial saves do not alert. Only the transition to `submitted` does. Existing ro
 
 ## Switches
 
-Apply `sql/20261120_lead_ops_v1.sql` in the Supabase SQL editor for project `vgflcrfaudrvrdmxjdtl` only after it has been reviewed. The file does not run itself. Applying it does four safe things and leaves the mail switches off:
+`sql/20261120_lead_ops_v1.sql` is already on the production database. Do not run it again after `sql/20261121_lead_pipeline_v1.sql`, because that would put the older owner function back until 20261121 is applied again. `sql/20261121_lead_pipeline_v1.sql` has not been applied. The 20 Nov file, on a database that does not have it yet, does four safe things and leaves the mail switches off:
 
-- Seeds the seats Byron, Jess, Aadi, Cai, and Chris.
-- Starts owner assignment on **new** submissions. The ring is Jess, Aadi, Cai, Chris. Byron is the fallback. A `?b=bh` or `?b=chris` link pins that person when the seat is active. Change the ring with `update pipeline.staff_seats set round_robin = …, round_robin_order = …`.
+- Seeds the seats Byron (principal, the admin seat), Jess, Aadi, Cai, and Chris.
+- After `sql/20261121_lead_pipeline_v1.sql`, new submissions are owned by Byron. Jessica is the backup if Byron's seat is inactive. The Jess / Aadi / Cai / Chris ring runs only when `round_robin_enabled` is true. A `?b=bh` or `?b=chris` link still pins that person when the seat is active.
 - Links Byron and Aadi where an Auth user already exists. It does not create passwords or send invites.
 - Adds Jess and Chris to `public.crm_users` so the CRM allowlist recognises them once they can sign in.
 
@@ -69,7 +69,7 @@ Both of these must be on, and the wording is still a draft marked `DRAFT — not
 - Environment: `LEAD_AUTOREPLY=true`
 - Database: `update pipeline.lead_ops_control set autoreply_armed_at = now(), updated_at = now() where id;`
 
-`autoreply_allowlist` defaults to `byron.hill@posfincapital.com`. While it is set, only a submission from that address can receive the reply, and only when `contact_consent` is true and the record is not `no_chase`. A missing AI-call consent blocks an automated caller; this email is not a call. `LEAD_AUTOREPLY_ONLY_EMAIL` is a second allowlist if you set it.
+`autoreply_allowlist` is Byron's address. The 21 Nov migration puts that address back if the allowlist was cleared. While it is set, only a submission from that address can receive the reply, and only when `contact_consent` is true and the record is not `no_chase`. A missing AI-call consent blocks an automated caller; this email is not a call. `LEAD_AUTOREPLY_ONLY_EMAIL` is a second allowlist if you set it. The message is marked `DRAFT — not approved` and names FRN 913022 and NACFB membership. It does not quote a rate.
 
 Clear the database allowlist only after the wording is approved and you intend real applicants to receive it:
 
@@ -79,7 +79,7 @@ update pipeline.lead_ops_control set autoreply_allowlist = null, updated_at = no
 
 ### 3. 15-minute contact clock
 
-Every new submission stores `sla_due_at`: 15 minutes inside 08:00–20:00 Europe/London, every day, including weekends. Weekend cover was not decided. Time left at 20:00 carries to 08:00 the next morning. The escalation email does not send until both switches are on:
+Every new submission stores `sla_due_at`: 15 minutes inside Monday–Friday 09:00–18:00 Europe/London. Saturday and Sunday wait until Monday 09:00. Time left at 18:00 carries to 09:00 the next weekday. The escalation email does not send until both switches are on:
 
 - Environment: `LEAD_SLA_ENABLED=true`
 - Database: `update pipeline.lead_ops_control set sla_armed_at = now(), updated_at = now() where id;`
@@ -96,7 +96,21 @@ It goes to Byron. It does not send for `no_chase`, and it does not place a call.
 update pipeline.lead_ops_control set assignment_armed_at = null, updated_at = now() where id;
 ```
 
+## Sheet
+
+New submitted fact finds can be appended to the Google Sheet `Leads` tab (`LEADS_SHEET_ID`, currently `1D75DSVCst4g5p0_Y4PiJXVsnFO5049nkfpLWt5KYx1A`). The same cron as the staff alert, `/api/factfind-alert-worker`, writes one row from row 2. It does not copy older leads. A lead id already in column B is not written again. Synthetic rows are skipped unless `sheet_include_tests` is true. Nothing is queued until:
+
+```sql
+update pipeline.lead_ops_control
+   set sheet_armed_at = now(), updated_at = now()
+ where id;
+```
+
+and the preview or production env has `LEADS_SHEET_ENABLED=true`, `LEADS_SHEET_ID`, `GOOGLE_SA_EMAIL`, and `GOOGLE_SA_PRIVATE_KEY`. Share the sheet with that service-account email as Editor. If a row is still unsent after 2 minutes, the worker reports it overdue and, when staff email is armed, sends the same alarm as a stuck alert.
+
 ## Test, using only Byron
+
+The written steps are in `ops/lead-pipeline-v1/e2e.md`. `npm test` is the part that runs without sending mail.
 
 Use Byron's own email, `byron.hill@posfincapital.com`, and his own mobile. Do not use anyone else's details. Do not turn on ads.
 
