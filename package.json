@@ -5,6 +5,10 @@
   "engines": {
     "node": "24.x"
   },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "verify": "node scripts/verify-forms.mjs"
+  },
   "dependencies": {
     "googleapis": "^144.0.0"
   }

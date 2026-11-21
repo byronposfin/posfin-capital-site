@@ -18,6 +18,8 @@ import {isLand,belowMinimum} from '../lib/ff-land.js';
 // landing path, referrer host, consent text version and form version.
 import crypto from "node:crypto";
 import { drainAlerts } from "../lib/ff-alert-outbox.js";
+import { drainLeadOps } from "../lib/lead-ops.js";
+import { isVerifyRequest, SYNTHETIC } from "../lib/verify-request.js";
 import { validate } from "../lib/ff-schema.js";
 
 export const VERSION = "uk-v005-land-v12";
@@ -169,6 +171,14 @@ export default async function handler(req, res) {
       return unavailable(res, "backend_not_configured", { reason: cfg.reason });
     }
     const body = await readBody(req);
+    const verified = isVerifyRequest(req);
+    if (verified && cfg.backendName === "leads") cfg.testRun = true;
+    if (verified && body.answers && typeof body.answers === "object") {
+      body.answers.full_name = SYNTHETIC.full_name;
+      body.answers.email = SYNTHETIC.email;
+      body.answers.phone = SYNTHETIC.phone;
+      body.answers.ai_call_consent = false;
+    }
     const action = String(body.action || "");
     if (!["save", "load", "submit"].includes(action)) return send(res, 400, { ok: false, error: "unknown_action" });
     const testMode = cfg.backend.test;
@@ -216,13 +226,26 @@ export default async function handler(req, res) {
       try { const result = await drainAlerts(); alert = {status: result.ok ? "queued" : "recovery_required"}; }
       catch { alert = {status: "recovery_required"}; }
     } else alert = await previewSubmitAlert(cfg, r.reference);
-    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
+    const emailAlert = await safeLeadEmail();
+    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, emailAlert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";
     const status = e instanceof BackendError ? e.status : 500;
     console.error("factfind_error", JSON.stringify({ code, status, detail: e && e.detail ? String(e.detail).slice(0, 60) : undefined, backend: cfg.backendName }));
     if (status >= 500) return unavailable(res, code);
     return send(res, status, { ok: false, error: code });
+  }
+}
+
+// Email drain is best-effort. The application is already saved. A miss is retried by the cron.
+async function safeLeadEmail() {
+  try {
+    const emailed = await drainLeadOps(process.env, fetch, { sla: false });
+    if (emailed.skipped) return { status: "disabled" };
+    if (!emailed.ok) return { status: "recovery_required" };
+    return { status: emailed.sent > 0 ? "sent" : "idle" };
+  } catch {
+    return { status: "recovery_required" };
   }
 }
 

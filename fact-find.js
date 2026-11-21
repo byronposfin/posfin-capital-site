@@ -1,9 +1,10 @@
 import {createLandJourney} from '/lib/ff-land-ui.js';
 import {isLand} from '/lib/ff-land.js';
-import { createPropertyEditor } from "/lib/ff-properties-ui.js?v=20261104-properties";
+import { createPropertyEditor } from "/lib/ff-properties-ui.js?v=20261120-address";
 import { renderProperties } from "/lib/ff-properties.js?v=20261104-properties";
 import { BRANCH_FIELDS, branchVisible, cleanBranches, routeCard } from "/lib/ff-routing.js?v=20261104-live";
 import { bindMoneyInput, bindPostcode } from "/lib/ff-inputs.js?v=20261104-live";
+import { FINDER_MARKUP, bindSecurityAddressPicker } from "/lib/ff-address-picker.js?v=20261120-address";
 import { money, renderScorecard } from "/lib/ff-finance.js?v=20261104-lender-gate";
 import * as S from "/lib/ff-schema.js?v=20261112-acquisition";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
@@ -67,25 +68,8 @@ for (const [key, field] of Object.entries(F)) {
   if (input && field.t === "money") bindMoneyInput(input);
 }
 const postcode=$("#security_postcode"); bindPostcode(postcode);
-postcode.insertAdjacentHTML("afterend", '<button type="button" id="findAddress" style="margin-top:10px">Find address</button><label class="l" for="addressChoices" style="margin-top:10px">Choose your address</label><select id="addressChoices" disabled><option>Enter postcode, then Find address</option></select><div id="addressMessage" role="status" aria-live="polite"></div>');
-let addressRows=[], lookupVersion=0;
-postcode.addEventListener("input",()=>{lookupVersion++;addressRows=[];$("#addressChoices").disabled=true;$("#addressChoices").innerHTML='<option>Find addresses for this postcode</option>';$("#addressMessage").textContent='';});
-$("#findAddress").onclick=async()=>{
-  const pc=postcode.value.trim().toUpperCase(), version=++lookupVersion;
-  const button=$("#findAddress"), choices=$("#addressChoices"), message=$("#addressMessage");
-  button.disabled=true;choices.disabled=true;message.textContent="Finding addresses…";
-  try {
-    const response=await fetch('/api/address-lookup?postcode='+encodeURIComponent(pc));const result=await response.json();
-    if(version!==lookupVersion)return;
-    if(!response.ok)throw new Error(result.error||'Address search unavailable. Please enter your address manually.');
-    addressRows=result.addresses||[];
-    choices.innerHTML='<option value="">Select your address</option>'+addressRows.map((a,i)=>`<option value="${i}">${esc(a.address)}</option>`).join('');
-    choices.disabled=!addressRows.length;
-    message.textContent=addressRows.length?'Choose from the list, or enter your address manually below.':'No addresses found. Please enter your address manually below.';
-  }catch(e){if(version===lookupVersion)message.textContent=e.message;}
-  finally{button.disabled=false;}
-};
-$("#addressChoices").onchange=()=>{const selected=addressRows[$("#addressChoices").value];if(!selected)return;$("#security_address").value=selected.address;$("#security_address").dispatchEvent(new Event('input',{bubbles:true}));};
+postcode.insertAdjacentHTML("afterend", FINDER_MARKUP);
+bindSecurityAddressPicker({postcodeInput:postcode,addressInput:$("#security_address"),button:$("#findAddress"),choices:$("#addressChoices"),message:$("#addressMessage")});
 const landHost=document.createElement('section');landHost.className='card';landHost.id='landJourney';landHost.hidden=true;$('#ff').before(landHost);
 const landJourney=createLandJourney({host:landHost,request:api,getCode:()=>code,setCode:c=>{code=c;},testMode:()=>testMode,onReturn:a=>{landArchive={...a,asset_type:'Land'};landJourney.stop();$('#ff').classList.remove('hide');a.asset_type=isLand(a)?'Residential':a.asset_type;fill(a);show(1);}});
 function startLand(a){a={...(landArchive||{}),...a};$('#ff').classList.add('hide');document.querySelector('.intro').textContent='Your Land Fact Find. Save and finish later on any device.';landJourney.start(a);}
