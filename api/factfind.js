@@ -22,6 +22,7 @@ import { drainLeadOps } from "../lib/lead-ops.js";
 import { isVerifyRequest, SYNTHETIC } from "../lib/verify-request.js";
 import { validate } from "../lib/ff-schema.js";
 import { looksLikeTestLead, referencePrefix, responseTestMode } from "../lib/ff-test-lead.js";
+import { buildBrokaSpine } from "../lib/broka-spine.js";
 
 export const VERSION = "uk-v005-land-v12";
 export const CONSENT_VERSION = "uk-consent-v1-2026-11-03"; // bump whenever the consent wording on /fact-find changes
@@ -67,6 +68,10 @@ export function isPublishableKey(k) {
   try { return JSON.parse(Buffer.from(p[1], "base64url").toString("utf8")).role === "anon"; } catch { return false; }
 }
 const refPrefix = (cfg, answers) => referencePrefix(cfg, answers);
+function stampSpine(clean) {
+  if (!clean || isLand(clean)) return clean;
+  return { ...clean, broka_case_spine: buildBrokaSpine(clean) };
+}
 const clip = (v, n) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, n) : "") || undefined;
 
 // Attribution + privacy-safe fingerprints for the leads backend. Never includes raw IP / UA.
@@ -190,7 +195,8 @@ export default async function handler(req, res) {
 
     if (action === "save") {
       const testMode = responseTestMode(cfg, body.answers);
-      const { clean, errors } = validate(body.answers, false, !!cfg.backend.test);
+      const parsed = validate(body.answers, false, !!cfg.backend.test);
+      const clean = stampSpine(parsed.clean), errors = parsed.errors;
       if (errors._) return send(res, 400, { ok: false, error: "bad_input" });
       let code = normCode(body.code), isNew = false;
       if (!code) { code = normCode(`${rand(4)}${rand(4)}${rand(4)}`); isNew = true; }
@@ -215,7 +221,8 @@ export default async function handler(req, res) {
     const code = normCode(body.code);
     if (!codeOk(code)) return send(res, 400, { ok: false, error: "bad_code" });
     const testMode = responseTestMode(cfg, body.answers);
-    const { clean, errors } = validate(body.answers, true, !!cfg.backend.test);
+    const parsed = validate(body.answers, true, !!cfg.backend.test);
+    const clean = stampSpine(parsed.clean), errors = parsed.errors;
     if(isLand(clean)&&belowMinimum(clean))return send(res,422,{ok:false,error:"below_minimum",message:"Below minimum value",no_chase:true});
     if (Object.keys(errors).length) return send(res, 422, { ok: false, error: "validation", fieldErrors: errors, message: "Please check the highlighted answers." });
     await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg, clean) + rand(6), p_step: 5, p_answers: clean, ...meta });
