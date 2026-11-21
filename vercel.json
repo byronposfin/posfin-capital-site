@@ -186,14 +186,14 @@
       "source": "/apply1",
       "destination": "/apply?b=chris"
     },
-    { "source": "/works/:token/statement", "destination": "/smartlink/static/index.html" },
-    { "source": "/works/:token", "destination": "/smartlink/static/index.html" },
-    { "source": "/al/:token/statement", "destination": "/smartlink/static/index.html" },
-    { "source": "/al/:token", "destination": "/smartlink/static/index.html" },
-    { "source": "/remortgage/:token/summary", "destination": "/smartlink/static/index.html" },
-    { "source": "/remortgage/:token", "destination": "/smartlink/static/index.html" },
-    { "source": "/lender/:token/summary", "destination": "/smartlink/static/index.html" },
-    { "source": "/lender/:token", "destination": "/smartlink/static/index.html" }
+    { "source": "/works/:token/statement", "destination": "/smartlink/static" },
+    { "source": "/works/:token", "destination": "/smartlink/static" },
+    { "source": "/al/:token/statement", "destination": "/smartlink/static" },
+    { "source": "/al/:token", "destination": "/smartlink/static" },
+    { "source": "/remortgage/:token/summary", "destination": "/smartlink/static" },
+    { "source": "/remortgage/:token", "destination": "/smartlink/static" },
+    { "source": "/lender/:token/summary", "destination": "/smartlink/static" },
+    { "source": "/lender/:token", "destination": "/smartlink/static" }
   ],
   "crons": [
     {
