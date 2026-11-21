@@ -11,13 +11,13 @@ The automated half is `npm test`. It does not call Google, Supabase, or an email
    - `FF_TEST_RUN=true` and the preview Supabase URL (`imcqwhccwsuglkzaxazg`), not the production project
    - `LEAD_ALERT_EMAIL=true` only if you want the inbox check
    - `LEAD_ALERT_ONLY_EMAIL=byron.hill@posfincapital.com` so Jessica does not get the test
-   - `LEAD_AUTOREPLY=true` only for submission 2, and only after the database allowlist is Byron's address
-   - `LEAD_AUTOREPLY_ONLY_EMAIL=byron.hill@posfincapital.com`
+   - `RESEND_API_KEY`
+   - `LEAD_EMAIL_FROM=Posfin Capital <hello@posfincapital.com>` once that address is verified in Resend
+   - `LEAD_AUTOREPLY=true` only for the real-address check in step 2
    - `LEADS_SHEET_ENABLED=true`
    - `LEADS_SHEET_ID=1D75DSVCst4g5p0_Y4PiJXVsnFO5049nkfpLWt5KYx1A`
-   - `GOOGLE_SA_EMAIL` and `GOOGLE_SA_PRIVATE_KEY` for the account the sheet is shared with
    - `FF_ALERT_SERVICE_KEY` (service role) and `CRON_SECRET`
-2. Share the sheet tab `Leads` with `GOOGLE_SA_EMAIL` as Editor. Do not share it publicly.
+2. The Leads tab is shared as Editor with `posfin-sheets@posfin-sheets.iam.gserviceaccount.com`. Do not share it publicly. The worker uses `GOOGLE_SA_B64` when that blob's client email is this address.
 3. In the **preview** database only, after applying the migration there:
 
 ```sql
@@ -30,7 +30,7 @@ update pipeline.lead_ops_control
  where id;
 ```
 
-Leave `autoreply_armed_at` null until submission 2. Leave `sla_armed_at` null until submission 3. `round_robin_enabled` stays false, so Byron owns the row and Jessica is only the backup.
+Leave `sla_armed_at` null until submission 3. `round_robin_enabled` stays false, so Byron owns the row and Jessica is only the backup. Do not set `autoreply_allowlist` to null on production. That is the go-live step, done by Byron, and not part of this test.
 
 ## 1. Ad URL, alert, owner, sheet
 
@@ -49,19 +49,11 @@ Expect:
 - One new row on the Leads tab, from row 2, lead id in column B. A second run of the worker does not add another row for the same id
 - `/staff/new-leads` (signed in as Byron) shows the card, green Within SLA, owner Byron
 
-## 2. Auto-reply draft, still no AI call
+## 2. Auto-reply, still no test email
 
-Set `LEAD_AUTOREPLY=true` and, on the preview database only:
+Submit again with `utm_campaign=nov-bridge-2`. The reference still starts with `TEST-WEB-` while `FF_TEST_RUN=true`. Expect no applicant email. `is_test` rows are excluded.
 
-```sql
-update pipeline.lead_ops_control
-   set autoreply_armed_at = now(), updated_at = now()
- where id;
-```
-
-Submit again from a new browser session (new resume code) with the same email, a different campaign `utm_campaign=nov-bridge-2`, contact consent ticked, AI-call still unticked.
-
-Expect a second sheet row and an auto-reply only to `byron.hill@posfincapital.com`. The subject and body contain `DRAFT — not approved`, FRN 913022, NACFB, and the line that Posfin is a broker, not a lender. It must not quote a rate. Then set `LEAD_AUTOREPLY=false` and `autoreply_armed_at` back to null.
+To read the final reply in Byron's own inbox, turn off `FF_TEST_RUN` on the preview only, set `LEAD_AUTOREPLY=true`, keep `autoreply_allowlist` as `byron.hill@posfincapital.com`, and submit once from that address. The subject is `We've received your enquiry`. The body is signed by Lizzy on behalf of Byron Hill and ends with the FRN 913022 and NACFB footer. It must not quote a rate, promise an approval, or ask to stay in touch. Then set `LEAD_AUTOREPLY=false` and turn `FF_TEST_RUN` back on. Do not use any other email address.
 
 ## 3. Cockpit write-back, contacted, and the 15-minute clock
 

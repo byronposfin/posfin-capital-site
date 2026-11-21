@@ -44,7 +44,10 @@ test('Byron owns new leads, Jessica is the backup, and round-robin is behind a f
   assert.equal(nextSeat(DEFAULT_SEATS, 0, 'chris').seat_code, 'chris');
   const chrisOff = DEFAULT_SEATS.map((seat) => seat.seat_code === 'chris' ? { ...seat, active: false } : seat);
   assert.equal(nextSeat(chrisOff, 0, 'chris', { roundRobin: true }).seat_code, 'jess');
-  assert.equal(DEFAULT_SEATS.find((seat) => seat.seat_code === 'cai').email, null);
+  const cai = DEFAULT_SEATS.find((seat) => seat.seat_code === 'cai');
+  assert.equal(cai.email, 'cai@posfincapital.com');
+  assert.equal(cai.role, 'case_owner');
+  assert.equal(cai.pronouns, 'she/her');
   assert.equal(DEFAULT_SEATS.find((seat) => seat.seat_code === 'byron').role, 'principal');
   assert.equal(DEFAULT_SEATS.find((seat) => seat.backup).seat_code, 'jess');
 });
@@ -60,22 +63,37 @@ test('writes are limited by role', () => {
   assert.equal(staffWriteAllowed('principal', { answers: {} }), false);
 });
 
-test('applicant reply is a marked draft from a credit broker and stays off without consent', () => {
-  const lead = { reference: 'POSFIN-WEB-ABC234', full_name: 'Byron Hill', contact_consent: true, ai_call_consent: false, no_chase: false, email: 'byron.hill@posfincapital.com' };
+test('applicant reply is the final Lizzy note and does not send for a test row', () => {
+  const lead = {
+    reference: 'POSFIN-WEB-ABC234', full_name: 'Byron Hill', address: '1 Test Street', postcode: 'SW1A 1AA',
+    contact_consent: true, ai_call_consent: false, no_chase: false, is_test: false, email: 'byron.hill@posfincapital.com',
+  };
   const message = applicantReplyMessage(lead);
-  assert.match(message.subject, /DRAFT — not approved/);
-  assert.match(message.text, /DRAFT — not approved/);
-  assert.match(message.text, /FRN 913022/);
-  assert.match(message.text, /NACFB/);
-  assert.match(message.text, /broker, not a lender/);
-  assert.match(message.text, /not a loan offer/);
-  assert.match(message.text, /promise of any rate/);
-  assert.doesNotMatch(message.text, /we will lend|you are approved|your loan is approved|from \d+(\.\d+)?%/i);
-  const cfg = { production: true, autoreply: false, autoreplyOnly: 'byron.hill@posfincapital.com', onlyAlert: '' };
+  assert.equal(message.subject, "We've received your enquiry");
+  assert.equal(message.text, [
+    'Hello Byron,',
+    '',
+    "Thank you. We've received your enquiry about 1 Test Street, SW1A 1AA.",
+    '',
+    'Someone from Posfin Capital will be in touch shortly, within our working hours, Monday to Friday, 09:00 to 18:00 UK time.',
+    '',
+    'If you would like a quick AI call now, reply to this email and say so. Byron will speak with you personally.',
+    '',
+    'Lizzy',
+    'on behalf of Byron Hill',
+    'Posfin Capital',
+    '',
+    'Posfin Capital Ltd is authorised and regulated by the Financial Conduct Authority (FRN 913022) and is a member of the NACFB.',
+  ].join('\n'));
+  assert.equal(applicantReplyMessage({ full_name: 'Byron Hill' }).text.includes('about your property'), true);
+  assert.doesNotMatch(`${message.subject}\n${message.text}`, /DRAFT|would you like us to stay in touch|%|approv/i);
+  const cfg = { production: true, autoreply: false, autoreplyOnly: '', onlyAlert: '' };
   assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: lead.reference, recipient_email: lead.email, payload: lead }, cfg).reason, 'autoreply_off');
   const on = { ...cfg, autoreply: true };
   assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: lead.reference, recipient_email: lead.email, payload: { ...lead, contact_consent: false } }, on).reason, 'no_consent');
   assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: lead.reference, recipient_email: lead.email, payload: { ...lead, no_chase: true } }, on).reason, 'no_chase');
+  assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: lead.reference, recipient_email: lead.email, payload: { ...lead, is_test: true } }, on).reason, 'is_test');
+  assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: 'TEST-WEB-ABC234', recipient_email: lead.email, payload: { ...lead, is_test: true } }, on).reason, 'synthetic');
   assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: lead.reference, recipient_email: 'other@example.com', payload: lead }, on).reason, 'recipient_mismatch');
   assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: lead.reference, recipient_email: lead.email, payload: lead }, on).suppress, false);
 });
@@ -103,6 +121,15 @@ test('email sender stays off unless the flag, database and provider are all set 
   for (const off of [{ LEAD_ALERT_EMAIL: 'false' }, { VERCEL_ENV: 'preview' }, { FF_SUPABASE_URL: 'https://imcqwhccwsuglkzaxazg.supabase.co' }, { LEAD_EMAIL_API_KEY: '' }, { LEAD_ALERT_ONLY_EMAIL: 'not-an-email' }]) {
     assert.equal(leadEmailConfig({ ...base, ...off }).ok, false);
   }
+  const resend = leadEmailConfig({
+    LEAD_AUTOREPLY: 'true', LEAD_ALERT_EMAIL: 'false', VERCEL_ENV: 'production', FF_TEST_RUN: 'false',
+    FF_SUPABASE_URL: 'https://vgflcrfaudrvrdmxjdtl.supabase.co', FF_ALERT_SERVICE_KEY: 'service-key',
+    RESEND_API_KEY: 're_live_test', LEAD_EMAIL_FROM: 'Posfin Capital <hello@posfincapital.com>',
+  });
+  assert.equal(resend.ok, true);
+  assert.equal(resend.provider, 'resend');
+  assert.equal(resend.apiKey, 're_live_test');
+  assert.equal(resend.autoreply, true);
 });
 
 test('drain sends the staff alert with an idempotency key and suppresses other recipients when the allowlist is Byron', async () => {
@@ -257,6 +284,10 @@ test('the migration is additive, leaves Telegram alone, and does not invent Cai\
   assert.doesNotMatch(v1, /insert into pipeline\.web_lead_sheet_outbox[\s\S]{0,200}from pipeline\.web_leads/i);
   assert.match(v1, /web_lead_sheet_raise_alarms/);
   assert.match(v1, /note_added/);
+  assert.match(v1, /cai@posfincapital\.com/);
+  assert.match(v1, /she\/her/);
+  assert.match(v1, /new\.is_test is not true/);
+  assert.doesNotMatch(v1, /set autoreply_allowlist/);
   assert.match(v1, /staff_new_web_leads_service/);
   assert.match(v1, /grant execute on function public\.staff_new_web_leads_service\(boolean\) to service_role/);
   assert.doesNotMatch(v1, /grant execute on function public\.staff_new_web_leads_service\(boolean\) to anon/);

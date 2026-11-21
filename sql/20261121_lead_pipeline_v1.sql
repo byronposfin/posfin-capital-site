@@ -34,11 +34,22 @@ update pipeline.staff_seats
  where seat_code = 'jess'
    and not exists (select 1 from pipeline.staff_seats where backup);
 
--- Draft applicant wording is not approved. Do not mail other applicants if the
--- allowlist was cleared. Leaves a non-null allowlist Byron already set as it is.
-update pipeline.lead_ops_control
-   set autoreply_allowlist = 'byron.hill@posfincapital.com', updated_at = now()
- where id and autoreply_allowlist is null;
+-- Cai's address was confirmed by Byron on 21 Nov 2026. she/her. case_owner.
+-- This does not change lead_ops_control.autoreply_allowlist. That lock stays
+-- byron.hill@posfincapital.com until Byron sets it to null at go-live.
+alter table pipeline.staff_seats add column if not exists pronouns text;
+
+update pipeline.staff_seats
+   set email = 'cai@posfincapital.com',
+       role = 'case_owner',
+       pronouns = 'she/her',
+       display_name = 'Cai',
+       updated_at = now()
+ where seat_code = 'cai';
+
+insert into public.crm_users (email, role)
+values ('cai@posfincapital.com', 'member')
+on conflict (email) do nothing;
 
 alter table pipeline.web_leads add column if not exists next_action text;
 alter table pipeline.web_leads add column if not exists staff_note text;
@@ -226,6 +237,8 @@ as $$
     'purpose', p.purpose,
     'loan_amount', p.loan_amount,
     'property_value', p.property_value,
+    'address', coalesce(p.security_address, p.answers->>'security_address'),
+    'postcode', coalesce(p.security_postcode, p.answers->>'security_postcode'),
     'utm_source', p.utm_source,
     'utm_medium', p.utm_medium,
     'utm_campaign', p.utm_campaign,
@@ -237,6 +250,50 @@ as $$
   where p.id = p_id;
 $$;
 revoke all on function pipeline.web_lead_email_payload(uuid) from public, anon, authenticated;
+
+-- Real consented submissions are queued without a separate wording hold.
+-- is_test rows are not queued. The allowlist is left untouched: while it is
+-- Byron's address, only that address can be queued. Set it to null at go-live.
+create or replace function pipeline.web_lead_enqueue_email()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_control pipeline.lead_ops_control;
+  v_payload jsonb;
+  v_email text;
+begin
+  if new.form_stage is distinct from 'submitted' then return null; end if;
+  if tg_op = 'UPDATE' and old.form_stage = 'submitted' then return null; end if;
+  if new.reference !~ '^(TEST-WEB-|POSFIN-WEB-)[A-Z2-9]{6}$' then return null; end if;
+
+  select * into v_control from pipeline.lead_ops_control c where c.id;
+  v_payload := coalesce(pipeline.web_lead_email_payload(new.id), '{}'::jsonb);
+
+  if v_control.email_alerts_armed_at is not null then
+    insert into pipeline.web_lead_email_outbox (lead_id, reference, kind, recipient_email, payload)
+    select new.id, new.reference, 'staff_alert', lower(s.email), v_payload
+      from pipeline.staff_seats s
+     where s.active and s.alert_copy and s.email is not null
+    on conflict (lead_id, kind, recipient_email) do nothing;
+  end if;
+
+  v_email := lower(btrim(coalesce(new.email, '')));
+  if new.is_test is not true
+     and new.contact_consent
+     and coalesce(new.answers->>'no_chase', 'false') <> 'true'
+     and v_email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'
+     and (v_control.autoreply_allowlist is null or v_email = lower(v_control.autoreply_allowlist))
+  then
+    insert into pipeline.web_lead_email_outbox (lead_id, reference, kind, recipient_email, payload)
+    values (new.id, new.reference, 'applicant_reply', v_email, v_payload)
+    on conflict (lead_id, kind, recipient_email) do nothing;
+  end if;
+  return null;
+end $$;
+revoke all on function pipeline.web_lead_enqueue_email() from public, anon, authenticated;
 
 -- One row per new submission. Idempotent on lead_id. No copy of older leads.
 create table if not exists pipeline.web_lead_sheet_outbox (

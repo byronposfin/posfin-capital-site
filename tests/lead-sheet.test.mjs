@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SHEET_HEADERS, appendLeadRow, drainSheet, sheetConfig, sheetRow, ukStamp } from '../lib/lead-sheet.js';
+import { SHEET_HEADERS, SHEET_SERVICE_ACCOUNT, appendLeadRow, drainSheet, sheetConfig, sheetCredentials, sheetRow, ukStamp } from '../lib/lead-sheet.js';
 
 const LEAD_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -128,4 +128,22 @@ test('the sheet sender stays off until its own flag is set, then appends once an
   assert.equal(finished.find((row) => row.p_id === '1').p_provider_id, 'Leads!A2:T2');
   assert.equal(finished.find((row) => row.p_id === '2').p_result, 'unknown');
   assert.doesNotMatch(JSON.stringify(result), /service-key|PRIVATE KEY/);
+});
+
+test('the sheet account is the shared service account, and a different blob is ignored', () => {
+  const key = '-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----';
+  const blob = (email) => Buffer.from(JSON.stringify({ client_email: email, private_key: key })).toString('base64');
+  const base = {
+    LEADS_SHEET_ENABLED: 'true', VERCEL_ENV: 'production', FF_TEST_RUN: 'false',
+    FF_SUPABASE_URL: 'https://vgflcrfaudrvrdmxjdtl.supabase.co', FF_ALERT_SERVICE_KEY: 'service-key',
+    LEADS_SHEET_ID: '1D75DSVCst4g5p0_Y4PiJXVsnFO5049nkfpLWt5KYx1A',
+  };
+  const matched = sheetConfig({ ...base, GOOGLE_SA_B64: blob(SHEET_SERVICE_ACCOUNT) });
+  assert.equal(matched.ok, true);
+  assert.equal(matched.email, 'posfin-sheets@posfin-sheets.iam.gserviceaccount.com');
+  assert.equal(sheetCredentials({ GOOGLE_SA_B64: blob('other@other.iam.gserviceaccount.com') }), null);
+  assert.equal(sheetConfig({ ...base, GOOGLE_SA_B64: blob('other@other.iam.gserviceaccount.com') }).ok, false);
+  const explicit = sheetCredentials({ GOOGLE_SA_EMAIL: SHEET_SERVICE_ACCOUNT, GOOGLE_SA_PRIVATE_KEY: key });
+  assert.equal(explicit.email, SHEET_SERVICE_ACCOUNT);
+  assert.match(explicit.key, /BEGIN PRIVATE KEY/);
 });
