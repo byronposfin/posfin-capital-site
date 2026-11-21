@@ -11,14 +11,14 @@ describe("smartlink supabase env", () => {
       FF_SUPABASE_URL: PREVIEW,
       FF_ALERT_SERVICE_KEY: "preview-service-key",
       SUPABASE_MAIN_SERVICE_ROLE_KEY: "main-service-key",
-    } as NodeJS.ProcessEnv);
+    } as unknown as NodeJS.ProcessEnv);
     expect(cfg.url).toBe(MAIN);
     expect(cfg.key).toBe("main-service-key");
     expect(cfg.ffIsMain).toBe(false);
   });
 
   test("accepts FF_ALERT_SERVICE_KEY when the fact-find URL is already the main project", () => {
-    const cfg = supabaseConfig({ FF_SUPABASE_URL: MAIN, FF_ALERT_SERVICE_KEY: "main-via-ff" } as NodeJS.ProcessEnv);
+    const cfg = supabaseConfig({ FF_SUPABASE_URL: MAIN, FF_ALERT_SERVICE_KEY: "main-via-ff" } as unknown as NodeJS.ProcessEnv);
     expect(cfg.url).toBe(MAIN);
     expect(cfg.key).toBe("main-via-ff");
   });
@@ -28,7 +28,7 @@ describe("smartlink supabase env", () => {
       FF_SUPABASE_URL: MAIN,
       FF_ALERT_SERVICE_KEY: "ff",
       SUPABASE_SERVICE_ROLE_KEY: "explicit",
-    } as NodeJS.ProcessEnv);
+    } as unknown as NodeJS.ProcessEnv);
     expect(cfg.key).toBe("explicit");
   });
 
@@ -42,8 +42,8 @@ describe("smartlink supabase env", () => {
   });
 
   test("vercel always selects supabase, even with no key, so a preview cannot pretend a local file was durable", () => {
-    expect(storageMode({ VERCEL: "1" } as NodeJS.ProcessEnv)).toBe("supabase");
-    expect(storageMode({ SMARTLINK_STORAGE: "local", VERCEL: "1" } as NodeJS.ProcessEnv)).toBe("local");
-    expect(storageMode({} as NodeJS.ProcessEnv)).toBe("local");
+    expect(storageMode({ VERCEL: "1" } as unknown as NodeJS.ProcessEnv)).toBe("supabase");
+    expect(storageMode({ SMARTLINK_STORAGE: "local", VERCEL: "1" } as unknown as NodeJS.ProcessEnv)).toBe("local");
+    expect(storageMode({} as unknown as NodeJS.ProcessEnv)).toBe("local");
   });
 });

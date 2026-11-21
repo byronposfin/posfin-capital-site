@@ -18,7 +18,7 @@ const MAX_BODY = 512 * 1024;
 
 export type RouteParams = { params: Promise<{ form: string; token: string }> };
 
-export async function resolve(req: Request, { params }: RouteParams) {
+export async function resolve(req: Request, { params }: RouteParams): Promise<{ error: Response } | { form: FormId; token: string; c: CaseInfo; sp: Record<string, string> }> {
   const { form, token } = await params;
   if (!FORMS.includes(form as FormId)) return { error: Response.json({ error: "unknown form" }, { status: 404 }) };
   const c = await getCase(token);

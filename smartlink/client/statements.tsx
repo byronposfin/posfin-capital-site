@@ -31,7 +31,7 @@ export function StatementView({ form, token, boot }: { form: FormId; token: stri
   if (form === "works") return <WorksStatement token={token} brand={brand} answers={answers} submitted={submitted} date={date} refId={boot.case.ref} demo={boot.case.demo} q={q} />;
   if (form === "al") return <AlStatement token={token} brand={brand} answers={answers} submitted={submitted} date={date} refId={boot.case.ref} demo={boot.case.demo} q={q} />;
   if (form === "remortgage") return <RemortgageSummary token={token} brand={brand} boot={boot} answers={answers} submitted={submitted} date={date} q={q} />;
-  return <LenderSummary token={token} brand={brand} answers={answers} date={date} refId={boot.case.ref} demo={boot.case.demo} q={q} />;
+  return <LenderSummary token={token} brand={brand} answers={answers} submitted={submitted} date={date} refId={boot.case.ref} demo={boot.case.demo} q={q} />;
 }
 
 function WorksStatement({ token, brand, answers, submitted, date, refId, demo, q }: ViewProps) {

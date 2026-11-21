@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { crmExport, ctxFrom, derivedFor, readJson, resolve, resolveBrand, submitValidate, type RouteParams } from "@/lib/api";
 import { hasErrors } from "@/lib/engine/validate";
 import { storage } from "@/lib/storage";
+import { isStorageUnavailable } from "@/lib/storage/supabase";
 import type { Answers } from "@/lib/engine/types";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ export async function POST(req: Request, ctx: RouteParams) {
     return NextResponse.json({ ok: true, submitted_at: saved.submitted_at });
   } catch (e) {
     console.error(`[smartlink] submit failed form=${r.form}: ${(e as Error).message}`);
+    if (isStorageUnavailable(e)) return NextResponse.json({ error: "storage unavailable" }, { status: 503 });
     return NextResponse.json({ error: "submit failed" }, { status: 500 });
   }
 }

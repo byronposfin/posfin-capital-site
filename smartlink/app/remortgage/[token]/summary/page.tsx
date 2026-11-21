@@ -11,7 +11,9 @@ export const metadata = { title: "Questionnaire summary · SmartLink" };
 export default async function Page({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { token } = await params;
   const sp = await searchParams;
-  const { c, brand, ctx, schema, draft, saved } = await loadForm("remortgage", token, sp);
+  const loaded = await loadForm("remortgage", token, sp);
+  if (!loaded) return <p className="p-8 text-[15px]">This link is not valid.</p>;
+  const { c, brand, ctx, schema, draft, saved } = loaded;
   const m = meta(c, saved);
   const q = new URLSearchParams({ brand: brand.id });
   if (sp.titleInsurance !== undefined) q.set("titleInsurance", String(sp.titleInsurance));

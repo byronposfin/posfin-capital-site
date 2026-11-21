@@ -13,6 +13,7 @@ import type { FormId } from "@/lib/brands";
 import { notifySubmission } from "@/lib/notify";
 import { loadForm, type SP } from "@/lib/server";
 import { storage } from "@/lib/storage";
+import { isStorageUnavailable } from "@/lib/storage/supabase";
 
 const JSON_HEADERS = { "cache-control": "no-store" };
 
@@ -74,6 +75,7 @@ async function putDraft(req: Request, ctx: RouteParams) {
     return Response.json({ ok: true, version: saved.version, updated_at: saved.updated_at }, { headers: JSON_HEADERS });
   } catch (e) {
     console.error(`[smartlink] save failed form=${r.form}: ${(e as Error).message}`);
+    if (isStorageUnavailable(e)) return Response.json({ error: "storage unavailable" }, { status: 503, headers: JSON_HEADERS });
     return Response.json({ error: "save failed" }, { status: 500 });
   }
 }
@@ -96,6 +98,7 @@ async function postSubmit(req: Request, ctx: RouteParams) {
     return Response.json({ ok: true, submitted_at: saved.submitted_at });
   } catch (e) {
     console.error(`[smartlink] submit failed form=${r.form}: ${(e as Error).message}`);
+    if (isStorageUnavailable(e)) return Response.json({ error: "storage unavailable" }, { status: 503, headers: JSON_HEADERS });
     return Response.json({ error: "submit failed" }, { status: 500 });
   }
 }

@@ -51,7 +51,9 @@ function KV({ rows }: { rows: [string, string][] }) {
 export default async function Page({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { token } = await params;
   const sp = await searchParams;
-  const { c, brand, draft, saved } = await loadForm("lender", token, sp);
+  const loaded = await loadForm("lender", token, sp);
+  if (!loaded) return <p className="p-8 text-[15px]">This link is not valid.</p>;
+  const { c, brand, draft, saved } = loaded;
   const s = buildLender(draft.answers);
   const m = lenderMeta(c, saved);
   const q = `brand=${brand.id}`;

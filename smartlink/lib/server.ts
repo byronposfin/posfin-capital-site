@@ -3,6 +3,7 @@ import { flagsFor, getDemoCase, TOKEN_RE, type CaseInfo } from "./cases";
 import type { Answers, Ctx, Draft } from "./engine/types";
 import { getSchema, initialAnswers } from "./forms/registry";
 import { storage } from "./storage";
+import { isStorageUnavailable } from "./storage/supabase";
 
 export type SP = Record<string, string | string[] | undefined>;
 
@@ -31,7 +32,13 @@ export async function loadForm(form: FormId, token: string, sp: SP) {
   const ctx: Ctx = { flags };
   const prefillSources = Object.keys(c.prefill);
   const schema = getSchema(form, brand.id, prefillSources);
-  const saved = await storage().getDraft(form, token);
+  let saved: Draft | null = null;
+  try {
+    saved = await storage().getDraft(form, token);
+  } catch (e) {
+    if (!isStorageUnavailable(e)) throw e;
+    console.error(`[smartlink] storage unavailable form=${form}: ${e.message}`);
+  }
   const draft: Pick<Draft, "answers" | "step" | "status"> = saved
     ? { answers: saved.answers, step: saved.step, status: saved.status }
     : { answers: initialAnswers(form, c, brand), step: -1, status: "draft" };

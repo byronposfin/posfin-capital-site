@@ -11,7 +11,9 @@ const M = (n: number | null | undefined) => (n === null || n === undefined ? "" 
 export default async function Page({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { token } = await params;
   const sp = await searchParams;
-  const { c, brand, draft, saved } = await loadForm("works", token, sp);
+  const loaded = await loadForm("works", token, sp);
+  if (!loaded) return <p className="p-8 text-[15px]">This link is not valid.</p>;
+  const { c, brand, draft, saved } = loaded;
   const s = buildWorks(draft.answers);
   const m = meta(c, saved);
   const q = `brand=${brand.id}`;

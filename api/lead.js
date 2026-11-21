@@ -13,6 +13,7 @@ import {validToken, tokenFor} from '../lib/scorecard-access.js';
  */
 
 import { scorecardLink } from '../lib/scorecard-access.js';
+import { isVerifyRequest, SYNTHETIC } from '../lib/verify-request.js';
 import { google } from 'googleapis';
 import { normalise, pipelineRecord, mapPipelineHeaders, REQUIRED_KEYS } from '../lib/factfind-contract.js';
 
@@ -725,7 +726,16 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
   try {
     const body = req.body;
+    const synthetic = isVerifyRequest(req);
     let { product, ...submitted } = body;
+    if (synthetic) {
+      submitted.first_name = 'Synthetic';
+      submitted.last_name = 'Verify';
+      submitted.email = SYNTHETIC.email;
+      submitted.mobile = SYNTHETIC.phone;
+      submitted.phone = SYNTHETIC.phone;
+      submitted.borrower_full_name = SYNTHETIC.full_name;
+    }
     if(product==='pa_land'){
       if(globalThis.PosfinLand.route(submitted)!=='pa_land')return res.status(400).json({error:'Use the property or development Fact Find for this security / funding purpose'});
       submitted.intake_type='pa_land';
@@ -817,7 +827,7 @@ export default async function handler(req, res) {
     const isMain = ['main_loan', 'bank_bridge', 'purchase_refurb', 'acquisition_finance', 'equitable_charges', 'development_finance', 'development_exit_finance'].includes(product);
     const brokerName = owner.name;
 
-    if (TELE_TOKEN && data.deal_ref && process.env.FACTFIND_INTERNAL_ALERTS === 'true') {
+    if (!synthetic && TELE_TOKEN && data.deal_ref && process.env.FACTFIND_INTERNAL_ALERTS === 'true') {
       const productLabel = pipelineRow ? pipelineRow[11] : product.replace(/_/g,' ');
       const name = `${data.first_name || ''} ${data.last_name || ''}`.trim();
       const msg = [

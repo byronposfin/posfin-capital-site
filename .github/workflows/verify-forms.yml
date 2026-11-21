@@ -1,0 +1,26 @@
+name: Verify live forms
+on:
+  schedule:
+    - cron: '17,47 * * * *'
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - run: npm run verify
+        env:
+          VERIFY_BROWSER: '1'
+          VERIFY_BASE_URL: https://posfincapital.com
+          VERIFY_SECRET: ${{ secrets.VERIFY_SECRET }}
+          FF_SUPABASE_URL: ${{ secrets.FF_SUPABASE_URL }}
+          FF_ALERT_SERVICE_KEY: ${{ secrets.FF_ALERT_SERVICE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          FF_ALERT_CHAT_ID: ${{ secrets.FF_ALERT_CHAT_ID }}

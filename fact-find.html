@@ -29,15 +29,26 @@ h1{font:600 34px/1.1 var(--serif);margin:0 0 8px;letter-spacing:-.02em}
 h2{font:600 24px/1.2 var(--serif);margin:0 0 4px}.sub{color:var(--muted);font-size:14px;margin:0 0 18px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.full{grid-column:1/-1}
 label.l{display:block;font:600 12px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#4A5B75;margin-bottom:7px}
-input[type=text],input[type=email],input[type=tel],select,textarea{width:100%;min-height:50px;border-radius:12px;border:1.5px solid #C9D3DF;background:#fff;padding:12px 14px;font:16px var(--sans);color:var(--ink)}
+input[type=text],input[type=email],input[type=tel],input[type=date],select,textarea{width:100%;min-height:50px;border-radius:12px;border:1.5px solid #C9D3DF;background:#fff;padding:12px 14px;font:16px var(--sans);color:var(--ink)}
 textarea{min-height:96px;resize:vertical}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(15,184,201,.18)}
-.err{color:var(--err);font-size:13px;margin-top:5px;min-height:0}.bad{border-color:var(--err)!important}
+.why{display:block;margin:6px 0 0;font-size:13px;line-height:1.4;color:var(--muted)}.err{color:var(--err);font-size:13px;margin-top:5px;min-height:0}.bad{border-color:var(--err)!important}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:15px}.chk input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:var(--navy-900)}
 .actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:24px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:999px;font:600 15px/1 var(--sans);border:0;cursor:pointer}
 .btn-primary{background:var(--navy-900);color:#fff}.btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid rgba(11,31,58,.25)}
 .btn[disabled]{opacity:.55;cursor:wait}
+.btn-teal{background:#0A7383;color:#fff;font-weight:700;min-height:48px;min-width:11rem;margin-top:10px;padding:12px 22px}
+.btn-teal:hover:not(:disabled){background:#086272}
+.btn-teal:active:not(:disabled){background:#064E5B}
+.btn-teal:focus-visible{outline:3px solid var(--navy-900);outline-offset:3px}
+.btn-teal:disabled,.btn-teal[disabled]{opacity:.65;cursor:wait}
+.address-choices-label{margin-top:14px}
+.address-message{margin:8px 0 0;font-size:14px;line-height:1.45;color:var(--muted)}
+.address-message.is-guide{color:#0A4E59;font-weight:600}
+.address-message.is-error{color:var(--err);font-weight:600}
+#addressChoices:disabled{background:#F6F4EE;color:#3E4C63}
+@media(max-width:640px){#findAddress,.find-address{width:100%;min-width:0}}
 .status{font-size:13.5px;color:var(--muted)}.status.ok{color:var(--ok)}.status.bad{color:var(--err)}
 .resume{margin-top:18px;border:1.5px dashed var(--brand-teal);border-radius:14px;padding:14px 16px;background:#F2FBFC;display:none}
 .resume.show{display:block}.resume code{font:700 20px var(--mono);letter-spacing:.12em;color:var(--navy-900)}
@@ -91,5 +102,5 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
   </form>
   <p class="risk">Your home may be repossessed if you do not keep up repayments on a mortgage or any other debt secured on it. Posfin Capital Limited is an authorised credit broker and not a lender. An enquiry is not an application or an offer of finance.</p>
 </main>
-<script type="module" src="/fact-find.js?v=20261112-land-v12"></script>
+<script type="module" src="/fact-find.js?v=20261121-broka"></script>
 </body></html>

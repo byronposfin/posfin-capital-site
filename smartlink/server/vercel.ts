@@ -32,7 +32,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
       for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
       if (chunks.length) body = Buffer.concat(chunks);
     }
-    const request = new Request(url, { method: req.method, headers, body });
+    const request = new Request(url, { method: req.method, headers, body: body ? new Uint8Array(body) : undefined });
     const response = await dispatch(request);
     const buf = Buffer.from(await response.arrayBuffer());
     res.statusCode = response.status;

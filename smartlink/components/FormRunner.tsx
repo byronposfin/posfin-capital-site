@@ -96,9 +96,9 @@ export default function FormRunner(p: RunnerProps) {
     setServerIssues([]);
     try {
       const r = await fetch(`/api/forms/${p.form}/${encodeURIComponent(p.token)}/submit`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ answers, brand: p.brandId, flags: p.flags }) });
-      const j = await r.json();
+      const j = await r.json().catch(() => ({}));
       if (!r.ok) {
-        const iss: Issue[] = j.issues ?? [];
+        const iss: Issue[] = j.issues?.length ? j.issues : [{ level: "error", path: "declaration_accepted", message: j.error === "storage unavailable" ? "We couldn’t save this just now. Your answers are still on this page." : "We couldn’t submit this just now. Please try again." }];
         setServerIssues(iss);
         const root = iss.find((i) => i.level === "error")?.path.split(".")[0];
         const target = schema.steps.findIndex((s) => s.nodes.some((n) => n.id === root || (n.kind === "repeater" && n.noneField === root)));
@@ -106,6 +106,8 @@ export default function FormRunner(p: RunnerProps) {
         return;
       }
       go(DONE, 1);
+    } catch {
+      setServerIssues([{ level: "error", path: "declaration_accepted", message: "We couldn’t submit this just now. Please try again." }]);
     } finally {
       setSubmitting(false);
     }

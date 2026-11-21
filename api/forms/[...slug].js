@@ -6529,11 +6529,30 @@ var TABLE = {
   lender: "lender_criteria"
 };
 var KEY = { al: "case_token", remortgage: "case_token", works: "case_token", lender: "link_token" };
+var StorageUnavailable = class extends Error {
+  constructor(reason) {
+    super(reason);
+    this.name = "StorageUnavailable";
+  }
+};
+function isStorageUnavailable(e) {
+  return e instanceof StorageUnavailable || e instanceof Error && e.name === "StorageUnavailable";
+}
+function unavailableReason(error) {
+  if (!error) return null;
+  const code = String(error.code || "");
+  const message = String(error.message || "");
+  if (code === "42P01" || code === "PGRST205" || code === "PGRST106") return message || code;
+  if (/could not find the table/i.test(message)) return message;
+  if (/relation ["'].*["'] does not exist/i.test(message)) return message;
+  if (/schema cache/i.test(message) && /table|relation|lender_criteria|case_/i.test(message)) return message;
+  return null;
+}
 var client = null;
 function db() {
   if (!client) {
     const { url, key } = supabaseConfig();
-    if (!url || !key) throw new Error("supabase_not_configured");
+    if (!url || !key) throw new StorageUnavailable("supabase_not_configured");
     client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   }
   return client;
@@ -6548,18 +6567,34 @@ var toDraft = (form, r) => ({
   updated_at: r.updated_at,
   submitted_at: r.submitted_at ?? void 0
 });
+var COLS = "status,version,step,payload,updated_at,submitted_at";
 var supabaseAdapter = {
   name: "supabase",
   async getDraft(form, token) {
-    const { data, error } = await db().from(TABLE[form]).select(`${KEY[form]},status,version,step,payload,updated_at,submitted_at`).eq(KEY[form], token).maybeSingle();
-    if (error) throw new Error(`supabase read failed (${error.code})`);
-    return data ? toDraft(form, data) : null;
+    try {
+      const key = KEY[form];
+      const { data, error } = await db().from(TABLE[form]).select(`${key},${COLS}`).eq(key, token).maybeSingle();
+      const missing = unavailableReason(error);
+      if (missing) {
+        console.error(`[smartlink] storage unavailable form=${form}: ${missing}`);
+        return null;
+      }
+      if (error) throw new Error(`supabase read failed (${error.code})`);
+      return data ? toDraft(form, data) : null;
+    } catch (e) {
+      if (isStorageUnavailable(e)) {
+        console.error(`[smartlink] storage unavailable form=${form}: ${e.message}`);
+        return null;
+      }
+      throw e;
+    }
   },
   async saveDraft(form, token, d) {
     const prev = await this.getDraft(form, token);
     const now = (/* @__PURE__ */ new Date()).toISOString();
+    const key = KEY[form];
     const row = {
-      [KEY[form]]: token,
+      [key]: token,
       status: d.status ?? prev?.status ?? "draft",
       version: (prev?.version ?? 0) + 1,
       step: d.step,
@@ -6569,9 +6604,11 @@ var supabaseAdapter = {
       updated_at: now,
       submitted_at: d.status === "submitted" ? now : prev?.submitted_at ?? null
     };
-    const { data, error } = await db().from(TABLE[form]).upsert(row, { onConflict: KEY[form] }).select(`${KEY[form]},status,version,step,payload,updated_at,submitted_at`).single();
-    if (error) throw new Error(`supabase write failed (${error.code})`);
-    return toDraft(form, data);
+    const res = await db().from(TABLE[form]).upsert(row, { onConflict: key }).select(`${key},${COLS}`).single();
+    const missing = unavailableReason(res.error);
+    if (missing) throw new StorageUnavailable(missing);
+    if (res.error || !res.data) throw new Error(`supabase write failed (${res.error?.code ?? "empty"})`);
+    return toDraft(form, res.data);
   }
 };
 
@@ -6600,7 +6637,13 @@ async function loadForm(form, token, sp) {
   const ctx = { flags };
   const prefillSources = Object.keys(c.prefill);
   const schema = getSchema(form, brand.id, prefillSources);
-  const saved = await storage().getDraft(form, token);
+  let saved = null;
+  try {
+    saved = await storage().getDraft(form, token);
+  } catch (e) {
+    if (!isStorageUnavailable(e)) throw e;
+    console.error(`[smartlink] storage unavailable form=${form}: ${e.message}`);
+  }
   const draft = saved ? { answers: saved.answers, step: saved.step, status: saved.status } : { answers: initialAnswers(form, c, brand), step: -1, status: "draft" };
   return { c, brand, flags, ctx, schema, prefillSources, draft, saved };
 }
@@ -7868,6 +7911,7 @@ async function putDraft(req, ctx) {
     return Response.json({ ok: true, version: saved.version, updated_at: saved.updated_at }, { headers: JSON_HEADERS });
   } catch (e) {
     console.error(`[smartlink] save failed form=${r.form}: ${e.message}`);
+    if (isStorageUnavailable(e)) return Response.json({ error: "storage unavailable" }, { status: 503, headers: JSON_HEADERS });
     return Response.json({ error: "save failed" }, { status: 500 });
   }
 }
@@ -7893,6 +7937,7 @@ async function postSubmit(req, ctx) {
     return Response.json({ ok: true, submitted_at: saved.submitted_at });
   } catch (e) {
     console.error(`[smartlink] submit failed form=${r.form}: ${e.message}`);
+    if (isStorageUnavailable(e)) return Response.json({ error: "storage unavailable" }, { status: 503, headers: JSON_HEADERS });
     return Response.json({ error: "submit failed" }, { status: 500 });
   }
 }
@@ -7965,7 +8010,7 @@ async function handler(req, res) {
       for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
       if (chunks.length) body = Buffer.concat(chunks);
     }
-    const request = new Request(url, { method: req.method, headers, body });
+    const request = new Request(url, { method: req.method, headers, body: body ? new Uint8Array(body) : void 0 });
     const response = await dispatch(request);
     const buf = Buffer.from(await response.arrayBuffer());
     res.statusCode = response.status;
