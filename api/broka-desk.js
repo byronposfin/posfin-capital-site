@@ -2,7 +2,7 @@ import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCooki
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
 import { PREVIEW_CASES, caseRefOk, factFindSubmitted, preflight } from '../lib/broka.js';
 import { renderBrokaCase, renderBrokaLogin, renderBrokaMessage } from '../lib/broka-html.js';
-import { getSearchControl, setSearchPaused } from '../lib/broka-state.js';
+import { getSearchControl, latestJob, setSearchPaused } from '../lib/broka-state.js';
 
 const STAGES = new Set([
   'raw_lead', 'opener_sent', 'new_triage', 'contacting', 'fact_find', 'lor_requested',
@@ -23,7 +23,7 @@ export function caseView(caseRef, stage) {
     brokaCaseId: fixture ? fixture.brokaCaseId : null,
     preflight: preflight(answers, fixture ? fixture.regulated : null),
     control: getSearchControl(),
-    job: null,
+    job: latestJob(caseRef),
   };
 }
 
@@ -67,7 +67,11 @@ export async function handleBrokaDesk(req, res, deps = {}) {
     const caseRef = caseRefFrom(req);
     if (!caseRef) return sendHtml(res, 404, renderBrokaMessage('Not on this desk', 'That case reference is not available.'));
     const stage = String(req.query?.stage || '');
-    return sendHtml(res, 200, renderBrokaCase(caseView(caseRef, stage)));
+    const notice = {
+      approved: 'Job recorded as approved under the standing approval. BROKA was not contacted.',
+      awaiting_approval: 'Job recorded and waiting for approval. BROKA was not contacted.',
+    }[String(req.query?.notice || '')] || '';
+    return sendHtml(res, 200, renderBrokaCase(caseView(caseRef, stage), notice));
   } catch (error) {
     console.error('[broka-desk]', error.code || 'broka_desk_failed');
     return sendHtml(res, 503, renderBrokaMessage('Please try again', 'The check is temporarily unavailable.'));

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { handleCockpit } from '../api/staff-cockpit.js';
 import pipeline from '../api/staff-pipeline.js';
 import brokaDesk from '../api/broka-desk.js';
+import brokaJobs from '../api/broka/jobs.js';
 
 process.env.COCKPIT_SOURCE = 'preview';
 process.env.COCKPIT_AUTH = 'preview';
@@ -27,7 +28,7 @@ const server = http.createServer(async (req, res) => {
   const spinePath = url.pathname.match(/^\/staff\/cockpit\/spine\/([^/]+)$/);
   const brokaPath = url.pathname.match(/^\/staff\/cockpit\/broka\/([^/]+)$/);
   const pipelinePath = url.pathname === '/staff/cockpit/pipeline';
-  const brokaJob = url.pathname === '/api/broka/jobs';
+  const brokaJob = url.pathname === '/api/broka/jobs' || url.pathname === '/staff/cockpit/broka-jobs';
   if (url.pathname !== '/staff/cockpit' && !spinePath && !pipelinePath && !brokaPath && !brokaJob) {
     res.statusCode = 404;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -45,13 +46,8 @@ const server = http.createServer(async (req, res) => {
   if (brokaPath) req.query.case = decodeURIComponent(brokaPath[1]);
   req.url = url.pathname + url.search;
   try {
-    if (brokaJob) {
-      res.statusCode = 404;
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.end('The job route is not on this step.');
-      return;
-    }
-    if (pipelinePath) await pipeline(req, res);
+    if (brokaJob) await brokaJobs(req, res);
+    else if (pipelinePath) await pipeline(req, res);
     else if (brokaPath) await brokaDesk(req, res);
     else await handleCockpit(req, res, { env: process.env });
   } catch (error) {
