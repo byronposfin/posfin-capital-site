@@ -117,9 +117,38 @@
           "value": "public, max-age=300, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/case/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Cache-Control", "value": "private, no-store" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    },
+    {
+      "source": "/staff/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Cache-Control", "value": "private, no-store" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
     }
   ],
   "rewrites": [
+    { "source": "/case/:token/file/:submission", "destination": "/api/case-file?token=:token&submission=:submission" },
+    { "source": "/case/:token/submit", "destination": "/api/case-submit?token=:token" },
+    { "source": "/case/:token/kyc", "destination": "/api/case-kyc?token=:token" },
+    { "source": "/case/:token", "destination": "/api/case-portal?token=:token" },
+    { "source": "/staff/cockpit/pipeline", "destination": "/api/staff-pipeline" },
+    { "source": "/staff/cockpit/spine/:caseRef", "destination": "/api/staff-cockpit?spine=:caseRef" },
+    { "source": "/staff/cockpit", "destination": "/api/staff-cockpit" },
+    { "source": "/staff/france/:caseId", "destination": "/api/fr-staff?caseId=:caseId" },
+    { "source": "/staff/france", "destination": "/api/fr-staff" },
+    { "source": "/staff/cases/:caseId/file/:submission", "destination": "/api/case-file?caseId=:caseId&submission=:submission&staff=1" },
+    { "source": "/staff/cases/:caseId/export", "destination": "/api/case-export?caseId=:caseId" },
+    { "source": "/staff/cases/:caseId", "destination": "/api/case-staff?caseId=:caseId" },
+    { "source": "/staff/cases", "destination": "/api/case-staff" },
     {
       "source": "/apply/bh",
       "destination": "/apply?b=bh"
