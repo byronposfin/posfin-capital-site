@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildModel, ltv, resolveStage, tokenOk, validateSubmission, poaDateStatus, kycPackErrors, servedFile } from '../lib/case-portal.js';
-import { renderDocument, renderExport, renderPortal, renderStaffCase } from '../lib/case-portal-html.js';
+import { buildModel, cardLtvs, ltv, resolveStage, tokenOk, validateSubmission, poaDateStatus, kycPackErrors, servedFile } from '../lib/case-portal.js';
+import { renderDocument, renderExport, renderPortal, renderStaffCase, renderStaffList } from '../lib/case-portal-html.js';
 import { parseMultipart } from '../lib/case-http.js';
 import handler from '../api/case-portal.js';
 import submit from '../api/case-submit.js';
@@ -348,6 +348,37 @@ test('the portal stays locked until the identity check is passed', () => {
   const waiting = renderDocument(buildModel({ ...record(), kyc: { status: 'submitted' } }), TOKEN);
   assert.match(waiting, /We've got your identity check/);
   assert.doesNotMatch(waiting, /Still to answer/);
+});
+
+test('staff list shows requested and current LTV and flags anything over 60 percent', () => {
+  const over = cardLtvs({ client_value: 130000, loan_amount: 96000, existing_balance: 63050 });
+  assert.equal(over.current, 48.5);
+  assert.equal(over.requested, 73.8);
+  assert.equal(over.over, true);
+  const level = cardLtvs({ client_value: 6800000, loan_amount: 4080000 });
+  assert.equal(level.requested, 60);
+  assert.equal(level.over, false);
+  const html = renderStaffList([{
+    caseId: 'EXAMPLE-LTV',
+    clientName: 'Example Borrower',
+    address: '1 Example Street',
+    stageLabel: 'Gathering info',
+    openCount: 12,
+    openLabel: 'still to answer',
+    kycStatus: 'not_started',
+    currentLtv: over.current,
+    requestedLtv: over.requested,
+    ltvOver: over.over,
+  }]);
+  assert.match(html, /Current LTV 48.5%/);
+  assert.match(html, /Requested LTV 73.8%/);
+  assert.match(html, /Over 60%/);
+  const quiet = renderStaffList([{ ...{
+    caseId: 'EXAMPLE-OK', clientName: 'Example Borrower', address: '1 Example Street',
+    stageLabel: 'Getting terms', openCount: 1, openLabel: 'internal items', kycStatus: 'not_started',
+  }, currentLtv: null, requestedLtv: level.requested, ltvOver: level.over }]);
+  assert.doesNotMatch(quiet, /Over 60%/);
+  assert.match(quiet, /Requested LTV 60.0%/);
 });
 
 test('public source does not contain the seeded client record', () => {
