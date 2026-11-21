@@ -288,7 +288,7 @@
   function rewriteStepLabels() {
     Array.prototype.slice.call(document.querySelectorAll('div,span,p')).forEach(function(el){
       var t = textOf(el);
-      if (/^Step\s+1\s+of\s+3(?:\s*·\s*60 seconds)?$/i.test(t)) el.textContent = 'Step 2 of 4 — About you';
+      if (/^Step\s+1\s+of\s+3(?:\s*·\s*(?:60 seconds|Apply now — takes about 5 minutes))?$/i.test(t)) el.textContent = 'Step 2 of 4 — About you';
       else if (/^Step\s+2\s+of\s+3$/i.test(t)) el.textContent = 'Step 3 of 4 — The property';
       else if (/^Step\s+3\s+of\s+3(?:\s*·\s*Almost there)?$/i.test(t)) el.textContent = 'Step 4 of 4 — Loan requirements';
     });
@@ -660,8 +660,8 @@
     });
   }
   function labelFooterWhatsapp() {
-    Array.prototype.slice.call(document.querySelectorAll('a[href^="tel:+447446950389"]')).forEach(function(a){
-      if (!/WhatsApp/i.test(textOf(a))) a.textContent = 'WhatsApp: +44 7446 950 389';
+    Array.prototype.slice.call(document.querySelectorAll('a[href^="tel:+447365587773"]')).forEach(function(a){
+      if (!/WhatsApp/i.test(textOf(a))) a.textContent = 'WhatsApp: 07365 587773';
     });
   }
 
@@ -788,7 +788,7 @@
       renderSubmitted(payload);
     } catch (err) {
       console.warn('[router continuation] submit failed', err);
-      showError('Something went wrong saving your Fact Find. Please try again, or WhatsApp Posfin on +44 7446 950 389.', btn);
+      showError('Something went wrong saving your Fact Find. Please try again, or WhatsApp Posfin on 07365 587773.', btn);
       if (btn) { btn.disabled = false; btn.textContent = original || 'Complete Fact Find →'; btn.style.opacity = '1'; }
     }
   }
