@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { slaDue, slaColour, ageLabel } from '../lib/lead-sla.js';
 import { nextSeat, DEFAULT_SEATS, staffWriteAllowed } from '../lib/lead-assign.js';
-import { applicantReplyMessage, staffAlertMessage, deliveryDecision } from '../lib/lead-notify.js';
+import { applicantReplyMessage, lizzyFollowUpMessage, isPositiveCallReply, staffAlertMessage, deliveryDecision } from '../lib/lead-notify.js';
 import { leadEmailConfig, drainLeadOps } from '../lib/lead-ops.js';
 import { presentLead } from '../lib/lead-lane.js';
 import handler from '../api/factfind-alert-worker.js';
@@ -75,9 +75,9 @@ test('applicant reply is the final Lizzy note and does not send for a test row',
     '',
     "Thank you. We've received your enquiry about 1 Test Street, SW1A 1AA.",
     '',
-    'Someone from Posfin Capital will be in touch shortly, within our working hours, Monday to Friday, 09:00 to 18:00 UK time.',
+    'Someone from Posfin Capital will be in touch, Monday to Saturday, 09:00 to 18:00 UK time.',
     '',
-    'If you would like a quick AI call now, reply to this email and say so. Byron will speak with you personally.',
+    'Would you like a quick call with Byron?',
     '',
     'Lizzy',
     'on behalf of Byron Hill',
@@ -102,7 +102,21 @@ test('applicant reply is the final Lizzy note and does not send for a test row',
   assert.match(sarah.text, /about your property/);
   assert.match(sarah.html, /<img src="https:\/\/posfincapital.com\/posfin-wati-byron-uk-banner-v3-20261101.png" alt="Posfin Capital. UK property finance." width="600">/);
   assert.doesNotMatch(sarah.html, /\sstyle=|\sborder=/);
+  assert.doesNotMatch(sarah.text, /AI call|reply to this email and say so/);
   assert.equal(sarah.html.includes('cid:'), false);
+  const follow = lizzyFollowUpMessage({ full_name: 'Sarah' });
+  assert.equal(isPositiveCallReply('Yes please'), true);
+  assert.equal(isPositiveCallReply('sure, call me'), true);
+  assert.equal(isPositiveCallReply('no thanks'), false);
+  assert.match(follow.text, /Hi Sarah,/);
+  assert.match(follow.text, /Byron's AI assistant/);
+  assert.match(follow.text, /an AI assistant, not a person/);
+  assert.match(follow.text, /07365 587773/);
+  assert.match(follow.html, /href="tel:\+447365587773"/);
+  assert.match(follow.html, /width="96"/);
+  assert.match(follow.html, /FRN 913022/);
+  assert.match(follow.html, /NACFB/);
+  assert.doesNotMatch(follow.html, /posfin-wati-byron-uk-banner/);
 });
 
 test('staff alert names the owner and the consent flags', () => {
