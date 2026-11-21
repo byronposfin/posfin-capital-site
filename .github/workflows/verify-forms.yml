@@ -13,6 +13,7 @@ jobs:
         with:
           node-version: '24'
       - run: npm install
+      - run: npm install --no-save playwright
       - run: npx playwright install --with-deps chromium
       - run: npm run verify
         env:
