@@ -96,6 +96,13 @@ test('applicant reply is the final Lizzy note and does not send for a test row',
   assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: 'TEST-WEB-ABC234', recipient_email: lead.email, payload: { ...lead, is_test: true } }, on).reason, 'synthetic');
   assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: lead.reference, recipient_email: 'other@example.com', payload: lead }, on).reason, 'recipient_mismatch');
   assert.equal(deliveryDecision({ kind: 'applicant_reply', reference: lead.reference, recipient_email: lead.email, payload: lead }, on).suppress, false);
+  const sarah = applicantReplyMessage({ full_name: 'Sarah' });
+  assert.equal(sarah.subject, "We've received your enquiry");
+  assert.match(sarah.text, /^Hello Sarah,/);
+  assert.match(sarah.text, /about your property/);
+  assert.match(sarah.html, /<img src="https:\/\/posfincapital.com\/posfin-wati-byron-uk-banner-v3-20261101.png" alt="Posfin Capital. UK property finance." width="600">/);
+  assert.doesNotMatch(sarah.html, /\sstyle=|\sborder=/);
+  assert.equal(sarah.html.includes('cid:'), false);
 });
 
 test('staff alert names the owner and the consent flags', () => {

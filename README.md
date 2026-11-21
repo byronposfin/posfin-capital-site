@@ -62,7 +62,7 @@ The cron is `* * * * *` on `/api/factfind-alert-worker`. The submit request also
 
 ### 2. Applicant auto-reply
 
-The wording is final. It is signed by Lizzy on behalf of Byron Hill. A real submission is queued when contact consent is yes, the row is not `no_chase`, and `is_test` is not true. `LEAD_AUTOREPLY=true` is the send switch. There is no draft hold and no `autoreply_armed_at` step.
+The wording is final. It is signed by Lizzy on behalf of Byron Hill. The HTML version starts with the hosted team banner at `https://posfincapital.com/posfin-wati-byron-uk-banner-v3-20261101.png`. The file is not attached. A real submission is queued when contact consent is yes, the row is not `no_chase`, and `is_test` is not true. `LEAD_AUTOREPLY=true` is the send switch. There is no draft hold and no `autoreply_armed_at` step.
 
 `autoreply_allowlist` is currently `byron.hill@posfincapital.com`. This migration does not change it. While it is set, only that address can be queued. At go-live Byron sets it to null himself:
 
