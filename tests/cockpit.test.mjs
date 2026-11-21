@@ -115,6 +115,12 @@ test('the cockpit page is the staff board, and Lizzy has drafts without a send c
   await handleCockpit({ method: 'GET', headers: { cookie: `pf_staff=${encodeURIComponent(session)}` }, query: {}, url: '/staff/cockpit' }, open, authed(store));
   assert.equal(open.status, 200);
   assert.match(open.body, /Let's clear the board\./);
+  assert.match(open.body, /New leads/);
+  assert.match(open.body, /TEST-WEB-BYRON1/);
+  assert.match(open.body, /Within SLA/);
+  assert.match(open.body, /byron\.hill@posfincapital\.com/);
+  assert.match(open.body, /No AI caller/);
+  assert.equal(open.body.includes('service_role'), false);
   assert.match(open.body, /Preview data/);
   assert.match(open.body, /Do now/);
   assert.match(open.body, /Byron&#39;s review/);
