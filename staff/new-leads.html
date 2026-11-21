@@ -28,13 +28,16 @@
   .warn { background: #fde8e6; }
   a { color: #13113a; }
   .error { color: #8a1f14; }
+  select, textarea { font: inherit; width: 100%; max-width: 420px; box-sizing: border-box; padding: 8px; }
+  textarea { min-height: 64px; }
+  .controls { display: grid; gap: 8px; margin-top: 8px; }
 </style>
 </head>
 <body>
 <header>
   <p class="broker">Posfin Capital · credit broker, not a lender</p>
   <h1>New leads</h1>
-  <p>Open fact finds, with the owner, how long they have been waiting, and whether the 15-minute contact clock has been met. Every staff seat can see every case. Mark contacted only after a person has actually been in touch. This page does not phone or email the applicant.</p>
+  <p>New leads from the fact find. Each card is a submitted row in the lead queue, with the owner, how long it has been waiting, and whether the 15-minute contact clock has been met. The clock runs Monday to Friday, 09:00 to 18:00 UK time. Every staff seat can see every case. Mark contacted only after a person has actually been in touch. This page does not phone, email, or start an AI call.</p>
 </header>
 <main>
   <form id="signin">
@@ -68,6 +71,10 @@ const list = document.querySelector('#list');
 const signinMsg = document.querySelector('#signin-msg');
 const boardMsg = document.querySelector('#board-msg');
 let session = null;
+let seats = [];
+let statuses = [];
+const fixture = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  && new URLSearchParams(location.search).get('fixture') === '1';
 
 function text(tag, value, className) {
   const node = document.createElement(tag);
@@ -130,9 +137,17 @@ function badge(label, warn) {
   return text('span', label, warn ? 'badge warn' : 'badge');
 }
 
+function labelled(title, control) {
+  const wrap = document.createElement('label');
+  wrap.append(text('span', title));
+  wrap.append(control);
+  return wrap;
+}
+
 function card(lead) {
   const item = document.createElement('article');
   item.className = 'card';
+  item.dataset.lane = 'new-leads';
   const top = document.createElement('div');
   top.className = 'row';
   top.append(text('strong', lead.reference || 'Fact find'));
@@ -140,6 +155,7 @@ function card(lead) {
   item.append(top);
   item.append(text('p', 'Owner: ' + (lead.ownerName || 'Unassigned') + (lead.ownerEmail ? ' (' + lead.ownerEmail + ')' : '')));
   item.append(text('p', 'Waiting: ' + (lead.age || '—'), 'meta'));
+  item.append(text('p', 'Status: ' + (lead.status || 'new')));
   item.append(text('p', lead.fullName || 'No name'));
   if (lead.phone) {
     const line = document.createElement('p');
@@ -163,13 +179,52 @@ function card(lead) {
   if (!lead.contactConsent) flags.append(badge('No contact consent', true));
   if (!lead.aiCallConsent) flags.append(badge('No AI caller', true));
   if (flags.childNodes.length) item.append(flags);
+  const controls = document.createElement('div');
+  controls.className = 'controls';
+  const owner = document.createElement('select');
+  owner.setAttribute('aria-label', 'Owner');
+  const ownerBlank = document.createElement('option');
+  ownerBlank.value = '';
+  ownerBlank.textContent = 'Keep owner';
+  owner.append(ownerBlank);
+  for (const seat of seats) {
+    const option = document.createElement('option');
+    option.value = seat.code;
+    option.textContent = seat.name;
+    if (seat.code === lead.seat) option.selected = true;
+    owner.append(option);
+  }
+  const status = document.createElement('select');
+  status.setAttribute('aria-label', 'Status');
+  const statusBlank = document.createElement('option');
+  statusBlank.value = '';
+  statusBlank.textContent = 'Keep status';
+  status.append(statusBlank);
+  for (const value of statuses) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    if (value === lead.status) option.selected = true;
+    status.append(option);
+  }
+  const next = document.createElement('input');
+  next.type = 'text';
+  next.maxLength = 240;
+  next.value = lead.nextAction || '';
+  next.setAttribute('aria-label', 'Next action');
+  const save = document.createElement('button');
+  save.type = 'button';
+  save.textContent = 'Save owner, status and next action';
+  save.addEventListener('click', () => savePatch(lead, { owner, status, next, save }));
+  controls.append(labelled('Owner', owner), labelled('Status', status), labelled('Next action', next), save);
   if (!lead.contactedAt) {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = 'Mark contacted';
     button.addEventListener('click', () => mark(lead, button));
-    item.append(button);
-  } else item.append(text('p', 'Contacted.', 'meta'));
+    controls.append(button);
+  } else controls.append(text('p', 'Contacted.', 'meta'));
+  item.append(controls);
   return item;
 }
 
@@ -180,8 +235,30 @@ async function load() {
   const body = await response.json();
   if (response.status === 401) { session.token = ''; showBoard(false); signinMsg.textContent = 'Please sign in again.'; return; }
   if (!response.ok) { boardMsg.textContent = 'The queue could not be loaded.'; return; }
+  seats = Array.isArray(body.seats) ? body.seats : [];
+  statuses = Array.isArray(body.statuses) ? body.statuses : [];
   boardMsg.textContent = body.leads.length ? (body.capped ? 'Showing the latest 100.' : '') : 'No open fact finds.';
   list.append(...body.leads.map(card));
+}
+
+async function savePatch(lead, fields) {
+  const patch = { action: 'patch', id: lead.id };
+  if (fields.owner.value && fields.owner.value !== lead.seat) patch.assigned_seat = fields.owner.value;
+  if (fields.status.value && fields.status.value !== lead.status) patch.status = fields.status.value;
+  if (fields.next.value !== (lead.nextAction || '')) patch.next_action = fields.next.value;
+  if (!patch.assigned_seat && !patch.status && patch.next_action === undefined) {
+    boardMsg.textContent = 'Nothing to save on that lead.';
+    return;
+  }
+  fields.save.disabled = true;
+  if (fixture) { fields.save.disabled = false; boardMsg.textContent = 'Preview only. Nothing was written.'; return; }
+  const response = await fetch('/api/staff-new-leads', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + session.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch)
+  });
+  if (!response.ok) { fields.save.disabled = false; boardMsg.textContent = 'Could not save that change.'; return; }
+  await load();
 }
 
 async function mark(lead, button) {
@@ -191,6 +268,7 @@ async function mark(lead, button) {
   const prompt = (warnings.join(' ') + ' Mark contacted only if a person has actually spoken with them.').trim();
   if (!window.confirm(prompt)) return;
   button.disabled = true;
+  if (fixture) { button.disabled = false; boardMsg.textContent = 'Preview only. Nothing was written.'; return; }
   const response = await fetch('/api/staff-new-leads', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + session.token, 'Content-Type': 'application/json' },
@@ -202,6 +280,25 @@ async function mark(lead, button) {
 
 document.querySelector('#refresh').addEventListener('click', load);
 document.querySelector('#signout').addEventListener('click', () => { session.token = ''; showBoard(false); });
+
+if (fixture) {
+  seats = [
+    { code: 'byron', name: 'Byron Hill' },
+    { code: 'jess', name: 'Jess' },
+    { code: 'aadi', name: 'Aadi' },
+    { code: 'cai', name: 'Cai' },
+    { code: 'chris', name: 'Chris Shipton' },
+  ];
+  statuses = ['new', 'contacted', 'qualified'];
+  const now = Date.now();
+  showBoard(true);
+  boardMsg.textContent = 'Local preview cards. Nothing is loaded from the database.';
+  list.append(...[
+    { id: 'fixture-1', reference: 'TEST-WEB-BYRON1', ownerName: 'Byron Hill', ownerEmail: 'byron.hill@posfincapital.com', seat: 'byron', age: '4 min', slaLabel: 'Within SLA', slaColour: 'green', status: 'new', fullName: 'Byron Hill', email: 'byron.hill@posfincapital.com', phone: '07700900111', contactConsent: true, aiCallConsent: false, noChase: false, isTest: true, nextAction: 'Call Byron back' },
+    { id: 'fixture-2', reference: 'TEST-WEB-BYRON2', ownerName: 'Byron Hill', seat: 'byron', age: '16 min', slaLabel: 'Overdue', slaColour: 'red', status: 'new', fullName: 'Byron Hill', email: 'byron.hill@posfincapital.com', contactConsent: true, aiCallConsent: false, noChase: false, isTest: true, nextAction: '' },
+    { id: 'fixture-3', reference: 'TEST-WEB-BYRON3', ownerName: 'Jess', ownerEmail: 'jessica@posfincapital.com', seat: 'jess', age: '1 h', slaLabel: 'Contacted', slaColour: 'done', status: 'contacted', fullName: 'Byron Hill', email: 'byron.hill@posfincapital.com', contactConsent: true, aiCallConsent: true, contactedAt: new Date(now).toISOString(), isTest: true, nextAction: 'Waiting on documents' },
+  ].map(card));
+}
 </script>
 </body>
 </html>

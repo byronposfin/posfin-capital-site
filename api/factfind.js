@@ -19,11 +19,12 @@ import {isLand,belowMinimum} from '../lib/ff-land.js';
 import crypto from "node:crypto";
 import { drainAlerts } from "../lib/ff-alert-outbox.js";
 import { drainLeadOps } from "../lib/lead-ops.js";
+import { drainSheet } from "../lib/lead-sheet.js";
 import { isVerifyRequest, SYNTHETIC } from "../lib/verify-request.js";
 import { validate } from "../lib/ff-schema.js";
 
 export const VERSION = "uk-v005-land-v12";
-export const CONSENT_VERSION = "uk-consent-v1-2026-11-03"; // bump whenever the consent wording on /fact-find changes
+export const CONSENT_VERSION = "uk-consent-v2-2026-11-21"; // bump whenever the consent wording on /fact-find changes
 const BACKENDS = {
   leads:    { prefix: "web_lead_", ref: "POSFIN-WEB-",  test: false, meta: true, testRef: "TEST-WEB-" },
   preview:  { prefix: "ff_test_",  ref: "POSFIN-TEST-", test: true },
@@ -227,7 +228,8 @@ export default async function handler(req, res) {
       catch { alert = {status: "recovery_required"}; }
     } else alert = await previewSubmitAlert(cfg, r.reference);
     const emailAlert = await safeLeadEmail();
-    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, emailAlert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
+    const sheetAlert = await safeSheet();
+    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, emailAlert, sheetAlert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";
     const status = e instanceof BackendError ? e.status : 500;
@@ -244,6 +246,18 @@ async function safeLeadEmail() {
     if (emailed.skipped) return { status: "disabled" };
     if (!emailed.ok) return { status: "recovery_required" };
     return { status: emailed.sent > 0 ? "sent" : "idle" };
+  } catch {
+    return { status: "recovery_required" };
+  }
+}
+
+// Same request as the staff alert. A miss is retried by /api/factfind-alert-worker.
+async function safeSheet() {
+  try {
+    const saved = await drainSheet(process.env, fetch);
+    if (saved.skipped) return { status: "disabled" };
+    if (!saved.ok) return { status: "recovery_required" };
+    return { status: saved.sent > 0 ? "sent" : "idle" };
   } catch {
     return { status: "recovery_required" };
   }
