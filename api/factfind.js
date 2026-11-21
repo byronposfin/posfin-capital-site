@@ -21,6 +21,7 @@ import { drainAlerts } from "../lib/ff-alert-outbox.js";
 import { drainLeadOps } from "../lib/lead-ops.js";
 import { isVerifyRequest, SYNTHETIC } from "../lib/verify-request.js";
 import { validate } from "../lib/ff-schema.js";
+import { POSFIN_PHONE_DISPLAY } from "../lib/contact.js";
 import { looksLikeTestLead, referencePrefix, responseTestMode } from "../lib/ff-test-lead.js";
 import { buildBrokaSpine } from "../lib/broka-spine.js";
 
@@ -32,7 +33,7 @@ const BACKENDS = {
   pipeline: { prefix: "ff_web_",   ref: "POSFIN-WEB-",  test: false },
 };
 const FALLBACK = {
-  phone: "+44 7446 950 389",
+  phone: POSFIN_PHONE_DISPLAY,
   calendly: "https://calendly.com/byron-hill/posfin-bridging-finance-consultation-30-min-byron",
 };
 const DB_TIMEOUT_MS = 8000;
