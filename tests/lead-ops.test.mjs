@@ -213,9 +213,9 @@ test('the new-leads API requires a staff token and does not return the fact-find
   global.fetch = async (url, opts) => {
     const fn = String(url).split('/').pop();
     const body = JSON.parse(opts.body || '{}');
-    if (fn === 'staff_new_web_leads_v2') {
+    if (fn === 'staff_new_web_leads_v3') {
       assert.equal(body.p_include_tests, false);
-      return { ok: true, status: 200, json: async () => [{ id: '11111111-1111-1111-1111-111111111111', reference: 'TEST-WEB-ABC234', submitted_at: new Date(now - 2 * 60 * 1000).toISOString(), full_name: 'Byron Hill', email: 'byron.hill@posfincapital.com', phone: '07000000000', owner_name: 'Jess', sla_due_at: new Date(now + 30 * 60 * 1000).toISOString(), contact_consent: true, ai_call_consent: false, no_chase: false, is_test: true, status: 'new', next_action: 'Call back', answers: { secret: true } }] };
+      return { ok: true, status: 200, json: async () => [{ id: '11111111-1111-1111-1111-111111111111', reference: 'TEST-WEB-ABC234', submitted_at: new Date(now - 2 * 60 * 1000).toISOString(), full_name: 'Byron Hill', email: 'byron.hill@posfincapital.com', phone: '07700900000', applicant_dob: '1980-04-02', joint_applicant_dob: null, owner_name: 'Jess', sla_due_at: new Date(now + 30 * 60 * 1000).toISOString(), contact_consent: true, ai_call_consent: false, no_chase: false, is_test: true, status: 'new', next_action: 'Call back', answers: { secret: true } }] };
     }
     if (fn === 'web_lead_staff_patch') {
       assert.equal(body.p_id, '11111111-1111-1111-1111-111111111111');
@@ -240,6 +240,9 @@ test('the new-leads API requires a staff token and does not return the fact-find
     assert.equal(lead.age, '2 min');
     assert.equal(lead.slaLabel, 'Within SLA');
     assert.equal(lead.answers, undefined);
+    assert.equal(lead.phone, '07700900000');
+    assert.equal(lead.dateOfBirth, '1980-04-02');
+    assert.equal(JSON.stringify(listed.read().payload).includes('secret'), false);
     assert.equal(lead.nextAction, 'Call back');
     assert.equal(presentLead({ submitted_at: '2026-11-20T09:00:00Z', sla_due_at: '2026-11-20T09:15:00Z' }, at('2026-11-20T09:00:00Z')).age, 'under 1 min');
     const marked = respond();

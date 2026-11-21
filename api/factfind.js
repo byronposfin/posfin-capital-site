@@ -69,6 +69,12 @@ export function isPublishableKey(k) {
   try { return JSON.parse(Buffer.from(p[1], "base64url").toString("utf8")).role === "anon"; } catch { return false; }
 }
 const refPrefix = (cfg, answers) => referencePrefix(cfg, answers);
+function publicLandAnswers(clean) {
+  const copy = { ...clean };
+  delete copy.applicant_dob;
+  delete copy.applicant_2_dob;
+  return copy;
+}
 function stampSpine(clean) {
   if (!clean || isLand(clean)) return clean;
   return { ...clean, broka_case_spine: buildBrokaSpine(clean) };
@@ -240,7 +246,7 @@ export default async function handler(req, res) {
     } else alert = await previewSubmitAlert(cfg, r.reference);
     const emailAlert = await safeLeadEmail();
     const sheetAlert = await safeSheet();
-    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, emailAlert, sheetAlert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
+    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, emailAlert, sheetAlert, ...(isLand(clean)?{answers:publicLandAnswers(clean),scorecard:clean.land_scorecard}:{}) });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";
     const status = e instanceof BackendError ? e.status : 500;

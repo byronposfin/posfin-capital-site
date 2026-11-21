@@ -59,16 +59,16 @@ test('append finds an existing lead id and refuses a header that is not the Lead
   const existing = await appendLeadRow({
     async get(range) {
       seen.push(range);
-      if (range.endsWith('A1:T1')) return [SHEET_HEADERS];
+      if (range.endsWith('A1:V1')) return [SHEET_HEADERS];
       return [['Lead ID'], ['someone-else'], [LEAD_ID]];
     },
     async append() { throw Error('must not append'); },
   }, sample());
   assert.equal(existing.outcome, 'sent');
   assert.equal(existing.providerId, 'existing:Leads!B3');
-  assert.deepEqual(seen, ['Leads!A1:T1', 'Leads!B:B']);
+  assert.deepEqual(seen, ['Leads!A1:V1', 'Leads!B:B']);
   const bad = await appendLeadRow({
-    async get(range) { return range.endsWith('A1:T1') ? [['Old header']] : []; },
+    async get(range) { return range.endsWith('A1:V1') ? [['Old header']] : []; },
     async append() { throw Error('must not append'); },
   }, sample());
   assert.equal(bad.errorCode, 'sheet_header');
@@ -96,7 +96,7 @@ test('the sheet sender stays off until its own flag is set, then appends once an
   const finished = [];
   const client = {
     async get(range) {
-      if (range.endsWith('A1:T1')) return [SHEET_HEADERS];
+      if (range.endsWith('A1:V1')) return [SHEET_HEADERS];
       return [['Lead ID'], ...appended.map((row) => [row[1]])];
     },
     async append(values) { appended.push(values); return 'Leads!A2:T2'; },

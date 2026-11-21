@@ -165,6 +165,12 @@ function card(lead) {
     line.append(link);
     item.append(line);
   }
+  const born = /^\d{4}-\d{2}-\d{2}$/.test(lead.dateOfBirth || '') ? lead.dateOfBirth.slice(8) + '/' + lead.dateOfBirth.slice(5, 7) + '/' + lead.dateOfBirth.slice(0, 4) : '';
+  if (born) item.append(text('p', 'Date of birth: ' + born));
+  if (/^\d{4}-\d{2}-\d{2}$/.test(lead.jointDateOfBirth || '')) {
+    const joint = lead.jointDateOfBirth;
+    item.append(text('p', 'Joint date of birth: ' + joint.slice(8) + '/' + joint.slice(5, 7) + '/' + joint.slice(0, 4)));
+  }
   if (lead.email) {
     const line = document.createElement('p');
     const link = document.createElement('a');
