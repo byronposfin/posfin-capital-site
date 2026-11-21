@@ -84,6 +84,7 @@ var DEMO = {
     "crm.borrower.legal_forenames": "Jordan Alex",
     "crm.borrower.legal_surname": "Example",
     "crm.borrower.mobile": "07700 900123",
+    "crm.borrower.date_of_birth": "1984-03-14",
     "crm.borrower.email": "jordan.example@example.com",
     "crm.property.address / title": "14 Sample Terrace\nDemo Town",
     "crm.property.postcode / title": "ZZ1 1ZZ",
@@ -212,6 +213,43 @@ function flattenAnswers(schema, answers, ctx) {
   return out;
 }
 
+// lib/engine/contact.ts
+function ukMobileError(value) {
+  const raw = value.trim();
+  if (!raw) return "Enter a UK mobile, starting 07 or +44.";
+  const compact = raw.replace(/[\s()-]/g, "");
+  if (!/^\+?\d+$/.test(compact)) return "Enter a UK mobile, starting 07 or +44.";
+  let national = compact.startsWith("+") ? compact.slice(1) : compact;
+  if (national.startsWith("0044")) national = national.slice(4);
+  else if (national.startsWith("44")) national = national.slice(2);
+  else if (national.startsWith("0")) national = national.slice(1);
+  else return "Enter a UK mobile, starting 07 or +44.";
+  if (!/^7\d{9}$/.test(national)) return "Enter a UK mobile, starting 07 or +44.";
+  return null;
+}
+function calendarDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+  return date;
+}
+function dobError(value, minAge = 18, now = /* @__PURE__ */ new Date()) {
+  const dob = calendarDate(value);
+  if (!dob) return "Enter a real date of birth.";
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  if (dob > today) return "Enter a real date of birth.";
+  const adult = new Date(Date.UTC(today.getUTCFullYear() - minAge, today.getUTCMonth(), today.getUTCDate()));
+  const oldest = new Date(Date.UTC(today.getUTCFullYear() - 120, today.getUTCMonth(), today.getUTCDate()));
+  if (dob > adult || dob < oldest) {
+    return minAge === 18 ? "Enter a date of birth. Applicants need to be 18 or over." : `Enter a real date of birth. This person needs to be ${minAge} or over.`;
+  }
+  return null;
+}
+
 // lib/engine/validate.ts
 var UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i;
 var EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -241,7 +279,11 @@ function validateField(f, value) {
     case "email":
       return EMAIL.test(String(s2)) ? null : "That email doesn\u2019t look quite right.";
     case "tel":
+      if (f.ukMobile) return ukMobileError(String(s2));
       return PHONE.test(String(s2)) ? null : "Please enter a valid phone number.";
+    case "date":
+      if (!f.dob) return null;
+      return dobError(String(s2), f.minAge ?? 18);
     case "postcode":
       return UK_POSTCODE.test(String(s2)) ? null : "Please enter a full UK postcode, e.g. SW1A 1AA.";
     case "sort_code":
@@ -759,6 +801,8 @@ var DEMO_AL = {
   mobile: "07700 900123",
   company_name: "Example Holdings Ltd",
   joint_applicant_name: "Sam Example",
+  date_of_birth: "1984-03-14",
+  joint_applicant_dob: "1986-07-02",
   no_property: false,
   properties: [
     { _id: "p1", address_line1: "14 Sample Terrace, Demo Town", postcode: "ZZ1 1ZZ", property_type: "Residential", owned_by: "Joint", value: 685e3, has_mortgage: "yes", lender: "Example Building Society", mortgage_balance: 312500, monthly_payment: 1840, charge: "1st", purchase_date: "2016-04", purchase_price: 455e3, rate_type: "Fixed", rate_expiry: "2027-06" },
@@ -787,6 +831,8 @@ var DEMO_AL = {
 };
 var DEMO_WORKS = {
   borrower_name: "Example Holdings Ltd",
+  borrower_mobile: "07700 900123",
+  borrower_date_of_birth: "1984-03-14",
   property_address: "21 Placeholder Street\nSampleton",
   property_postcode: "ZZ3 7CD",
   property_type: "HMO",
@@ -1530,9 +1576,11 @@ var alSchema = {
       nodes: [
         { id: "applicant_name", label: "Your full name", type: "text", required: true, placeholder: "As it appears on your ID" },
         { id: "email", label: "Email", type: "email", required: true },
-        { id: "mobile", label: "Mobile", type: "tel", placeholder: "07\u2026" },
+        { id: "mobile", label: "Mobile", type: "tel", ukMobile: true, placeholder: "07700 900000", help: "Optional here, because the case file may already have it. Use a UK mobile, starting 07 or +44." },
+        { id: "date_of_birth", label: "Date of birth", type: "date", required: true, dob: true, help: "Day, month and year. You need to be 18 or over." },
         { id: "company_name", label: "Company name", type: "text", help: "Only if you own property through a company or SPV." },
-        { id: "joint_applicant_name", label: "Anyone else on this?", type: "text", help: "A joint applicant\u2019s full name, if there is one." }
+        { id: "joint_applicant_name", label: "Anyone else on this?", type: "text", help: "A joint applicant\u2019s full name, if there is one." },
+        { id: "joint_applicant_dob", label: "Date of birth", type: "date", required: true, dob: true, when: { field: "joint_applicant_name", notEmpty: true }, help: "Joint applicant. They need to be 18 or over." }
       ]
     },
     {
@@ -6247,6 +6295,9 @@ function toField(f, brand, prefillSources) {
     options: f.options ?? void 0,
     when: f.conditional ?? void 0,
     advanced: ["borrower_phone_fax", "borrower_phone_work"].includes(f.id) || void 0,
+    ukMobile: f.id === "borrower_phone_mobile" || void 0,
+    dob: f.id === "borrower_date_of_birth" || f.id === "occupier_date_of_birth" || void 0,
+    minAge: f.id === "occupier_date_of_birth" ? 17 : f.id === "borrower_date_of_birth" ? 18 : void 0,
     half: ["borrower_forenames", "borrower_surname", "first_lender_amount_owing", "first_lender_payment_date"].includes(f.id) || void 0,
     prefilled: Boolean(f.prefill?.possible && f.prefill.source && prefillSources.has(f.prefill.source)),
     meta: { pdf: f.pdf ?? null, source: f.source ?? null, addition_group: f.addition_group ?? null }
@@ -6357,6 +6408,8 @@ var worksSchema = {
       description: "A high-level view of what\u2019s being done \u2014 lenders and valuers use this to understand the scheme.",
       nodes: [
         { id: "borrower_name", label: "Borrower", type: "text", required: true, help: "Person or company taking the loan." },
+        { id: "borrower_mobile", label: "Mobile", type: "tel", required: true, ukMobile: true, placeholder: "07700 900000", help: "UK mobile for the person completing this form." },
+        { id: "borrower_date_of_birth", label: "Date of birth", type: "date", required: true, dob: true, help: "Day, month and year for the person completing this form. They need to be 18 or over. If the borrower is a company, use the director who is filling this in." },
         { id: "property_address", label: "Property address", type: "textarea", required: true },
         { id: "property_postcode", label: "Postcode", type: "postcode", required: true, half: true },
         { id: "property_type", label: "Property type", type: "choice", half: true, options: ["Residential", "BTL", "HMO", "Multi-unit", "Commercial", "Semi-commercial", "Other"] },
@@ -6522,6 +6575,43 @@ var localAdapter = {
 
 // lib/storage/supabase.ts
 import { createClient } from "@supabase/supabase-js";
+
+// lib/contact-columns.ts
+function text(value, max = 40) {
+  const s2 = String(value ?? "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, max);
+  return s2 || null;
+}
+function iso(value) {
+  const s2 = String(value ?? "").trim();
+  return calendarDate(s2) ? s2 : null;
+}
+function contactColumns(form, answers) {
+  if (form === "al") {
+    return {
+      applicant_mobile: text(answers.mobile),
+      applicant_dob: iso(answers.date_of_birth),
+      joint_applicant_dob: iso(answers.joint_applicant_dob)
+    };
+  }
+  if (form === "works") {
+    return {
+      borrower_mobile: text(answers.borrower_mobile),
+      borrower_dob: iso(answers.borrower_date_of_birth)
+    };
+  }
+  if (form === "remortgage") {
+    const people = Array.isArray(answers.borrowers) ? answers.borrowers : [];
+    const applicants = people.map((person) => ({ mobile: text(person.borrower_phone_mobile), date_of_birth: iso(person.borrower_date_of_birth) })).filter((person) => person.mobile || person.date_of_birth);
+    return {
+      applicant_mobile: applicants[0]?.mobile ?? null,
+      applicant_dob: applicants[0]?.date_of_birth ?? null,
+      applicants: applicants.length ? applicants : null
+    };
+  }
+  return {};
+}
+
+// lib/storage/supabase.ts
 var TABLE = {
   al: "case_assets_liabilities",
   remortgage: "case_remortgage_questionnaire",
@@ -6601,6 +6691,7 @@ var supabaseAdapter = {
       payload: d.answers,
       derived: d.derived ?? null,
       crm_export: d.export ?? null,
+      ...contactColumns(form, d.answers),
       updated_at: now,
       submitted_at: d.status === "submitted" ? now : prev?.submitted_at ?? null
     };
@@ -6964,10 +7055,10 @@ async function resolve(req, { params }) {
 async function readJson(req) {
   const len = Number(req.headers.get("content-length") ?? 0);
   if (len > MAX_BODY) return null;
-  const text = await req.text();
-  if (text.length > MAX_BODY) return null;
+  const text2 = await req.text();
+  if (text2.length > MAX_BODY) return null;
   try {
-    const j = JSON.parse(text);
+    const j = JSON.parse(text2);
     return j && typeof j === "object" ? j : null;
   } catch {
     return null;

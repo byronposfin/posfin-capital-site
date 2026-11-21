@@ -7,6 +7,8 @@ export const DEMO_AL: Answers = {
   mobile: "07700 900123",
   company_name: "Example Holdings Ltd",
   joint_applicant_name: "Sam Example",
+  date_of_birth: "1984-03-14",
+  joint_applicant_dob: "1986-07-02",
   no_property: false,
   properties: [
     { _id: "p1", address_line1: "14 Sample Terrace, Demo Town", postcode: "ZZ1 1ZZ", property_type: "Residential", owned_by: "Joint", value: 685000, has_mortgage: "yes", lender: "Example Building Society", mortgage_balance: 312500, monthly_payment: 1840, charge: "1st", purchase_date: "2016-04", purchase_price: 455000, rate_type: "Fixed", rate_expiry: "2027-06" },
@@ -36,6 +38,8 @@ export const DEMO_AL: Answers = {
 
 export const DEMO_WORKS: Answers = {
   borrower_name: "Example Holdings Ltd",
+  borrower_mobile: "07700 900123",
+  borrower_date_of_birth: "1984-03-14",
   property_address: "21 Placeholder Street\nSampleton",
   property_postcode: "ZZ3 7CD",
   property_type: "HMO",

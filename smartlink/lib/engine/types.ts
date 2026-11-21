@@ -57,6 +57,11 @@ export interface Field {
   unit?: "%" | "£" | "";
   /** tolerance: colour per option index (good / mid / bad). Defaults to green / amber / red. */
   tones?: ("good" | "mid" | "bad")[];
+  /** UK mobile: 07… or +44 7…. Other telephone fields stay on the general check. */
+  ukMobile?: boolean;
+  /** Date of birth: day/month/year, a real past date, and at least minAge (default 18). */
+  dob?: boolean;
+  minAge?: number;
 }
 
 export interface Repeater {
