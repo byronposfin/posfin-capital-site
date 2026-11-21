@@ -153,6 +153,7 @@
     { "source": "/case/:token/submit", "destination": "/api/case-submit?token=:token" },
     { "source": "/case/:token/kyc", "destination": "/api/case-kyc?token=:token" },
     { "source": "/case/:token", "destination": "/api/case-portal?token=:token" },
+    { "source": "/staff/cockpit/broka/:caseRef", "destination": "/api/broka-desk?case=:caseRef" },
     { "source": "/staff/cockpit/pipeline", "destination": "/api/staff-pipeline" },
     { "source": "/staff/cockpit/spine/:caseRef", "destination": "/api/staff-cockpit?spine=:caseRef" },
     { "source": "/staff/cockpit", "destination": "/api/staff-cockpit" },
