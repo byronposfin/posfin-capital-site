@@ -21,6 +21,8 @@ import { drainAlerts } from "../lib/ff-alert-outbox.js";
 import { drainLeadOps } from "../lib/lead-ops.js";
 import { isVerifyRequest, SYNTHETIC } from "../lib/verify-request.js";
 import { validate } from "../lib/ff-schema.js";
+import { looksLikeTestLead, referencePrefix, responseTestMode } from "../lib/ff-test-lead.js";
+import { buildBrokaSpine } from "../lib/broka-spine.js";
 
 export const VERSION = "uk-v005-land-v12";
 export const CONSENT_VERSION = "uk-consent-v1-2026-11-03"; // bump whenever the consent wording on /fact-find changes
@@ -65,7 +67,11 @@ export function isPublishableKey(k) {
   if (p.length !== 3) return false;
   try { return JSON.parse(Buffer.from(p[1], "base64url").toString("utf8")).role === "anon"; } catch { return false; }
 }
-const refPrefix = cfg => (cfg.testRun ? cfg.backend.testRef : cfg.backend.ref);
+const refPrefix = (cfg, answers) => referencePrefix(cfg, answers);
+function stampSpine(clean) {
+  if (!clean || isLand(clean)) return clean;
+  return { ...clean, broka_case_spine: buildBrokaSpine(clean) };
+}
 const clip = (v, n) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, n) : "") || undefined;
 
 // Attribution + privacy-safe fingerprints for the leads backend. Never includes raw IP / UA.
@@ -181,7 +187,6 @@ export default async function handler(req, res) {
     }
     const action = String(body.action || "");
     if (!["save", "load", "submit"].includes(action)) return send(res, 400, { ok: false, error: "unknown_action" });
-    const testMode = cfg.backend.test;
     const meta = cfg.backend.meta ? { p_meta: buildMeta(cfg, req, body) } : {};
 
     const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
@@ -189,16 +194,19 @@ export default async function handler(req, res) {
     if (allowed !== true) return send(res, 429, { ok: false, error: "rate_limited", message: "Too many attempts. Please wait a few minutes and try again." });
 
     if (action === "save") {
-      const { clean, errors } = validate(body.answers, false, testMode);
+      const testMode = responseTestMode(cfg, body.answers);
+      const parsed = validate(body.answers, false, !!cfg.backend.test);
+      const clean = stampSpine(parsed.clean), errors = parsed.errors;
       if (errors._) return send(res, 400, { ok: false, error: "bad_input" });
       let code = normCode(body.code), isNew = false;
       if (!code) { code = normCode(`${rand(4)}${rand(4)}${rand(4)}`); isNew = true; }
       else if (!codeOk(code)) return send(res, 400, { ok: false, error: "bad_code", message: "That resume code is not valid." });
       const step = Math.max(1, Math.min(5, parseInt(body.step, 10) || 1));
-      const rows = await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg) + rand(6), p_step: step, p_answers: clean, ...meta });
+      const rows = await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg, clean) + rand(6), p_step: step, p_answers: clean, ...meta });
       const row = rows && rows[0];
       if (!row) throw new BackendError("save_failed", 502);
       if (row.status !== "draft") return send(res, 409, { ok: false, error: "already_submitted", reference: row.reference, message: "This fact find has already been submitted." });
+      if (looksLikeTestLead(clean)) await markDeclaredTest(cfg, sha(code));
       return send(res, 200, { ok: true, code: code.match(/.{4}/g).join("-"), isNew, reference: row.reference, step: row.step, savedAt: row.updated_at, testMode, fieldErrors: errors });
     }
     if (action === "load") {
@@ -207,15 +215,18 @@ export default async function handler(req, res) {
       const rows = await rpc(cfg, "load", { p_resume_hash: sha(code) });
       const r = rows && rows[0];
       if (!r) return send(res, 404, { ok: false, error: "not_found", message: "We could not find a fact find with that code." });
-      return send(res, 200, { ok: true, reference: r.reference, status: r.status, step: r.step, answers: r.status === "draft" ? r.answers : {}, savedAt: r.updated_at, testMode });
+      return send(res, 200, { ok: true, reference: r.reference, status: r.status, step: r.step, answers: r.status === "draft" ? r.answers : {}, savedAt: r.updated_at, testMode: responseTestMode(cfg, r.answers) });
     }
     // submit
     const code = normCode(body.code);
     if (!codeOk(code)) return send(res, 400, { ok: false, error: "bad_code" });
-    const { clean, errors } = validate(body.answers, true, testMode);
+    const testMode = responseTestMode(cfg, body.answers);
+    const parsed = validate(body.answers, true, !!cfg.backend.test);
+    const clean = stampSpine(parsed.clean), errors = parsed.errors;
     if(isLand(clean)&&belowMinimum(clean))return send(res,422,{ok:false,error:"below_minimum",message:"Below minimum value",no_chase:true});
     if (Object.keys(errors).length) return send(res, 422, { ok: false, error: "validation", fieldErrors: errors, message: "Please check the highlighted answers." });
-    await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg) + rand(6), p_step: 5, p_answers: clean, ...meta });
+    await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg, clean) + rand(6), p_step: 5, p_answers: clean, ...meta });
+    if (looksLikeTestLead(clean)) await markDeclaredTest(cfg, sha(code));
     const rows = await rpc(cfg, "submit", { p_resume_hash: sha(code), p_answers: clean, ...meta });
     const r = rows && rows[0];
     if (!r || r.status !== "submitted") throw new BackendError("submit_failed", 502);
@@ -235,6 +246,22 @@ export default async function handler(req, res) {
     if (status >= 500) return unavailable(res, code);
     return send(res, status, { ok: false, error: code });
   }
+}
+
+// A name or note containing TEST is still saved. Mark the row so live counts exclude it.
+async function markDeclaredTest(cfg, resumeHash) {
+  const key = String(process.env.FF_ALERT_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  if (!key || !cfg.url || !/^[0-9a-f]{64}$/.test(resumeHash)) return;
+  try {
+    await timedFetch(`${cfg.url}/rest/v1/web_leads?resume_hash=eq.${resumeHash}`, {
+      method: "PATCH",
+      headers: {
+        apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json",
+        "Accept-Profile": "pipeline", "Content-Profile": "pipeline", Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ is_test: true }),
+    }, 4000);
+  } catch { /* A new TEST-WEB reference is already excluded. */ }
 }
 
 // Email drain is best-effort. The application is already saved. A miss is retried by the cron.
