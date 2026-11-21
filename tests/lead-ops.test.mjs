@@ -146,7 +146,7 @@ test('drain sends the staff alert with an idempotency key and suppresses other r
     LEAD_EMAIL_PROVIDER: 'resend', LEAD_EMAIL_API_KEY: 're_test_secret', LEAD_EMAIL_FROM: 'Posfin Capital <byron.hill@posfincapital.com>',
     LEAD_ALERT_ONLY_EMAIL: 'byron.hill@posfincapital.com', LEAD_SLA_ENABLED: 'true',
   };
-  const payload = { reference: 'POSFIN-WEB-ABC234', owner_name: 'Jess', contact_consent: true, ai_call_consent: false, no_chase: false, is_test: true, full_name: 'Byron Hill', email: 'byron.hill@posfincapital.com', phone: '07000000000' };
+  const payload = { reference: 'POSFIN-WEB-ABC234', owner_name: 'Jess', contact_consent: true, ai_call_consent: false, no_chase: false, is_test: false, full_name: 'Byron Hill', email: 'byron.hill@posfincapital.com', phone: '07000000000' };
   const rows = [
     { id: '1', reference: 'POSFIN-WEB-ABC234', kind: 'staff_alert', recipient_email: 'byron.hill@posfincapital.com', lease_id: 'lease-1', attempts: 1, idempotency_key: 'idem-1', created_at: new Date().toISOString(), payload },
     { id: '2', reference: 'POSFIN-WEB-ABC234', kind: 'staff_alert', recipient_email: 'jessica@posfincapital.com', lease_id: 'lease-2', attempts: 1, idempotency_key: 'idem-2', created_at: new Date().toISOString(), payload },
