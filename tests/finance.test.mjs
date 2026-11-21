@@ -46,6 +46,18 @@ test('negative/range debt rejected, not silently converted; insufficient request
  for(const n of ['-5000','40000-50000'])assert.ok(validate({...base,second_charge_balance:n},false,false).errors.second_charge_balance);
  const c=calculate({...base,loan_amount:20000,redemption_structure:'Deduct within requested amount'});assert.equal(c.cash,null);assert.equal(c.facility,null);
 });
+test('no arrears hides treatment, and a first-charge redemption deducted within the request shows estimated cash',()=>{
+ const none={loan_amount:150000,property_value:400000,first_charge_status:'Mortgage in place',first_charge_balance:100000,arrears:'No',first_charge_arrears_amount:0,arrears_included_in_balance:'Not sure',second_charges:'No',charge_position:'First charge — replacing/clearing the current lender',redemption_structure:'Deduct within requested amount',legal_buffer:'2000',contingency_buffer:'0'};
+ assert.equal(calculate(none).cash,50000);
+ const html=renderScorecard(none);
+ assert.match(html,/Estimated cash available/);
+ assert.match(html,/£50,000/);
+ assert.doesNotMatch(html,/Arrears treatment/);
+ assert.match(html,/not a lender offer/i);
+ const kept={...none,redemption_structure:'Add on top of requested amount'};
+ assert.equal(calculate(kept).cash,null);
+ assert.doesNotMatch(renderScorecard(kept),/Estimated cash available/);
+});
 test('explicit no mortgage supersedes stale arrears consistently with persisted normalisation',()=>{
  const a={...base,first_charge_status:'No mortgage',second_charges:'No'};
  assert.deepEqual(calculate(a),calculate(validate(a,false,false).clean));assert.equal(calculate(a).mandatory,0);

@@ -1,11 +1,13 @@
 import {createLandJourney} from '/lib/ff-land-ui.js';
 import {isLand} from '/lib/ff-land.js';
 import { createPropertyEditor } from "/lib/ff-properties-ui.js?v=20261120-address";
-import { renderProperties } from "/lib/ff-properties.js?v=20261104-properties";
+import { renderProperties } from "/lib/ff-properties.js?v=20261121-factfind";
 import { BRANCH_FIELDS, branchVisible, cleanBranches, routeCard } from "/lib/ff-routing.js?v=20261104-live";
 import { bindMoneyInput, bindPostcode } from "/lib/ff-inputs.js?v=20261104-live";
 import { FINDER_MARKUP, bindSecurityAddressPicker } from "/lib/ff-address-picker.js?v=20261120-address";
-import { money, renderScorecard } from "/lib/ff-finance.js?v=20261104-lender-gate";
+import { money, renderScorecard } from "/lib/ff-finance.js?v=20261121-factfind";
+import { looksLikeTestLead } from "/lib/ff-test-lead.js?v=20261121-factfind";
+import { createSingleFlight } from "/lib/ff-save-queue.js?v=20261121-factfind";
 import * as S from "/lib/ff-schema.js?v=20261112-acquisition";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
@@ -49,7 +51,7 @@ const OPT = {...O,ownership:O.ownership,asset_type:O.asset_type,residential_type
   first_charge_status:O.first_charge_status,arrears:O.yns,second_charges:O.yns,restrictions:O.restrictions,credit_profile:O.credit_profile,credit_events:O.credit_events,missed_payments:O.missed_payments,contact_pref:O.contact_pref};
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let step = 0, code = "", mode = "server", busy = false, landArchive = null;
+let step = 0, code = "", mode = "server", landArchive = null, namedTest = false;
 const fmt = v => { const n=money(v); return n===null ? "Not sure" : Number.isFinite(n) ? "£"+n.toLocaleString("en-GB") : String(v??""); };
 
 // render
@@ -116,6 +118,7 @@ async function checkHealth(){
   lastHealth=Date.now();
   try{ const r=await fetch("/api/factfind",{method:"GET",cache:"no-store"}); const h=await r.json();
     setTestMode(h.testMode===true || h.testRun===true);
+    if(looksLikeTestLead(collect())) namedTest=true;
     if(h.ready){ setMode("server"); return true; }
     setMode("local", h.reason||h.db||"not_ready"); return false;
   }catch(e){ setTestMode(testMode); setMode("local","health_unreachable"); return false; }
@@ -130,23 +133,28 @@ const LS="posfin_ff_local_v1"; const lget=()=>{try{return JSON.parse(localStorag
 const lcode=()=>{const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",b=new Uint8Array(12);crypto.getRandomValues(b);const s=[...b].map(x=>A[x%32]).join("");return s.match(/.{4}/g).join("-")};
 const norm=c=>String(c||"").toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/(.{4})(?=.)/g,"$1-");
 
-async function save(quiet){
-  if(busy) return false; busy=true; $("#save").disabled=true;
-  const answers=collect();
+async function doSave(){
+  $("#save").disabled=true;
   try{
-    if(mode==="server"){
-      const {status,j}=await api({action:"save",code,step:step+1,answers});
-      if(down(status)) { setMode("local", j.error); busy=false; $("#save").disabled=false; return save(quiet); }
-      if(!j.ok){ setStatus(j.error==="already_submitted"?"This fact find has already been submitted.":(j.message||"Could not save just now. Please try again."),"bad"); return false; }
-      showCode(j.code); setStatus((testMode?"Draft saved to the test database at ":"Draft saved securely at ")+new Date(j.savedAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})+".","ok"); return true;
-    } else {
-      if(Date.now()-lastHealth>30000 && await checkHealth()){ busy=false; $("#save").disabled=false; return save(quiet); }
+    for(let attempt=0; attempt<2; attempt++){
+      const answers=collect();
+      if(looksLikeTestLead(answers)) namedTest=true;
+      if(mode==="server"){
+        const {status,j}=await api({action:"save",code,step:step+1,answers});
+        if(down(status)){ setMode("local", j.error); continue; }
+        if(!j.ok){ setStatus(j.error==="already_submitted"?"This fact find has already been submitted.":(j.message||"Could not save just now. Please try again."),"bad"); return false; }
+        if(j.testMode) namedTest=true;
+        showCode(j.code); setStatus((testMode?"Draft saved to the test database at ":"Draft saved securely at ")+new Date(j.savedAt).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})+".","ok"); return true;
+      }
+      if(Date.now()-lastHealth>30000 && await checkHealth()) continue;
       const d=lget(); if(!code) code=lcode(); d[code]={answers,step:step+1,status:"draft",savedAt:new Date().toISOString()}; lput(d); showCode(code);
       setStatus("Saved on this device only. Our secure online save is unavailable right now, so nothing has been sent to us yet.","warn"); return true;
     }
-  }catch(e){ if(mode==="server"){ setMode("local"); busy=false; $("#save").disabled=false; return save(quiet);} setStatus("Could not save.","bad"); return false; }
-  finally{ busy=false; $("#save").disabled=false; }
+    setStatus("Could not save.","bad"); return false;
+  }catch(e){ if(mode==="server"){ setMode("local"); return doSave(); } setStatus("Could not save.","bad"); return false; }
+  finally{ if($("#save")) $("#save").disabled=false; }
 }
+const save = createSingleFlight(doSave);
 async function resume(c){
   c=norm(c); const rs=$("#resumeStatus"); if(!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(c)){ rs.textContent="Please enter the 12-character code."; rs.className="status bad"; return; }
   rs.textContent="Opening…"; rs.className="status";
@@ -172,9 +180,10 @@ async function submit(){
       const {status,j}=await api({action:"submit",code,answers:collect()});
       if(down(status)){ setMode("local", j.error); $("#next").disabled=false; return submit(); }
       if(!j.ok){ if(j.fieldErrors) showErr(j.fieldErrors); setStatus(j.message||"Could not submit. Please check your answers.","bad"); return; }
+      if(j.testMode||looksLikeTestLead(collect())) namedTest=true;
       const summary=routeCard(collect())+renderScorecard(collect())+renderProperties(collect());
       $("#ff").innerHTML='<h2>Your fact find is saved</h2><p id="submittedReference"></p><p>Thank you. We will review your declared figures and confirm the outstanding details together.</p>'+summary+'<p><a href="/">Back to the home page</a></p>';
-      $("#submittedReference").textContent="Reference: "+j.reference+(testMode?" — synthetic preview test":"");
+      $("#submittedReference").textContent="Reference: "+j.reference+((testMode||namedTest)?" — test, excluded from live lead counts and alerts":"");
       window.scrollTo({top:0,behavior:"smooth"});
     } else {
       // Never pretend a local-only submit reached us. Re-check the server once, else show the not-sent panel.
@@ -185,7 +194,20 @@ async function submit(){
     }
   } finally { if($("#next")) $("#next").disabled=false; }
 }
-$("#next").addEventListener("click",async()=>{ if(step===4) return submit(); const e=stepErrors(step); if(Object.keys(e).length){ showErr(e); setStatus("Please check the highlighted answers.","bad"); return; } clearErr(); const ok=await save(true); if(ok!==false) show(step+1); window.scrollTo({top:0,behavior:"smooth"}); });
+let nextBusy=false;
+$("#next").addEventListener("click",async()=>{
+  if(step===4) return submit();
+  const e=stepErrors(step);
+  if(Object.keys(e).length){ showErr(e); setStatus("Please check the highlighted answers.","bad"); return; }
+  clearErr();
+  if(nextBusy) return;
+  nextBusy=true;
+  const btn=$("#next");
+  btn.disabled=true; btn.textContent="Saving…";
+  try{ const ok=await save(true); if(ok!==false) show(step+1); }
+  finally{ nextBusy=false; if($("#next")){ $("#next").disabled=false; if($("#next").textContent==="Saving…") $("#next").textContent=step===4?"Submit fact find":"Continue"; } }
+  window.scrollTo({top:0,behavior:"smooth"});
+});
 $("#back").addEventListener("click",()=>{ clearErr(); show(step-1); });
 $("#save").addEventListener("click",()=>save(false));
 $("#resumeBtn").addEventListener("click",()=>resume($("#resumeCode").value));
@@ -204,4 +226,4 @@ $("#retryBtn").addEventListener("click",async()=>{ setStatus("Checking…"); con
 /* Clear a field's error as soon as the user edits it */
 document.addEventListener("input", clearOne, true);
 document.addEventListener("change", clearOne, true);
-function clearOne(ev){ const el=ev.target; if(!el||!el.id) return; const e=document.getElementById("e_"+el.id); if(e&&e.textContent){ e.textContent=""; el.classList.remove("bad"); } }
+function clearOne(ev){ const el=ev.target; if(!el||!el.id) return; const errs=stepErrors(step); if(!errs[el.id]){ const e=document.getElementById("e_"+el.id); if(e) e.textContent=""; el.classList.remove("bad"); } if(!Object.keys(errs).length){ const status=$("#status"); if(status&&status.textContent.startsWith("Please check the highlighted answers")) setStatus(""); } if(["full_name","company_name","notes"].includes(el.id)&&looksLikeTestLead(collect())) namedTest=true; }
