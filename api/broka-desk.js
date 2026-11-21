@@ -1,8 +1,8 @@
 import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCookie } from '../lib/case-http.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
-import { PREVIEW_CASES, caseRefOk, factFindSubmitted, preflight } from '../lib/broka.js';
+import { PREVIEW_CASES, caseRefOk, factFindSubmitted, groupResults, preflight } from '../lib/broka.js';
 import { renderBrokaCase, renderBrokaLogin, renderBrokaMessage } from '../lib/broka-html.js';
-import { getSearchControl, latestJob, setSearchPaused } from '../lib/broka-state.js';
+import { getSearchControl, latestJob, listDirectory, listResults, recordResult, setSearchPaused } from '../lib/broka-state.js';
 
 const STAGES = new Set([
   'raw_lead', 'opener_sent', 'new_triage', 'contacting', 'fact_find', 'lor_requested',
@@ -24,6 +24,7 @@ export function caseView(caseRef, stage) {
     preflight: preflight(answers, fixture ? fixture.regulated : null),
     control: getSearchControl(),
     job: latestJob(caseRef),
+    results: groupResults(listResults(caseRef), listDirectory()),
   };
 }
 
@@ -50,6 +51,23 @@ export async function handleBrokaDesk(req, res, deps = {}) {
       if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderBrokaLogin());
       const caseRef = caseRefOk(fields.case_ref) ? fields.case_ref : caseRefFrom(req);
       if (!caseRef) return sendHtml(res, 404, renderBrokaMessage('Not on this desk', 'That case reference is not available.'));
+      if (fields.action === 'record-result') {
+        const saved = recordResult({
+          caseRef,
+          lender: fields.lender,
+          terms: {
+            rate: fields.rate,
+            fee: fields.fee,
+            ltv: fields.ltv,
+            term_months: fields.term_months,
+            gross: fields.gross,
+            net: fields.net,
+          },
+        });
+        if (!saved.ok) return sendHtml(res, 400, renderBrokaMessage('Not recorded', 'That lender result was not stored. Nobody was contacted.'));
+        const note = saved.created ? `${saved.result.lender} was added to the PLACED directory. Nobody was contacted.` : 'Result recorded. Nobody was contacted.';
+        return sendHtml(res, 200, renderBrokaCase(caseView(caseRef, fields.stage), note));
+      }
       if (fields.action === 'pause' || fields.action === 'resume') {
         const changed = setSearchPaused(String(fields.seat || ''), fields.action === 'pause');
         if (!changed.ok) return sendHtml(res, 403, renderBrokaMessage('Not changed', 'Only Byron can pause or resume searches. Nothing was sent.'));
