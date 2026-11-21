@@ -28,6 +28,12 @@ test('results group as X of Y known, with baseline badges and new lenders', () =
   assert.equal(byName.Invocap.label, '4 of 6 known');
   assert.equal(byName.Invocap.baseline, true);
   assert.equal(byName.Invocap.isNew, false);
+  const forced = groupResults(
+    [{ lender: 'Invocap', terms: { rate: '1%' } }],
+    [{ name: 'Invocap', baseline: true, addedFromResult: true, contact: null }],
+  );
+  assert.equal(forced[0].isNew, false);
+  assert.equal(forced[0].baseline, true);
   assert.equal(byName['Albatross Lending Group'].baseline, true);
   assert.equal(byName['Albatross Lending Group'].label, '5 of 6 known');
   assert.equal(byName['Albatross Capital'].baseline, false);
