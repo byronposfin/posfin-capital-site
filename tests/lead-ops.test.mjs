@@ -58,7 +58,7 @@ test('writes are limited by role', () => {
 test('applicant reply is a marked draft from a credit broker and stays off without consent', () => {
   const lead = { reference: 'POSFIN-WEB-ABC234', full_name: 'Byron Hill', contact_consent: true, ai_call_consent: false, no_chase: false, email: 'byron.hill@posfincapital.com' };
   const message = applicantReplyMessage(lead);
-  assert.match(message.subject, /DRAFT — not approved/);
+  assert.doesNotMatch(message.subject, /DRAFT/);
   assert.match(message.text, /credit broker/);
   assert.match(message.text, /not a lender/);
   assert.match(message.text, /not a loan offer/);

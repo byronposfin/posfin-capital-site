@@ -149,6 +149,10 @@
     {
       "path": "/api/factfind-alert-worker",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/verify-forms",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

@@ -520,6 +520,7 @@ begin
        and l.sla_due_at is not null
        and l.sla_due_at <= now()
        and coalesce(l.answers->>'no_chase', 'false') <> 'true'
+       and l.is_test = false
        and l.status not in ('closed_won','closed_lost','spam')
        and exists (select 1 from recipient)
      order by l.sla_due_at, l.id
@@ -599,6 +600,7 @@ begin
     left join pipeline.staff_seats s on s.seat_code = l.assigned_seat
    where l.form_stage = 'submitted'
      and l.closed_at is null
+     and l.is_test = false
      and l.status not in ('closed_won','closed_lost','spam')
    order by l.submitted_at desc nulls last, l.id
    limit 100;
@@ -623,6 +625,39 @@ begin
   if v_ref is null then raise exception 'not_allowed' using errcode = '42501'; end if;
   return jsonb_build_object('ok', true, 'reference', v_ref);
 end $$;
+
+-- Service role only. Accepts TEST-WEB references so the overnight check can see its own rows.
+create or replace function public.verify_web_lead(p_reference text)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare v jsonb;
+begin
+  if p_reference !~ '^TEST-WEB-[A-Z2-9]{6}$' then
+    raise exception 'not_allowed' using errcode = '42501';
+  end if;
+  select jsonb_build_object(
+    'reference', l.reference,
+    'is_test', l.is_test,
+    'email', l.email,
+    'assigned_seat', l.assigned_seat,
+    'contacted_at', l.contacted_at,
+    'sla_due_at', l.sla_due_at,
+    'alerts', coalesce((
+      select jsonb_agg(jsonb_build_object('kind', o.kind, 'state', o.state, 'provider_id', o.provider_id))
+        from pipeline.web_lead_email_outbox o
+       where o.lead_id = l.id
+    ), '[]'::jsonb)
+  ) into v
+    from pipeline.web_leads l
+   where l.reference = p_reference;
+  return coalesce(v, 'null'::jsonb);
+end $$;
+revoke all on function public.verify_web_lead(text) from public, anon, authenticated;
+grant execute on function public.verify_web_lead(text) to service_role;
 
 revoke all on function public.staff_new_web_leads() from public, anon, service_role;
 revoke all on function public.web_lead_mark_contacted(uuid) from public, anon, service_role;

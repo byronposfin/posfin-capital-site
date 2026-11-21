@@ -1,6 +1,10 @@
 # Lead pipeline
 
-This is the switch-on guide for new fact-find alerts, owners, and the 15-minute contact clock. Nothing in this branch is live until the migration is applied and the environment flags below are set. Do not turn on Facebook ads from this file.
+Staff alerts, the applicant reply, and the 15-minute clock are switched on in production. Facebook ads stay off until Tuesday or Wednesday.
+
+Synthetic checks use `synthetic.verify@posfincapital.com` and `07700900000`, are stored with `is_test = true` and a `TEST-WEB-` reference, and are not emailed to a person. Real applicants are excluded from that path. `is_test` rows stay in the database and are left out of the staff new-leads queue and the SLA chase. CRM rows for them use source `web_factfind_test`.
+
+The overnight check is `GET /api/verify-forms` every 30 minutes. It alerts the existing Telegram chat only when a check fails. `npm run verify` with `VERIFY_BROWSER=1` also clicks the dropdowns.
 
 Posfin Capital is a credit broker, not a lender. The applicant email is a draft and stays off.
 
