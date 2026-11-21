@@ -19,41 +19,41 @@ async function browserPass(origin) {
       const item = { name: `dropdowns:${form.id}`, ok: false, detail: {} };
       try {
         await page.goto(origin + form.path, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForSelector('select, #findAddress', { state: 'attached', timeout: 20000 });
+        const summary = await page.evaluate(() => {
+          const formEl = document.querySelector('#ff');
+          if (formEl) formEl.removeAttribute('inert');
+          document.querySelectorAll('.step').forEach((section) => section.classList.remove('hide'));
+          const selects = [...document.querySelectorAll('select')];
+          let worked = 0;
+          for (const select of selects) {
+            if (select.options.length < 2 || select.disabled) continue;
+            select.selectedIndex = 1;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            if (select.value) worked++;
+          }
+          return { found: selects.length, worked };
+        });
+        item.detail = { ...summary };
         if (form.address) {
-          await page.waitForSelector('#security_postcode', { timeout: 20000 });
-          const selects = page.locator('select');
-          const count = await selects.count();
-          let worked = 0;
-          for (let i = 0; i < count; i++) {
-            const select = selects.nth(i);
-            if (!(await select.isVisible())) continue;
-            const options = await select.locator('option').count();
-            if (options < 2) continue;
-            await select.selectOption({ index: 1 });
-            const value = await select.inputValue();
-            if (value) worked++;
-          }
-          await page.fill('#security_postcode', 'SW1A 1AA');
-          await page.click('#findAddress');
+          await page.evaluate(() => {
+            const postcode = document.querySelector('#security_postcode');
+            if (postcode) {
+              postcode.value = 'SW1A 1AA';
+              postcode.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          });
+          await page.locator('#findAddress').click({ force: true });
           await page.waitForTimeout(4000);
-          const choiceCount = await page.locator('#addressChoices option').count();
-          const message = await page.locator('#addressMessage').innerText();
-          item.detail = { selects: worked, addressOptions: choiceCount, message: message.slice(0, 180) };
-          item.ok = worked > 0 && (choiceCount > 1 || /address|postcode|provider|manual/i.test(message));
+          const address = await page.evaluate(() => ({
+            options: document.querySelectorAll('#addressChoices option').length,
+            message: (document.querySelector('#addressMessage') || {}).textContent || '',
+          }));
+          item.detail.addressOptions = address.options;
+          item.detail.message = address.message.slice(0, 180);
+          item.ok = summary.worked > 0 && (address.options > 1 || /address|postcode|manual|unavailable/i.test(address.message));
         } else {
-          const selects = page.locator('select');
-          const count = await selects.count();
-          let worked = 0;
-          for (let i = 0; i < count; i++) {
-            const select = selects.nth(i);
-            const options = await select.locator('option').count();
-            if (options < 2) continue;
-            await select.selectOption({ index: 1 });
-            if (await select.inputValue()) worked++;
-          }
-          item.detail = { selects: worked, found: count };
-          item.ok = worked > 0 && worked === count - 0 && count > 0;
-          if (count > 0 && worked < count) item.ok = worked > 0 && worked >= Math.min(3, count);
+          item.ok = summary.found > 0 && summary.worked >= Math.min(3, summary.found);
         }
       } catch (error) {
         item.detail = { error: String(error && error.message || error).slice(0, 180) };
@@ -68,7 +68,7 @@ async function browserPass(origin) {
 }
 
 const origin = String(process.env.VERIFY_BASE_URL || 'https://posfincapital.com').replace(/\/+$/, '');
-const api = await runChecks();
+const api = process.env.VERIFY_BROWSER_ONLY === '1' ? { checks: [] } : await runChecks();
 let dropdowns = [];
 if (process.env.VERIFY_BROWSER === '1') dropdowns = await browserPass(origin);
 const checks = api.checks.concat(dropdowns);

@@ -1,5 +1,6 @@
 // Overnight check. Synthetic contacts only. Alerts Byron on Telegram when a check fails.
 import crypto from 'node:crypto';
+import { probeGmail } from '../lib/lead-email.js';
 import { factFindAnswers, optionsLead, acquisitionLead } from '../lib/verify-samples.js';
 
 const FORMS = [
@@ -78,6 +79,9 @@ export async function runChecks(env = process.env, fetcher = fetch) {
   } else if (reference) {
     checks.push({ name: 'supabase-alert', ok: false, detail: { reason: 'service_key_missing' } });
   }
+
+  const gmail = await probeGmail(env);
+  checks.push({ name: 'gmail-auth', ok: gmail.ok === true, detail: gmail.skipped ? { skipped: true } : { error: gmail.error || null } });
 
   const failed = checks.filter((item) => !item.ok);
   return { ok: failed.length === 0, checks, failed: failed.map((item) => item.name) };
