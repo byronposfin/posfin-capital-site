@@ -137,14 +137,25 @@ async function getXlsx(req: Request, ctx: RouteParams) {
   return new Response(new Uint8Array(buf), { headers: { "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "content-disposition": `attachment; filename="${name}_${m.ref}.xlsx"`, "cache-control": "no-store" } });
 }
 
-export async function dispatch(req: Request): Promise<Response> {
-  const url = new URL(req.url);
+function routeOf(url: URL): { form: string; token: string; action: string } | null {
   const parts = url.pathname.split("/").filter(Boolean);
   const at = parts.indexOf("forms");
-  if (at < 0 || parts.length < at + 3 || parts.length > at + 4) return Response.json({ error: "not found" }, { status: 404 });
-  const form = parts[at + 1];
-  const token = decodeURIComponent(parts[at + 2]);
-  const action = parts[at + 3] ?? "";
+  if (at >= 0 && parts.length >= at + 3 && parts.length <= at + 4) {
+    return { form: parts[at + 1], token: decodeURIComponent(parts[at + 2]), action: parts[at + 3] ?? "" };
+  }
+  // The live site rewrites /api/forms/:form/:token onto a plain function, because
+  // Vercel does not route the bracket catch-all. The original segments travel as a query.
+  const form = url.searchParams.get("form") ?? "";
+  const token = url.searchParams.get("token") ?? "";
+  if (!form || !token) return null;
+  return { form, token: decodeURIComponent(token), action: url.searchParams.get("action") ?? "" };
+}
+
+export async function dispatch(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const route = routeOf(url);
+  if (!route) return Response.json({ error: "not found" }, { status: 404 });
+  const { form, token, action } = route;
   const ctx: RouteParams = { params: Promise.resolve({ form, token }) };
   if (!action && req.method === "GET") return getDraft(req, ctx);
   if (!action && req.method === "PUT") return putDraft(req, ctx);

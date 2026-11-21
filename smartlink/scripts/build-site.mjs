@@ -14,7 +14,7 @@ const repo = path.resolve(smartlink, "..");
 
 await esbuild.build({
   entryPoints: [path.join(smartlink, "server/vercel.ts")],
-  outfile: path.join(repo, "api/forms/[...slug].js"),
+  outfile: path.join(repo, "api/smartlink-forms.js"),
   bundle: true,
   platform: "node",
   format: "esm",

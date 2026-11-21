@@ -14,7 +14,7 @@ type NodeRes = {
   end(body?: Buffer | string): void;
 };
 
-/** Vercel Node handler for /api/forms/:form/:token and /submit /export /pdf /xlsx. */
+/** Vercel Node handler. Live traffic is rewritten from /api/forms/:form/:token onto this file. */
 export default async function handler(req: NodeReq, res: NodeRes) {
   try {
     const host = header(req, "x-forwarded-host") || header(req, "host") || "localhost";

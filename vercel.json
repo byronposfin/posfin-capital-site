@@ -186,6 +186,8 @@
       "source": "/apply1",
       "destination": "/apply?b=chris"
     },
+    { "source": "/api/forms/:form/:token/:action", "destination": "/api/smartlink-forms?form=:form&token=:token&action=:action" },
+    { "source": "/api/forms/:form/:token", "destination": "/api/smartlink-forms?form=:form&token=:token" },
     { "source": "/works/:token/statement", "destination": "/smartlink/static" },
     { "source": "/works/:token", "destination": "/smartlink/static" },
     { "source": "/al/:token/statement", "destination": "/smartlink/static" },
