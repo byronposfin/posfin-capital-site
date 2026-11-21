@@ -2,6 +2,7 @@
 // The service-role key is never accepted here and never sent to the browser.
 import { readConfig } from './factfind.js';
 import { presentLead } from '../lib/lead-lane.js';
+import { DEFAULT_SEATS, LEAD_STATUSES } from '../lib/lead-assign.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -44,14 +45,30 @@ export default async function handler(req, res) {
   if (!token) return send(res, 401, { ok: false, error: 'auth' });
   try {
     if (req.method === 'GET') {
-      const result = await userRpc(cfg, token, 'staff_new_web_leads', {});
+      const includeTests = process.env.FF_TEST_RUN === 'true' && process.env.VERCEL_ENV !== 'production';
+      const result = await userRpc(cfg, token, 'staff_new_web_leads_v2', { p_include_tests: includeTests });
       if (result.error) return send(res, result.status, { ok: false, error: result.error });
       const rows = Array.isArray(result.data) ? result.data : [];
-      return send(res, 200, { ok: true, leads: rows.map((row) => presentLead(row)), capped: rows.length === 100 });
+      const seats = DEFAULT_SEATS.filter((seat) => seat.active !== false).map((seat) => ({
+        code: seat.seat_code, name: seat.display_name, role: seat.role,
+      }));
+      return send(res, 200, { ok: true, leads: rows.map((row) => presentLead(row)), seats, statuses: LEAD_STATUSES, capped: rows.length === 100 });
     }
     const body = req.body && typeof req.body === 'object' ? req.body : {};
-    if (body.action !== 'mark_contacted' || !UUID.test(String(body.id || ''))) return send(res, 400, { ok: false, error: 'bad_input' });
-    const result = await userRpc(cfg, token, 'web_lead_mark_contacted', { p_id: body.id });
+    if (!UUID.test(String(body.id || ''))) return send(res, 400, { ok: false, error: 'bad_input' });
+    if (body.action === 'mark_contacted') {
+      const result = await userRpc(cfg, token, 'web_lead_mark_contacted', { p_id: body.id });
+      if (result.error) return send(res, result.status, { ok: false, error: result.error });
+      return send(res, 200, { ok: true, reference: result.data && result.data.reference });
+    }
+    if (body.action !== 'patch') return send(res, 400, { ok: false, error: 'bad_input' });
+    const patch = {};
+    if (typeof body.assigned_seat === 'string' && /^[a-z][a-z0-9_]{1,30}$/.test(body.assigned_seat)) patch.assigned_seat = body.assigned_seat;
+    if (typeof body.status === 'string' && LEAD_STATUSES.includes(body.status)) patch.status = body.status;
+    if (typeof body.next_action === 'string') patch.next_action = body.next_action.slice(0, 240);
+    if (typeof body.staff_note === 'string') patch.staff_note = body.staff_note.slice(0, 1000);
+    if (!Object.keys(patch).length) return send(res, 400, { ok: false, error: 'bad_input' });
+    const result = await userRpc(cfg, token, 'web_lead_staff_patch', { p_id: body.id, p_patch: patch });
     if (result.error) return send(res, result.status, { ok: false, error: result.error });
     return send(res, 200, { ok: true, reference: result.data && result.data.reference });
   } catch {
