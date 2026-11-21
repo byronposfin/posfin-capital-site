@@ -117,6 +117,19 @@
           "value": "public, max-age=300, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/(works|al|remortgage|lender)/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -143,7 +156,15 @@
     {
       "source": "/apply1",
       "destination": "/apply?b=chris"
-    }
+    },
+    { "source": "/works/:token/statement", "destination": "/smartlink/static/index.html" },
+    { "source": "/works/:token", "destination": "/smartlink/static/index.html" },
+    { "source": "/al/:token/statement", "destination": "/smartlink/static/index.html" },
+    { "source": "/al/:token", "destination": "/smartlink/static/index.html" },
+    { "source": "/remortgage/:token/summary", "destination": "/smartlink/static/index.html" },
+    { "source": "/remortgage/:token", "destination": "/smartlink/static/index.html" },
+    { "source": "/lender/:token/summary", "destination": "/smartlink/static/index.html" },
+    { "source": "/lender/:token", "destination": "/smartlink/static/index.html" }
   ],
   "crons": [
     {

@@ -1,0 +1,4503 @@
+{
+  "version": "v001",
+  "prepared": "2026-11-18",
+  "timezone": "Europe/Paris",
+  "status": "internal design handoff for Tom — not a live form",
+  "title": "Posfin remortgage questionnaire",
+  "source_pdf": "/workspace/ackroyds/standard_pack_from_amery_20260803/Remortgage Questionnaire.pdf",
+  "source_protocol": "/workspace/ackroyds/ACKROYDS_STANDARD_PACK_AND_INTRO_PROTOCOL_v001.md",
+  "source_prefill_note": "/workspace/mazza/MAZZA_ACKROYDS_QUESTIONNAIRE_PREFILL_20261118_v001.md",
+  "purpose": "Capture every answer on Ackroyds' historic 6-page remortgage questionnaire (and the usual pre-loan enquiry overlap) via a smart link, save the answers to the CRM, populate the solicitor PDF, and send it for e-signature. The borrower never prints or completes the PDF themselves.",
+  "brands": {
+    "general": {
+      "id": "general",
+      "param": "general",
+      "title": "Remortgage questionnaire",
+      "subtitle": "Posfin Capital",
+      "logo": "assets/posfin_wordmark.png",
+      "mentions_ackroyds": false,
+      "html": "GENERAL_v001.html",
+      "footer": "Posfin Capital is a broker, not a lender."
+    },
+    "ackroyds_posfin_2_0": {
+      "id": "ackroyds_posfin_2_0",
+      "param": "ackroyds",
+      "title": "Ackroyds × Posfin 2.0",
+      "subtitle": "Remortgage questionnaire",
+      "logos": [
+        "assets/ackroyd_legal_logo.svg",
+        "assets/posfin_wordmark.png"
+      ],
+      "mentions_ackroyds": true,
+      "html": "ACKROYDS_POSFIN_2_0_v001.html",
+      "footer": "Prepared by Posfin Capital, a broker not a lender, for Ackroyd Legal.",
+      "branding_note": "Use the current Ackroyd Legal logo and name, not the historic 'Stirling Ackroyd Legal' wording that still appears on pages 5–6 of the PDF."
+    }
+  },
+  "stack_recommendation": {
+    "app": "Next.js on Vercel",
+    "database": "Supabase (CRM write)",
+    "brand_switch": "A query or path parameter, e.g. /q/:token?brand=general or /q/:token?brand=ackroyds. Same field schema, different chrome, intro copy, Q21 wording, and logos.",
+    "pdf_fill": "Server-side population of Ackroyds' Remortgage Questionnaire.pdf from saved answers, then an e-sign envelope (existing Posfin e-sign flow).",
+    "capture_alternative": "Grok voice call using the same field schema, for borrowers who prefer not to use the link."
+  },
+  "rules": {
+    "never_name_lenders_in_borrower_copy": "Do not name the proposed new lender, SM1, SOMO, or any panel lender or insurer in borrower-facing copy. Existing lender names are typed by the borrower, or pre-filled from the title for them to confirm. New-lender name, address and account number are staff-only and are written onto the solicitor PDF at generation time. Insurance ‘interested party’ wording should say ‘the lender’, not a named lender.",
+    "no_cifas": "Do not mention CIFAS anywhere in the form or surrounding copy.",
+    "no_bank_details": "Do not ask for card numbers, PINs or online-banking logins. Mortgage account / roll / court references remain required and must be clearly described as such. Exception, added from SM1/Charles Rose title requisition 5.2 (addition C): we do collect the nominated account for the net advance (bank name, account name, sort code, account number), clearly labelled, in the borrower(s) name(s) only. The solicitor’s client account stays off this form.",
+    "borrower_never_prints": true,
+    "e_sign_at_end": "The web form collects answers and a confirmation only. Signatures on the questionnaire, the leasehold block, and the form of authority are collected in the e-sign envelope, not as wet ink and not inside this app.",
+    "uk_english": true,
+    "posfin_is_broker_not_lender": true
+  },
+  "sections": [
+    {
+      "id": "welcome",
+      "title": "Welcome",
+      "borrower_title": "Remortgage questionnaire",
+      "description_general": "A few questions about you, the property and your current mortgage. We'll use your answers to prepare the solicitor's forms and send them for e-signature. You will not need to print or fill anything in by hand.",
+      "description_ackroyds": "Ackroyd Legal will act as your solicitor on this remortgage. Posfin is collecting the answers they need, so we can complete their forms and send them to you for e-signature. You will not need to print or fill in a PDF."
+    },
+    {
+      "id": "about_you",
+      "title": "About you",
+      "borrower_title": "About you",
+      "description": "Please use the full legal names of every borrower — the people who own the property and will be on the new loan."
+    },
+    {
+      "id": "the_property",
+      "title": "The property",
+      "borrower_title": "The property",
+      "description": "The property being remortgaged."
+    },
+    {
+      "id": "current_mortgages",
+      "title": "Current mortgages",
+      "borrower_title": "Your current mortgage",
+      "description": "Details of the mortgage and any other charges already secured against the property. We only need mortgage account or roll numbers — not your bank account details."
+    },
+    {
+      "id": "the_new_loan",
+      "title": "The new loan",
+      "borrower_title": "Your new loan",
+      "description": "A few details about the new loan, how it will be used and repaid, any money you will put in yourself, insurance, and when you would like to complete. We already have most of the facility details on file. We will not name the new lender on this form."
+    },
+    {
+      "id": "who_lives_there",
+      "title": "Who lives there",
+      "borrower_title": "Who lives at the property",
+      "description": "How the property will be occupied on completion, and anyone aged 17 or over other than the borrowers. Occupiers who are not borrowers and not on a tenancy will need to sign occupier documents, which we will send for e-signature."
+    },
+    {
+      "id": "about_the_property",
+      "title": "About the property",
+      "borrower_title": "A few questions about the property",
+      "description": "These answers also help the solicitor with the enquiries they usually raise later, so asking them now saves time."
+    },
+    {
+      "id": "building_works",
+      "title": "Building works",
+      "borrower_title": "Building works and alterations",
+      "description": "Including works already done, works you plan to do, and any approvals you hold."
+    },
+    {
+      "id": "rights_and_neighbours",
+      "title": "Rights and neighbours",
+      "borrower_title": "Rights, neighbours and when it was built",
+      "description": null
+    },
+    {
+      "id": "leasehold",
+      "title": "Leasehold",
+      "borrower_title": "Your lease",
+      "description": "These questions only apply if the property is leasehold.",
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      }
+    },
+    {
+      "id": "company",
+      "title": "Company",
+      "borrower_title": "About the company",
+      "description": "A few questions that apply when the borrower or a guarantor is a company or LLP.",
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.3–2.7"
+    },
+    {
+      "id": "purchase",
+      "title": "Purchase and gifts",
+      "borrower_title": "Buying the property",
+      "description": "These questions only apply if this facility is being used to buy the property. The solicitor will obtain the contract, transfer and replies to requisitions — you do not need to attach those papers here.",
+      "conditional": {
+        "field": "is_purchase",
+        "equals": "yes"
+      },
+      "addition_group": "G",
+      "source": "SM1/Charles Rose title requisition 9.1 / 9.2"
+    },
+    {
+      "id": "nominated_account",
+      "title": "Account for the net advance",
+      "borrower_title": "Where should the loan be paid?",
+      "description": "The account that should receive the net advance, in the borrower(s) name(s). This is not the solicitor’s client account, and we will never ask for a card number or online-banking login.",
+      "addition_group": "C",
+      "source": "SM1/Charles Rose title requisition 5.2"
+    },
+    {
+      "id": "how_you_found_us",
+      "title": "How you found us",
+      "borrower_title": "One last question",
+      "description": null
+    },
+    {
+      "id": "authority_and_declaration",
+      "title": "Authority and declaration",
+      "borrower_title": "Before we prepare your forms",
+      "description": "We'll prepare the solicitor's questionnaire and a form of authority for e-signature. You will not need to print anything. There is also an optional insolvency question, which does not replace searches the solicitor will run."
+    },
+    {
+      "id": "done",
+      "title": "Done",
+      "borrower_title": "Thank you",
+      "description": "We'll prepare your form for e-signature and send you the envelope shortly. You don't need to print anything."
+    }
+  ],
+  "fields": [
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-A",
+        "field": "Full Forenames Names"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.legal_forenames",
+        "notes": "Confirm spelling against ID / title."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Your full legal forenames, as they appear on the title or your passport.",
+      "accept": null,
+      "placeholder": "e.g. Sarah Jane",
+      "id": "borrower_forenames",
+      "section": "about_you",
+      "label": "First and middle name(s)",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-A",
+        "field": "Surname(s)"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.legal_surname",
+        "notes": "Confirm spelling against ID / title."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": "e.g. Hughes",
+      "id": "borrower_surname",
+      "section": "about_you",
+      "label": "Surname",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-C",
+        "field": "TELEPHONE NUMBERS: Mobile"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.mobile",
+        "notes": "Usually already on the case file."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": "07…",
+      "id": "borrower_phone_mobile",
+      "section": "about_you",
+      "label": "Mobile number",
+      "type": "tel"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-C",
+        "field": "TELEPHONE NUMBERS: Home"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.phone_home",
+        "notes": "Often missing from the file."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Optional. Leave blank if you do not have a landline.",
+      "accept": null,
+      "placeholder": null,
+      "id": "borrower_phone_home",
+      "section": "about_you",
+      "label": "Home telephone",
+      "type": "tel"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-C",
+        "field": "TELEPHONE NUMBERS: Work"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.phone_work",
+        "notes": "Often missing from the file."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Optional.",
+      "accept": null,
+      "placeholder": null,
+      "id": "borrower_phone_work",
+      "section": "about_you",
+      "label": "Work telephone",
+      "type": "tel"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-C",
+        "field": "TELEPHONE NUMBERS: Fax"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": "Legacy field. Hide behind 'Add a fax number' in the UI."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Optional and rarely used. Included only because it appears on the solicitor form.",
+      "accept": null,
+      "placeholder": null,
+      "id": "borrower_phone_fax",
+      "section": "about_you",
+      "label": "Fax number",
+      "type": "tel"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.entity_type",
+        "notes": "Prefill from the case (individual vs company/LLP)."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If yes, we will ask a short set of company questions. If the borrowers are all individuals and there is no company guarantor, choose no.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.3–2.7 (gate)",
+      "id": "borrower_or_guarantor_is_company",
+      "section": "about_you",
+      "label": "Is this loan in the name of a company or LLP, or is a company or LLP acting as a guarantor?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-B",
+        "field": "FULL ADDRESS OF PROPERTY"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.property.address / title",
+        "notes": "Confirm with the borrower."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "property_address",
+      "section": "the_property",
+      "label": "Full address of the property",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-B",
+        "field": "Post Code"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.property.postcode / title",
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": "e.g. BS1 1AA",
+      "id": "property_postcode",
+      "section": "the_property",
+      "label": "Postcode",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q16",
+        "field": "Please state the date you purchased the property."
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "title.price_paid_date",
+        "notes": "Prefill from the title price-paid entry and ask the borrower to confirm."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "purchase_date",
+      "section": "the_property",
+      "label": "When did you buy the property?",
+      "type": "date"
+    },
+    {
+      "options": [
+        "Freehold",
+        "Leasehold"
+      ],
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 5,
+        "question_ref": "L1–L6 gate",
+        "field": "SPECIAL QUESTIONS FOR LEASEHOLD PROPERTY ONLY — section applies or is skipped"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "title.tenure",
+        "notes": "Prefill from the official copy. Confirm if the title is unusual (e.g. commonhold)."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "This is not a numbered question on the form, but we need it so we only ask the leasehold questions where they apply.",
+      "accept": null,
+      "placeholder": null,
+      "id": "tenure",
+      "section": "the_property",
+      "label": "Is the property freehold or leasehold?",
+      "type": "single_choice"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.case.transaction_type",
+        "notes": "Prefill from the case (purchase vs remortgage). If yes, flag for the solicitor that the contract, transfer and TA13 replies will be needed. Do not ask the borrower to attach those legal papers."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Most of our cases are remortgages. Choose yes only if this facility is being used to buy the property.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "G",
+      "source": "SM1/Charles Rose title requisition 9.1 / 9.2 (gate)",
+      "id": "is_purchase",
+      "section": "the_property",
+      "label": "Are you buying this property, rather than remortgaging one you already own?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-D",
+        "field": "FIRST PRESENT LENDER — Name"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "title.first_charge.proprietor / crm",
+        "notes": "Prefill from the title charge and confirm."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "The lender named on your main mortgage statement. Please type the name as it appears there.",
+      "accept": null,
+      "placeholder": null,
+      "id": "first_lender_name",
+      "section": "current_mortgages",
+      "label": "Who is your current first-charge lender?",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-D",
+        "field": "FIRST PRESENT LENDER — Address"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "title.first_charge.proprietor_address",
+        "notes": "Often on the title. Confirm."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "first_lender_address",
+      "section": "current_mortgages",
+      "label": "Their address, if you have it",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-D",
+        "field": "FIRST PRESENT LENDER — Tel No."
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "first_lender_tel",
+      "section": "current_mortgages",
+      "label": "Their telephone number, if you have it",
+      "type": "tel"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-D",
+        "field": "FIRST PRESENT LENDER — Account Number"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": "Rarely on the title. Usually has to be asked."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "This is the account or roll number on your mortgage statement. It is not a bank account or sort code.",
+      "accept": null,
+      "placeholder": null,
+      "id": "first_lender_account_number",
+      "section": "current_mortgages",
+      "label": "Your mortgage account or roll number",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-D",
+        "field": "FIRST PRESENT LENDER — Date of monthly payment"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": "Frequently missing from the file."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": "e.g. the 1st, or the 28th",
+      "id": "first_lender_payment_date",
+      "section": "current_mortgages",
+      "label": "On what date of the month is the payment usually taken?",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-D",
+        "field": "FIRST PRESENT LENDER — Approximate amount owing"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.existing_borrowing.balance",
+        "notes": "Prefill if a recent redemption figure or statement is on file; always confirm."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "first_lender_amount_owing",
+      "section": "current_mortgages",
+      "label": "Approximate amount still owing",
+      "type": "currency_gbp"
+    },
+    {
+      "options": [
+        "Fixed",
+        "Variable",
+        "I'm not sure"
+      ],
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-D",
+        "field": "FIRST PRESENT LENDER — Fixed/variable rate"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "first_lender_rate_type",
+      "section": "current_mortgages",
+      "label": "Is the rate fixed or variable?",
+      "type": "single_choice"
+    },
+    {
+      "options": [
+        "Repayment",
+        "Endowment",
+        "Interest only",
+        "I'm not sure"
+      ],
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-D",
+        "field": "FIRST PRESENT LENDER — Endowment/Repayment"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "first_lender_repayment_type",
+      "section": "current_mortgages",
+      "label": "Is this a repayment or endowment mortgage?",
+      "type": "single_choice"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER (section shown if yes)"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "title.further_charges",
+        "notes": "Prefill from the title. The solicitor form has only one 'second lender' block; our form is repeatable so every further charge can be recorded and then attached or scheduled when we populate the PDF."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "For example a second mortgage, a private charge, or a charging order.",
+      "accept": null,
+      "placeholder": null,
+      "id": "has_further_charges",
+      "section": "current_mortgages",
+      "label": "Are there any other loans or charges secured against the property?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER — Name"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "title.further_charges[].proprietor",
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "further_lender_name",
+      "section": "current_mortgages",
+      "label": "Name of the other lender or charge holder",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER — Address"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "title.further_charges[].proprietor_address",
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "further_lender_address",
+      "section": "current_mortgages",
+      "label": "Their address, if you have it",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER — Tel No."
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "further_lender_tel",
+      "section": "current_mortgages",
+      "label": "Their telephone number, if you have it",
+      "type": "tel"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER — Account Number"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If you have a mortgage account number, roll number or court reference, enter it here. This is not a bank account number.",
+      "accept": null,
+      "placeholder": null,
+      "id": "further_lender_account_number",
+      "section": "current_mortgages",
+      "label": "Account, roll or court reference number",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER — Date of monthly payment"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "further_lender_payment_date",
+      "section": "current_mortgages",
+      "label": "Date of monthly payment, if any",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER — Approximate amount owing"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "further_lender_amount_owing",
+      "section": "current_mortgages",
+      "label": "Approximate amount still owing",
+      "type": "currency_gbp"
+    },
+    {
+      "options": [
+        "Fixed",
+        "Variable",
+        "Not applicable",
+        "I'm not sure"
+      ],
+      "required": false,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER — Fixed/variable rate"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "further_lender_rate_type",
+      "section": "current_mortgages",
+      "label": "Fixed or variable rate?",
+      "type": "single_choice"
+    },
+    {
+      "options": [
+        "Repayment",
+        "Endowment",
+        "Interest only",
+        "Not applicable",
+        "I'm not sure"
+      ],
+      "required": false,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "SECOND PRESENT LENDER — Endowment/Repayment"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "further_lender_repayment_type",
+      "section": "current_mortgages",
+      "label": "Endowment or repayment?",
+      "type": "single_choice"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "further_charge",
+      "conditional": {
+        "field": "has_further_charges",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 1,
+        "question_ref": "Q-E",
+        "field": "Do you intend to repay this second charge from the new Mortgage Advance? YES/NO"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "further_charge_repay_from_advance",
+      "section": "current_mortgages",
+      "label": "Should this charge be repaid from the new loan?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-F",
+        "field": "Are there any financial redemption (repayment) penalties that they may impose?"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Please check your latest mortgage statement or offer if you are unsure.",
+      "accept": null,
+      "placeholder": null,
+      "id": "redemption_penalties",
+      "section": "current_mortgages",
+      "label": "Will any of your current lenders charge an early repayment or redemption penalty?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "redemption_penalties",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-F",
+        "field": "redemption penalties — details (unlined follow-on space)"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "redemption_penalties_details",
+      "section": "current_mortgages",
+      "label": "Please give any details you have of the penalty",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-G",
+        "field": "PROPOSED NEW LENDER — Name"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.offer.lender_name",
+        "notes": "Prefill from the offer when generating the PDF. Never surface the name in borrower-facing copy."
+      },
+      "visible_to_borrower": false,
+      "staff_only": true,
+      "help": "Staff only. Do not display or name the new lender to the borrower in this form or in surrounding copy.",
+      "accept": null,
+      "placeholder": null,
+      "id": "new_lender_name",
+      "section": "the_new_loan",
+      "label": "Name of the proposed new lender",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-G",
+        "field": "PROPOSED NEW LENDER — Address"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.offer.lender_address",
+        "notes": "Staff-only. Prefill when generating the PDF."
+      },
+      "visible_to_borrower": false,
+      "staff_only": true,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "new_lender_address",
+      "section": "the_new_loan",
+      "label": "Address of the proposed new lender",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-G",
+        "field": "PROPOSED NEW LENDER — Account Number"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": "Often n/a, especially on a short-term or bridging facility. Leave blank or mark n/a on the PDF."
+      },
+      "visible_to_borrower": false,
+      "staff_only": true,
+      "help": "Usually not issued until after completion. Staff only.",
+      "accept": null,
+      "placeholder": null,
+      "id": "new_lender_account_number",
+      "section": "the_new_loan",
+      "label": "New lender account number",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-G",
+        "field": "PROPOSED NEW LENDER — Approximate amount of new mortgage"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.offer.gross_or_net_amount",
+        "notes": "Prefill from the offer (be clear whether the figure is gross or net) and ask the borrower to confirm."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "new_loan_amount",
+      "section": "the_new_loan",
+      "label": "Approximate amount of the new loan",
+      "type": "currency_gbp"
+    },
+    {
+      "options": [
+        "There is a monthly payment",
+        "Interest is rolled up — no monthly payment",
+        "I'm not sure"
+      ],
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-G",
+        "field": "Amount of monthly payment / Date of payment — gate"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If interest is rolled up for the term, there may be no monthly payment.",
+      "accept": null,
+      "placeholder": null,
+      "id": "new_loan_has_monthly_payment",
+      "section": "the_new_loan",
+      "label": "Will this loan have a monthly payment, or is the interest rolled up?",
+      "type": "single_choice"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "new_loan_has_monthly_payment",
+        "equals": "There is a monthly payment"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-G",
+        "field": "PROPOSED NEW LENDER — Amount of monthly payment"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.offer.monthly_payment",
+        "notes": "Prefill from the offer where a monthly payment is stated."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "new_loan_monthly_payment",
+      "section": "the_new_loan",
+      "label": "Amount of the monthly payment",
+      "type": "currency_gbp"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "new_loan_has_monthly_payment",
+        "equals": "There is a monthly payment"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q-G",
+        "field": "PROPOSED NEW LENDER — Date of payment"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "new_loan_payment_date",
+      "section": "the_new_loan",
+      "label": "Usual date of the monthly payment, if you know it",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q17",
+        "field": "Is your new lender insuring the property? YES/NO"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.offer.insurance_arrangement",
+        "notes": "Often the new loan does not include buildings insurance. Do not name the new lender in the question wording."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If not, we will need a copy of your current buildings insurance policy. You can upload it here.",
+      "accept": null,
+      "placeholder": null,
+      "id": "buildings_insurance_by_new_loan",
+      "section": "the_new_loan",
+      "label": "Will buildings insurance be arranged as part of the new loan?",
+      "type": "yes_no_unsure",
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1 (tightened existing questionnaire Q17 / leasehold L5)"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "buildings_insurance_by_new_loan",
+        "equals": "no"
+      },
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q17",
+        "field": "If not, please provide a copy of your buildings insurance policy"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "id": "buildings_insurance_policy_upload",
+      "section": "the_new_loan",
+      "label": "Upload a copy of your buildings insurance policy",
+      "type": "file_upload",
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1 (tightened existing questionnaire Q17 / leasehold L5)"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "buildings_insurance_by_new_loan",
+        "in": [
+          "no",
+          "unsure"
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.insurance.insurer",
+        "notes": "Prefill if a policy is already on the file."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1",
+      "id": "buildings_insurance_insurer",
+      "section": "the_new_loan",
+      "label": "Name of the insurer",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "buildings_insurance_by_new_loan",
+        "in": [
+          "no",
+          "unsure"
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.insurance.policy_number",
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1",
+      "id": "buildings_insurance_policy_number",
+      "section": "the_new_loan",
+      "label": "Policy number",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "buildings_insurance_by_new_loan",
+        "in": [
+          "no",
+          "unsure"
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1",
+      "id": "buildings_insurance_sum_insured",
+      "section": "the_new_loan",
+      "label": "Sum insured",
+      "type": "currency_gbp"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "buildings_insurance_by_new_loan",
+        "in": [
+          "no",
+          "unsure"
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "The schedule is usually a one- or two-page summary from your insurer, rather than the full policy wording.",
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1",
+      "id": "buildings_insurance_schedule_upload",
+      "section": "the_new_loan",
+      "label": "Upload the current buildings insurance schedule",
+      "type": "file_upload"
+    },
+    {
+      "options": [
+        "Yes, I will arrange this",
+        "Already noted",
+        "I need help with this"
+      ],
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "buildings_insurance_by_new_loan",
+        "in": [
+          "no",
+          "unsure"
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "We will tell you the exact wording to give your insurer. You do not need to name the lender yourself on this form.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1",
+      "id": "buildings_insurance_lender_noted",
+      "section": "the_new_loan",
+      "label": "Will the lender be noted as an interested party on the policy before completion?",
+      "type": "single_choice"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "buildings_insurance_lender_noted",
+        "equals": "Already noted"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1",
+      "id": "buildings_insurance_endorsement_upload",
+      "section": "the_new_loan",
+      "label": "Upload the endorsement or updated schedule showing the lender has been noted",
+      "type": "file_upload"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q18",
+        "field": "Are you taking an interest only mortgage? YES/NO"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.offer.product_type",
+        "notes": "Product type is usually known. Do not assume the life-cover answer."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If yes, the solicitor form also asks for evidence of enough life cover. On a short-term facility where interest is rolled up, life cover may not apply in the same way — tell us if you are unsure.",
+      "accept": null,
+      "placeholder": null,
+      "id": "interest_only",
+      "section": "the_new_loan",
+      "label": "Is the new loan interest only?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "interest_only",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q18",
+        "field": "If yes, please provide evidence of sufficient life cover for amount of mortgage"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "id": "life_cover_evidence_upload",
+      "section": "the_new_loan",
+      "label": "Upload evidence of life cover for the loan amount",
+      "type": "file_upload"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q19",
+        "field": "Please can you inform us of any forthcoming holidays that you have planned"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Dates are enough. If none, say so.",
+      "accept": null,
+      "placeholder": "e.g. None, or 3–10 December",
+      "id": "forthcoming_holidays",
+      "section": "the_new_loan",
+      "label": "Do you have any holidays planned that might affect signing or completion?",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q20",
+        "field": "Please indicate what date you wish to complete your re-mortgage on."
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.case.target_completion_date",
+        "notes": "Prefill the target date if we have one, and ask the borrower to confirm."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "desired_completion_date",
+      "section": "the_new_loan",
+      "label": "When would you like the remortgage to complete?",
+      "type": "date"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "A",
+      "source": "SM1/Charles Rose title requisition 1.2 / 2.8",
+      "id": "balance_funds_needed",
+      "section": "the_new_loan",
+      "label": "Will you need to put in any of your own money to complete, for example to redeem existing charges or to make up a purchase balance?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "balance_funds_needed",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "A",
+      "source": "SM1/Charles Rose title requisition 1.2 / 2.8",
+      "id": "balance_funds_amount",
+      "section": "the_new_loan",
+      "label": "Approximate amount you will put in",
+      "type": "currency_gbp"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "balance_funds_needed",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "A",
+      "source": "SM1/Charles Rose title requisition 1.2 / 2.8",
+      "id": "balance_funds_own_resources",
+      "section": "the_new_loan",
+      "label": "This money will come from my or our own resources and is not being borrowed from anywhere else",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "balance_funds_own_resources",
+        "equals": "no"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "A",
+      "source": "SM1/Charles Rose title requisition 1.2 / 2.8",
+      "id": "balance_funds_own_resources_explanation",
+      "section": "the_new_loan",
+      "label": "Please explain where any borrowed or third-party money is coming from",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "balance_funds_needed",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "For example savings, sale proceeds, or a director’s loan.",
+      "accept": null,
+      "placeholder": "e.g. savings",
+      "addition_group": "A",
+      "source": "SM1/Charles Rose title requisition 1.2 / 2.8",
+      "id": "balance_funds_source",
+      "section": "the_new_loan",
+      "label": "Where will this money come from?",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Most facilities we arrange need to be for a business purpose. If this does not sound right for your case, please tell us in the box below rather than ticking this.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "H",
+      "source": "SM1/Charles Rose title requisition 10.1",
+      "id": "business_purpose_confirmation",
+      "section": "the_new_loan",
+      "label": "I confirm that this loan will be used for business purposes only",
+      "type": "checkbox"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.use_of_funds / offer purpose",
+        "notes": "Prefill from a Use of Funds form if one is already on file, and ask the borrower to confirm. The signed Use of Funds form should still go to the lender."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": "e.g. to refinance the property and fund refurbishment works",
+      "addition_group": "H",
+      "source": "SM1/Charles Rose title requisition 10.1",
+      "id": "business_purpose_details",
+      "section": "the_new_loan",
+      "label": "Please tell us what the business purposes are",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "addition_group": "H",
+      "source": "SM1/Charles Rose title requisition 10.1",
+      "id": "use_of_funds_upload",
+      "section": "the_new_loan",
+      "label": "Optional: upload a Use of Funds form if you have already completed one",
+      "type": "file_upload"
+    },
+    {
+      "options": [
+        "Refinance",
+        "Sale of this property",
+        "Sale of another property",
+        "Business proceeds / trading cashflow",
+        "Other"
+      ],
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.exit_route",
+        "notes": "Prefill the route if already on the file. Do not pre-fill or display a named refinance lender in borrower-facing copy."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "You can choose more than one.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "I",
+      "source": "SM1/Charles Rose title requisition 10.2",
+      "id": "exit_route",
+      "section": "the_new_loan",
+      "label": "How do you intend to repay this loan at the end of the term?",
+      "type": "multi_choice"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "For example expected timing, or a sale that is already planned. You do not need to name a lender unless you want to.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "I",
+      "source": "SM1/Charles Rose title requisition 10.2",
+      "id": "exit_route_details",
+      "section": "the_new_loan",
+      "label": "Please add any details you already have",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q1",
+        "field": "Are there any persons aged 17 years or over (other than the Borrower(s)) occupying the Property"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.occupiers",
+        "notes": "We may already have adult occupiers at 18+. Re-ask at 17+ and confirm names."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "The solicitor form uses 17, not 18. Please include every adult or 17-year-old occupier, even if they are a family member.",
+      "accept": null,
+      "placeholder": null,
+      "id": "occupiers_17_plus",
+      "section": "who_lives_there",
+      "label": "Does anyone aged 17 or over, other than the borrower(s), live at the property?",
+      "type": "yes_no",
+      "addition_group": "E",
+      "source": "SM1/Charles Rose title requisition 8.1 (tightened existing questionnaire Q1)"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "occupier",
+      "conditional": {
+        "field": "occupiers_17_plus",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q1",
+        "field": "If so, give name, date of birth and relationship."
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "occupier_name",
+      "section": "who_lives_there",
+      "label": "Full name",
+      "type": "text",
+      "addition_group": "E",
+      "source": "SM1/Charles Rose title requisition 8.1 (tightened existing questionnaire Q1)"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "occupier",
+      "conditional": {
+        "field": "occupiers_17_plus",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q1",
+        "field": "date of birth"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "occupier_date_of_birth",
+      "section": "who_lives_there",
+      "label": "Date of birth",
+      "type": "date",
+      "addition_group": "E",
+      "source": "SM1/Charles Rose title requisition 8.1 (tightened existing questionnaire Q1)"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "occupier",
+      "conditional": {
+        "field": "occupiers_17_plus",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q1",
+        "field": "relationship"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": "e.g. spouse, partner, adult child, lodger",
+      "id": "occupier_relationship",
+      "section": "who_lives_there",
+      "label": "Relationship to you",
+      "type": "text",
+      "addition_group": "E",
+      "source": "SM1/Charles Rose title requisition 8.1 (tightened existing questionnaire Q1)"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "occupier",
+      "conditional": {
+        "field": "occupiers_17_plus",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "E",
+      "source": "SM1/Charles Rose title requisition 8.1",
+      "id": "occupier_is_borrower",
+      "section": "who_lives_there",
+      "label": "Are they a borrower on this loan?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "occupier",
+      "conditional": {
+        "field": "occupiers_17_plus",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If they are not a borrower and are not named on a tenancy, the lender will need them to sign occupier documents before completion. We will arrange that — they do not need to print anything now.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "E",
+      "source": "SM1/Charles Rose title requisition 8.1",
+      "id": "occupier_on_formal_tenancy",
+      "section": "who_lives_there",
+      "label": "Are they named on a formal tenancy agreement?",
+      "type": "yes_no"
+    },
+    {
+      "options": [
+        "My or our main home (owner-occupied)",
+        "Vacant",
+        "Let as a residential tenancy",
+        "Let as an HMO",
+        "Let as a holiday let",
+        "Let commercially",
+        "Other"
+      ],
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "You do not need to upload a tenancy agreement or lease unless we ask for one later.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "F",
+      "source": "SM1/Charles Rose title requisition 8.2",
+      "id": "occupancy_type",
+      "section": "who_lives_there",
+      "label": "Which of these best describes the property on the day of completion?",
+      "type": "single_choice"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "occupancy_type",
+        "equals": "Other"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "F",
+      "source": "SM1/Charles Rose title requisition 8.2",
+      "id": "occupancy_type_other",
+      "section": "who_lives_there",
+      "label": "Please specify how the property will be occupied",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "occupancy_type",
+        "in": [
+          "Let as a residential tenancy",
+          "Let as an HMO",
+          "Let as a holiday let",
+          "Let commercially"
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Please do not upload the tenancy or lease unless we ask for it.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "F",
+      "source": "SM1/Charles Rose title requisition 8.2",
+      "id": "occupancy_let_details",
+      "section": "who_lives_there",
+      "label": "Optional: a few words about the letting (for example an AST, or holiday guests)",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q2",
+        "field": "Do you own any adjoining property which is not to be included in this remortgage"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "adjoining_property_owned",
+      "section": "about_the_property",
+      "label": "Do you own any adjoining property that is not included in this remortgage?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "adjoining_property_owned",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q2",
+        "field": "If yes, give details here."
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "adjoining_property_details",
+      "section": "about_the_property",
+      "label": "Please give the address and a short description",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q3",
+        "field": "Are you aware of any breach of any covenants or restrictions affecting the property?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "title.covenants (flag only)",
+        "notes": "Do not pre-answer 'no'. If the title shows historic covenants, show them to the borrower and ask whether they are aware of any breach."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Covenants are rules about how the property can be used. If we already know of historic covenants on the title, we will flag them for you to confirm. Please do not guess — say if you are unsure.",
+      "accept": null,
+      "placeholder": null,
+      "id": "covenant_breach",
+      "section": "about_the_property",
+      "label": "Are you aware of any breach of covenants or restrictions affecting the property?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "covenant_breach",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q3",
+        "field": "If yes, give details here."
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "covenant_breach_details",
+      "section": "about_the_property",
+      "label": "Please give details",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q4",
+        "field": "Has the property been the subject of a Local Authority Improvement/Repair Grant within the last three years?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "la_grant",
+      "section": "about_the_property",
+      "label": "Has the property had a local authority improvement or repair grant in the last three years?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "la_grant",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q4",
+        "field": "approximate date"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "la_grant_date",
+      "section": "about_the_property",
+      "label": "Approximate date of the grant",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "la_grant",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q4",
+        "field": "amount of the Grant"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "la_grant_amount",
+      "section": "about_the_property",
+      "label": "Approximate amount of the grant",
+      "type": "currency_gbp"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "la_grant",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q4",
+        "field": "details of the Local Authority"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "la_grant_authority",
+      "section": "about_the_property",
+      "label": "Which local authority?",
+      "type": "text"
+    },
+    {
+      "options": [
+        "Yes",
+        "No",
+        "Not applicable — I have not married since"
+      ],
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q5",
+        "field": "If you purchased or remortgaged the property prior to marriage, please provide your original Marriage Certificate for copying and certifying."
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.marital_status",
+        "notes": "Marital status is often outstanding. Do not invent it."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If yes, the solicitor will need a certified copy of the marriage certificate. You do not need to post the original — we will arrange certification with you.",
+      "accept": null,
+      "placeholder": null,
+      "id": "purchased_or_remortgaged_prior_to_marriage",
+      "section": "about_the_property",
+      "label": "Did you buy or remortgage the property before you got married?",
+      "type": "yes_no_not_applicable"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "purchased_or_remortgaged_prior_to_marriage",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 2,
+        "question_ref": "Q5",
+        "field": "provide your original Marriage Certificate for copying and certifying"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Optional at this stage. A certified copy can be arranged later if needed.",
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "id": "marriage_certificate_upload",
+      "section": "about_the_property",
+      "label": "Upload a copy of your marriage certificate if you have one to hand",
+      "type": "file_upload"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q6",
+        "field": "Have you received any formal notices in relation to the property?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "For example a notice from the council, a neighbour, a landlord or a court.",
+      "accept": null,
+      "placeholder": null,
+      "id": "formal_notices",
+      "section": "about_the_property",
+      "label": "Have you received any formal notices in relation to the property?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "formal_notices",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q6",
+        "field": "If yes, give details here."
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "formal_notices_details",
+      "section": "about_the_property",
+      "label": "Please give details",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q7",
+        "field": "Are all main services including drainage/sewers connected to the property?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "main_services_connected",
+      "section": "about_the_property",
+      "label": "Are all main services, including drainage and sewers, connected to the property?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "main_services_connected",
+        "equals": "no"
+      },
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q7",
+        "field": "If no, give details here"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "main_services_details",
+      "section": "about_the_property",
+      "label": "Please tell us what is not connected, or give details",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q8",
+        "field": "Is there main access to the property via a private road?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "private_road_access",
+      "section": "about_the_property",
+      "label": "Is the main access to the property via a private road?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "private_road_access",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q8",
+        "field": "If yes, is it in good order"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "private_road_condition",
+      "section": "about_the_property",
+      "label": "Is the private road in good order?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "private_road_access",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q8",
+        "field": "are you expecting to contribute to its maintenance in the near future? (please give details)"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Please give any details you have, including likely cost if you know it.",
+      "accept": null,
+      "placeholder": null,
+      "id": "private_road_maintenance",
+      "section": "about_the_property",
+      "label": "Are you expecting to contribute to its maintenance in the near future?",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q9a",
+        "field": "In the last 4 years has any building on this property been built/altered/added to or other structural works carried out on it?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "works_last_4_years",
+      "section": "building_works",
+      "label": "In the last four years, has any building on this property been built, altered, added to, or had other structural works?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q9b",
+        "field": "Have any replacement doors or windows been installed since 2002?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "replacement_doors_windows_since_2002",
+      "section": "building_works",
+      "label": "Have any replacement doors or windows been installed since 2002?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q9c",
+        "field": "Have any electrical works been carried out since 1 January 2005?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "electrical_works_since_2005",
+      "section": "building_works",
+      "label": "Have any electrical works been carried out since 1 January 2005?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q10",
+        "field": "Are you presently carrying out any building alterations, additions or other structural works at the property, or do you plan to do so with the aid of the remortgage advance?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.use_of_funds (flag only)",
+        "notes": "Use of funds may already hint at works, but do not auto-answer. Ask explicitly."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "works_underway_or_planned",
+      "section": "building_works",
+      "label": "Are you carrying out any building alterations, additions or structural works now, or do you plan to do so with the help of this remortgage?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "any_of": [
+          {
+            "field": "works_last_4_years",
+            "equals": "yes"
+          },
+          {
+            "field": "replacement_doors_windows_since_2002",
+            "equals": "yes"
+          },
+          {
+            "field": "electrical_works_since_2005",
+            "equals": "yes"
+          },
+          {
+            "field": "works_underway_or_planned",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q11",
+        "field": "If the answer is yes to one or both of questions 9 and 10 please give details here"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Needed if you answered yes to any of the works questions above.",
+      "accept": null,
+      "placeholder": null,
+      "id": "works_details",
+      "section": "building_works",
+      "label": "Please describe the works",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "any_of": [
+          {
+            "field": "works_last_4_years",
+            "equals": "yes"
+          },
+          {
+            "field": "works_underway_or_planned",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q11",
+        "field": "forward to us copies of any Planning Consents and/or Building Regulation Approvals that you hold"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "id": "works_consents_upload",
+      "section": "building_works",
+      "label": "Upload any planning consents or building-regulation approvals you hold",
+      "type": "file_upload"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q12",
+        "field": "Save as advised above has the original building been altered or added to so far as you are aware?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "original_building_altered",
+      "section": "building_works",
+      "label": "Apart from anything already mentioned, has the original building been altered or added to, as far as you are aware?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "original_building_altered",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q12",
+        "field": "If yes, give brief details here."
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "original_building_altered_details",
+      "section": "building_works",
+      "label": "Please give brief details",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q13",
+        "field": "Does any other person or property enjoy any rights of any kind over the property?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "title.easements_and_rights (flag only)",
+        "notes": "Flag known rights from the title for the borrower to confirm. Do not auto-answer."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "For example a right of way, a right to park, or shared access.",
+      "accept": null,
+      "placeholder": null,
+      "id": "third_party_rights",
+      "section": "rights_and_neighbours",
+      "label": "Does any other person or property have any rights over this property?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "third_party_rights",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 3,
+        "question_ref": "Q13",
+        "field": "If yes, give details here."
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "third_party_rights_details",
+      "section": "rights_and_neighbours",
+      "label": "Please give details",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q14",
+        "field": "Are you aware of any proposals to develop or re-develop any adjoining or neighbouring land or property?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "neighbouring_development",
+      "section": "rights_and_neighbours",
+      "label": "Are you aware of any proposals to develop or redevelop adjoining or neighbouring land or property?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "neighbouring_development",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q14",
+        "field": "If yes, give details here"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "neighbouring_development_details",
+      "section": "rights_and_neighbours",
+      "label": "Please give details",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q15",
+        "field": "If the dwelling on this property was built in the last 10 years…"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "title / property age",
+        "notes": "If the title or purchase date shows the building is clearly older than 10 years, prefill 'no' and allow the borrower to correct it."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "built_last_10_years",
+      "section": "rights_and_neighbours",
+      "label": "Was the dwelling built in the last 10 years?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "built_last_10_years",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q15",
+        "field": "please estimate date of construction"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "construction_date",
+      "section": "rights_and_neighbours",
+      "label": "Estimated date of construction",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "built_last_10_years",
+        "equals": "yes"
+      },
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q15",
+        "field": "confirm the property has the benefit of an NHBC or Municipal Mutual Foundation 15 Certificate"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "NHBC is the usual new-build warranty. 'Municipal Mutual Foundation 15' is the wording on the solicitor form — tick yes if you have either.",
+      "accept": null,
+      "placeholder": null,
+      "id": "nhbc_or_mmf15",
+      "section": "rights_and_neighbours",
+      "label": "Does the property have an NHBC certificate, or a Municipal Mutual Foundation 15 certificate?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": [
+        "Introduced by Posfin Capital",
+        "Recommendation",
+        "Existing client",
+        "Search / website",
+        "Other"
+      ],
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 4,
+        "question_ref": "Q21",
+        "field": "Can you tell us where you heard about our firm i.e. recommendation, existing client,"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "introduction source",
+        "notes": "On Ackroyds cases, default to 'Introduced by Posfin Capital' and allow correction. On the general form, this is about Posfin, not a solicitor."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Brand-specific wording: general form asks about Posfin; Ackroyds × Posfin 2.0 form asks about Ackroyd Legal, with a default of 'Introduced by Posfin Capital'.",
+      "accept": null,
+      "placeholder": null,
+      "id": "heard_about_firm",
+      "section": "how_you_found_us",
+      "label": "How did you hear about us?",
+      "type": "single_choice_with_other"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L1",
+        "field": "Please give details of the Freeholder, i.e. the landlord, the Managing Agents for the property, or the Secretary of the Management Company — Name"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "title.leasehold.landlord / crm",
+        "notes": "Prefill from the title or lease if held."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_freeholder_name",
+      "section": "leasehold",
+      "label": "Name of the freeholder, landlord, managing agent, or secretary of the management company",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L1",
+        "field": "Address"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "title.leasehold.landlord_address",
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_freeholder_address",
+      "section": "leasehold",
+      "label": "Their address",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L1",
+        "field": "Reference (if known) or contact"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_reference",
+      "section": "leasehold",
+      "label": "Reference or contact name, if known",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L1",
+        "field": "Telephone Number (if known)"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_telephone",
+      "section": "leasehold",
+      "label": "Telephone number, if known",
+      "type": "tel"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L2",
+        "field": "Have you ever complained about a breach of covenant by the landlord?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "For example, a failure to carry out their obligations under the lease.",
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_complained_about_landlord",
+      "section": "leasehold",
+      "label": "Have you ever complained about a breach of covenant by the landlord?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L3",
+        "field": "Has the landlord/managing agent complained of any breach of covenants under your Lease e.g. non payment of ground rent or service charges?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "For example, non-payment of ground rent or service charges.",
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_landlord_complained",
+      "section": "leasehold",
+      "label": "Has the landlord or managing agent complained of any breach of your lease?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L4",
+        "field": "indicate how and to whom this is normally paid"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_ground_rent_payment_method",
+      "section": "leasehold",
+      "label": "How, and to whom, is ground rent normally paid?",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L4",
+        "field": "Please send us a copy of the last ground rent receipt issued by the landlord/managing agent (if available)"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "id": "leasehold_ground_rent_receipt_upload",
+      "section": "leasehold",
+      "label": "Upload a copy of the last ground rent receipt, if you have it",
+      "type": "file_upload"
+    },
+    {
+      "options": [
+        "The landlord or managing agents arrange a block policy",
+        "I arrange it myself"
+      ],
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L5a / L5b",
+        "field": "If the landlord/managing agents arrange block buildings insurance under the Lease… / If the landlord/managing agents do not arrange the buildings insurance…"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_block_insurance",
+      "section": "leasehold",
+      "label": "Who arranges the buildings insurance under the lease?",
+      "type": "single_choice",
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1 (tightened existing questionnaire Q17 / leasehold L5)"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L5a / L5b",
+        "field": "please send us a copy of the current Insurance Schedule"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "The solicitor form says this is needed as soon as possible so that completion can take place.",
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "id": "leasehold_insurance_schedule_upload",
+      "section": "leasehold",
+      "label": "Upload the current insurance schedule",
+      "type": "file_upload",
+      "addition_group": "D",
+      "source": "SM1/Charles Rose title requisition 6.1 (tightened existing questionnaire Q17 / leasehold L5)"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "tenure",
+        "equals": "Leasehold"
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L6",
+        "field": "Are there any present proposals under which (either alone or with other lessees) you will acquire a freehold interest in your property?"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_acquire_freehold",
+      "section": "leasehold",
+      "label": "Are there any present proposals for you (alone or with other leaseholders) to buy the freehold?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "tenure",
+            "equals": "Leasehold"
+          },
+          {
+            "field": "leasehold_acquire_freehold",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": {
+        "page": 5,
+        "question_ref": "L6",
+        "field": "If yes, give details here"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "leasehold_acquire_freehold_details",
+      "section": "leasehold",
+      "label": "Please give details",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 6,
+        "question_ref": "Auth",
+        "field": "FORM OF AUTHORITY — I/We hereby irrevocably authorise and request you to (1) provide the solicitor with any information they request in connection with my/our mortgage and (2) pending redemption to forward the Title Deeds and documents"
+      },
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "answers from current_mortgages",
+        "notes": "Prefill lender names and account numbers onto page 6 when generating the PDF. The wet-ink signature blocks are replaced by the e-sign envelope."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "We will pre-fill a form of authority with the lender names and account numbers you have given, and include it in the e-sign pack. You will not be asked to print or post it. All borrowers will need to sign.",
+      "accept": null,
+      "placeholder": null,
+      "id": "authority_confirmation",
+      "section": "authority_and_declaration",
+      "label": "I am happy for the solicitor to request my title deeds and mortgage information from my current lender(s)",
+      "type": "checkbox"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": 1,
+        "question_ref": "intro",
+        "field": "Complete and accurate replies will avoid unnecessary delays… We will, of course, rely on your replies as being accurate."
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "answers_accurate",
+      "section": "authority_and_declaration",
+      "label": "I confirm that the answers I have given are complete and accurate, as far as I know",
+      "type": "checkbox"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "companies_house.directors",
+        "notes": "Prefill from Companies House if available, and confirm."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.3",
+      "id": "company_director_count",
+      "section": "company",
+      "label": "How many directors does the company have now?",
+      "type": "number"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.3",
+      "id": "company_previously_more_than_one_director",
+      "section": "company",
+      "label": "Has the company ever had more than one director?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If there is currently only one director, the company previously had more than one, and the articles may be unamended, we will need either a second director to be appointed, or the articles to be amended and filed at Companies House, before loan documents can be signed.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.3",
+      "id": "company_standard_model_articles",
+      "section": "company",
+      "label": "Are the company’s articles the standard model articles, with no amendments?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.3",
+      "id": "company_articles_upload",
+      "section": "company",
+      "label": "Upload any filed resolutions or amended articles if you already have them",
+      "type": "file_upload"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.4",
+      "id": "company_shares_held_absolutely",
+      "section": "company",
+      "label": "Are all the shares held in the shareholders’ own names, and not on trust for anyone else?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "borrower_or_guarantor_is_company",
+            "equals": "yes"
+          },
+          {
+            "field": "company_shares_held_absolutely",
+            "equals": "no"
+          }
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.4",
+      "id": "company_shares_trust_details",
+      "section": "company",
+      "label": "Who is the share held for, and why?",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.5",
+      "id": "company_shareholders_agreement",
+      "section": "company",
+      "label": "Is there a shareholders’ agreement, or any other agreement, that changes who owns or controls the company compared with what Companies House shows?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "borrower_or_guarantor_is_company",
+            "equals": "yes"
+          },
+          {
+            "field": "company_shareholders_agreement",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.5",
+      "id": "company_shareholders_agreement_details",
+      "section": "company",
+      "label": "Please give a short description",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "borrower_or_guarantor_is_company",
+            "equals": "yes"
+          },
+          {
+            "field": "company_shareholders_agreement",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": [
+        "application/pdf",
+        "image/*"
+      ],
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.5",
+      "id": "company_shareholders_agreement_upload",
+      "section": "company",
+      "label": "Optional: upload the agreement",
+      "type": "file_upload"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "For example other loans, director loans, or invoice finance.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.6",
+      "id": "company_other_indebtedness",
+      "section": "company",
+      "label": "Apart from any mortgages on this property, does the company owe money to anyone else?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "borrower_or_guarantor_is_company",
+            "equals": "yes"
+          },
+          {
+            "field": "company_other_indebtedness",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.6",
+      "id": "company_other_indebtedness_details",
+      "section": "company",
+      "label": "Please give the creditor, the approximate amount, and whether you expect this to be subordinated to the new loan",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "borrower_or_guarantor_is_company",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "companies_house.charges (flag only)",
+        "notes": "Flag a known floating charge for the borrower to confirm. Do not auto-answer."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "If yes, the solicitor will need a letter of non-crystallisation and consent to the negative pledge on the day of completion. You do not need to arrange that yourself now.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.7",
+      "id": "company_floating_charge",
+      "section": "company",
+      "label": "Has the company granted a floating charge, for example to a bank or invoice funder?",
+      "type": "yes_no_unsure"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "borrower_or_guarantor_is_company",
+            "equals": "yes"
+          },
+          {
+            "field": "company_floating_charge",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "B",
+      "source": "SM1/Charles Rose title requisition 2.7",
+      "id": "company_floating_charge_holder",
+      "section": "company",
+      "label": "Name of the floating-charge holder",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "is_purchase",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "G",
+      "source": "SM1/Charles Rose title requisition 9.2",
+      "id": "gift_funds",
+      "section": "purchase",
+      "label": "Is any part of the deposit, or of the balance needed to complete, being given to you as a gift?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "is_purchase",
+            "equals": "yes"
+          },
+          {
+            "field": "gift_funds",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "G",
+      "source": "SM1/Charles Rose title requisition 9.2",
+      "id": "gift_donor_name",
+      "section": "purchase",
+      "label": "Donor’s full name",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "is_purchase",
+            "equals": "yes"
+          },
+          {
+            "field": "gift_funds",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": "e.g. parent, spouse",
+      "addition_group": "G",
+      "source": "SM1/Charles Rose title requisition 9.2",
+      "id": "gift_donor_relationship",
+      "section": "purchase",
+      "label": "Your relationship to the donor",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": {
+        "all_of": [
+          {
+            "field": "is_purchase",
+            "equals": "yes"
+          },
+          {
+            "field": "gift_funds",
+            "equals": "yes"
+          }
+        ]
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "The lender’s gifted-deposit documents will need to be signed. We will send those for e-signature — you do not need to print them.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "G",
+      "source": "SM1/Charles Rose title requisition 9.2",
+      "id": "gift_amount",
+      "section": "purchase",
+      "label": "Amount of the gift",
+      "type": "currency_gbp"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "This is the account the net loan should be paid into, in the borrower(s) name(s). It is not the solicitor’s account, and we will never ask for a card number or online-banking login.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "C",
+      "source": "SM1/Charles Rose title requisition 5.2",
+      "id": "net_advance_bank_name",
+      "section": "nominated_account",
+      "label": "Bank name",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.legal_name",
+        "notes": "Suggest the borrower legal name(s); the borrower must confirm."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "C",
+      "source": "SM1/Charles Rose title requisition 5.2",
+      "id": "net_advance_account_name",
+      "section": "nominated_account",
+      "label": "Account name",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": "00-00-00",
+      "addition_group": "C",
+      "source": "SM1/Charles Rose title requisition 5.2",
+      "id": "net_advance_sort_code",
+      "section": "nominated_account",
+      "label": "Sort code",
+      "type": "sort_code"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "This is the account that should receive the net advance, not a mortgage roll number.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "C",
+      "source": "SM1/Charles Rose title requisition 5.2",
+      "id": "net_advance_account_number",
+      "section": "nominated_account",
+      "label": "Account number",
+      "type": "bank_account_number"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "C",
+      "source": "SM1/Charles Rose title requisition 5.2",
+      "id": "net_advance_account_in_all_borrowers_names",
+      "section": "nominated_account",
+      "label": "This account is in the name of all borrowers",
+      "type": "checkbox"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": {
+        "field": "net_advance_account_in_all_borrowers_names",
+        "equals": "no"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Shown if there is more than one borrower and the confirmation above is not ticked.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "C",
+      "source": "SM1/Charles Rose title requisition 5.2",
+      "id": "net_advance_account_explanation",
+      "section": "nominated_account",
+      "label": "If the account is not in every borrower’s name, please explain or give a joint-account alternative",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "party",
+      "conditional": null,
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "This is optional context for the file. It does not replace the insolvency searches the solicitor will run on the day of completion. Answer for each person if you can.",
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "J",
+      "source": "SM1/Charles Rose title requisition 1.1 / 2.2 / 9.3 (optional declaration; does not replace completion-day searches)",
+      "id": "insolvency_declaration",
+      "section": "authority_and_declaration",
+      "label": "Have you, or has any director, member or guarantor, ever been bankrupt, entered an IVA or a similar arrangement, or been disqualified as a director?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "party",
+      "conditional": {
+        "field": "insolvency_declaration",
+        "equals": "yes"
+      },
+      "pdf": null,
+      "answers_pre_loan_enquiry": true,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "addition_group": "J",
+      "source": "SM1/Charles Rose title requisition 1.1 / 2.2 / 9.3 (optional declaration; does not replace completion-day searches)",
+      "id": "insolvency_details",
+      "section": "authority_and_declaration",
+      "label": "Please tell us who, when, and the current status",
+      "type": "textarea"
+    }
+  ],
+  "additional_fields_not_on_questionnaire_pdf": [
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": null,
+        "question_ref": "Instruction form",
+        "field": "email"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.email",
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "Needed so we can send the e-sign envelope. This is on Ackroyds' Client Instruction Form, not the 6-page remortgage questionnaire.",
+      "accept": null,
+      "placeholder": null,
+      "id": "borrower_email",
+      "section": "about_you_extras",
+      "label": "Email address",
+      "type": "email"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": null,
+        "question_ref": "Instruction form",
+        "field": "date of birth"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.date_of_birth",
+        "notes": "Often outstanding."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "On the Client Instruction Form, not the remortgage questionnaire.",
+      "accept": null,
+      "placeholder": null,
+      "id": "borrower_date_of_birth",
+      "section": "about_you_extras",
+      "label": "Date of birth",
+      "type": "date"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": null,
+        "question_ref": "Instruction form",
+        "field": "NI number"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": true,
+        "source": "crm.borrower.ni_number",
+        "notes": "Often outstanding."
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": "On the Client Instruction Form, not the remortgage questionnaire.",
+      "accept": null,
+      "placeholder": null,
+      "id": "borrower_ni_number",
+      "section": "about_you_extras",
+      "label": "National Insurance number",
+      "type": "text"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": "borrower",
+      "conditional": null,
+      "pdf": {
+        "page": null,
+        "question_ref": "Instruction form",
+        "field": "Correspondence address"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "correspondence_address",
+      "section": "about_you_extras",
+      "label": "Correspondence address, if different from the property",
+      "type": "textarea"
+    },
+    {
+      "options": null,
+      "required": true,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": null,
+        "question_ref": "Instruction form",
+        "field": "I/we agree / do not agree to Conveyancing Protocol information-sharing"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "conveyancing_protocol_consent",
+      "section": "about_you_extras",
+      "label": "Do you agree to information being shared under the Law Society Conveyancing Protocol?",
+      "type": "yes_no"
+    },
+    {
+      "options": null,
+      "required": false,
+      "repeatable_group": null,
+      "conditional": null,
+      "pdf": {
+        "page": null,
+        "question_ref": "Instruction form",
+        "field": "Any other information we need to know?"
+      },
+      "answers_pre_loan_enquiry": false,
+      "prefill": {
+        "possible": false,
+        "source": null,
+        "notes": null
+      },
+      "visible_to_borrower": true,
+      "staff_only": false,
+      "help": null,
+      "accept": null,
+      "placeholder": null,
+      "id": "anything_else",
+      "section": "about_you_extras",
+      "label": "Is there anything else the solicitor should know?",
+      "type": "textarea"
+    }
+  ],
+  "counts": {
+    "fields_mapped_to_pdf": 94,
+    "fields_total_on_questionnaire": 142,
+    "ple_addition_fields": 56,
+    "additional_instruction_form_fields": 6,
+    "fields_visible_to_borrower": 139,
+    "staff_only_fields": 3,
+    "prefillable_fields": 41,
+    "pre_loan_enquiry_fields": 97,
+    "ple_fields_by_group": {
+      "A": 5,
+      "B": 14,
+      "C": 6,
+      "D": 10,
+      "E": 6,
+      "F": 3,
+      "G": 5,
+      "H": 3,
+      "I": 2,
+      "J": 2
+    }
+  },
+  "pdf_notes": [
+    "The source PDF is a 6-page non-fillable scan (OCR via Readiris, dated 24 July 2017). Pages 5–6 still say 'Stirling Ackroyd Legal'. Use current 'Ackroyd Legal' branding on our form.",
+    "The PDF typo 'Approximate amount owin2' is 'owing'. 'SPECIAL QUESTONS' is 'questions'.",
+    "Telephone numbers on page 1 are laid out as Mr / Ms columns. Our form uses a repeatable borrower group instead, with no gendered columns.",
+    "The PDF has only one 'second present lender' block. Cases can have several further charges, so further_charge is repeatable. When populating the PDF, use extra pages or a schedule if there is more than one further charge.",
+    "Q9 is three separate yes/no questions (works in the last 4 years; doors/windows since 2002; electrical works since 1 January 2005).",
+    "Q11 is a shared details + document request triggered by a yes to Q9 or Q10.",
+    "Q5 is not a yes/no on the PDF; it is a conditional document request. We add a clear gate question and do not ask the borrower to post an original certificate.",
+    "Q15 only applies if the dwelling was built in the last 10 years. 'Municipal Mutual Foundation 15 Certificate' is historic wording; keep it as an option alongside NHBC.",
+    "Page 6 form of authority is in addition to Ackroyds' standalone letter of authority. Prefill it and include both in the e-sign pack until Ackroyds say otherwise.",
+    "Signature, print-name and date blocks on pages 4, 5 and 6 are satisfied by the e-sign envelope, not by this web form."
+  ],
+  "gaps": [
+    "Ackroyds have not yet confirmed that we may pre-fill and e-sign this historic PDF (rather than a current template or their own e-sign link).",
+    "The public Posfin fact-find (posfincapital.com/apply) does not yet cover most of these solicitor questions. The smart link needs to become the system of record for them, writing to Supabase / the CRM.",
+    "New-lender account number and payment date are often n/a on a short-term or bridging facility. Confirm PDF wording before typing 'n/a' as fact.",
+    "Marital status, mortgage account numbers, ERC details, occupiers at 17+, and most property questions are typically not already on the file.",
+    "Client Instruction Form fields (email, date of birth, NI, protocol consent) are recommended extras in this spec but are not on the 6-page questionnaire. Include them in the same smart-link flow if Tom has room.",
+    "Fax is a legacy field and should be hidden behind an optional control.",
+    "We do not currently have a structured title-to-form mapper in the CRM; prefill from title is a target behaviour, not a live API.",
+    "Addition C collects the nominated bank account for the net advance (SM1/Charles Rose title requisition 5.2). This is an intentional exception to the original ‘no bank details’ brief, and must be stored and transmitted as sensitive data.",
+    "Addition H assumes a business-purpose facility, which is typical for Posfin. If the same form is later used for a purely residential remortgage, Tom should hide or reword H rather than force the confirmation.",
+    "Addition J is optional and does not replace completion-day bankruptcy searches (1.1, 2.2, 9.3), which stay with the solicitor.",
+    "The completed questionnaire should pre-populate the Charles Rose / SM1 PLE response column for the solicitor to confirm and sign. The borrower should never fill in that PDF. Map each A–J answer to the PLE number in the CRM.",
+    "Do not ask the borrower for unsolicited leases, tenancies, searches or title documents (the title-insurance covering letter tells the solicitor not to send these unless asked)."
+  ],
+  "ple_additions": {
+    "source_document": "/workspace/somo/ple/SOMO_PLE_VS_QUESTIONNAIRE_GAP_v001.md",
+    "form_title": "Solicitor Title Indemnity Requisitions",
+    "issuer": "Charles Rose Legal, for lender SM1 Capital & Security Limited",
+    "borrower_copy_rule": "Do not name SM1, SOMO, Charles Rose, Westcor, or any other lender or insurer in borrower-facing copy. Source tags below are for the spec and CRM mapping only.",
+    "placement": {
+      "A": "general flow (always asked)",
+      "B": "gated — show only if borrower or guarantor is a company or LLP",
+      "C": "general flow (always asked)",
+      "D": "tighten existing insurance questions (Q17 / leasehold L5)",
+      "E": "tighten existing occupier questions (Q1), per named occupier",
+      "F": "general flow (always asked)",
+      "G": "gated — G1 asked of everyone as the purchase gate; G2 and gift fields only if this is a purchase",
+      "H": "general flow (always asked)",
+      "I": "general flow (always asked)",
+      "J": "optional declaration in the general flow; does not replace completion-day searches"
+    },
+    "groups": {
+      "A": {
+        "title": "Source of any balance needed to complete",
+        "source": "SM1/Charles Rose title requisition 1.2 / 2.8"
+      },
+      "B": {
+        "title": "Company / SPV block",
+        "source": "SM1/Charles Rose title requisition 2.3–2.7"
+      },
+      "C": {
+        "title": "Account for the net advance",
+        "source": "SM1/Charles Rose title requisition 5.2"
+      },
+      "D": {
+        "title": "Buildings insurance — tightened",
+        "source": "SM1/Charles Rose title requisition 6.1"
+      },
+      "E": {
+        "title": "Occupiers aged 17+ — tightened",
+        "source": "SM1/Charles Rose title requisition 8.1"
+      },
+      "F": {
+        "title": "How the property is occupied",
+        "source": "SM1/Charles Rose title requisition 8.2"
+      },
+      "G": {
+        "title": "Purchase and gifted funds",
+        "source": "SM1/Charles Rose title requisition 9.1 / 9.2"
+      },
+      "H": {
+        "title": "Business purpose of the loan",
+        "source": "SM1/Charles Rose title requisition 10.1"
+      },
+      "I": {
+        "title": "Exit route",
+        "source": "SM1/Charles Rose title requisition 10.2"
+      },
+      "J": {
+        "title": "Optional insolvency declaration",
+        "source": "SM1/Charles Rose title requisition 1.1 / 2.2 / 9.3"
+      }
+    },
+    "not_added_solicitor_or_completion_items": [
+      "1.1, 2.2, 9.3 — completion-day bankruptcy searches",
+      "2.1, 7.1, 7.3, 7.4 — company search, official copies, OS1, environmental search",
+      "3.1–3.3, 5.1 — solicitor PI cover, SRA partner count, solicitor client-account details",
+      "4.1, 11 — return of executed security documents, pre-completion undertaking",
+      "9.1 — purchase contract, transfer and TA13 (flagged to the solicitor when G1 is yes, not collected from the borrower)",
+      "7.2 — redemption statements and DS1 (solicitor documents; we already collect the lender details that let the solicitor obtain them)"
+    ]
+  },
+  "version_notes": "v001 includes the full Ackroyds 6-page remortgage questionnaire mapping, plus SOMO/SM1 Charles Rose title-requisition additions A–J from /workspace/somo/ple/SOMO_PLE_VS_QUESTIONNAIRE_GAP_v001.md, folded in on 18 November 2026."
+}
