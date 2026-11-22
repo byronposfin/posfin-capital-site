@@ -1,0 +1,126 @@
+{
+  "schema": "posfin.el-lor-seed/v1",
+  "cases": [
+    {
+      "case_ref": "TEST-EL-SOMO-001",
+      "is_test": true,
+      "label": "Example SOMO file",
+      "stage": "packaging",
+      "db_stage": "packaging",
+      "owner": "Byron",
+      "product": "SOMO",
+      "email": "somo.borrower@example.invalid",
+      "postcode": "SW1A 1AA",
+      "security_label": "Example security, London",
+      "broka_case_id": null,
+      "flags": [],
+      "lender_exclusions": [],
+      "eligible_lenders": [
+        { "name": "Invocap", "contact": "invocap.desk@example.invalid" },
+        { "name": "TAB", "contact": null }
+      ],
+      "signatories": [
+        { "name": "Example Borrower", "email": "somo.borrower@example.invalid", "role": "borrower" }
+      ],
+      "money": { "gross": 250000, "retentions": 15000, "net_release": 235000, "fee_confirmed": false },
+      "el": { "state": "none" },
+      "lor": { "state": "pre_lor", "version": 1 },
+      "blocking_tasks": [],
+      "next_action": "Generate the engagement letter",
+      "fact_find_submitted": true,
+      "opened_at": "2026-11-20T09:00:00.000Z"
+    },
+    {
+      "case_ref": "TEST-LOR-BROKA-002",
+      "is_test": true,
+      "label": "Example BROKA file",
+      "stage": "placement",
+      "db_stage": "placement",
+      "owner": "Jess",
+      "product": "MTF",
+      "email": "mtf.borrower@example.invalid",
+      "postcode": "EC1A 1BB",
+      "security_label": "Example security, example district",
+      "broka_case_id": "TEST-22999",
+      "flags": [],
+      "lender_exclusions": [
+        { "name": "Excluded Lender Ltd", "abbreviations": ["ELL"], "patterns": ["MT-\\d+"] }
+      ],
+      "eligible_lenders": [
+        { "name": "Invocap", "contact": "invocap.desk@example.invalid" },
+        { "name": "TAB", "contact": null },
+        { "name": "Albatross Capital", "contact": "capital.desk@example.invalid" },
+        { "name": "Dantis", "contact": "dantis.desk@example.invalid" },
+        { "name": "Albatross Lending Group", "contact": "group.desk@example.invalid" },
+        { "name": "Harbour Example Ltd", "contact": "harbour.desk@example.invalid" }
+      ],
+      "signatories": [
+        { "name": "Example Borrower Two", "email": "mtf.borrower@example.invalid", "role": "borrower" },
+        { "name": "Example Guarantor", "email": "guarantor@example.invalid", "role": "guarantor" }
+      ],
+      "money": { "gross": 400000, "retentions": 0, "net_release": 400000, "fee_confirmed": false },
+      "el": { "state": "none" },
+      "lor": { "state": "none" },
+      "blocking_tasks": [],
+      "next_action": "Generate the lender copy",
+      "fact_find_submitted": true,
+      "opened_at": "2026-11-20T09:05:00.000Z"
+    },
+    {
+      "case_ref": "TEST-SIGNED-003",
+      "is_test": true,
+      "label": "Example letter out for signature",
+      "stage": "terms_issued",
+      "db_stage": "terms_issued",
+      "owner": "Cai",
+      "product": "SUB_LOAN",
+      "email": "sub.borrower@example.invalid",
+      "postcode": "M1 1AE",
+      "security_label": "Example security, example city",
+      "broka_case_id": null,
+      "flags": [],
+      "lender_exclusions": [],
+      "eligible_lenders": [
+        { "name": "Invocap", "contact": "invocap.desk@example.invalid" }
+      ],
+      "signatories": [
+        { "name": "Example Borrower Three", "email": "sub.borrower@example.invalid", "role": "borrower" }
+      ],
+      "money": { "gross": 180000, "retentions": 5000, "net_release": 175000, "fee_confirmed": false },
+      "el": { "state": "sent", "version": 1 },
+      "lor": { "state": "none" },
+      "blocking_tasks": [],
+      "next_action": "Await signature",
+      "fact_find_submitted": true,
+      "opened_at": "2026-11-20T09:10:00.000Z"
+    },
+    {
+      "case_ref": "TEST-NOAI-004",
+      "is_test": true,
+      "label": "Example no-contact file",
+      "stage": "factfind",
+      "db_stage": "factfind",
+      "owner": "Byron",
+      "product": "SOMO",
+      "email": "nocontact.borrower@example.invalid",
+      "postcode": "BS1 4ST",
+      "security_label": "Example security, example quay",
+      "broka_case_id": null,
+      "flags": ["no_ai_contact"],
+      "lender_exclusions": [],
+      "eligible_lenders": [
+        { "name": "Dantis", "contact": "dantis.desk@example.invalid" }
+      ],
+      "signatories": [
+        { "name": "Example Borrower Four", "email": "nocontact.borrower@example.invalid", "role": "borrower" }
+      ],
+      "money": { "gross": 100000, "retentions": 0, "net_release": 100000, "fee_confirmed": false },
+      "el": { "state": "draft", "version": 1 },
+      "lor": { "state": "none" },
+      "blocking_tasks": [],
+      "next_action": "Byron handles client contact",
+      "fact_find_submitted": true,
+      "opened_at": "2026-11-20T09:15:00.000Z"
+    }
+  ]
+}

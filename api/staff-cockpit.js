@@ -10,6 +10,7 @@ import {
   sessionAllows, sharedPreviewStore, writePreviewFile,
 } from '../lib/cockpit-store.js';
 import { newLeadsHtml } from '../lib/new-leads-lane.js';
+import { elLorEnabled } from '../lib/el-lor-flag.js';
 
 function queryOf(req) {
   if (req.query && (req.query.filter || req.query.view || req.query.caseId || req.query.spine || req.query.waiting)) return req.query;
@@ -265,6 +266,7 @@ export async function handleCockpit(req, res, deps = {}) {
         sections: groupBoard(cards, filter),
         queue: lizzyQueue(cards),
         newLeadsHtml: await newLeadsHtml(mode, env, deps.fetch),
+        liveCases: elLorEnabled(env),
       };
       const html = query.view === 'lizzy' ? renderLizzy(model) : renderBoard(model);
       return sendHtml(res, 200, html);
@@ -279,6 +281,7 @@ export async function handleCockpit(req, res, deps = {}) {
       sections: groupBoard(cards, filter),
       queue: lizzyQueue(cards),
       newLeadsHtml: await newLeadsHtml('preview', env, deps.fetch),
+      liveCases: elLorEnabled(env),
     };
     const html = query.view === 'lizzy' ? renderLizzy(model) : renderBoard(model);
     return sendHtml(res, 200, html);
