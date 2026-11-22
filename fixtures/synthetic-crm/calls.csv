@@ -1,0 +1,3 @@
+owner_tab,date,priority,lead_name,call_status,source_row_or_case_ref,campaign,note_summary,case_id_matched
+CHRIS CALLS,2026-11-17,,Ada Caller,open,,,Further questions only. Synthetic.,
+BYRON CALLS,2026-11-01,,Example Borrower One,open,PC-001,,Spoke on a synthetic file.,PC-001

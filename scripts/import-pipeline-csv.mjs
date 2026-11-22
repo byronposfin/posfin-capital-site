@@ -1,7 +1,7 @@
 // Read-only importer. Prints stage counts. Does not write to Supabase or Sheets.
 // node scripts/import-pipeline-csv.mjs
 // node scripts/import-pipeline-csv.mjs path/to/pipeline.csv
-// node scripts/import-pipeline-csv.mjs --pipeline data/pipeline-tab-20261120.csv --clean data/pipeline-clean-20261120.csv --calls data/calls-20261120.csv
+// node scripts/import-pipeline-csv.mjs --pipeline fixtures/synthetic-crm/pipeline-tab.csv --clean fixtures/synthetic-crm/pipeline-clean.csv --calls fixtures/synthetic-crm/calls.csv
 import { readFileSync } from 'node:fs';
 import {
   attachCallsExport, buildCases, filterOwner, groupColumns, loadCrmBoard, loadMasterIndex, mergeCrmCards, parseCallsExport, parsePipelineCsv,
@@ -25,9 +25,9 @@ if (single) {
   const cards = parsePipelineCsv(readFileSync(single, 'utf8'));
   console.log(JSON.stringify({ file: single, rows: cards.length, counts: countsFor(cards) }, null, 2));
 } else {
-  const pipelinePath = option('--pipeline') || new URL('../data/pipeline-tab-20261120.csv', import.meta.url);
-  const cleanPath = option('--clean') || new URL('../data/pipeline-clean-20261120.csv', import.meta.url);
-  const callsPath = option('--calls') || new URL('../data/calls-20261120.csv', import.meta.url);
+  const pipelinePath = option('--pipeline') || new URL('../fixtures/synthetic-crm/pipeline-tab.csv', import.meta.url);
+  const cleanPath = option('--clean') || new URL('../fixtures/synthetic-crm/pipeline-clean.csv', import.meta.url);
+  const callsPath = option('--calls') || new URL('../fixtures/synthetic-crm/calls.csv', import.meta.url);
   const pipeline = parsePipelineCsv(readFileSync(pipelinePath, 'utf8'));
   const clean = parsePipelineCsv(readFileSync(cleanPath, 'utf8'));
   const calls = parseCallsExport(readFileSync(callsPath, 'utf8'));

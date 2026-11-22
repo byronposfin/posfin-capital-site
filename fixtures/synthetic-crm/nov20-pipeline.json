@@ -1,0 +1,33 @@
+[
+  {
+    "match": { "ref": "PC-001" },
+    "name": "Example Borrower One",
+    "stage": "el_signed",
+    "loan": 250000,
+    "feeVerified": 7500,
+    "note": "Synthetic overlay. Not a live case.",
+    "nextAction": "Review the synthetic file"
+  },
+  {
+    "match": { "ref": "PC-002" },
+    "name": "Example Borrower Two",
+    "stage": "fact_find",
+    "loan": 180000,
+    "note": "Synthetic overlay. Not a live case."
+  },
+  {
+    "match": { "ref": "PC-003" },
+    "name": "Example Borrower Three",
+    "stage": "lor_requested",
+    "loan": 185000,
+    "feeVerified": 9250,
+    "note": "Synthetic overlay. Not a live case."
+  },
+  {
+    "match": { "ref": "PC-004" },
+    "name": "Example Borrower Four",
+    "stage": "el_sent",
+    "flag": "EL not on file",
+    "note": "Synthetic overlay. Not a live case."
+  }
+]

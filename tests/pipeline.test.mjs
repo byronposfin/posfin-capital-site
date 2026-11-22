@@ -90,58 +90,58 @@ test('index and pipeline statuses land on the named columns', () => {
 
 test('20 Nov stage wins over the 14 Nov index and both stay in history', () => {
   const index = loadMasterIndex();
-  assert.equal(index.length, 33);
-  assert.equal(index.filter((row) => row.tier.startsWith('A')).length, 19);
-  assert.equal(index.filter((row) => row.tier.startsWith('B')).length, 9);
-  assert.equal(index.filter((row) => row.tier.startsWith('D')).length, 5);
+  assert.equal(index.length, 5);
+  assert.equal(index.filter((row) => row.tier.startsWith('A')).length, 2);
+  assert.equal(index.filter((row) => row.tier.startsWith('B')).length, 2);
+  assert.equal(index.filter((row) => row.tier.startsWith('D')).length, 1);
   const cards = buildCases(index);
-  const roy = cards.find((card) => card.caseRef === 'PC-002');
-  assert.equal(roy.stage, 'el_signed');
-  assert.equal(roy.loan, 1500000);
-  assert.equal(roy.feeVerified, 45000);
-  assert.equal(roy.feeAssumed, null);
-  assert.equal(roy.driveUrl.startsWith('https://drive.google.com/'), true);
-  assert.equal(roy.history[0].source, 'master-index-14-nov');
-  assert.equal(roy.history[1].source, 'pipeline-20-nov');
-  const williamson = cards.find((card) => card.caseRef === 'POSFIN-WEB-EYCTQ6');
-  assert.equal(williamson.stage, 'fact_find');
-  assert.equal(williamson.loan, 455000);
-  assert.equal(cards.some((card) => card.caseRef === 'PC-004' && card.name.includes('Williamson')), false);
-  const morys = cards.find((card) => card.caseRef === 'PC-004');
-  assert.match(morys.name, /Morys/);
-  assert.equal(morys.stage, 'el_sent');
-  assert.equal(morys.flags.includes('EL not on file'), true);
-  const unsure = cards.find((card) => card.caseRef === 'PC-027');
-  assert.equal(unsure.flags.includes('Byron/Chris to confirm'), true);
+  const first = cards.find((card) => card.caseRef === 'PC-001');
+  assert.equal(first.name, 'Example Borrower One');
+  assert.equal(first.stage, 'el_signed');
+  assert.equal(first.loan, 250000);
+  assert.equal(first.feeVerified, 7500);
+  assert.equal(first.feeAssumed, null);
+  assert.equal(first.driveUrl.startsWith('https://drive.google.com/'), true);
+  assert.equal(first.history[0].source, 'master-index-14-nov');
+  assert.equal(first.history[1].source, 'pipeline-20-nov');
+  const second = cards.find((card) => card.caseRef === 'PC-002');
+  assert.equal(second.stage, 'fact_find');
+  assert.equal(second.loan, 180000);
+  const fourth = cards.find((card) => card.caseRef === 'PC-004');
+  assert.equal(fourth.name, 'Example Borrower Four');
+  assert.equal(fourth.stage, 'el_sent');
+  assert.equal(fourth.flags.includes('EL not on file'), true);
+  assert.equal(fourth.flags.includes('Byron/Chris to confirm'), true);
   assert.equal(assumedFee(185000, 'lor_requested'), 9250);
   assert.equal(assumedFee(null, 'lor_requested'), null);
-  const mcdonald = cards.find((card) => card.caseRef === 'PC-003');
-  assert.equal(mcdonald.feeVerified, 9250);
-  assert.equal(mcdonald.feeAssumed, 9250);
+  const third = cards.find((card) => card.caseRef === 'PC-003');
+  assert.equal(third.feeVerified, 9250);
+  assert.equal(third.feeAssumed, 9250);
 });
 
 test('call tabs attach by source row or name, and a new caller becomes an intake card', () => {
   const cards = buildCases(loadMasterIndex());
   const withCalls = attachCalls(cards, [
-    { date: '2026-11-17', name: 'Rod Sim', owner: 'Chris', sourceRow: '', email: 'rsimdevelopments@gmail.com', phone: '447515970811', note: 'He answered the questions yesterday and Byron asked further questions.' },
-    { date: '2026-10-22', name: 'Someone Else', owner: 'Chris', sourceRow: 'Pipeline:94 | META-31483305', email: '', phone: '', note: 'Router complete and fact find submitted.' },
-    { date: '2026-07-27', name: 'Edward Bromet', owner: 'Chris', sourceRow: 'Existing client came back', email: '', phone: '', note: 'Called again.' },
+    { date: '2026-11-17', name: 'Ada Caller', owner: 'Chris', sourceRow: '', email: 'ada.caller@example.invalid', phone: '447700900123', note: 'Further questions only. Synthetic.' },
+    { date: '2026-10-22', name: 'Example Case', owner: 'Chris', sourceRow: 'Pipeline:94 | META-31483305', email: '', phone: '', note: 'Router complete and fact find submitted.' },
+    { date: '2026-07-27', name: 'Example Bromet', owner: 'Chris', sourceRow: 'Existing synthetic file', email: '', phone: '', note: 'Called again.' },
   ]);
-  const rod = withCalls.find((card) => card.name === 'Rod Sim');
-  assert.equal(rod.stage, 'contacting');
-  assert.equal(rod.owner, 'Chris');
-  assert.equal(rod.flags.includes('Not on the Pipeline tab'), true);
-  const stratford = withCalls.find((card) => card.caseRef === 'META-31483305');
-  assert.equal(stratford.stage, 'fact_find');
-  assert.equal(stratford.callNotes[0].sourceRow.includes('META-31483305'), true);
+  const ada = withCalls.find((card) => card.name === 'Ada Caller');
+  assert.equal(ada.stage, 'contacting');
+  assert.equal(ada.owner, 'Chris');
+  assert.equal(ada.flags.includes('Not on the Pipeline tab'), true);
+  const meta = withCalls.find((card) => card.caseRef === 'META-31483305');
+  assert.equal(meta.stage, 'fact_find');
+  assert.equal(meta.callNotes[0].sourceRow.includes('META-31483305'), true);
   const bromet = withCalls.find((card) => card.caseRef === 'PC-026');
+  assert.equal(bromet.name, 'Example Bromet');
   assert.equal(bromet.stage, 'parked');
   assert.equal(bromet.callNotes[0].owner, 'Chris');
   assert.equal(bromet.owner, 'Chris');
 });
 
 test('pipeline CSV import uses case_id and does not require a sheet write', () => {
-  const csv = 'case_id,borrower_name,status,owner_sales,next_step\nPOSFIN.26.0115,Elliot Hill,COMPLETED,Chris,Check the file\n';
+  const csv = 'case_id,borrower_name,status,owner_sales,next_step\nPOSFIN.26.0115,Elliot Example,COMPLETED,Chris,Check the file\n';
   const rows = parsePipelineCsv(csv);
   assert.equal(rows[0].caseRef, 'POSFIN.26.0115');
   assert.equal(rows[0].stage, 'completed');
@@ -206,7 +206,7 @@ test('crm exports keep messy rows and match by case id then name', () => {
   const csv = [
     'case_id,borrower_name,status,owner_sales,next_action',
     'POSFIN-X,Ann Example,━━ DEAL STATUS — note COMPLETED on 10 Apr,Byron,Check',
-    ',Jean Michel BOUCHON,Website,Byron,Call',
+    ',Jean Example,Website,Byron,Call',
     'POSFIN-D,Pat Example,DEAD - CLIENT GHOSTING,Chris,Stop',
   ].join('\n');
   const rows = parsePipelineCsv(csv);
@@ -214,35 +214,36 @@ test('crm exports keep messy rows and match by case id then name', () => {
   const messy = rows.find((row) => row.caseRef === 'POSFIN-X');
   assert.equal(messy.flags.includes('source data needs cleanup'), true);
   assert.equal(messy.stage, 'completed');
-  assert.equal(rows.find((row) => row.name === 'Jean Michel BOUCHON').stage, 'new_triage');
-  const base = [{ caseRef: 'PC-001', name: 'Jean Michel BOUCHON', stage: 'raw_lead', owner: 'Lizzy', flags: [], history: [{ source: 'index', stage: 'raw_lead' }], callNotes: [] }];
-  const merged = mergeCrmCards(base, rows.filter((row) => row.name === 'Jean Michel BOUCHON'));
+  assert.equal(rows.find((row) => row.name === 'Jean Example').stage, 'new_triage');
+  const base = [{ caseRef: 'PC-001', name: 'Jean Example', stage: 'raw_lead', owner: 'Lizzy', flags: [], history: [{ source: 'index', stage: 'raw_lead' }], callNotes: [] }];
+  const merged = mergeCrmCards(base, rows.filter((row) => row.name === 'Jean Example'));
   assert.equal(merged.length, 1);
   assert.equal(merged[0].caseRef, 'PC-001');
   assert.equal(merged[0].stage, 'new_triage');
   assert.equal(merged[0].owner, 'Byron');
   assert.match(merged[0].history.map((row) => row.note).join(' '), /Earlier stage raw_lead/);
-  const calls = parseCallsExport('owner_tab,date,lead_name,note_summary,case_id_matched,source_row_or_case_ref\nCHRIS CALLS,2026-11-17,Rod Sim,Further questions,,\nBYRON CALLS,2026-11-01,Pat Example,Spoke,POSFIN-D,PIPELINE\n');
+  const calls = parseCallsExport('owner_tab,date,lead_name,note_summary,case_id_matched,source_row_or_case_ref\nCHRIS CALLS,2026-11-17,Ada Caller,Further questions,,\nBYRON CALLS,2026-11-01,Pat Example,Spoke,POSFIN-D,PIPELINE\n');
   const withCalls = attachCallsExport([{ caseRef: 'POSFIN-D', name: 'Pat Example', stage: 'parked', owner: 'Chris', flags: [], history: [], callNotes: [] }], calls);
   assert.equal(withCalls.length, 2);
   assert.equal(withCalls.find((card) => card.caseRef === 'POSFIN-D').callNotes.length, 1);
-  const rod = withCalls.find((card) => card.name === 'Rod Sim');
-  assert.equal(rod.owner, 'Chris');
-  assert.equal(rod.stage, 'contacting');
-  assert.equal(rod.flags.includes('Not on the Pipeline tab'), true);
+  const ada = withCalls.find((card) => card.name === 'Ada Caller');
+  assert.equal(ada.owner, 'Chris');
+  assert.equal(ada.stage, 'contacting');
+  assert.equal(ada.flags.includes('Not on the Pipeline tab'), true);
 });
 
-test('committed crm fixtures keep every exported row', () => {
-  const pipeline = parsePipelineCsv(readFileSync(new URL('../data/pipeline-tab-20261120.csv', import.meta.url), 'utf8'));
-  const clean = parsePipelineCsv(readFileSync(new URL('../data/pipeline-clean-20261120.csv', import.meta.url), 'utf8'));
-  const calls = parseCallsExport(readFileSync(new URL('../data/calls-20261120.csv', import.meta.url), 'utf8'));
-  assert.equal(pipeline.length, 110);
-  assert.equal(clean.length, 79);
-  assert.equal(calls.length, 63);
-  assert.equal(calls.filter((call) => call.caseRef).length, 33);
+test('synthetic crm fixtures keep every exported row', () => {
+  const pipeline = parsePipelineCsv(readFileSync(new URL('../fixtures/synthetic-crm/pipeline-tab.csv', import.meta.url), 'utf8'));
+  const clean = parsePipelineCsv(readFileSync(new URL('../fixtures/synthetic-crm/pipeline-clean.csv', import.meta.url), 'utf8'));
+  const calls = parseCallsExport(readFileSync(new URL('../fixtures/synthetic-crm/calls.csv', import.meta.url), 'utf8'));
+  assert.equal(pipeline.length, 3);
+  assert.equal(clean.length, 2);
+  assert.equal(calls.length, 2);
+  assert.equal(calls.filter((call) => call.caseRef).length, 1);
   const cards = loadCrmBoard();
-  assert.equal(cards.length > 110, true);
+  assert.equal(cards.length > pipeline.length, true);
   assert.equal(cards.some((card) => card.flags.includes('source data needs cleanup')), true);
+  assert.equal(cards.some((card) => /@(?!example\.invalid)/.test(card.email || '')), false);
 });
 
 test('lead summary counts skips and contact dedupe without writing', () => {
