@@ -29,6 +29,7 @@ function startPreview() {
       SEAT_VIEW_SOURCE: 'fixtures',
       VERCEL_ENV: 'preview',
       FEATURE_SEAT_VIEW_CHRIS: 'on',
+      FEATURE_SEAT_VIEW_BYRON: 'on',
     },
     stdio: 'inherit',
   });
@@ -100,6 +101,16 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await shot(page, page.locator('#daily-tasks'), '05-daily-tasks-mobile.png');
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/staff/cockpit/seat/byron`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#live-cases');
+  const byron = await page.content();
+  if (byron.includes('switched off') || !byron.includes("Byron Hill's seat") || !byron.includes('TEST-SEAT-001')) {
+    throw new Error('Byron seat did not open on the sample book');
+  }
+  if (/broker_fee|@gmail\.com/i.test(byron)) throw new Error('Byron fixture page failed the synthetic-data check');
+  await shot(page, page.locator('#live-cases'), '06-byron-seat.png');
   console.log('seat walkthrough ok');
 } finally {
   await browser.close();

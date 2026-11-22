@@ -3,6 +3,7 @@ import { endSession, establishSession, sessionAllows } from '../lib/cockpit-stor
 import { seatViewEnabled } from '../lib/seat-flag.js';
 import { renderSeat, renderSeatLogin, renderSeatMessage } from '../lib/seat-html.js';
 import { loadAnswers, loadBook, saveAnswer, sharedSeatStore } from '../lib/seat-store.js';
+import { supabaseAccessToken } from '../lib/staff-auth.js';
 import { presentSeat, recordAnswer, seatByCode } from '../lib/seat-view.js';
 
 function queryOf(req) {
@@ -40,6 +41,20 @@ function writeAnswerCookie(res, req, store) {
   else res.setHeader('Set-Cookie', cookie);
 }
 
+function accessOf(req, deps) {
+  if (deps.accessToken) return String(deps.accessToken);
+  return supabaseAccessToken(readCookie(req, 'pf_staff'));
+}
+
+function loginMessage(error) {
+  if (error === 'not_configured') return 'Individual sign-in is not configured on this preview.';
+  if (error === 'not_allowed') return 'That email is not on the staff list.';
+  if (error === 'unavailable' || error === 'schema_pending') return 'Sign-in is temporarily unavailable.';
+  if (error === 'email') return 'Enter the work email for this seat.';
+  if (error) return 'That email or password was not recognised.';
+  return '';
+}
+
 function locationFor(code, fields, edit) {
   const params = new URLSearchParams();
   if (fields.from) params.set('from', fields.from);
@@ -69,8 +84,8 @@ export async function handleSeat(req, res, deps = {}) {
       const action = String(fields.action || '');
       const session = readCookie(req, 'pf_staff');
       if (fields.password && !action) {
-        const login = await establishSession(String(fields.password || ''), depsEnv);
-        if (!login.ok) return sendHtml(res, 401, renderSeatLogin('That staff password was not recognised.', path));
+        const login = await establishSession({ email: fields.email, password: fields.password }, depsEnv);
+        if (!login.ok) return sendHtml(res, 401, renderSeatLogin(loginMessage(login.error), path));
         writeStaffCookie(res, req, login.session);
         return redirect(res, path);
       }
@@ -85,8 +100,9 @@ export async function handleSeat(req, res, deps = {}) {
       }
       const now = deps.now || new Date().toISOString();
       const store = storeFor(req, deps);
-      const book = await loadBook(env, deps);
-      const saved = await loadAnswers(env, seat.code, presentSeat({ ...book, seat, now, query: fields }).today, { ...deps, store });
+      const accessToken = accessOf(req, deps);
+      const book = await loadBook(env, { ...deps, accessToken });
+      const saved = await loadAnswers(env, seat.code, presentSeat({ ...book, seat, now, query: fields }).today, { ...deps, store, accessToken });
       const view = presentSeat({
         ...book,
         seat,
@@ -110,7 +126,7 @@ export async function handleSeat(req, res, deps = {}) {
         return sendHtml(res, 400, renderSeatMessage('Not saved', text));
       }
       if (result.editing) return redirect(res, locationFor(seat.code, fields, result.editing));
-      const written = await saveAnswer(env, result.row, { ...deps, store });
+      const written = await saveAnswer(env, result.row, { ...deps, store, accessToken });
       if (!deps.store) writeAnswerCookie(res, req, store);
       else writeAnswerCookie(res, req, store);
       if (written && written.error) return sendHtml(res, 400, renderSeatMessage('Not saved', 'That answer was not saved.'));
@@ -123,9 +139,10 @@ export async function handleSeat(req, res, deps = {}) {
     if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderSeatLogin('', path));
     const now = deps.now || new Date().toISOString();
     const store = storeFor(req, deps);
-    const book = await loadBook(env, deps);
+    const accessToken = accessOf(req, deps);
+    const book = await loadBook(env, { ...deps, accessToken });
     const draft = presentSeat({ ...book, seat, now, query });
-    const saved = await loadAnswers(env, seat.code, draft.today, { ...deps, store });
+    const saved = await loadAnswers(env, seat.code, draft.today, { ...deps, store, accessToken });
     const view = presentSeat({
       ...book,
       seat,
