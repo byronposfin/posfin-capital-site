@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://posfincapital.com/schemas/el-lor-seed.schema.json",
+  "title": "EL/LOR desk seed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "cases"],
+  "properties": {
+    "schema": { "const": "posfin.el-lor-seed/v1" },
+    "cases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "$defs": {
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_ref", "is_test", "label", "stage", "db_stage", "owner", "product",
+        "email", "postcode", "signatories", "money", "eligible_lenders",
+        "lender_exclusions", "flags", "el", "lor", "fact_find_submitted"
+      ],
+      "properties": {
+        "case_ref": { "type": "string", "minLength": 3, "maxLength": 64 },
+        "is_test": { "type": "boolean" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "stage": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "db_stage": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "owner": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "product": { "enum": ["SOMO", "MTF", "SUB_LOAN"] },
+        "email": { "type": "string", "maxLength": 120 },
+        "postcode": { "type": "string", "maxLength": 16 },
+        "security_label": { "type": "string", "maxLength": 160 },
+        "broka_case_id": { "type": ["string", "null"], "maxLength": 64 },
+        "flags": { "type": "array", "items": { "type": "string", "maxLength": 40 } },
+        "lender_exclusions": { "type": "array", "items": { "$ref": "#/$defs/exclusion" } },
+        "eligible_lenders": { "type": "array", "items": { "$ref": "#/$defs/lender" } },
+        "signatories": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/signer" } },
+        "money": { "$ref": "#/$defs/money" },
+        "el": { "$ref": "#/$defs/el" },
+        "lor": { "$ref": "#/$defs/lor" },
+        "blocking_tasks": { "type": "array", "items": { "$ref": "#/$defs/task" } },
+        "next_action": { "type": "string", "maxLength": 200 },
+        "fact_find_submitted": { "type": "boolean" },
+        "opened_at": { "type": "string" }
+      }
+    },
+    "exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "abbreviations": { "type": "array", "items": { "type": "string", "maxLength": 20 } },
+        "patterns": { "type": "array", "items": { "type": "string", "maxLength": 40 } }
+      }
+    },
+    "lender": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "contact": { "type": ["string", "null"], "maxLength": 120 },
+        "abbreviations": { "type": "array", "items": { "type": "string", "maxLength": 20 } }
+      }
+    },
+    "signer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "email", "role"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "email": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "maxLength": 40 }
+      }
+    },
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gross", "retentions", "net_release", "fee_confirmed"],
+      "properties": {
+        "gross": { "type": "number" },
+        "retentions": { "type": "number" },
+        "net_release": { "type": "number" },
+        "fee_confirmed": { "type": "boolean" },
+        "fee_amount": { "type": "number" },
+        "fee_text": { "type": "string", "maxLength": 80 }
+      }
+    },
+    "el": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state"],
+      "properties": {
+        "state": { "enum": ["none", "draft", "sent", "viewed", "partly_signed", "signed"] },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "lor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state"],
+      "properties": {
+        "state": { "enum": ["none", "pre_lor", "lender_copy"] },
+        "version": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "open"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "open": { "type": "boolean" },
+        "blocking": { "type": "boolean" }
+      }
+    }
+  }
+}
