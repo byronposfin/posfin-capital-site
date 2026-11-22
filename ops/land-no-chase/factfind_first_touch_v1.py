@@ -35,7 +35,7 @@ def suppressed(x,entries):
 
 def body(x,url):
  e=html.escape
- return f'<p><b>Name:</b> {e(x["name"])}<br><b>Mobile:</b> +{e(phone(x["phone"]))}<br><b>Email:</b> {e(x["email"])}<br><b>Enquiry:</b> {e(x["campaign"])}</p><p>Hi {e(x["name"].split()[0])},</p><p>I’m Tom, Byron’s AI assistant at Posfin Capital. Thank you for your enquiry.</p><p>Please complete our short fact find so we can review the property, existing borrowing, amount needed and repayment plan.</p><p><a href="{e(url,quote=True)}">Complete your fact find</a></p><p>Your contact details are prefilled. This is for our initial review, not a formal lender application or credit check.</p><p>You can also reply with any missing information or questions. There is no need to resend details you have already supplied. Once complete, reply DONE and we will review the next step.</p>'
+ return f'<p><b>Name:</b> {e(x["name"])}<br><b>Mobile:</b> +{e(phone(x["phone"]))}<br><b>Email:</b> {e(x["email"])}<br><b>Enquiry:</b> {e(x["campaign"])}</p><p>Hi {e(x["name"].split()[0])},</p><p>I’m Tom, Byron’s AI assistant at Posfin Capital. Thank you for your enquiry.</p><p>Apply now — takes about 5 minutes, so we can review the property, existing borrowing, amount needed and repayment plan.</p><p><a href="{e(url,quote=True)}">Apply now — takes about 5 minutes</a></p><p>Your contact details are prefilled. This is for our initial review, not a formal lender application or credit check.</p><p>You can also reply with any missing information or questions. There is no need to resend details you have already supplied. Once complete, reply DONE and we will review the next step.</p>'
 
 def main():
  with (OUT/'run.lock').open('w') as lock:

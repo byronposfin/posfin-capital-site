@@ -186,7 +186,7 @@ function collect(){ const a={}; for(const k of Object.keys(F)){ const el=documen
 function fill(a){ a={...a,purpose:S.normalisePurpose(a?.purpose ?? a?.loanPurpose ?? a?.loan_purpose)}; landArchive=a?.inactive_land_answers||landArchive; for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el || !F[k]) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):(["first_charge_lender","second_charge_provider"].includes(k)?String(v).toUpperCase():v); if(F[k].t==="date") fillDobParts(k, el.value); } propertyEditor.fill(a);syncBranches(); if(a?.security_address) epcSeen=(String(a.security_postcode||"")+"|"+String(a.security_address)).replace(/\s/g,"").toUpperCase(); }
 function show(i){ step=Math.max(0,Math.min(4,i)); document.querySelectorAll(".step").forEach(s=>s.classList.toggle("hide",+s.dataset.i!==step));
   document.querySelectorAll("#rail div").forEach((d,j)=>{d.classList.toggle("on",j===step);d.classList.toggle("done",j<step)});
-  $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; updateFinancialReview(); }
+  $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Apply now":"Continue"; updateFinancialReview(); }
 function setStatus(t,c){ const s=$("#status"); s.textContent=t; s.className="status "+(c||""); }
 function clearErr(){ document.querySelectorAll(".err").forEach(e=>e.textContent=""); document.querySelectorAll(".bad").forEach(e=>e.classList.remove("bad")); }
 function showErr(errs){ clearErr(); let first=null; for(const [k,m] of Object.entries(errs||{})){ const e=document.getElementById("e_"+k), el=document.getElementById(k); if(e) e.textContent=m; if(el){el.classList.add("bad"); const day=dobPart(k,"day"); if(day) day.classList.add("bad"); if(first===null) first=k;} } return first; }
@@ -293,7 +293,7 @@ $("#next").addEventListener("click",async()=>{
   const btn=$("#next");
   btn.disabled=true; btn.textContent="Saving…";
   try{ const ok=await save(true); if(ok!==false) show(step+1); }
-  finally{ nextBusy=false; if($("#next")){ $("#next").disabled=false; if($("#next").textContent==="Saving…") $("#next").textContent=step===4?"Submit fact find":"Continue"; } }
+  finally{ nextBusy=false; if($("#next")){ $("#next").disabled=false; if($("#next").textContent==="Saving…") $("#next").textContent=step===4?"Apply now":"Continue"; } }
   window.scrollTo({top:0,behavior:"smooth"});
 });
 $("#back").addEventListener("click",()=>{ clearErr(); show(step-1); });
