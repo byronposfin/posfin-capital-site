@@ -1,0 +1,10 @@
+Posfin Capital — lender enquiry
+Case: {{case_ref}}
+Lender: {{lender_name}}
+Contact: {{contact}}
+Regulated: {{regulated}}
+Security district: {{postcode_district}}
+Loan request: {{loan_label}}
+
+This note was prepared inside Posfin. It has not been sent.
+Posfin Capital is a credit broker, not a lender.
