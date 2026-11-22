@@ -135,7 +135,7 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const fields = await readFields(req);
       if (fields.password && !fields.action) {
-        const login = await establishSession(String(fields.password), { env });
+        const login = await establishSession({ email: fields.email, password: fields.password }, { env });
         if (!login.ok) return sendHtml(res, 401, renderPipelineLogin());
         writeStaffCookie(res, req, login.session);
         return redirect(res, '/staff/cockpit/pipeline');

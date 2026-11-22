@@ -70,7 +70,7 @@ export async function handleElLorDesk(req, res, deps = {}) {
     if (req.method === 'POST') {
       const fields = await fieldsOf(req);
       if (fields.password && !fields.action) {
-        const login = await establishSession(String(fields.password || ''), depsEnv);
+        const login = await establishSession({ email: fields.email, password: fields.password }, depsEnv);
         if (!login.ok) return sendHtml(res, 401, renderElLorLogin('/staff/cockpit/live'));
         writeStaffCookie(res, req, login.session);
         const next = caseRefOf(queryOf(req), fields);
