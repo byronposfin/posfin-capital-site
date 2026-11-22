@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { mapRegisterRow, mapRegisterRows } from '../lib/case-register.js';
 import { filterOwner } from '../lib/pipeline.js';
 import { renderPipeline } from '../lib/pipeline-html.js';
 import { renderLiveCases } from '../lib/el-lor-html.js';
+import { loadCaseRegister } from '../lib/case-register.js';
+import { loadSeed } from '../lib/el-lor-seed.js';
 import { previewPasswordAllowed, supabasePasswordLogin } from '../lib/staff-auth.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
 import { ownerSeat, seatEmail } from '../lib/staff-seats.js';
@@ -149,4 +152,56 @@ test('password login uses the anon key and the allowlist, and the service key st
   assert.equal(await sessionAllows(login.session, { env, fetch: fetchImpl }), true);
   const html = renderLiveCases({ rows: [], total: 0, stages: [], owners: [], warning: '', query: {} });
   assert.equal(html.includes('service-key-secret'), false);
+});
+
+test('the case register is read with the staff session and fails closed', async () => {
+  const calls = [];
+  const env = {
+    VERCEL_ENV: 'production',
+    STAFF_SUPABASE_URL: 'https://example.test',
+    STAFF_SUPABASE_ANON_KEY: 'anon-key',
+    STAFF_SUPABASE_SERVICE_KEY: 'service-key-secret',
+    SUPABASE_REVOLUT_API_KEY: 'revolut-secret',
+  };
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url: String(url), headers: options.headers || {}, body: options.body });
+    if (calls.length === 1) {
+      return { ok: false, status: 401, text: async () => '{"message":"not_allowed"}' };
+    }
+    return {
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify([{
+        case_ref: 'TEST-REG-009',
+        case_label: 'Example Borrower',
+        stage: 'factfind',
+        owner: 'Chris Shipton',
+        product: 'SOMO',
+        email: 'borrower@example.invalid',
+      }]),
+    };
+  };
+  const denied = await loadCaseRegister(env, fetchImpl, 'user-access');
+  assert.equal(denied.ok, false);
+  assert.deepEqual(denied.cases, []);
+  assert.match(denied.warning, /not substituted/);
+  const closed = await loadSeed(env, fetchImpl, 'user-access');
+  assert.equal(closed.cases.some((row) => row.case_ref === 'TEST-EL-SOMO-001'), false);
+  assert.equal(closed.cases[0].case_ref, 'TEST-REG-009');
+  assert.equal(closed.cases[0].owner, 'Chris Shipton');
+  const none = await loadCaseRegister(env, fetchImpl, '');
+  assert.deepEqual(none.cases, []);
+  assert.equal(calls.length, 2);
+  assert.match(calls[0].url, /\/rpc\/staff_case_register$/);
+  assert.equal(calls[0].headers.apikey, 'anon-key');
+  assert.equal(calls[0].headers.Authorization, 'Bearer user-access');
+  assert.equal(calls[0].headers['Accept-Profile'], 'pipeline');
+  assert.equal(calls[0].headers['Content-Profile'], 'pipeline');
+  const sent = JSON.stringify(calls);
+  assert.equal(sent.includes('service-key-secret'), false);
+  assert.equal(sent.includes('revolut-secret'), false);
+  const reader = readFileSync(new URL('../lib/case-register.js', import.meta.url), 'utf8');
+  const auth = readFileSync(new URL('../lib/staff-auth.js', import.meta.url), 'utf8');
+  assert.equal(reader.includes('STAFF_SUPABASE_SERVICE_KEY'), false);
+  assert.equal(auth.includes('STAFF_SUPABASE_SERVICE_KEY'), false);
 });

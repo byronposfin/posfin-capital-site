@@ -1,9 +1,13 @@
-// Sends staff invite and recovery emails. Dry run unless --send is present.
-// Do not run this until Byron says the set-password page is live and the
-// Supabase redirect allow-list contains https://posfincapital.com/staff/set-password.
+// Operator-only invite and recovery sender. Dry run unless --send is present.
+// This is the only staff-desk tool that reads a full-access Supabase key.
+// The website never reads that key. Run this on the operator's own machine.
 //
-// Requires STAFF_SUPABASE_URL and STAFF_SUPABASE_SERVICE_KEY in the environment.
-// The key is not printed. This script is not part of the site and is not run by CI.
+// The key is taken from SUPABASE_REVOLUT_API_KEY, or STAFF_SUPABASE_SERVICE_KEY
+// if that is unset. It is not printed. Delete the key in Supabase after the
+// invites have been sent. Do not put it in Vercel.
+//
+// Do not run --send until the set-password page is live and
+// https://posfincapital.com/staff/set-password is on the Auth redirect list.
 
 import { SET_PASSWORD_REDIRECT, STAFF_LINK_PLAN } from '../lib/staff-auth-links.js';
 
@@ -16,9 +20,9 @@ for (const row of STAFF_LINK_PLAN) {
 if (!send) process.exit(0);
 
 const url = String(process.env.STAFF_SUPABASE_URL || '').replace(/\/+$/, '');
-const key = String(process.env.STAFF_SUPABASE_SERVICE_KEY || '').trim();
+const key = String(process.env.SUPABASE_REVOLUT_API_KEY || process.env.STAFF_SUPABASE_SERVICE_KEY || '').trim();
 if (!url || !key) {
-  console.error('STAFF_SUPABASE_URL and STAFF_SUPABASE_SERVICE_KEY are required. Nothing was sent.');
+  console.error('STAFF_SUPABASE_URL and a local full-access key are required. Nothing was sent.');
   process.exit(1);
 }
 
