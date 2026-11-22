@@ -160,6 +160,7 @@
     { "source": "/staff/cockpit/broka/:caseRef", "destination": "/api/broka-desk?case=:caseRef" },
     { "source": "/staff/cockpit/pipeline", "destination": "/api/staff-pipeline" },
     { "source": "/staff/cockpit/spine/:caseRef", "destination": "/api/staff-cockpit?spine=:caseRef" },
+    { "source": "/staff/cockpit/seat/:seat", "destination": "/api/staff-seat?seat=:seat" },
     { "source": "/staff/cockpit", "destination": "/api/staff-cockpit" },
     { "source": "/staff/france/:caseId", "destination": "/api/fr-staff?caseId=:caseId" },
     { "source": "/staff/france", "destination": "/api/fr-staff" },
