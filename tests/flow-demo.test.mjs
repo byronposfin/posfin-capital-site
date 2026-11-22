@@ -427,6 +427,9 @@ test('15. production returns 404 for every Posfin Flow route', async () => {
     { view: 'place', case: 'TEST-FLOW-001', via: 'broka' },
     { view: 'approve', case: 'TEST-FLOW-001', via: 'placed' },
     { view: 'lender', id: 'L001' },
+    { view: 'processing' },
+    { view: 'processing', case: 'TEST-FLOW-001' },
+    { view: 'leadership' },
   ];
   for (const query of routes) {
     const page = await call({ query, env, method: query.view === 'place' ? 'POST' : 'GET', body: { via: query.via } });

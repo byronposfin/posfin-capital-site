@@ -2,7 +2,7 @@ import { readCookie, readRaw, sendHtml, setPrivate } from '../lib/case-http.js';
 import { renderLogin } from '../lib/cockpit-html.js';
 import { sessionAllows } from '../lib/cockpit-store.js';
 import {
-  cleanVia, findFlowCase, presentApprove, presentCase, presentDocument, presentHome, presentLender, presentLenders, presentPlace, submitApproval,
+  cleanVia, findFlowCase, presentApprove, presentCase, presentDocument, presentHome, presentLeadership, presentLender, presentLenders, presentPlace, presentProcessing, saveProcessingDraft, submitApproval,
 } from '../lib/flow.js';
 import { portalMode } from '../lib/flow-links.js';
 import { renderFlowMessage, renderNotFound } from '../lib/flow-html.js';
@@ -84,12 +84,23 @@ export async function handleFlow(req, res, deps = {}) {
     const view = String(query.view || 'home');
     const ref = String(query.case || '').trim();
     const flowCase = ref ? findFlowCase(ref) : null;
-    if (view !== 'home' && view !== 'lenders' && !flowCase) {
+    const caseFree = view === 'home' || view === 'lenders' || view === 'lender' || view === 'leadership' || (view === 'processing' && !ref);
+    if (!caseFree && !flowCase) {
       return sendHtml(res, 404, renderFlowMessage('Not on this demo', 'That case is not on the Posfin Flow demo.'));
     }
     const actor = await actorOf(req, depsEnv);
     const mode = portalMode(env);
-    if (view === 'home') return sendHtml(res, 200, presentHome().html);
+    if (view === 'home') return sendHtml(res, 200, presentHome(query).html);
+    if (view === 'leadership') return sendHtml(res, 200, presentLeadership(depsEnv).html);
+    if (view === 'processing') {
+      if (method === 'POST') {
+        if (!flowCase) return sendHtml(res, 404, renderFlowMessage('Not on this demo', 'That case is not on the Posfin Flow demo.'));
+        const page = saveProcessingDraft(flowCase, { ...fields, audience: fields.audience || query.audience }, depsEnv);
+        return sendHtml(res, page.status, page.html);
+      }
+      const page = presentProcessing(flowCase, depsEnv);
+      return sendHtml(res, page.status, page.html);
+    }
     if (view === 'lenders') return sendHtml(res, 200, presentLenders(query).html);
     if (view === 'lender') {
       const page = presentLender(query.id);
