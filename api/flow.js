@@ -2,7 +2,7 @@ import { readCookie, readRaw, sendHtml, setPrivate } from '../lib/case-http.js';
 import { renderLogin } from '../lib/cockpit-html.js';
 import { sessionAllows } from '../lib/cockpit-store.js';
 import {
-  cleanVia, findFlowCase, presentApprove, presentCase, presentDocument, presentHome, presentLenders, presentPlace, submitApproval,
+  cleanVia, findFlowCase, presentApprove, presentCase, presentDocument, presentHome, presentLender, presentLenders, presentPlace, submitApproval,
 } from '../lib/flow.js';
 import { portalMode } from '../lib/flow-links.js';
 import { renderFlowMessage, renderNotFound } from '../lib/flow-html.js';
@@ -91,6 +91,10 @@ export async function handleFlow(req, res, deps = {}) {
     const mode = portalMode(env);
     if (view === 'home') return sendHtml(res, 200, presentHome().html);
     if (view === 'lenders') return sendHtml(res, 200, presentLenders(query).html);
+    if (view === 'lender') {
+      const page = presentLender(query.id);
+      return sendHtml(res, page.status, page.html);
+    }
     if (view === 'case') return sendHtml(res, 200, presentCase(flowCase, query, depsEnv).html);
     if (view === 'doc') {
       const parsed = splitKind(query.kind, query.format);

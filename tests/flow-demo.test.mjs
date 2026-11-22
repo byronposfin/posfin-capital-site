@@ -7,11 +7,11 @@ import { handleCockpit } from '../api/staff-cockpit.js';
 import { handleSeat } from '../api/staff-seat.js';
 import { createPreviewStore, mintPreviewSession } from '../lib/cockpit-store.js';
 import { getCase } from '../lib/flow-cases.js';
-import { presentDocument } from '../lib/flow.js';
+import { presentDocument, presentLender } from '../lib/flow.js';
 import { buildLor, contactViolations, headlineProblems } from '../lib/flow-docs.js';
 import { netHeadline } from '../lib/flow-cases.js';
 import { createFlowStore } from '../lib/flow-store.js';
-import { loadPlacedLenders } from '../lib/placed-lenders.js';
+import { lendersFromCsv, loadPlacedLenders, PLACED_FIXTURE_CSV, PLACED_FIXTURE_JSON } from '../lib/placed-lenders.js';
 import { matchLenders, tierCounts } from '../lib/placed-match.js';
 import { fixtureBook } from '../lib/seat-view.js';
 
@@ -96,16 +96,27 @@ function row(result, name) {
 test('1. second-charge unregulated bridge matches the fixture counts', () => {
   const result = matchLenders(CASE_A);
   assert.equal(result.ltv, 48.39);
-  assert.deepEqual(counts(result), { eligible: 14, unverified: 72, excluded: 203 });
+  assert.deepEqual(counts(result), { eligible: 32, unverified: 53, excluded: 204 });
   for (const name of ['Albatross Lending Group', 'MT Finance', 'Somo', 'Precise Bridging', 'West One', 'CrowdProperty']) {
     assert.equal(row(result, name).tier, 'eligible', name);
   }
   assert.equal(loadPlacedLenders().length, 289);
+  const fromCsv = lendersFromCsv(readFileSync(PLACED_FIXTURE_CSV, 'utf8'));
+  const fixture = JSON.parse(readFileSync(PLACED_FIXTURE_JSON, 'utf8'));
+  assert.equal(fixture.source, 'placed_lenders_v002.csv');
+  assert.equal(fixture.tag, 'website-stated, not lender-confirmed');
+  assert.equal(JSON.stringify(fixture.lenders), JSON.stringify(fromCsv));
+  const detail = presentLender('L001');
+  assert.equal(detail.status, 200);
+  assert.match(detail.html, /data-research-tag="website-stated, not lender-confirmed"/);
+  assert.match(detail.html, /https:\/\/novellusfinance\.com\/uk\/bridging-loan-finance-london\//);
+  assert.match(detail.html, /2026-11-23/);
+  assert.match(detail.html, /data-field="regulated"/);
 });
 
 test('2. the same case regulated drops unregulated-only lenders', () => {
   const result = matchLenders({ ...CASE_A, regulated: true });
-  assert.deepEqual(counts(result), { eligible: 6, unverified: 50, excluded: 233 });
+  assert.deepEqual(counts(result), { eligible: 10, unverified: 25, excluded: 254 });
   for (const name of ['Albatross Lending Group', 'Somo', 'CrowdProperty']) {
     assert.equal(row(result, name).tier, 'excluded', name);
     assert.ok(row(result, name).block.includes('unregulated only'), name);
@@ -120,7 +131,7 @@ test('3. first charge at 70 percent', () => {
     property_value: 500000, existing_charges: [], net_ask: 350000, charge_type: 'first', regulated: false, product_type: 'bridging',
   });
   assert.equal(result.ltv, 70);
-  assert.deepEqual(counts(result), { eligible: 54, unverified: 44, excluded: 191 });
+  assert.deepEqual(counts(result), { eligible: 66, unverified: 35, excluded: 188 });
   assert.match(result.note, /redemptions/);
 });
 
@@ -128,7 +139,7 @@ test('4. first charge at 80 percent leaves four eligible and excludes MT Finance
   const result = matchLenders({
     property_value: 500000, existing_charges: [], net_ask: 400000, charge_type: 'first', regulated: false, product_type: 'bridging',
   });
-  assert.equal(counts(result).eligible, 4);
+  assert.equal(counts(result).eligible, 9);
   assert.equal(row(result, 'MT Finance').tier, 'excluded');
   assert.ok(row(result, 'MT Finance').block.includes('LTV 80% above 70%'));
 });
@@ -152,24 +163,47 @@ test('6. development at 60 percent LTGDV', () => {
     property_value: 2000000, existing_charges: [], net_ask: 1200000, charge_type: 'first', regulated: false, product_type: 'development',
   });
   assert.equal(result.ltv, 60);
-  assert.deepEqual(counts(result), { eligible: 28, unverified: 42, excluded: 219 });
+  assert.deepEqual(counts(result), { eligible: 32, unverified: 39, excluded: 218 });
   assert.equal(row(result, 'Somo').tier, 'excluded');
   assert.ok(row(result, 'Somo').block.includes('product type not offered'));
   assert.equal(row(result, 'Precise Bridging').tier, 'excluded');
   assert.ok(row(result, 'Precise Bridging').block.includes('above max £1000000'));
 });
 
-test('7. regulated = No is unregulated only', () => {
-  const lenders = loadPlacedLenders().map((item) => ({ ...item }));
-  const mt = lenders.find((item) => item.name === 'MT Finance');
-  mt.regulated = 'No';
-  const result = matchLenders({ ...CASE_A, regulated: true }, lenders);
-  const found = row(result, 'MT Finance');
-  assert.equal(found.tier, 'excluded');
-  assert.ok(found.block.includes('unregulated only'));
-  mt.regulated = 'Y and N';
-  const allowed = matchLenders({ ...CASE_A, regulated: true }, lenders);
-  assert.equal(row(allowed, 'MT Finance').tier, 'eligible');
+test('7. N, No, no and unregulated are unregulated only, and both passes either way', () => {
+  function panel(regulated) {
+    return {
+      id: 'T1',
+      name: 'Panel TEST Lender',
+      segment: 'bridging',
+      charge: 'first+second',
+      regulated,
+      development: 'Y',
+      max_ltv_first: 75,
+      max_ltv_second: 70,
+      max_ltgdv: 70,
+      loan_min: 50000,
+      loan_max: 5000000,
+      rate_pcm: 0.8,
+      stale: false,
+      source: 'web',
+      source_date: '2026-11-23',
+      grade: 'C',
+    };
+  }
+  for (const value of ['N', 'No', 'no', 'unregulated']) {
+    const regulatedCase = matchLenders({ ...CASE_A, regulated: true }, [panel(value)]);
+    assert.equal(regulatedCase.rows[0].tier, 'excluded', value);
+    assert.ok(regulatedCase.rows[0].block.includes('unregulated only'), value);
+    const openCase = matchLenders(CASE_A, [panel(value)]);
+    assert.equal(openCase.rows[0].tier, 'eligible', value);
+    assert.equal(openCase.rows[0].block.includes('unregulated only'), false, value);
+  }
+  for (const regulated of [true, false]) {
+    const result = matchLenders({ ...CASE_A, regulated }, [panel('both')]);
+    assert.equal(result.rows[0].tier, 'eligible', String(regulated));
+    assert.equal(result.rows[0].block.includes('unregulated only'), false);
+  }
 });
 
 test('8. eligible lenders sort non-stale first, then lowest rate', () => {
@@ -291,7 +325,7 @@ test('13. demo placement simulates both routes, logs one entry and does not call
     unverified: store.activity()[0].unverified,
     excluded: store.activity()[0].excluded,
   }, {
-    caseRef: 'TEST-FLOW-001', via: 'broka', mode: 'demo', eligible: 14, unverified: 72, excluded: 203,
+    caseRef: 'TEST-FLOW-001', via: 'broka', mode: 'demo', eligible: 32, unverified: 53, excluded: 204,
   });
   const placed = await call({
     method: 'POST',
@@ -392,6 +426,7 @@ test('15. production returns 404 for every Posfin Flow route', async () => {
     { view: 'doc', case: 'TEST-FLOW-001', kind: 'lor.pdf' },
     { view: 'place', case: 'TEST-FLOW-001', via: 'broka' },
     { view: 'approve', case: 'TEST-FLOW-001', via: 'placed' },
+    { view: 'lender', id: 'L001' },
   ];
   for (const query of routes) {
     const page = await call({ query, env, method: query.view === 'place' ? 'POST' : 'GET', body: { via: query.via } });
@@ -409,6 +444,7 @@ test('16. a missing staff session gets the sign-in page and no fixture data', as
     { view: 'doc', case: 'TEST-FLOW-002', kind: 'lor' },
     { view: 'place', case: 'TEST-FLOW-001', via: 'placed' },
     { view: 'lenders' },
+    { view: 'lender', id: 'L001' },
   ];
   for (const query of routes) {
     const page = await call({ query, session: false });
