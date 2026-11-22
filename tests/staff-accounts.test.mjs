@@ -141,8 +141,11 @@ test('password login uses the anon key and the allowlist, and the service key st
   assert.equal(login.session.startsWith('sb1.'), true);
   assert.equal(calls[0].headers.apikey, 'anon-key');
   assert.equal(JSON.stringify(calls[0]).includes('service-key-secret'), false);
-  const allow = calls.find((call) => String(call.url).includes('staff_allowlist'));
-  assert.equal(allow.headers.Authorization, 'Bearer service-key-secret');
+  const allow = calls.find((call) => String(call.url).includes('/rpc/staff_caller'));
+  assert.equal(allow.headers.Authorization, 'Bearer access-token');
+  assert.equal(allow.headers.apikey, 'anon-key');
+  assert.equal(allow.headers['Accept-Profile'], 'pipeline');
+  assert.equal(JSON.stringify(calls).includes('service-key-secret'), false);
   assert.equal(await sessionAllows(login.session, { env, fetch: fetchImpl }), true);
   const html = renderLiveCases({ rows: [], total: 0, stages: [], owners: [], warning: '', query: {} });
   assert.equal(html.includes('service-key-secret'), false);
