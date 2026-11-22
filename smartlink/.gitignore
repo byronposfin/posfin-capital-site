@@ -1,0 +1,7 @@
+node_modules
+.next
+data/*.json
+data/**/*.json
+!data/.gitkeep
+screenshots/*.pdf
+.env*

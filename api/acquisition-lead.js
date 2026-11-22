@@ -6,6 +6,7 @@
  */
 
 import { google } from 'googleapis';
+import { isVerifyRequest, SYNTHETIC } from '../lib/verify-request.js';
 
 const SHEET_ID = '1aqFwX7GabZRLPE3H4cb6OiFYeOmbxms5oKX05HhZksQ';
 const TAB = 'Acquisition Leads';
@@ -98,6 +99,12 @@ export default async function handler(req, res) {
 
   try {
     const d = req.body || {};
+    const synthetic = isVerifyRequest(req);
+    if (synthetic) {
+      d.name = SYNTHETIC.full_name;
+      d.email = SYNTHETIC.email;
+      d.phone = SYNTHETIC.phone;
+    }
     if (!clean(d.name) || !clean(d.email)) {
       return res.status(400).json({ ok: false, error: 'Name and email are required' });
     }
@@ -141,8 +148,8 @@ export default async function handler(req, res) {
       requestBody: { values: [row] },
     });
 
-    await alertByron(d, ref);
-    return res.status(200).json({ ok: true, ref });
+    if (!synthetic) await alertByron(d, ref);
+    return res.status(200).json({ ok: true, ref, synthetic });
   } catch (err) {
     console.error('acquisition-lead error', err);
     return res.status(500).json({ ok: false, error: 'Lead capture failed' });

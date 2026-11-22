@@ -29,10 +29,10 @@ h1{font:600 34px/1.1 var(--serif);margin:0 0 8px;letter-spacing:-.02em}
 h2{font:600 24px/1.2 var(--serif);margin:0 0 4px}.sub{color:var(--muted);font-size:14px;margin:0 0 18px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.full{grid-column:1/-1}
 label.l{display:block;font:600 12px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#4A5B75;margin-bottom:7px}
-input[type=text],input[type=email],input[type=tel],select,textarea{width:100%;min-height:50px;border-radius:12px;border:1.5px solid #C9D3DF;background:#fff;padding:12px 14px;font:16px var(--sans);color:var(--ink)}
+input[type=text],input[type=email],input[type=tel],input[type=date],select,textarea{width:100%;min-height:50px;border-radius:12px;border:1.5px solid #C9D3DF;background:#fff;padding:12px 14px;font:16px var(--sans);color:var(--ink)}
 textarea{min-height:96px;resize:vertical}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(15,184,201,.18)}
-.err{color:var(--err);font-size:13px;margin-top:5px;min-height:0}.bad{border-color:var(--err)!important}
+.why{display:block;margin:6px 0 0;font-size:13px;line-height:1.4;color:var(--muted)}.err{color:var(--err);font-size:13px;margin-top:5px;min-height:0}.bad{border-color:var(--err)!important}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:15px}.chk input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:var(--navy-900)}
 .actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:24px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:999px;font:600 15px/1 var(--sans);border:0;cursor:pointer}
@@ -63,16 +63,16 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
 <header><div class="in"><a class="brand" href="/"><img src="/assets/logo-mark.png" alt="Posfin Capital"><span>POSFIN<small>CAPITAL</small></span></a><div class="fca">FCA authorised · FRN 913022<br>Credit broker, not a lender</div></div></header>
 <main>
   <h1>Your fact find <span id="mode" class="mode">Checking…</span></h1>
-  <p class="intro">Five short steps. Rounded figures and best estimates are fine. You can save and come back later.</p>
+  <p class="intro">Apply now — takes about 5 minutes. Rounded figures and best estimates are fine. You can save and come back later.</p>
   <section class="direct-contact" aria-label="Speak to Posfin">
     <strong>Prefer to talk first?</strong>
-    <p>You do not need to complete this form to speak to us. Message Byron on WhatsApp or call; we can work through your enquiry together.</p>
-    <div class="direct-actions"><a class="btn btn-primary" href="https://wa.me/447773339444?text=Hello%20Byron%2C%20I%27d%20like%20to%20discuss%20property%20finance." target="_blank" rel="noopener noreferrer">WhatsApp Byron</a><a class="btn btn-ghost" href="tel:+447773339444">Call Byron</a></div>
+    <p>You do not need to complete this form to speak to us. WhatsApp or call 07365 587773; we can work through your enquiry together.</p>
+    <div class="direct-actions"><a class="btn btn-primary" href="https://wa.me/447365587773?text=Hello%20Posfin%2C%20I%27d%20like%20to%20discuss%20property%20finance." target="_blank" rel="noopener noreferrer">WhatsApp</a><a class="btn btn-ghost" href="tel:+447365587773">Call 07365 587773</a></div>
     <p class="direct-note">Or continue below at your own pace. If you message us, a property postcode and the amount needed are a useful start — estimates are fine.</p>
   </section>
   <p class="notice test-only hide" id="previewNotice" role="alert"></p>
-  <div class="fallback hide" id="fallback" role="alert"><b>Our secure online save is temporarily unavailable.</b>You can keep going: your answers are saved on this device only and have <u>not</u> been sent to us yet. To reach us now, call <a href="tel:+447773339444">+44 7773 339444</a> or book a 15-minute call.
-    <div class="row"><a class="btn btn-primary" href="https://calendly.com/byron-hill/posfin-bridging-finance-consultation-30-min-byron" target="_blank" rel="noopener" data-calendly>Book a 15-minute call</a><a class="btn btn-ghost" href="tel:+447773339444">Call +44 7773 339444</a><button class="btn btn-ghost" type="button" id="retryBtn">Try again</button></div></div>
+  <div class="fallback hide" id="fallback" role="alert"><b>Our secure online save is temporarily unavailable.</b>You can keep going: your answers are saved on this device only and have <u>not</u> been sent to us yet. To reach us now, call <a href="tel:+447365587773">07365 587773</a> or book a 15-minute call.
+    <div class="row"><a class="btn btn-primary" href="https://calendly.com/byron-hill/posfin-bridging-finance-consultation-30-min-byron" target="_blank" rel="noopener" data-calendly>Book a 15-minute call</a><a class="btn btn-ghost" href="tel:+447365587773">Call 07365 587773</a><button class="btn btn-ghost" type="button" id="retryBtn">Try again</button></div></div>
   <p class="honest">Our fact find is a fact-finding form only. Nothing is sent to a lender and no credit search is made.</p>
 
   <details class="resbox" id="resbox"><summary>Already started? Resume with your code</summary>
@@ -98,5 +98,5 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
   </form>
   <p class="risk">Your home may be repossessed if you do not keep up repayments on a mortgage or any other debt secured on it. Posfin Capital Limited is an authorised credit broker and not a lender. An enquiry is not an application or an offer of finance.</p>
 </main>
-<script type="module" src="/fact-find.js?v=charge-provider-uppercase-20261117"></script>
+<script type="module" src="/fact-find.js?v=20261121-broka"></script>
 </body></html>

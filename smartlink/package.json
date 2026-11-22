@@ -1,0 +1,42 @@
+{
+  "name": "posfin-smartlink-forms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Posfin Capital SmartLink borrower forms: Assets & Liabilities, Remortgage Questionnaire, Schedule of Works",
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "screenshots": "node scripts/screenshots.mjs",
+    "build:site": "node scripts/build-site.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.1",
+    "exceljs": "^4.4.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "playwright": "^1.65.1",
+    "tailwindcss": "^4.3.5",
+    "@tailwindcss/vite": "^4.3.5",
+    "@vitejs/plugin-react": "^5.1.1",
+    "esbuild": "^0.25.12",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1",
+    "vitest": "^5.1.1"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
+}

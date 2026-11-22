@@ -18,17 +18,23 @@ import {isLand,belowMinimum} from '../lib/ff-land.js';
 // landing path, referrer host, consent text version and form version.
 import crypto from "node:crypto";
 import { drainAlerts } from "../lib/ff-alert-outbox.js";
+import { drainLeadOps } from "../lib/lead-ops.js";
+import { drainSheet } from "../lib/lead-sheet.js";
+import { isVerifyRequest, SYNTHETIC } from "../lib/verify-request.js";
 import { validate } from "../lib/ff-schema.js";
+import { POSFIN_PHONE_DISPLAY } from "../lib/contact.js";
+import { looksLikeTestLead, referencePrefix, responseTestMode } from "../lib/ff-test-lead.js";
+import { buildBrokaSpine } from "../lib/broka-spine.js";
 
 export const VERSION = "uk-v005-land-v12";
-export const CONSENT_VERSION = "uk-consent-v1-2026-11-03"; // bump whenever the consent wording on /fact-find changes
+export const CONSENT_VERSION = "uk-consent-v2-2026-11-21"; // bump whenever the consent wording on /fact-find changes
 const BACKENDS = {
   leads:    { prefix: "web_lead_", ref: "POSFIN-WEB-",  test: false, meta: true, testRef: "TEST-WEB-" },
   preview:  { prefix: "ff_test_",  ref: "POSFIN-TEST-", test: true },
   pipeline: { prefix: "ff_web_",   ref: "POSFIN-WEB-",  test: false },
 };
 const FALLBACK = {
-  phone: "+44 7446 950 389",
+  phone: POSFIN_PHONE_DISPLAY,
   calendly: "https://calendly.com/byron-hill/posfin-bridging-finance-consultation-30-min-byron",
 };
 const DB_TIMEOUT_MS = 8000;
@@ -63,7 +69,17 @@ export function isPublishableKey(k) {
   if (p.length !== 3) return false;
   try { return JSON.parse(Buffer.from(p[1], "base64url").toString("utf8")).role === "anon"; } catch { return false; }
 }
-const refPrefix = cfg => (cfg.testRun ? cfg.backend.testRef : cfg.backend.ref);
+const refPrefix = (cfg, answers) => referencePrefix(cfg, answers);
+function publicLandAnswers(clean) {
+  const copy = { ...clean };
+  delete copy.applicant_dob;
+  delete copy.applicant_2_dob;
+  return copy;
+}
+function stampSpine(clean) {
+  if (!clean || isLand(clean)) return clean;
+  return { ...clean, broka_case_spine: buildBrokaSpine(clean) };
+}
 const clip = (v, n) => (typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, n) : "") || undefined;
 
 // Attribution + privacy-safe fingerprints for the leads backend. Never includes raw IP / UA.
@@ -169,9 +185,16 @@ export default async function handler(req, res) {
       return unavailable(res, "backend_not_configured", { reason: cfg.reason });
     }
     const body = await readBody(req);
+    const verified = isVerifyRequest(req);
+    if (verified && cfg.backendName === "leads") cfg.testRun = true;
+    if (verified && body.answers && typeof body.answers === "object") {
+      body.answers.full_name = SYNTHETIC.full_name;
+      body.answers.email = SYNTHETIC.email;
+      body.answers.phone = SYNTHETIC.phone;
+      body.answers.ai_call_consent = false;
+    }
     const action = String(body.action || "");
     if (!["save", "load", "submit"].includes(action)) return send(res, 400, { ok: false, error: "unknown_action" });
-    const testMode = cfg.backend.test;
     const meta = cfg.backend.meta ? { p_meta: buildMeta(cfg, req, body) } : {};
 
     const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
@@ -179,16 +202,19 @@ export default async function handler(req, res) {
     if (allowed !== true) return send(res, 429, { ok: false, error: "rate_limited", message: "Too many attempts. Please wait a few minutes and try again." });
 
     if (action === "save") {
-      const { clean, errors } = validate(body.answers, false, testMode);
+      const testMode = responseTestMode(cfg, body.answers);
+      const parsed = validate(body.answers, false, !!cfg.backend.test);
+      const clean = stampSpine(parsed.clean), errors = parsed.errors;
       if (errors._) return send(res, 400, { ok: false, error: "bad_input" });
       let code = normCode(body.code), isNew = false;
       if (!code) { code = normCode(`${rand(4)}${rand(4)}${rand(4)}`); isNew = true; }
       else if (!codeOk(code)) return send(res, 400, { ok: false, error: "bad_code", message: "That resume code is not valid." });
       const step = Math.max(1, Math.min(5, parseInt(body.step, 10) || 1));
-      const rows = await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg) + rand(6), p_step: step, p_answers: clean, ...meta });
+      const rows = await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg, clean) + rand(6), p_step: step, p_answers: clean, ...meta });
       const row = rows && rows[0];
       if (!row) throw new BackendError("save_failed", 502);
       if (row.status !== "draft") return send(res, 409, { ok: false, error: "already_submitted", reference: row.reference, message: "This fact find has already been submitted." });
+      if (looksLikeTestLead(clean)) await markDeclaredTest(cfg, sha(code));
       return send(res, 200, { ok: true, code: code.match(/.{4}/g).join("-"), isNew, reference: row.reference, step: row.step, savedAt: row.updated_at, testMode, fieldErrors: errors });
     }
     if (action === "load") {
@@ -197,15 +223,18 @@ export default async function handler(req, res) {
       const rows = await rpc(cfg, "load", { p_resume_hash: sha(code) });
       const r = rows && rows[0];
       if (!r) return send(res, 404, { ok: false, error: "not_found", message: "We could not find a fact find with that code." });
-      return send(res, 200, { ok: true, reference: r.reference, status: r.status, step: r.step, answers: r.status === "draft" ? r.answers : {}, savedAt: r.updated_at, testMode });
+      return send(res, 200, { ok: true, reference: r.reference, status: r.status, step: r.step, answers: r.status === "draft" ? r.answers : {}, savedAt: r.updated_at, testMode: responseTestMode(cfg, r.answers) });
     }
     // submit
     const code = normCode(body.code);
     if (!codeOk(code)) return send(res, 400, { ok: false, error: "bad_code" });
-    const { clean, errors } = validate(body.answers, true, testMode);
+    const testMode = responseTestMode(cfg, body.answers);
+    const parsed = validate(body.answers, true, !!cfg.backend.test);
+    const clean = stampSpine(parsed.clean), errors = parsed.errors;
     if(isLand(clean)&&belowMinimum(clean))return send(res,422,{ok:false,error:"below_minimum",message:"Below minimum value",no_chase:true});
     if (Object.keys(errors).length) return send(res, 422, { ok: false, error: "validation", fieldErrors: errors, message: "Please check the highlighted answers." });
-    await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg) + rand(6), p_step: 5, p_answers: clean, ...meta });
+    await rpc(cfg, "save", { p_resume_hash: sha(code), p_reference: refPrefix(cfg, clean) + rand(6), p_step: 5, p_answers: clean, ...meta });
+    if (looksLikeTestLead(clean)) await markDeclaredTest(cfg, sha(code));
     const rows = await rpc(cfg, "submit", { p_resume_hash: sha(code), p_answers: clean, ...meta });
     const r = rows && rows[0];
     if (!r || r.status !== "submitted") throw new BackendError("submit_failed", 502);
@@ -216,13 +245,55 @@ export default async function handler(req, res) {
       try { const result = await drainAlerts(); alert = {status: result.ok ? "queued" : "recovery_required"}; }
       catch { alert = {status: "recovery_required"}; }
     } else alert = await previewSubmitAlert(cfg, r.reference);
-    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, ...(isLand(clean)?{answers:clean,scorecard:clean.land_scorecard}:{}) });
+    const emailAlert = await safeLeadEmail();
+    const sheetAlert = await safeSheet();
+    return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, emailAlert, sheetAlert, ...(isLand(clean)?{answers:publicLandAnswers(clean),scorecard:clean.land_scorecard}:{}) });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";
     const status = e instanceof BackendError ? e.status : 500;
     console.error("factfind_error", JSON.stringify({ code, status, detail: e && e.detail ? String(e.detail).slice(0, 60) : undefined, backend: cfg.backendName }));
     if (status >= 500) return unavailable(res, code);
     return send(res, status, { ok: false, error: code });
+  }
+}
+
+// A name or note containing TEST is still saved. Mark the row so live counts exclude it.
+async function markDeclaredTest(cfg, resumeHash) {
+  const key = String(process.env.FF_ALERT_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  if (!key || !cfg.url || !/^[0-9a-f]{64}$/.test(resumeHash)) return;
+  try {
+    await timedFetch(`${cfg.url}/rest/v1/web_leads?resume_hash=eq.${resumeHash}`, {
+      method: "PATCH",
+      headers: {
+        apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json",
+        "Accept-Profile": "pipeline", "Content-Profile": "pipeline", Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ is_test: true }),
+    }, 4000);
+  } catch { /* A new TEST-WEB reference is already excluded. */ }
+}
+
+// Email drain is best-effort. The application is already saved. A miss is retried by the cron.
+async function safeLeadEmail() {
+  try {
+    const emailed = await drainLeadOps(process.env, fetch, { sla: false });
+    if (emailed.skipped) return { status: "disabled" };
+    if (!emailed.ok) return { status: "recovery_required" };
+    return { status: emailed.sent > 0 ? "sent" : "idle" };
+  } catch {
+    return { status: "recovery_required" };
+  }
+}
+
+// Same request as the staff alert. A miss is retried by /api/factfind-alert-worker.
+async function safeSheet() {
+  try {
+    const saved = await drainSheet(process.env, fetch);
+    if (saved.skipped) return { status: "disabled" };
+    if (!saved.ok) return { status: "recovery_required" };
+    return { status: saved.sent > 0 ? "sent" : "idle" };
+  } catch {
+    return { status: "recovery_required" };
   }
 }
 
