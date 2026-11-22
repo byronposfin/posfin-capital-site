@@ -223,7 +223,7 @@ export async function handleCockpit(req, res, deps = {}) {
         return redirect(res, '/staff/cockpit');
       }
       if (!action) {
-        const login = await establishSession(String(fields.password || ''), depsEnv);
+        const login = await establishSession({ email: fields.email, password: fields.password }, depsEnv);
         if (!login.ok) return sendHtml(res, 401, renderLogin(login.error || 'password'));
         writeStaffCookie(res, req, login.session);
         return redirect(res, safeNext(fields.next) || '/staff/cockpit');

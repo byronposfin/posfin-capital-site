@@ -42,7 +42,7 @@ export async function handleBrokaDesk(req, res, deps = {}) {
     if (req.method === 'POST') {
       const fields = await readFields(req);
       if (fields.password && !fields.action) {
-        const login = await establishSession(String(fields.password || ''), depsEnv);
+        const login = await establishSession({ email: fields.email, password: fields.password }, depsEnv);
         if (!login.ok) return sendHtml(res, 401, renderBrokaLogin());
         writeStaffCookie(res, req, login.session);
         const next = caseRefOk(fields.case_ref) ? fields.case_ref : 'PREVIEW-NORTHGATE';
