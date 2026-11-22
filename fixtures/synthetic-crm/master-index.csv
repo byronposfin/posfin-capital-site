@@ -1,0 +1,6 @@
+case_id,tier,case,owner,stage,folder_name,drive_link,drive_status,box_path,box_files,outlook_attachments_saved,outlook_attachments_pending,whatsapp_export,whatsapp_export_needed,last_activity,whatsapp_files_in_folder,drive_upload_14nov
+PC-001,A1,Example Borrower One,Byron,Offer,Example folder,https://drive.google.com/file/d/synthetic-example/view,ok,,,,,,,,,2026-11-01,,
+PC-002,A2,Example Borrower Two,Byron,Qualified Opportunity,Example folder two,,,,,,,,,,2026-11-02,,
+PC-003,B1,Example Borrower Three,Chris,Terms in / LOR sent,Example folder three,,,,,,,,,,2026-11-03,,
+PC-004,D1,Example Borrower Four,Byron,EL sent,Example folder four,,,,,,,,,,2026-11-04,,
+PC-026,B2,Example Bromet,Chris,Stalled,Example folder five,,,,,,,,,,2026-11-05,,

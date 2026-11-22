@@ -1,4 +1,11 @@
 .vercel
 node_modules/
 package-lock.json
+# Live case books. Do not commit client names, addresses, loan figures, emails or phones.
 /data/
+/data/*.csv
+/data/master-index*
+/data/pipeline-*
+/data/calls-*
+/data/nov20-pipeline.json
+/data/call-notes.json

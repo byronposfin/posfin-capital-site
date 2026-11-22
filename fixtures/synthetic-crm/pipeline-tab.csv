@@ -1,0 +1,4 @@
+case_id,borrower_name,owner_sales,owner_processor,status,next_action,last_updated
+TEST-PIPE-001,Example Pipeline One,Byron,,COMPLETED,Review the synthetic file,2026-11-20
+,Example Messy Row,Byron,,━━ DEAL STATUS — note COMPLETED on 10 Apr,Check the example,2026-11-20
+TEST-PIPE-002,Example Pipeline Two,Chris,,TRIAGE,Call the example,2026-11-20
