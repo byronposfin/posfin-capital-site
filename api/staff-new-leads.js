@@ -28,6 +28,7 @@ async function userRpc(cfg, token, fn, body) {
     body: JSON.stringify(body || {}),
   });
   if (response.status === 401) return { status: 401, error: 'auth' };
+  if (response.status === 404) return { status: 404, error: 'missing' };
   if (!response.ok) {
     const text = await response.text();
     if (response.status === 403 || text.includes('not_allowed') || text.includes('42501')) return { status: 403, error: 'forbidden' };
@@ -46,7 +47,8 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const includeTests = process.env.FF_TEST_RUN === 'true' && process.env.VERCEL_ENV !== 'production';
-      const result = await userRpc(cfg, token, 'staff_new_web_leads_v2', { p_include_tests: includeTests });
+      let result = await userRpc(cfg, token, 'staff_new_web_leads_v3', { p_include_tests: includeTests });
+      if (result.status === 404) result = await userRpc(cfg, token, 'staff_new_web_leads_v2', { p_include_tests: includeTests });
       if (result.error) return send(res, result.status, { ok: false, error: result.error });
       const rows = Array.isArray(result.data) ? result.data : [];
       const seats = DEFAULT_SEATS.filter((seat) => seat.active !== false).map((seat) => ({

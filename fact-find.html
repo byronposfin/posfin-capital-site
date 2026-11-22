@@ -33,6 +33,9 @@ input[type=text],input[type=email],input[type=tel],input[type=date],select,texta
 textarea{min-height:96px;resize:vertical}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(15,184,201,.18)}
 .why{display:block;margin:6px 0 0;font-size:13px;line-height:1.4;color:var(--muted)}.err{color:var(--err);font-size:13px;margin-top:5px;min-height:0}.bad{border-color:var(--err)!important}
+.dob{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px}
+.dob-part{display:flex;flex-direction:column;gap:4px;font:600 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#4A5B75}
+.dob-part input{text-align:left}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:15px}.chk input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:var(--navy-900)}
 .actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:24px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:999px;font:600 15px/1 var(--sans);border:0;cursor:pointer}
@@ -102,5 +105,5 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
   </form>
   <p class="risk">Your home may be repossessed if you do not keep up repayments on a mortgage or any other debt secured on it. Posfin Capital Limited is an authorised credit broker and not a lender. An enquiry is not an application or an offer of finance.</p>
 </main>
-<script type="module" src="/fact-find.js?v=20261121-broka"></script>
+<script type="module" src="/fact-find.js?v=20261121-dob"></script>
 </body></html>

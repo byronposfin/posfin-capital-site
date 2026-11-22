@@ -20,10 +20,10 @@ const CAL = "https://calendly.com/byron-hill/posfin-bridging-finance-consultatio
 let testMode = true; // until /api/factfind health says otherwise
 const STEPS = [
  {t:"About you", s:"Your contact details and who owns the property.", f:[
-  ["full_name","Full name *",{ac:"off",ph:""}],["applicant_dob","Date of birth *",{why:"Lenders need this to price your loan quickly."}],
-  ["phone","Phone *",{ph:"07700 900000"}],["email","Email *",{ph:"name@example.com",full:1}],
+  ["full_name","Full name *",{ac:"off",ph:""}],["applicant_dob","Date of birth *",{why:"Day, month and year. Applicants need to be 18 or over."}],
+  ["phone","Phone *",{ph:"07700 900000",ac:"tel"}],["email","Email *",{ph:"name@example.com",full:1}],
   ["asset_type","Security type *",{}],["ownership","Who owns the property? *",{}],
-  ["applicant_2_dob","Second applicant date of birth *",{why:"Each applicant's date of birth is needed for the same check."}],
+  ["applicant_2_dob","Date of birth *",{why:"Second applicant. Day, month and year. Each applicant needs to be 18 or over."}],
   ["company_name","Company name (if a company owns it)",{}],
   ["property_experience","Property experience *",{full:1,why:"Lenders use how many properties you have owned or developed."}],
   ["test_mode_ack","I understand this is a PREVIEW form and I am using made-up details only *",{full:1,test:1}]]},
@@ -66,12 +66,13 @@ const fmt = v => { const n=money(v); return n===null ? "Not sure" : Number.isFin
 $("#steps").innerHTML = STEPS.map((st,i)=>`<section class="step" data-i="${i}"><h2>${st.t}</h2><p class="sub">${st.s}</p><div class="grid">`+
  st.f.map(([k,l,o])=>{ const f=F[k]; const cls=((o.full||f.t==="textarea"||f.t==="bool")?"full":"")+(o.test?" test-only hide":""); let inp;
   const why=o.why?`<p class="why">${esc(o.why)}</p>`:"";
+  const labelFor=f.t==="date"?`${k}_day`:k;
   if(f.t==="select") inp=`<select id="${k}" name="${k}"><option value="">Please select</option>${OPT[k].map(x=>`<option value="${esc(x)}">${esc(["legal_buffer","contingency_buffer"].includes(k)&&x!=="Not sure"?"£"+Number(x).toLocaleString("en-GB"):x)}</option>`).join("")}</select>`;
   else if(f.t==="textarea") inp=`<textarea id="${k}" name="${k}" maxlength="${f.max}" placeholder="${esc(o.ph||"")}"></textarea>`;
-  else if(f.t==="date") inp=`<input type="date" id="${k}" name="${k}" min="1900-01-01" max="${new Date().toISOString().slice(0,10)}">`;
+  else if(f.t==="date") inp=`<div class="dob" data-dob-group="${k}"><label class="dob-part">Day<input id="${k}_day" data-dob="${k}" inputmode="numeric" maxlength="2" placeholder="DD" autocomplete="bday-day" aria-label="Day"></label><label class="dob-part">Month<input id="${k}_month" data-dob="${k}" inputmode="numeric" maxlength="2" placeholder="MM" autocomplete="bday-month" aria-label="Month"></label><label class="dob-part">Year<input id="${k}_year" data-dob="${k}" inputmode="numeric" maxlength="4" placeholder="YYYY" autocomplete="bday-year" aria-label="Year"></label></div><input type="hidden" id="${k}" name="${k}">`;
   else if(f.t==="bool"){ const notice=k==="contact_consent"?' <a href="/privacy-policy">Privacy notice</a>':""; return `<div class="${cls}"><label class="chk"><input type="checkbox" id="${k}" name="${k}"><span>${esc(l)}${notice}</span></label>${why}<div class="err" id="e_${k}"></div></div>`; }
-  else { const ty=f.t==="email"?"email":f.t==="tel"?"tel":"text"; const im=f.t==="money"?' inputmode="numeric"':''; const upper=["first_charge_lender","second_charge_provider"].includes(k); inp=`<input type="${ty}" id="${k}" name="${k}"${im}${upper?' style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"':''} maxlength="${f.max||14}" placeholder="${esc(o.ph||"")}" autocomplete="off">`; }
-  return `<div class="${cls}"><label class="l" for="${k}">${esc(l)}</label>${inp}${why}<div class="err" id="e_${k}"></div></div>`; }).join("")+`</div></section>`).join("");
+  else { const ty=f.t==="email"?"email":f.t==="tel"?"tel":"text"; const im=f.t==="money"?' inputmode="numeric"':''; const upper=["first_charge_lender","second_charge_provider"].includes(k); const ac=o.ac?` autocomplete="${esc(o.ac)}"`:' autocomplete="off"'; inp=`<input type="${ty}" id="${k}" name="${k}"${im}${upper?' style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"':''} maxlength="${f.max||14}" placeholder="${esc(o.ph||"")}"${ac}>`; }
+  return `<div class="${cls}"><label class="l" for="${labelFor}">${esc(l)}</label>${inp}${why}<div class="err" id="e_${k}"></div></div>`; }).join("")+`</div></section>`).join("");
 for (const key of ["epc_rating","epc_certificate_number","epc_registration_date","epc_floor_area_m2","epc_habitable_rooms","epc_lookup_status"]) {
   const hidden=document.createElement("input"); hidden.type="hidden"; hidden.id=key; hidden.name=key; $("#ff").append(hidden);
 }
@@ -103,7 +104,7 @@ function syncBranches(){
   companyName.parentElement.classList.toggle('hide',!companyOwned);
   if(!companyOwned) companyName.value="";
   const second=$("#applicant_2_dob"), joint=a.ownership==="Joint with spouse or partner";
-  second.disabled=!joint; second.parentElement.classList.toggle("hide",!joint); if(!joint) second.value="";
+  setDateEnabled("applicant_2_dob", joint); second.parentElement.classList.toggle("hide",!joint); if(!joint){ second.value=""; fillDobParts("applicant_2_dob",""); }
   const rent=$("#rental_income_monthly"), letOut=a.rental_status==="Let";
   if(rent){ rent.disabled=!letOut; rent.parentElement.classList.toggle("hide",!letOut); if(!letOut) rent.value=""; }
   for(const f of BRANCH_FIELDS){const el=document.getElementById(f.key),visible=branchVisible(f,a);el.disabled=!visible;el.parentElement.classList.toggle('hide',!visible);}
@@ -161,14 +162,34 @@ const financialReview=document.createElement("div");financialReview.id="financia
 function updateFinancialReview(){productReview.innerHTML=routeCard(collect());productReview.classList.toggle("hide",step<2);financialReview.innerHTML=renderScorecard(collect());financialReview.classList.toggle("hide",step<3);}
 $("#ff").addEventListener("input",updateFinancialReview);$("#ff").addEventListener("change",updateFinancialReview);
 
-function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=["first_charge_lender","second_charge_provider"].includes(k)?el.value.toUpperCase():el.value; } return cleanBranches({...a,...propertyEditor.collect(),...(landArchive?{inactive_land_answers:landArchive}:{})}); }
-function fill(a){ a={...a,purpose:S.normalisePurpose(a?.purpose ?? a?.loanPurpose ?? a?.loan_purpose)}; landArchive=a?.inactive_land_answers||landArchive; for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el || !F[k]) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):(["first_charge_lender","second_charge_provider"].includes(k)?String(v).toUpperCase():v); } propertyEditor.fill(a);syncBranches(); if(a?.security_address) epcSeen=(String(a.security_postcode||"")+"|"+String(a.security_address)).replace(/\s/g,"").toUpperCase(); }
+function dobPart(k, part){ return document.getElementById(`${k}_${part}`); }
+function syncDob(k){
+  const hidden=document.getElementById(k); if(!hidden) return;
+  const day=String(dobPart(k,"day")?.value||"").replace(/\D/g,"");
+  const month=String(dobPart(k,"month")?.value||"").replace(/\D/g,"");
+  const year=String(dobPart(k,"year")?.value||"").replace(/\D/g,"");
+  hidden.value=day&&month&&year.length===4?`${year}-${month.padStart(2,"0")}-${day.padStart(2,"0")}`:"";
+}
+function fillDobParts(k, iso){
+  const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||""));
+  const day=dobPart(k,"day"), month=dobPart(k,"month"), year=dobPart(k,"year");
+  if(!day||!month||!year) return;
+  day.value=match?String(Number(match[3])):"";
+  month.value=match?String(Number(match[2])):"";
+  year.value=match?match[1]:"";
+}
+function setDateEnabled(k, on){
+  const hidden=document.getElementById(k); if(hidden) hidden.disabled=!on;
+  for(const part of ["day","month","year"]){ const el=dobPart(k,part); if(el) el.disabled=!on; }
+}
+function collect(){ const a={}; for(const k of Object.keys(F)){ const el=document.getElementById(k); if(!el || el.disabled) continue; if(k==="test_mode_ack"&&!testMode) continue; if(F[k].t==="date") syncDob(k); if(F[k].t==="bool") a[k]=el.checked; else if(el.value) a[k]=["first_charge_lender","second_charge_provider"].includes(k)?el.value.toUpperCase():el.value; } return cleanBranches({...a,...propertyEditor.collect(),...(landArchive?{inactive_land_answers:landArchive}:{})}); }
+function fill(a){ a={...a,purpose:S.normalisePurpose(a?.purpose ?? a?.loanPurpose ?? a?.loan_purpose)}; landArchive=a?.inactive_land_answers||landArchive; for(const [k,v] of Object.entries(a||{})){ const el=document.getElementById(k); if(!el || !F[k]) continue; if(F[k].t==="bool") el.checked=v===true; else el.value=F[k].t==="money"?fmt(v):(["first_charge_lender","second_charge_provider"].includes(k)?String(v).toUpperCase():v); if(F[k].t==="date") fillDobParts(k, el.value); } propertyEditor.fill(a);syncBranches(); if(a?.security_address) epcSeen=(String(a.security_postcode||"")+"|"+String(a.security_address)).replace(/\s/g,"").toUpperCase(); }
 function show(i){ step=Math.max(0,Math.min(4,i)); document.querySelectorAll(".step").forEach(s=>s.classList.toggle("hide",+s.dataset.i!==step));
   document.querySelectorAll("#rail div").forEach((d,j)=>{d.classList.toggle("on",j===step);d.classList.toggle("done",j<step)});
   $("#back").style.visibility=step?"visible":"hidden"; $("#next").textContent=step===4?"Submit fact find":"Continue"; updateFinancialReview(); }
 function setStatus(t,c){ const s=$("#status"); s.textContent=t; s.className="status "+(c||""); }
 function clearErr(){ document.querySelectorAll(".err").forEach(e=>e.textContent=""); document.querySelectorAll(".bad").forEach(e=>e.classList.remove("bad")); }
-function showErr(errs){ clearErr(); let first=null; for(const [k,m] of Object.entries(errs||{})){ const e=document.getElementById("e_"+k), el=document.getElementById(k); if(e) e.textContent=m; if(el){el.classList.add("bad"); if(first===null) first=k;} } return first; }
+function showErr(errs){ clearErr(); let first=null; for(const [k,m] of Object.entries(errs||{})){ const e=document.getElementById("e_"+k), el=document.getElementById(k); if(e) e.textContent=m; if(el){el.classList.add("bad"); const day=dobPart(k,"day"); if(day) day.classList.add("bad"); if(first===null) first=k;} } return first; }
 function stepErrors(i){ const a=collect(), {errors}=S.validate(a,true,testMode); const keys=STEPS[i].f.map(x=>x[0]);if(i===1)keys.push("total_properties_owned","additional_properties"); const out={}; for(const k of keys) if(errors[k]) out[k]=errors[k]; return out; }
 function setMode(m, why){ mode=m; const el=$("#mode");
   el.textContent = m==="server" ? (testMode?"Preview · saved to test database":"Saved securely") : "Saved on this device only";
@@ -293,4 +314,4 @@ $("#retryBtn").addEventListener("click",async()=>{ setStatus("Checking…"); con
 /* Clear a field's error as soon as the user edits it */
 document.addEventListener("input", clearOne, true);
 document.addEventListener("change", clearOne, true);
-function clearOne(ev){ const el=ev.target; if(!el||!el.id) return; const errs=stepErrors(step); if(!errs[el.id]){ const e=document.getElementById("e_"+el.id); if(e) e.textContent=""; el.classList.remove("bad"); } if(!Object.keys(errs).length){ const status=$("#status"); if(status&&status.textContent.startsWith("Please check the highlighted answers")) setStatus(""); } if(["full_name","company_name","notes"].includes(el.id)&&looksLikeTestLead(collect())) namedTest=true; }
+function clearOne(ev){ const el=ev.target; if(!el||!el.id) return; if(el.dataset&&el.dataset.dob) syncDob(el.dataset.dob); const key=el.dataset&&el.dataset.dob?el.dataset.dob:el.id; const errs=stepErrors(step); if(!errs[key]){ const e=document.getElementById("e_"+key); if(e) e.textContent=""; el.classList.remove("bad"); const hidden=document.getElementById(key); if(hidden) hidden.classList.remove("bad"); } if(!Object.keys(errs).length){ const status=$("#status"); if(status&&status.textContent.startsWith("Please check the highlighted answers")) setStatus(""); } if(["full_name","company_name","notes"].includes(el.id)&&looksLikeTestLead(collect())) namedTest=true; }
