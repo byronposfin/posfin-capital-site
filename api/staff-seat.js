@@ -3,7 +3,7 @@ import { endSession, establishSession, sessionAllows } from '../lib/cockpit-stor
 import { seatViewEnabled } from '../lib/seat-flag.js';
 import { renderSeat, renderSeatLogin, renderSeatMessage } from '../lib/seat-html.js';
 import { loadAnswers, loadBook, saveAnswer, sharedSeatStore } from '../lib/seat-store.js';
-import { supabaseAccessToken } from '../lib/staff-auth.js';
+import { staffAuthMode, supabaseAccessToken } from '../lib/staff-auth.js';
 import { presentSeat, recordAnswer, seatByCode } from '../lib/seat-view.js';
 
 function queryOf(req) {
@@ -46,6 +46,16 @@ function accessOf(req, deps) {
   return supabaseAccessToken(readCookie(req, 'pf_staff'));
 }
 
+function production(env) {
+  return String(env.VERCEL_ENV || '').toLowerCase() === 'production';
+}
+
+async function openSeat(session, depsEnv, env) {
+  if (!session || !await sessionAllows(session, depsEnv)) return false;
+  if (production(env) || staffAuthMode(env) === 'supabase') return Boolean(supabaseAccessToken(session));
+  return true;
+}
+
 function loginMessage(error) {
   if (error === 'not_configured') return 'Individual sign-in is not configured on this preview.';
   if (error === 'not_allowed') return 'That email is not on the staff list.';
@@ -78,6 +88,9 @@ export async function handleSeat(req, res, deps = {}) {
     if (!seatViewEnabled(env, seat.code)) {
       return sendHtml(res, 404, renderSeatMessage('Switched off', 'This seat is switched off.'));
     }
+    if (production(env) && staffAuthMode(env) !== 'supabase') {
+      return sendHtml(res, 401, renderSeatMessage('Sign-in required', 'This seat opens with individual staff sign-in. Sample cards are not shown.'));
+    }
     const depsEnv = { ...deps, env };
     if (req.method === 'POST') {
       const fields = await readFields(req);
@@ -94,7 +107,7 @@ export async function handleSeat(req, res, deps = {}) {
         writeStaffCookie(res, req, '', 0);
         return redirect(res, path);
       }
-      if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderSeatLogin('', path));
+      if (!await openSeat(session, depsEnv, env)) return sendHtml(res, 401, renderSeatLogin('', path));
       if (action === 'send' || action === 'release' || action === 'notify') {
         return sendHtml(res, 400, renderSeatMessage('Not available', 'This seat does not send messages.'));
       }
@@ -136,7 +149,7 @@ export async function handleSeat(req, res, deps = {}) {
       return sendHtml(res, 405, renderSeatMessage('Not available', 'Open the seat in a browser.'));
     }
     const session = readCookie(req, 'pf_staff');
-    if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderSeatLogin('', path));
+    if (!await openSeat(session, depsEnv, env)) return sendHtml(res, 401, renderSeatLogin('', path));
     const now = deps.now || new Date().toISOString();
     const store = storeFor(req, deps);
     const accessToken = accessOf(req, deps);

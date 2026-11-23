@@ -89,14 +89,16 @@ test('fixtures stay synthetic and fact-find stands come from the lead and the fa
   assert.equal(filtered.completed.length, 0);
 });
 
-test('the chris flag is off by default, closed in production, and reusable for another seat', () => {
+test('a seat flag opens on Production and fixtures stay off Production', () => {
   assert.equal(seatFlagName('chris'), 'FEATURE_SEAT_VIEW_CHRIS');
   assert.equal(seatFlagName('geri'), 'FEATURE_SEAT_VIEW_GERI');
   assert.equal(seatViewEnabled({}, 'chris'), false);
-  assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_CHRIS: 'on', VERCEL_ENV: 'production' }, 'chris'), false);
+  assert.equal(seatViewEnabled({ VERCEL_ENV: 'production' }, 'chris'), false);
+  assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_CHRIS: 'on', VERCEL_ENV: 'production' }, 'chris'), true);
   assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_GERI: 'on' }, 'geri'), true);
   assert.equal(seatByCode('geri').name, 'Geri');
-  assert.equal(dataMode({ VERCEL_ENV: 'production', SEAT_VIEW_SOURCE: 'supabase' }), 'closed');
+  assert.equal(dataMode({ VERCEL_ENV: 'production', SEAT_VIEW_SOURCE: 'fixtures' }), 'unavailable');
+  assert.equal(dataMode({ VERCEL_ENV: 'production', SEAT_VIEW_SOURCE: 'fixtures', STAFF_AUTH_MODE: 'supabase' }), 'session');
   assert.equal(dataMode({ SEAT_VIEW_SOURCE: 'fixtures' }), 'fixtures');
   assert.equal(dataMode({
     VERCEL_ENV: 'preview',
@@ -106,7 +108,7 @@ test('the chris flag is off by default, closed in production, and reusable for a
   }), 'fixtures');
   assert.equal(dataMode({ VERCEL_ENV: 'preview', STAFF_AUTH_MODE: 'supabase' }), 'session');
   assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_BYRON: 'on', VERCEL_ENV: 'preview' }, 'byron'), true);
-  assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_BYRON: 'on', VERCEL_ENV: 'production' }, 'byron'), false);
+  assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_BYRON: 'on', VERCEL_ENV: 'production' }, 'byron'), true);
 });
 
 test('flag off leaves the cockpit nav unchanged and the seat route closed', async () => {
@@ -126,7 +128,10 @@ test('flag off leaves the cockpit nav unchanged and the seat route closed', asyn
   assert.equal(closed.status, 404);
   assert.match(closed.body, /switched off/);
   const production = await call(null, { env: { ...ON, VERCEL_ENV: 'production' } });
-  assert.equal(production.status, 404);
+  assert.equal(production.status, 401);
+  assert.match(production.body, /Sample cards are not shown/);
+  assert.equal(production.body.includes('Pat Example'), false);
+  assert.equal(production.body.includes('TEST-SEAT-'), false);
   const unknown = await call(null, { query: { seat: 'not-a-seat' } });
   assert.equal(unknown.status, 404);
   assert.match(unknown.body, /not on this desk/);
@@ -401,6 +406,94 @@ test('individual sign-in refuses the shared preview password', async () => {
   assert.equal(calls[0].headers.apikey, 'anon-key');
   assert.equal(JSON.stringify(calls).includes('service-key-secret'), false);
   assert.equal(JSON.stringify(calls).includes('pipeline-secret'), false);
+});
+
+test('Production asks anonymous visitors to sign in, refuses the shared password, and strips fees', async () => {
+  const env = {
+    ...LIVE_ENV,
+    VERCEL_ENV: 'production',
+    SEAT_VIEW_SOURCE: 'fixtures',
+    COCKPIT_SOURCE: 'preview',
+    COCKPIT_AUTH: 'preview',
+    COCKPIT_PREVIEW_PASSWORD: 'preview-desk',
+  };
+  let reads = 0;
+  const anon = response();
+  await handleSeat({
+    method: 'GET',
+    url: '/staff/cockpit/seat/chris',
+    query: { seat: 'chris' },
+    headers: {},
+  }, anon, {
+    env,
+    now: NOW,
+    book: fixtureBook(),
+    fetch: async () => { reads += 1; throw new Error('network'); },
+  });
+  assert.equal(anon.status, 401);
+  assert.match(anon.body, /Work email/);
+  assert.match(anon.body, /Staff password/);
+  assert.equal(anon.body.includes('Pat Example'), false);
+  assert.equal(anon.body.includes('TEST-SEAT-'), false);
+  assert.equal(reads, 0);
+  const forced = await loadBook(env, { book: fixtureBook(), fetch: async () => { reads += 1; throw new Error('network'); } });
+  assert.equal(forced.source, 'unavailable');
+  assert.equal(forced.cases.length, 0);
+  assert.equal(reads, 0);
+
+  const calls = [];
+  const refused = response();
+  await handleSeat({
+    method: 'POST',
+    url: '/staff/cockpit/seat/chris',
+    query: { seat: 'chris' },
+    headers: {},
+    body: { email: 'chris.shipton@posfincapital.com', password: 'preview-desk' },
+  }, refused, {
+    env,
+    fetch: async (url, options = {}) => {
+      calls.push({ url: String(url), headers: options.headers || {} });
+      return { ok: false, status: 401, text: async () => '{"error":"invalid_grant"}' };
+    },
+  });
+  assert.equal(refused.status, 401);
+  assert.match(refused.body, /not recognised/);
+  assert.equal(String(refused.headers['set-cookie'] || '').includes('pv.'), false);
+  assert.equal(JSON.stringify(calls).includes('service-key-secret'), false);
+
+  const seen = [];
+  const page = response();
+  await handleSeat({
+    method: 'GET',
+    url: '/staff/cockpit/seat/chris',
+    query: { seat: 'chris' },
+    headers: { cookie: `pf_staff=${encodeURIComponent('sb1.user-access')}` },
+  }, page, {
+    env,
+    now: NOW,
+    book: fixtureBook(),
+    fetch: sessionFetch(seen, [{
+      case_ref: 'TEST-MIG-001',
+      case_label: 'Example file',
+      stage: 'factfind',
+      owner: 'Chris Shipton',
+      next_action_summary: 'Call the example contact',
+      seed_source: 'migration_20261122',
+      existing_lender_label: 'Example Harbour',
+      broker_fee_pct: 1.5,
+      created_at: '2026-11-22T08:00:00.000Z',
+    }]),
+  });
+  assert.equal(page.status, 200);
+  assert.match(page.body, /data-case="TEST-MIG-001"/);
+  assert.equal(page.body.includes('broker_fee'), false);
+  assert.equal(page.body.includes('1.5'), false);
+  assert.equal(page.body.includes('Example Harbour'), false);
+  assert.equal(page.body.includes('Pat Example'), false);
+  assert.equal(page.body.includes('TEST-SEAT-'), false);
+  const rpc = seen.find((item) => item.url.includes('staff_case_register'));
+  assert.equal(rpc.headers.Authorization, 'Bearer user-access');
+  assert.equal(rpc.headers.apikey, 'anon-key');
 });
 
 test('answer writes use the staff session and stay in the browser when the table is absent', async () => {
