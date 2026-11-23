@@ -3,7 +3,7 @@ import { endSession, establishSession, sessionAllows } from '../lib/cockpit-stor
 import { seatViewEnabled } from '../lib/seat-flag.js';
 import { renderSeat, renderSeatLogin, renderSeatMessage } from '../lib/seat-html.js';
 import { loadAnswers, loadBook, saveAnswer, sharedSeatStore } from '../lib/seat-store.js';
-import { supabaseAccessToken } from '../lib/staff-auth.js';
+import { staffActorFromToken, supabaseAccessToken } from '../lib/staff-auth.js';
 import { presentSeat, recordAnswer, seatByCode } from '../lib/seat-view.js';
 
 function queryOf(req) {
@@ -39,6 +39,22 @@ function writeAnswerCookie(res, req, store) {
   const existing = res.getHeader && res.getHeader('Set-Cookie');
   if (existing) res.setHeader('Set-Cookie', [].concat(existing, cookie));
   else res.setHeader('Set-Cookie', cookie);
+}
+
+async function ownSeat(req, deps, env, seat) {
+  const token = accessOf(req, deps);
+  if (!token) return null;
+  const actor = await staffActorFromToken(token, { ...deps, env });
+  if (!actor.ok) {
+    return (res, path) => sendHtml(res, 401, renderSeatLogin('Sign in again with this seat’s own email.', path));
+  }
+  if (actor.seat.code !== seat.code) {
+    return (res) => sendHtml(res, 403, renderSeatMessage(
+      'Wrong seat',
+      `Signed in as ${actor.seat.name}. This page shows only ${seat.name}'s cases.`,
+    ));
+  }
+  return null;
 }
 
 function accessOf(req, deps) {
@@ -87,7 +103,10 @@ export async function handleSeat(req, res, deps = {}) {
         const login = await establishSession({ email: fields.email, password: fields.password }, depsEnv);
         if (!login.ok) return sendHtml(res, 401, renderSeatLogin(loginMessage(login.error), path));
         writeStaffCookie(res, req, login.session);
-        return redirect(res, path);
+        const home = login.seat && login.seat !== seat.code
+          ? `/staff/cockpit/seat/${encodeURIComponent(login.seat)}`
+          : path;
+        return redirect(res, home);
       }
       if (action === 'logout') {
         if (session && await sessionAllows(session, depsEnv)) await endSession(session, depsEnv);
@@ -95,6 +114,8 @@ export async function handleSeat(req, res, deps = {}) {
         return redirect(res, path);
       }
       if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderSeatLogin('', path));
+      const posted = await ownSeat(req, deps, env, seat);
+      if (posted) return posted(res, path);
       if (action === 'send' || action === 'release' || action === 'notify') {
         return sendHtml(res, 400, renderSeatMessage('Not available', 'This seat does not send messages.'));
       }
@@ -137,6 +158,8 @@ export async function handleSeat(req, res, deps = {}) {
     }
     const session = readCookie(req, 'pf_staff');
     if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderSeatLogin('', path));
+    const opened = await ownSeat(req, deps, env, seat);
+    if (opened) return opened(res, path);
     const now = deps.now || new Date().toISOString();
     const store = storeFor(req, deps);
     const accessToken = accessOf(req, deps);

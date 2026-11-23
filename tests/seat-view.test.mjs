@@ -105,6 +105,21 @@ test('the chris flag is off by default, closed in production, and reusable for a
     PIPELINE_SUPABASE_KEY: 'pipeline-secret',
   }), 'fixtures');
   assert.equal(dataMode({ VERCEL_ENV: 'preview', STAFF_AUTH_MODE: 'supabase' }), 'session');
+  assert.equal(dataMode({
+    VERCEL_ENV: 'preview',
+    STAFF_AUTH_MODE: 'preview',
+    STAFF_SUPABASE_ANON_KEY: 'anon-key',
+  }), 'session');
+  assert.equal(dataMode({
+    VERCEL_ENV: 'preview',
+    STAFF_AUTH_MODE: 'preview',
+    STAFF_SUPABASE_ANON_KEY: 'anon-key',
+    SEAT_VIEW_SOURCE: 'fixtures',
+  }), 'fixtures');
+  assert.equal(seatViewEnabled({ VERCEL_ENV: 'preview' }, 'chris'), true);
+  assert.equal(seatViewEnabled({ VERCEL_ENV: 'preview' }, 'byron'), true);
+  assert.equal(seatViewEnabled({ VERCEL_ENV: 'preview' }, 'jess'), false);
+  assert.equal(seatViewEnabled({ VERCEL_ENV: 'production' }, 'chris'), false);
   assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_BYRON: 'on', VERCEL_ENV: 'preview' }, 'byron'), true);
   assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_BYRON: 'on', VERCEL_ENV: 'production' }, 'byron'), false);
 });
@@ -356,21 +371,60 @@ test('a signed-in session reads the register and does not substitute sample lead
   assert.equal(failed.cases.length, 0);
   assert.match(failed.warning, /not substituted/);
 
-  const res = response();
+  const pageFetch = sessionFetch(calls, [{
+    case_ref: 'TEST-MIG-001',
+    case_label: 'Example file',
+    stage: 'factfind',
+    status: 'open',
+    owner: 'Chris Shipton',
+    next_action_summary: 'Call the example contact',
+    seed_source: 'migration_20261122',
+    existing_lender_label: 'Example Harbour',
+    broker_fee_pct: 1.5,
+    created_at: '2026-11-22T08:00:00.000Z',
+  }, {
+    case_ref: 'TEST-BYRON-001',
+    case_label: 'Byron example file',
+    stage: 'packaging',
+    owner_label: 'Byron',
+    seed_source: 'migration_20261122',
+    created_at: '2026-11-21T08:00:00.000Z',
+  }, {
+    case_ref: 'TEST-OTHER',
+    case_label: 'Other file',
+    stage: 'enquiry',
+    seed_source: 'other',
+    broker_fee_pct: 9,
+  }]);
+  const wrong = response();
   await handleSeat({
     method: 'GET',
     url: '/staff/cockpit/seat/byron',
     query: { seat: 'byron' },
     headers: { cookie: `pf_staff=${encodeURIComponent('sb1.user-access')}` },
-  }, res, { env: LIVE_ENV, now: NOW, fetch: fetchImpl });
+  }, wrong, { env: LIVE_ENV, now: NOW, fetch: pageFetch });
+  assert.equal(wrong.status, 403);
+  assert.match(wrong.body, /Signed in as Chris Shipton/);
+  assert.equal(wrong.body.includes('TEST-MIG-001'), false);
+  assert.equal(wrong.body.includes('TEST-BYRON-001'), false);
+  const res = response();
+  await handleSeat({
+    method: 'GET',
+    url: '/staff/cockpit/seat/chris',
+    query: { seat: 'chris' },
+    headers: { cookie: `pf_staff=${encodeURIComponent('sb1.user-access')}` },
+  }, res, { env: LIVE_ENV, now: NOW, fetch: pageFetch });
   assert.equal(res.status, 200);
-  assert.match(res.body, /Byron Hill's seat/);
+  assert.match(res.body, /Chris Shipton's seat/);
+  assert.match(res.body, /this seat/);
   assert.match(res.body, /data-case="TEST-MIG-001"/);
+  assert.equal(res.body.includes('TEST-BYRON-001'), false);
   assert.match(res.body, /data-leads="unavailable"/);
   assert.equal(res.body.includes('Example Harbour'), false);
   assert.equal(res.body.includes('Pat Example'), false);
   assert.equal(res.body.includes('broker_fee'), false);
   assert.equal(res.body.includes('switched off'), false);
+  assert.match(res.body, /Posfin Flow demo cases/);
 });
 
 test('individual sign-in refuses the shared preview password', async () => {
