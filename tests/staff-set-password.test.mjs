@@ -138,18 +138,74 @@ test('a new link is requested only for a verified seat', async () => {
   }, ok, { env: ENV, fetch: fetchImpl });
   assert.equal(ok.statusCode, 200);
   assert.match(ok.body, /new link is on its way/);
-  assert.match(calls[0].url, /\/auth\/v1\/recover$/);
-  assert.equal(calls[0].body.includes(SET_PASSWORD_REDIRECT), true);
+  const recoverUrl = new URL(calls[0].url);
+  assert.equal(recoverUrl.pathname, '/auth/v1/recover');
+  assert.equal(recoverUrl.searchParams.get('redirect_to'), SET_PASSWORD_REDIRECT);
+  assert.equal(JSON.parse(calls[0].body).redirect_to, undefined);
+  assert.equal(JSON.parse(calls[0].body).email, 'chris.shipton@posfincapital.com');
   assert.equal(calls[0].key, 'anon-key');
+
+  for (const email of ['cai@posfincapital.com', 'vanessa@posfincapital.com']) {
+    const allowed = mockRes();
+    await handleSetPassword({
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: { action: 'resend', email },
+    }, allowed, { env: ENV, fetch: fetchImpl });
+    assert.equal(allowed.statusCode, 200);
+  }
 
   const before = calls.length;
   const denied = mockRes();
   await handleSetPassword({
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: { action: 'resend', email: 'cai@posfincapital.com' },
+    body: { action: 'resend', email: 'stranger@example.invalid' },
   }, denied, { env: ENV, fetch: fetchImpl });
   assert.equal(denied.statusCode, 400);
   assert.match(denied.body, /not on the staff list/);
   assert.equal(calls.length, before);
+});
+
+test('a signed-in seat changes its own password with that session', async () => {
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({ url: String(url), method: options.method, auth: options.headers && options.headers.Authorization, body: options.body || '' });
+    if (String(url).includes('/auth/v1/user') && options.method === 'PUT') return response(200, {});
+    return response(200, [{ email: 'vanessa@posfincapital.com', seat_code: 'vanessa', role: 'case_owner' }]);
+  };
+  const anon = mockRes();
+  await handleSetPassword({
+    method: 'GET',
+    url: '/staff/set-password?change=1',
+    headers: {},
+    query: { change: '1' },
+  }, anon, { env: ENV, fetch: fetchImpl });
+  assert.equal(anon.statusCode, 401);
+  assert.match(anon.body, /Sign in on the cockpit first/);
+  assert.equal(calls.length, 0);
+
+  const form = mockRes();
+  await handleSetPassword({
+    method: 'GET',
+    url: '/staff/set-password?change=1',
+    headers: { cookie: `pf_staff=${encodeURIComponent('sb1.user-access')}` },
+    query: { change: '1' },
+  }, form, { env: ENV, fetch: fetchImpl });
+  assert.equal(form.statusCode, 200);
+  assert.match(form.body, /Change your password/);
+  assert.match(form.body, /name="change" value="1"/);
+
+  const saved = mockRes();
+  await handleSetPassword({
+    method: 'POST',
+    headers: { cookie: `pf_staff=${encodeURIComponent('sb1.user-access')}`, 'content-type': 'application/json' },
+    body: { action: 'set', change: '1', password: 'correct-horse', confirm: 'correct-horse' },
+  }, saved, { env: ENV, fetch: fetchImpl });
+  assert.equal(saved.statusCode, 303);
+  assert.equal(saved.headers.location, '/staff/cockpit');
+  const update = calls.find((call) => call.method === 'PUT');
+  assert.equal(update.auth, 'Bearer user-access');
+  assert.equal(update.body.includes('correct-horse'), true);
+  assert.equal(JSON.stringify(calls).includes('service-key-secret'), false);
 });

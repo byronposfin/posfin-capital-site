@@ -28,14 +28,14 @@ if (!url || !key) {
 
 for (const row of STAFF_LINK_PLAN) {
   const path = row.action === 'invite' ? '/auth/v1/invite' : '/auth/v1/recover';
-  const response = await fetch(`${url}${path}`, {
+  const response = await fetch(`${url}${path}?redirect_to=${encodeURIComponent(SET_PASSWORD_REDIRECT)}`, {
     method: 'POST',
     headers: {
       apikey: key,
       Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email: row.email, redirect_to: SET_PASSWORD_REDIRECT }),
+    body: JSON.stringify({ email: row.email }),
   });
   console.log(`${row.action} ${row.email} ${response.status}`);
   if (!response.ok) process.exitCode = 1;
