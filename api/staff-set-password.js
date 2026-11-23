@@ -1,4 +1,5 @@
 import { readCookie, readFields, redirect, setPrivate } from '../lib/case-http.js';
+import { callerFromToken, supabaseAccessToken } from '../lib/staff-auth.js';
 import { renderSetPassword, requestNewLink, savePassword, sessionFromLink, SET_PASSWORD_PATH } from '../lib/staff-set-password.js';
 
 function secureCookie(req) {
@@ -33,14 +34,17 @@ function sendPage(res, status, html, cookies) {
 }
 
 function queryOf(req) {
-  if (req.query && (req.query.token_hash || req.query.type || req.query.code || req.query.ready || req.query.error || req.query.error_code)) {
-    return req.query;
-  }
+  let fromUrl = {};
   try {
-    return Object.fromEntries(new URL(req.url || '/', 'http://localhost').searchParams);
+    fromUrl = Object.fromEntries(new URL(req.url || '/', 'http://localhost').searchParams);
   } catch {
-    return req.query || {};
+    fromUrl = {};
   }
+  return { ...fromUrl, ...(req.query || {}) };
+}
+
+function staffAccess(req) {
+  return supabaseAccessToken(readCookie(req, 'pf_staff'));
 }
 
 export async function handleSetPassword(req, res, deps = {}) {
@@ -63,13 +67,16 @@ export async function handleSetPassword(req, res, deps = {}) {
         return sendPage(res, status, renderSetPassword({ error: sent.ok ? 'sent' : sent.error, email: fields.email, mode: 'link' }));
       }
       if (action === 'set') {
-        const access = readCookie(req, 'pf_setup');
-        if (!access) return sendPage(res, 400, renderSetPassword({ error: 'expired', mode: 'link' }));
+        const changing = String(fields.change || '') === '1';
+        const access = changing ? staffAccess(req) : readCookie(req, 'pf_setup');
+        const failMode = changing ? 'change' : 'choose';
+        if (!access) return sendPage(res, 400, renderSetPassword({ error: changing ? 'sign_in' : 'expired', mode: 'link' }));
         const saved = await savePassword(access, fields.password, fields.confirm, depsEnv);
         if (!saved.ok) {
-          const mode = saved.error === 'not_allowed' || saved.error === 'unavailable' || saved.error === 'not_configured' ? 'link' : 'choose';
+          const mode = saved.error === 'not_allowed' || saved.error === 'unavailable' || saved.error === 'not_configured' ? 'link' : failMode;
           return sendPage(res, 400, renderSetPassword({ error: saved.error, mode }));
         }
+        if (changing) return redirect(res, '/staff/cockpit');
         res.setHeader('Set-Cookie', [staffCookie(req, saved.session), clearSetup(req)]);
         return redirect(res, '/staff/cockpit/live');
       }
@@ -93,6 +100,13 @@ export async function handleSetPassword(req, res, deps = {}) {
       if (!opened.ok) return sendPage(res, 400, renderSetPassword({ error: opened.error, mode: 'link' }));
       res.setHeader('Set-Cookie', setupCookie(req, opened.access));
       return redirect(res, `${SET_PASSWORD_PATH}?ready=1`);
+    }
+    if (query.change === '1') {
+      const access = staffAccess(req);
+      if (!access) return sendPage(res, 401, renderSetPassword({ error: 'sign_in', mode: 'link' }));
+      const actor = await callerFromToken(access, depsEnv);
+      if (!actor.ok) return sendPage(res, 401, renderSetPassword({ error: 'not_allowed', mode: 'link' }));
+      return sendPage(res, 200, renderSetPassword({ mode: 'change' }));
     }
     if (query.ready === '1' && readCookie(req, 'pf_setup')) {
       return sendPage(res, 200, renderSetPassword({ mode: 'choose' }));

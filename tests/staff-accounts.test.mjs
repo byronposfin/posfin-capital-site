@@ -20,7 +20,10 @@ test('Chris Shipton keeps his own email and does not inherit Byron', () => {
   assert.equal(seatEmail('Chris'), 'chris.shipton@posfincapital.com');
   assert.notEqual(seatEmail('chris'), seatEmail('byron'));
   assert.equal(ownerSeat('byronhill739@gmail.com'), null);
-  assert.equal(seatEmail('cai'), '');
+  assert.equal(seatEmail('cai'), 'cai@posfincapital.com');
+  assert.equal(seatEmail('vanessa'), 'vanessa@posfincapital.com');
+  assert.equal(ownerSeat('cai@posfincapital.com').code, 'cai');
+  assert.equal(ownerSeat('vanessa@posfincapital.com').role, 'case_owner');
 });
 
 test('the Chris seat filter matches Chris Shipton and stays off Byron', () => {

@@ -4,7 +4,13 @@ import { readFileSync } from 'node:fs';
 import { handleCockpit } from '../api/staff-cockpit.js';
 import { handleSeat } from '../api/staff-seat.js';
 import { mintPreviewSession, resetSharedPreviewStore } from '../lib/cockpit-store.js';
-import { seatFlagName, seatViewEnabled } from '../lib/seat-flag.js';
+import { enabledSeatLinks, seatFlagName, seatViewEnabled } from '../lib/seat-flag.js';
+import { renderSeatLogin } from '../lib/seat-html.js';
+import { renderLogin } from '../lib/cockpit-html.js';
+import { renderBrokaLogin } from '../lib/broka-html.js';
+import { renderElLorLogin } from '../lib/el-lor-html.js';
+import { renderFranceLogin } from '../lib/fr-desk-html.js';
+import { renderPipelineLogin } from '../lib/pipeline-html.js';
 import { dataMode, loadBook, resetSharedSeatStore, saveAnswer } from '../lib/seat-store.js';
 import {
   factFindStand, fixtureBook, hiddenCaseKeys, presentSeat, seatByCode,
@@ -109,6 +115,26 @@ test('a seat flag opens on Production and fixtures stay off Production', () => {
   assert.equal(dataMode({ VERCEL_ENV: 'preview', STAFF_AUTH_MODE: 'supabase' }), 'session');
   assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_BYRON: 'on', VERCEL_ENV: 'preview' }, 'byron'), true);
   assert.equal(seatViewEnabled({ FEATURE_SEAT_VIEW_BYRON: 'on', VERCEL_ENV: 'production' }, 'byron'), true);
+  assert.equal(seatByCode('vanessa').name, 'Vanessa');
+  assert.equal(seatByCode('cai').name, 'Cai');
+  const links = enabledSeatLinks({
+    FEATURE_SEAT_VIEW_CHRIS: 'on',
+    FEATURE_SEAT_VIEW_BYRON: 'on',
+    FEATURE_SEAT_VIEW_JESS: 'on',
+    FEATURE_SEAT_VIEW_AADI: 'on',
+    FEATURE_SEAT_VIEW_CAI: 'on',
+    FEATURE_SEAT_VIEW_VANESSA: 'on',
+  });
+  assert.deepEqual(links.map((item) => item.code), ['chris', 'byron', 'jess', 'aadi', 'cai', 'vanessa']);
+  const pages = [
+    renderSeatLogin('', '/staff/cockpit/seat/cai'),
+    renderLogin(''),
+    renderBrokaLogin(),
+    renderElLorLogin('/staff/cockpit/live'),
+    renderFranceLogin('', 'en'),
+    renderPipelineLogin(),
+  ];
+  for (const html of pages) assert.match(html, /href="\/staff\/set-password">Forgot password\?/);
 });
 
 test('flag off leaves the cockpit nav unchanged and the seat route closed', async () => {
@@ -149,6 +175,7 @@ test('the four sections render from fixtures and the cockpit links Chris when th
     headers: { cookie: cookie(ON) },
   }, board, { env: ON, now: NOW, fetch: async () => { throw new Error('network'); } });
   assert.match(board.body, /data-tab="seat-chris"/);
+  assert.match(board.body, /href="\/staff\/set-password\?change=1">Change password/);
   const page = await call(null);
   assert.equal(page.status, 200);
   assert.match(page.body, /id="raw-leads"/);
@@ -168,6 +195,7 @@ test('the four sections render from fixtures and the cockpit links Chris when th
   assert.equal(page.body.includes('broker_fee'), false);
   assert.equal(page.body.includes('1.25'), false);
   assert.match(page.body, /Same sheet for Byron's seat/);
+  assert.match(page.body, /href="\/staff\/set-password\?change=1">Change password/);
   assert.match(page.body, /data-task="chris:case:TEST-SEAT-001:2026-11-22"/);
   assert.equal(page.body.includes('chris:case:TEST-SEAT-002'), false);
   const dated = await call(null, { query: { seat: 'chris', from: '2026-11-18', source: 'all' } });
