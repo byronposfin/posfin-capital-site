@@ -83,6 +83,9 @@ test('committed fixtures are TEST cases and the loader degrades when the seed UR
   assert.equal(failed.cases.length, 4);
   assert.match(failed.warning, /unreachable/);
   assert.equal(elLorEnabled({}), false);
+  assert.equal(elLorEnabled({ VERCEL_ENV: 'preview' }), true);
+  assert.equal(elLorEnabled({ VERCEL_ENV: 'preview', FEATURE_EL_LOR_DESK: 'off' }), false);
+  assert.equal(elLorEnabled({ VERCEL_ENV: 'production' }), false);
   assert.equal(sendsAreMock({ COCKPIT_SOURCE: 'supabase', VERCEL_ENV: 'preview', EL_LOR_LIVE_SENDS: 'on' }), true);
 });
 
