@@ -11,6 +11,7 @@ import {
 } from '../lib/cockpit-store.js';
 import { newLeadsHtml } from '../lib/new-leads-lane.js';
 import { elLorEnabled } from '../lib/el-lor-flag.js';
+import { enabledSeatLinks } from '../lib/seat-flag.js';
 
 function queryOf(req) {
   if (req.query && (req.query.filter || req.query.view || req.query.caseId || req.query.spine || req.query.waiting)) return req.query;
@@ -223,7 +224,7 @@ export async function handleCockpit(req, res, deps = {}) {
         return redirect(res, '/staff/cockpit');
       }
       if (!action) {
-        const login = await establishSession(String(fields.password || ''), depsEnv);
+        const login = await establishSession({ email: fields.email, password: fields.password }, depsEnv);
         if (!login.ok) return sendHtml(res, 401, renderLogin(login.error || 'password'));
         writeStaffCookie(res, req, login.session);
         return redirect(res, safeNext(fields.next) || '/staff/cockpit');
@@ -267,6 +268,7 @@ export async function handleCockpit(req, res, deps = {}) {
         queue: lizzyQueue(cards),
         newLeadsHtml: await newLeadsHtml(mode, env, deps.fetch),
         liveCases: elLorEnabled(env),
+        seatLinks: enabledSeatLinks(env),
       };
       const html = query.view === 'lizzy' ? renderLizzy(model) : renderBoard(model);
       return sendHtml(res, 200, html);
@@ -282,6 +284,7 @@ export async function handleCockpit(req, res, deps = {}) {
       queue: lizzyQueue(cards),
       newLeadsHtml: await newLeadsHtml('preview', env, deps.fetch),
       liveCases: elLorEnabled(env),
+      seatLinks: enabledSeatLinks(env),
     };
     const html = query.view === 'lizzy' ? renderLizzy(model) : renderBoard(model);
     return sendHtml(res, 200, html);

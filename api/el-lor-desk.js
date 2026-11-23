@@ -7,6 +7,7 @@ import {
 } from '../lib/el-lor-html.js';
 import { loadSeed } from '../lib/el-lor-seed.js';
 import { sharedElLorStore } from '../lib/el-lor-store.js';
+import { supabaseAccessToken } from '../lib/staff-auth.js';
 
 const NOTICES = new Set([
   'el-draft', 'lor-draft', 'approval-pending', 'mock-sent', 'viewed', 'signed', 'marked', 'lor-sent', 'response', 'processing',
@@ -48,12 +49,12 @@ function caseRefOf(query, fields) {
   return /^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$/.test(raw) ? raw : '';
 }
 
-async function seedStore(store, env, deps) {
+async function seedStore(store, env, deps, session) {
   if (deps.seed) {
     store.useSeed(deps.seed);
     return { warning: '' };
   }
-  const loaded = await loadSeed(env, deps.fetch || globalThis.fetch);
+  const loaded = await loadSeed(env, deps.fetch || globalThis.fetch, supabaseAccessToken(session));
   store.useSeed(loaded.cases);
   return loaded;
 }
@@ -66,11 +67,10 @@ export async function handleElLorDesk(req, res, deps = {}) {
   const now = deps.now || new Date().toISOString();
   const depsEnv = { ...deps, env };
   try {
-    const loaded = await seedStore(store, env, deps);
     if (req.method === 'POST') {
       const fields = await fieldsOf(req);
       if (fields.password && !fields.action) {
-        const login = await establishSession(String(fields.password || ''), depsEnv);
+        const login = await establishSession({ email: fields.email, password: fields.password }, depsEnv);
         if (!login.ok) return sendHtml(res, 401, renderElLorLogin('/staff/cockpit/live'));
         writeStaffCookie(res, req, login.session);
         const next = caseRefOf(queryOf(req), fields);
@@ -78,6 +78,7 @@ export async function handleElLorDesk(req, res, deps = {}) {
       }
       const session = readCookie(req, 'pf_staff');
       if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderElLorLogin('/staff/cockpit/live'));
+      await seedStore(store, env, deps, session);
       const ref = caseRefOf(queryOf(req), fields);
       const row = ref ? store.seedRow(ref) : null;
       if (!row) return sendHtml(res, 404, renderElLorMessage('Not on this desk', 'That case reference is not on the desk.'));
@@ -99,6 +100,7 @@ export async function handleElLorDesk(req, res, deps = {}) {
     }
     const session = readCookie(req, 'pf_staff');
     if (!session || !await sessionAllows(session, depsEnv)) return sendHtml(res, 401, renderElLorLogin('/staff/cockpit/live'));
+    const loaded = await seedStore(store, env, deps, session);
     const query = queryOf(req);
     const ref = caseRefOf(query, null);
     if (!ref) {

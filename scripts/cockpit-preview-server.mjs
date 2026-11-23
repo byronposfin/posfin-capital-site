@@ -8,11 +8,13 @@ import pipeline from '../api/staff-pipeline.js';
 import brokaDesk from '../api/broka-desk.js';
 import brokaJobs from '../api/broka/jobs.js';
 import elLorDesk from '../api/el-lor-desk.js';
+import seatDesk from '../api/staff-seat.js';
 
 process.env.COCKPIT_SOURCE = 'preview';
 process.env.COCKPIT_AUTH = 'preview';
 process.env.COCKPIT_PREVIEW_PASSWORD = process.env.COCKPIT_PREVIEW_PASSWORD || 'preview-desk';
 process.env.COCKPIT_STORE_PATH = process.env.COCKPIT_STORE_PATH || '/tmp/posfin-cockpit-preview.json';
+process.env.SEAT_VIEW_SOURCE = 'fixtures';
 
 function formFields(raw) {
   const params = new URLSearchParams(raw);
@@ -39,10 +41,11 @@ const server = http.createServer(async (req, res) => {
   const spinePath = url.pathname.match(/^\/staff\/cockpit\/spine\/([^/]+)$/);
   const brokaPath = url.pathname.match(/^\/staff\/cockpit\/broka\/([^/]+)$/);
   const elPath = url.pathname.match(/^\/staff\/cockpit\/el\/([^/]+)$/);
+  const seatPath = url.pathname.match(/^\/staff\/cockpit\/seat\/([^/]+)$/);
   const livePath = url.pathname === '/staff/cockpit/live';
   const pipelinePath = url.pathname === '/staff/cockpit/pipeline';
   const brokaJob = url.pathname === '/api/broka/jobs' || url.pathname === '/staff/cockpit/broka-jobs';
-  if (url.pathname !== '/staff/cockpit' && !spinePath && !pipelinePath && !brokaPath && !brokaJob && !livePath && !elPath) {
+  if (url.pathname !== '/staff/cockpit' && !spinePath && !pipelinePath && !brokaPath && !brokaJob && !livePath && !elPath && !seatPath) {
     res.statusCode = 404;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.end('This preview server only serves /staff/cockpit.');
@@ -58,9 +61,11 @@ const server = http.createServer(async (req, res) => {
   if (spinePath) req.query.spine = decodeURIComponent(spinePath[1]);
   if (brokaPath) req.query.case = decodeURIComponent(brokaPath[1]);
   if (elPath) req.query.case = decodeURIComponent(elPath[1]);
+  if (seatPath) req.query.seat = decodeURIComponent(seatPath[1]);
   req.url = url.pathname + url.search;
   try {
     if (brokaJob) await brokaJobs(req, res);
+    else if (seatPath) await seatDesk(req, res);
     else if (livePath || elPath) await elLorDesk(req, res);
     else if (pipelinePath) await pipeline(req, res);
     else if (brokaPath) await brokaDesk(req, res);

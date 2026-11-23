@@ -1,5 +1,7 @@
 import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCookie } from "../lib/case-http.js";
 import { staffList, staffLogin, staffLogout } from "../lib/case-store.js";
+import { establishSession, sessionAllows } from "../lib/cockpit-store.js";
+import { staffAuthMode, supabaseAccessToken } from "../lib/staff-auth.js";
 import { deskOrigin, presentCase, TRAINING_CASES, trainingById } from "../lib/fr-desk.js";
 import { renderFranceCase, renderFranceList, renderFranceLogin } from "../lib/fr-desk-html.js";
 import { requestOrigin } from "./fr-factfind.js";
@@ -30,7 +32,9 @@ export default async function handler(req, res) {
         writeStaffCookie(res, req, "", 0);
         return redirect(res, "/staff/france");
       }
-      const login = await staffLogin(String(fields.password || ""));
+      const login = staffAuthMode(process.env) === "supabase"
+        ? await establishSession({ email: fields.email, password: fields.password }, { env: process.env })
+        : await staffLogin(String(fields.password || ""));
       if (!login || login.ok !== true || !login.session) return sendHtml(res, 401, renderFranceLogin(lang === "en" ? "That staff password was not recognised." : "Ce mot de passe staff n'est pas reconnu.", lang));
       writeStaffCookie(res, req, login.session);
       rememberLang(res, lang);
@@ -45,8 +49,12 @@ export default async function handler(req, res) {
     }
     const session = readCookie(req, "pf_staff");
     if (!session) return sendHtml(res, 401, renderFranceLogin("", lang));
-    const rows = await staffList(session);
-    if (!rows) return sendHtml(res, 401, renderFranceLogin(lang === "en" ? "Please sign in again." : "Merci de vous reconnecter.", lang));
+    if (supabaseAccessToken(session)) {
+      if (!await sessionAllows(session, { env: process.env })) return sendHtml(res, 401, renderFranceLogin(lang === "en" ? "Please sign in again." : "Merci de vous reconnecter.", lang));
+    } else {
+      const rows = await staffList(session);
+      if (!rows) return sendHtml(res, 401, renderFranceLogin(lang === "en" ? "Please sign in again." : "Merci de vous reconnecter.", lang));
+    }
     const origin = deskOrigin(process.env, requestOrigin(req));
     if (caseId) {
       const item = trainingById(caseId);

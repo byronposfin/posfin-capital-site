@@ -2,6 +2,8 @@ import { setPrivate, sendHtml, readCookie } from '../lib/case-http.js';
 import { renderMessage } from '../lib/case-portal-html.js';
 import { servedFile } from '../lib/case-portal.js';
 import { readClientFile, readStaffFile, safeName } from '../lib/case-store.js';
+import { sessionAllows } from '../lib/cockpit-store.js';
+import { supabaseAccessToken } from '../lib/staff-auth.js';
 
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -12,8 +14,12 @@ export default async function handler(req, res) {
   if (!ID.test(submission)) return sendHtml(res, 404, renderMessage('Not available', 'That file is not on this case.'));
   try {
     const staff = req.query?.staff === '1';
+    const staffSession = readCookie(req, 'pf_staff');
+    if (staff && supabaseAccessToken(staffSession) && !await sessionAllows(staffSession, { env: process.env })) {
+      return sendHtml(res, 401, renderMessage('Please sign in', 'That staff session was not recognised.'));
+    }
     const file = staff
-      ? await readStaffFile(readCookie(req, 'pf_staff'), String(req.query?.caseId || ''), submission)
+      ? await readStaffFile(staffSession, String(req.query?.caseId || ''), submission)
       : await readClientFile(String(req.query?.token || ''), submission);
     if (!file) return sendHtml(res, 404, renderMessage('Not available', 'That file is not on this case.'));
     const served = servedFile(file.mime);
