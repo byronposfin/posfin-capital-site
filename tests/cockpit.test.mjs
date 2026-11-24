@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { handleCockpit } from '../api/staff-cockpit.js';
+import { renderCard } from '../lib/cockpit-html.js';
 import {
   FILTERS, RELEASE_LINE, SECTIONS, applyEdit, cardFromStaff, cardsFromRemote, groupBoard, lizzyQueue, matchesFilter, safeHref,
 } from '../lib/cockpit.js';
@@ -108,6 +109,44 @@ test('staff portal rows become cards without tokens or borrower links', () => {
   assert.equal(remote.find((item) => item.id === 'task-abcd').kind, 'task');
 });
 
+test('a live case title opens its file and fixture cards stay labelled as examples', () => {
+  const live = renderCard({
+    id: 'example-1',
+    kind: 'case',
+    preview: false,
+    title: 'Example Person',
+    status: 'AWAITING REPLY',
+    description: '1 Example Street',
+    owner: 'Byron',
+    nextAction: 'Review the example',
+    knownDone: '',
+    releaseLine: 'Tom releases borrower links on SmartLink.',
+    dueOn: '',
+    note: '',
+    done: false,
+    draftMessage: '',
+    evidence: [],
+  }, 'all', 'board');
+  assert.match(live, /<a href="\/staff\/cases\/example-1">Example Person<\/a>/);
+  assert.match(live, /<details class="edit"><summary>Edit<\/summary>/);
+  assert.equal(live.includes('Example, no case file'), false);
+  const fixture = renderCard({
+    id: 'preview-quay',
+    kind: 'case',
+    preview: true,
+    title: 'Quay Cottage — example redemption',
+    status: 'AWAITING REPLY',
+    description: 'Preview case.',
+    owner: 'Jess',
+    nextAction: '',
+    knownDone: '',
+    releaseLine: '',
+    evidence: [],
+  }, 'all', 'board');
+  assert.match(fixture, /Example, no case file/);
+  assert.equal(fixture.includes('/staff/cases/preview-quay'), false);
+});
+
 test('the cockpit page is the staff board, and Lizzy has drafts without a send control', async () => {
   const store = createPreviewStore();
   const session = mintPreviewSession(ENV);
@@ -117,6 +156,11 @@ test('the cockpit page is the staff board, and Lizzy has drafts without a send c
   assert.match(open.body, /Let's clear the board\./);
   assert.match(open.body, /New leads/);
   assert.match(open.body, /TEST-WEB-BYRON1/);
+  assert.match(open.body, /href="\/staff\/new-leads#TEST-WEB-BYRON1"/);
+  assert.match(open.body, /Example, no case file/);
+  assert.match(open.body, /<summary>Edit<\/summary>/);
+  assert.equal(open.body.includes('/staff/cases/preview-hale'), false);
+  assert.equal(open.body.includes('/staff/cases/preview-quay'), false);
   assert.match(open.body, /Within SLA/);
   assert.match(open.body, /byron\.hill@posfincapital\.com/);
   assert.match(open.body, /No AI caller/);

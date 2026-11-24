@@ -44,6 +44,7 @@ test('the scorecard tab renders the board and the case shortlist', async () => {
   }, res, { env: ENV, fetch: async () => { throw new Error('no network'); } });
   assert.equal(res.status, 200);
   assert.match(res.body, /Lender scorecard/);
+  assert.match(res.body, /Example data/);
   assert.match(res.body, /69\.00/);
   assert.match(res.body, /36\.00/);
   assert.match(res.body, /The first five sets of terms/);
