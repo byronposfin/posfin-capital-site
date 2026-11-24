@@ -33,6 +33,9 @@ input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px
 textarea{min-height:88px;resize:vertical}
 button.send{background:var(--teal);color:var(--navy);border:0;border-radius:999px;padding:10px 16px;min-height:44px;font-weight:700;cursor:pointer}
 button.pill,button.mode{min-height:40px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--navy);padding:8px 12px;cursor:pointer}
+button.count-link{display:block;width:100%;text-align:left;background:transparent;border:0;padding:0;color:inherit;cursor:pointer;font:inherit}
+tr.case-row{cursor:pointer}
+tr.case-row:hover{background:#f3fbfd}
 button.mode.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
 .filters{display:grid;gap:8px}

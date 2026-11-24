@@ -3,7 +3,9 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 import { handleCommandDashboard } from '../api/command-dashboard.js';
+import { handleStaffCases } from '../api/case-staff.js';
 import { renderBoard } from '../lib/cockpit-html.js';
 import {
   pipelineSeatMatch,
@@ -587,4 +589,146 @@ test('the client, migration and routes stay free of secrets and excluded columns
     for (const pattern of banned) assert.equal(pattern.test(source), false, `${path} ${pattern}`);
   }
   assert.equal(root.endsWith('/'), true);
+});
+
+test('a pipeline row click opens the case detail and urgency counts filter the list', async () => {
+  const listeners = {};
+  const panel = { innerHTML: '' };
+  let hash = '#overview';
+  const document = {
+    hidden: false,
+    activeElement: null,
+    body: { dataset: { seat: 'chris', finance: '0', name: 'Chris Shipton' } },
+    querySelector(sel) {
+      if (sel === '#panel') return panel;
+      if (sel === '#fresh' || sel === '#seat-badge') return { textContent: '' };
+      return null;
+    },
+    querySelectorAll() { return []; },
+    getElementById() { return null; },
+    addEventListener(type, fn) { (listeners[type] ||= []).push(fn); },
+  };
+  const location = {
+    get hash() { return hash; },
+    set hash(value) { hash = value; },
+  };
+  const history = {
+    replaceState(_state, _title, next) {
+      if (String(next).startsWith('#')) hash = String(next);
+    },
+  };
+  const dashboard = {
+    ok: true,
+    seat: 'chris',
+    displayName: 'Chris Shipton',
+    canViewFinance: false,
+    finance: null,
+    freshness: {},
+    overview: { kpis: {}, standing_rules: [], highlights: [] },
+    roster: { agents: [] },
+    pipeline: {
+      cases: [
+        {
+          id: 'TEST-SHARED-001', name: 'Example shared case', lane: 'Live deal', stage: 'Processing',
+          owner: 'Cai', urgent: 'URGENT', loan: 'Example facility', fee: 'Example fee',
+          last_message_date: '2026-11-22', days_since_last_message: 1, next_action: 'Chase the example document',
+          assigned_seat: 'cai+jess', assigned_seats: ['cai', 'jess'], whatsapp_assigned: true,
+        },
+        {
+          id: 'TEST-EMERG-001', name: 'Example emergency', lane: 'Live deal', stage: 'Packaging',
+          owner: 'Byron', urgent: 'EMERGENCY', loan: 'Emergency facility', fee: 'Emergency fee',
+          last_message_date: '2026-11-23', days_since_last_message: 0, next_action: 'Byron to decide',
+          assigned_seat: 'byron', whatsapp_assigned: true,
+        },
+        { id: 'short', name: 'Too short to file', lane: 'Enquiry', stage: 'New', urgent: '', loan: '', fee: '' },
+      ],
+    },
+    tasks: { cards: [] },
+    lenders: { active_case_lenders: [] },
+    files: { key_sheets: [], recent_outputs: [] },
+    thread: [],
+  };
+  const context = {
+    document,
+    location,
+    history,
+    console,
+    fetch: async () => ({ ok: true, status: 200, json: async () => dashboard }),
+    setInterval() { return 0; },
+    clearInterval() {},
+    setTimeout,
+    clearTimeout,
+    Map,
+    Intl,
+    URL,
+    Promise,
+  };
+  context.window = {
+    document,
+    location,
+    addEventListener(type, fn) { (listeners[type] ||= []).push(fn); },
+  };
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL('../staff/command-app.js', import.meta.url), 'utf8'), context);
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.match(panel.innerHTML, /data-mode="emergency"/);
+  assert.match(panel.innerHTML, /data-mode="urgent-only"/);
+
+  const click = (closest) => listeners.click[0]({ target: { closest, id: '' } });
+  await click((sel) => (sel === '[data-case-id]' ? { dataset: { caseId: 'TEST-SHARED-001' } } : null));
+  assert.equal(hash, '#pipeline/TEST-SHARED-001');
+  assert.match(panel.innerHTML, /data-case-detail="TEST-SHARED-001"/);
+  assert.match(panel.innerHTML, /Chase the example document/);
+  assert.match(panel.innerHTML, /Example facility/);
+  assert.match(panel.innerHTML, /Example fee/);
+  assert.match(panel.innerHTML, /1 day/);
+  assert.match(panel.innerHTML, /href="\/staff\/cases\/TEST-SHARED-001"/);
+  assert.match(panel.innerHTML, /Open the case file/);
+
+  await click((sel) => (sel === '[data-pipeline-back]' ? { dataset: {} } : null));
+  assert.equal(hash, '#pipeline');
+  assert.match(panel.innerHTML, /data-case-id="TEST-SHARED-001"/);
+  assert.match(panel.innerHTML, /href="#pipeline\/TEST-SHARED-001"/);
+  assert.match(panel.innerHTML, /tabindex="0"/);
+  assert.match(panel.innerHTML, /data-case-id="short"/);
+
+  await click((sel) => (sel === '[data-case-id]' ? { dataset: { caseId: 'short' } } : null));
+  assert.match(panel.innerHTML, /No staff case file for this row/);
+  assert.equal(panel.innerHTML.includes('/staff/cases/short'), false);
+
+  await click((sel) => (sel === '[data-mode]' ? { dataset: { mode: 'emergency' } } : null));
+  assert.equal(hash, '#pipeline');
+  assert.match(panel.innerHTML, /data-case-id="TEST-EMERG-001"/);
+  assert.equal(panel.innerHTML.includes('TEST-SHARED-001'), false);
+  assert.match(panel.innerHTML, /aria-pressed="true"/);
+});
+
+test('a dashboard session does not get a 404 when it opens a staff case link', async () => {
+  const email = seatByCode('cai').email;
+  const fetchImpl = async (url) => {
+    const target = String(url);
+    if (target.includes('/auth/v1/user')) return { ok: true, status: 200, text: async () => JSON.stringify({ email }) };
+    if (target.includes('/rpc/staff_caller')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify([{ email, seat_code: 'cai', role: 'case_owner' }]) };
+    }
+    return { ok: false, status: 404, text: async () => '' };
+  };
+  const res = response();
+  await handleStaffCases({
+    method: 'GET',
+    url: '/staff/cases/TEST-SHARED-001',
+    query: { caseId: 'TEST-SHARED-001' },
+    headers: { cookie: `pf_staff=${encodeURIComponent('sb1.staff-access-token')}` },
+  }, res, {
+    env: {
+      STAFF_AUTH_MODE: 'supabase',
+      STAFF_SUPABASE_URL: 'https://example.test',
+      STAFF_SUPABASE_ANON_KEY: 'anon-key',
+    },
+    fetch: fetchImpl,
+  });
+  assert.equal(res.status, 200);
+  assert.match(res.body, /Open it on the cockpit/);
+  assert.match(res.body, /href="\/staff\/cockpit#card-TEST-SHARED-001"/);
+  assert.equal(res.body.includes('Not on this folder'), false);
 });

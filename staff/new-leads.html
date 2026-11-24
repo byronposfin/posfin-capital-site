@@ -148,6 +148,7 @@ function card(lead) {
   const item = document.createElement('article');
   item.className = 'card';
   item.dataset.lane = 'new-leads';
+  if (lead.reference) item.id = 'lead-' + String(lead.reference).replace(/[^A-Za-z0-9_-]/g, '');
   const top = document.createElement('div');
   top.className = 'row';
   top.append(text('strong', lead.reference || 'Fact find'));
@@ -245,6 +246,16 @@ async function load() {
   statuses = Array.isArray(body.statuses) ? body.statuses : [];
   boardMsg.textContent = body.leads.length ? (body.capped ? 'Showing the latest 100.' : '') : 'No open fact finds.';
   list.append(...body.leads.map(card));
+  focusLead();
+}
+
+function focusLead() {
+  const raw = (location.hash || '').replace(/^#/, '');
+  if (!raw) return;
+  let reference = raw;
+  try { reference = decodeURIComponent(raw); } catch { reference = raw; }
+  const node = document.getElementById('lead-' + reference.replace(/[^A-Za-z0-9_-]/g, ''));
+  if (node) node.scrollIntoView({ block: 'start' });
 }
 
 async function savePatch(lead, fields) {
@@ -304,6 +315,7 @@ if (fixture) {
     { id: 'fixture-2', reference: 'TEST-WEB-BYRON2', ownerName: 'Byron Hill', seat: 'byron', age: '16 min', slaLabel: 'Overdue', slaColour: 'red', status: 'new', fullName: 'Byron Hill', email: 'byron.hill@posfincapital.com', contactConsent: true, aiCallConsent: false, noChase: false, isTest: true, nextAction: '' },
     { id: 'fixture-3', reference: 'TEST-WEB-BYRON3', ownerName: 'Jess', ownerEmail: 'jessica@posfincapital.com', seat: 'jess', age: '1 h', slaLabel: 'Contacted', slaColour: 'done', status: 'contacted', fullName: 'Byron Hill', email: 'byron.hill@posfincapital.com', contactConsent: true, aiCallConsent: true, contactedAt: new Date(now).toISOString(), isTest: true, nextAction: 'Waiting on documents' },
   ].map(card));
+  focusLead();
 }
 </script>
 </body>

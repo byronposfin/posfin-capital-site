@@ -19,7 +19,8 @@
   const opening = readHash();
   const state = {
     tab: opening.tab,
-    meetingId: opening.id,
+    meetingId: opening.tab === "meetings" ? opening.id : "",
+    caseId: opening.tab === "pipeline" ? opening.id : "",
     data: null,
     meetings: null,
     meetingsRequest: null,
@@ -135,6 +136,8 @@
       if (!isOpen(item)) return false;
       if (state.mode === "live" && !isLive(item)) return false;
       if (state.mode === "urgent" && !isUrgent(item.urgent)) return false;
+      if (state.mode === "emergency" && String(item.urgent || "").toUpperCase() !== "EMERGENCY") return false;
+      if (state.mode === "urgent-only" && String(item.urgent || "").toUpperCase() !== "URGENT") return false;
       if ((state.mode === "cai" || state.mode === "jess") && !(isLive(item) && item.whatsapp_assigned === true && pipelineSeatMatch(item, state.mode))) return false;
       if (state.stage && item.stage !== state.stage) return false;
       if (state.lender && !(map.get(item.id) || []).includes(state.lender)) return false;
@@ -144,10 +147,10 @@
     });
   }
 
-  function table(columns, rows) {
+  function table(columns, rows, rowAttr) {
     const head = columns.map((col) => `<th scope="col">${esc(col[0])}</th>`).join("");
     const body = rows.length
-      ? rows.map((row) => `<tr>${columns.map((col) => `<td>${col[1](row)}</td>`).join("")}</tr>`).join("")
+      ? rows.map((row) => `<tr${rowAttr ? rowAttr(row) : ""}>${columns.map((col) => `<td>${col[1](row)}</td>`).join("")}</tr>`).join("")
       : `<tr><td colspan="${columns.length}">None in this snapshot.</td></tr>`;
     return `<div class="scroll"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
   }
@@ -168,12 +171,24 @@
     return messages.map((item) => `<article class="msg"><b>${esc(seatName[item.from_agent] || item.from_agent)}</b> → ${esc(seatName[item.to_agent] || item.to_agent)} <i>${esc(when(item.created_at))}</i><br>${esc(item.message)}</article>`).join("");
   }
 
+  function urgencyCounts(data) {
+    const rows = casesOf(data).filter(isOpen);
+    return {
+      emergency: rows.filter((item) => String(item.urgent || "").toUpperCase() === "EMERGENCY").length,
+      urgent: rows.filter((item) => String(item.urgent || "").toUpperCase() === "URGENT").length,
+    };
+  }
+
+  function countButton(label, mode, value) {
+    return `<article class="card"><button type="button" class="count-link" data-mode="${esc(mode)}">${esc(label)}<b>${count(value)}</b></button></article>`;
+  }
+
   function kpiCards(data) {
     const kpis = (data.overview && data.overview.kpis) || {};
+    const levels = urgencyCounts(data);
     const cards = [
       ["Open cases", count(kpis.total_open_non_private), "Non-private"],
       ["Live deals", count(kpis.live_deals), ""],
-      ["Urgent / emergency", count(kpis.urgent_emergency), ""],
       ["Cai's assigned live deals", count(kpis.cai_assigned_live), "WhatsApp assignment"],
       ["Jess's assigned live deals", count(kpis.jess_assigned_live), "WhatsApp assignment"],
       ["Tasks", count(kpis.tasks_total), ""],
@@ -181,7 +196,8 @@
       ["Active lenders", count(kpis.active_lenders), ""],
       ["Lender timing", kpis.lender_timing_metrics_available === true ? "Live" : "Awaiting", "Deep dive"],
     ];
-    return `<div class="grid">${cards.map(([label, value, note]) => `<article class="card">${esc(label)}<b>${value}</b>${note ? `<span>${esc(note)}</span>` : ""}</article>`).join("")}</div>`;
+    const grid = cards.map(([label, value, note]) => `<article class="card">${esc(label)}<b>${value}</b>${note ? `<span>${esc(note)}</span>` : ""}</article>`).join("");
+    return `<div class="grid">${grid}${countButton("Emergency", "emergency", levels.emergency)}${countButton("Urgent", "urgent-only", levels.urgent)}</div>`;
   }
 
   function rulesHtml(rules) {
@@ -207,15 +223,38 @@
     return `<div class="two"><section><h2>Agents</h2>${roster.note ? `<p class="note">${esc(roster.note)}</p>` : ""}<p class="meta">Private staff Lizzys marked bridge pending are not on a live bridge.</p>${table([["Agent", (row) => esc(row.name)], ["Lane", (row) => esc(row.lane)], ["Status", (row) => statusPill(row.status)]], agents)}<h2>Ask Lizzy</h2><p class="meta">Answers use this seat's dashboard data only.</p><label for="q-ask">Question</label><textarea id="q-ask" rows="3" maxlength="2000" placeholder="For example: which live deals are waiting on Byron?"></textarea><div class="row"><button class="send" type="button" id="ask">Ask Lizzy</button><span id="ask-status" role="status"></span></div><pre class="answer" id="answer" hidden></pre></section><section><h2>Shared team thread</h2><div class="thread" id="thread">${threadHtml(data.thread)}</div><form id="composer"><label for="to-agent">To</label><select id="to-agent">${options}</select><label for="thread-text">Message</label><textarea id="thread-text" maxlength="2000" placeholder="Message the team" required></textarea><div class="row"><button class="send" type="submit" id="post">Post as ${esc(data.displayName)}</button><span id="post-status" role="status"></span></div></form></section></div>`;
   }
 
+  const CASE_FILE = /^[A-Za-z0-9-]{6,48}$/;
+
+  function caseFileHref(id) {
+    const caseId = String(id || "");
+    return CASE_FILE.test(caseId) ? `/staff/cases/${encodeURIComponent(caseId)}` : "";
+  }
+
+  function pipelineDetail(item) {
+    const href = caseFileHref(item.id);
+    const file = href
+      ? `<p><a href="${esc(href)}">Open the case file</a></p>`
+      : `<p class="meta">No staff case file for this row.</p>`;
+    return `<p><button type="button" class="back" data-pipeline-back>All cases</button></p><article class="card" data-case-detail="${esc(item.id)}"><h2>${esc(item.id)} ${esc(item.name || "")}</h2><ul class="lines"><li><strong>Stage</strong> ${esc(item.stage || "—")}${item.lane ? ` · ${esc(item.lane)}` : ""}</li><li><strong>Urgency</strong> ${urgentCell(item.urgent)}</li><li><strong>Seat</strong> ${esc(labelSeat(item.assigned_seat || (item.assigned_seats || []).join("+")))}</li><li><strong>Next action</strong> ${esc(item.next_action || "—")}</li><li><strong>Owner</strong> ${esc(item.owner || item.next_action_owner || "—")}</li><li><strong>Last message</strong> ${esc(item.last_message_date || "—")} ${dayCount(item.days_since_last_message)}</li><li><strong>Loan</strong> ${esc(item.loan || "—")}</li><li><strong>Fee</strong> ${esc(item.fee || "—")}</li></ul>${file}</article>`;
+  }
+
   function pipeline(data) {
+    if (state.caseId) {
+      const item = casesOf(data).find((row) => row.id === state.caseId);
+      if (!item) return `<p><button type="button" class="back" data-pipeline-back>All cases</button></p><article class="note">That case is not in this snapshot.</article>`;
+      return pipelineDetail(item);
+    }
     const rule = (data.pipeline && data.pipeline.rule_r001) || {};
     const kpis = (data.overview && data.overview.kpis) || {};
+    const levels = urgencyCounts(data);
     const caiCount = rule.cai_count != null ? rule.cai_count : kpis.cai_assigned_live;
     const jessCount = rule.jess_count != null ? rule.jess_count : kpis.jess_assigned_live;
     const modes = [
       ["all", "All open"],
       ["live", "Live deals"],
       ["urgent", "Urgent / emergency"],
+      ["emergency", `Emergency (${count(levels.emergency)})`],
+      ["urgent-only", `Urgent (${count(levels.urgent)})`],
       ["cai", `Cai's deals (${count(caiCount)} live)`],
       ["jess", `Jess's deals (${count(jessCount)} live)`],
     ];
@@ -231,7 +270,7 @@
       ? `<p class="meta">${esc(labelSeat(state.mode))}'s live WhatsApp deals, including deals shared with the other processing seat. Choose All open to see the whole register.</p>`
       : "";
     return `${ruleNote}<div class="row" role="group" aria-label="Pipeline view">${pills}</div>${seatNote}<div class="filters"><label for="case-search">Search cases</label><input id="case-search" type="search" value="${esc(state.q)}" placeholder="Case, owner, product or next action"><div class="row"><div><label for="stage">Stage</label><select id="stage">${stageOptions}</select></div><div><label for="lender">Lender</label><select id="lender">${lenderOptions}</select></div></div></div><p class="meta">${visible.length} shown</p>${table([
-      ["Case", (row) => `<b>${esc(row.id)}</b> ${esc(row.name)}${row.private && data.seat === "byron" ? ' <span class="pill private">Private</span>' : ""}${row.whatsapp_assigned ? ' <span class="pill live">WhatsApp</span>' : ""}${row.needs_byron ? ' <span class="pill">Byron review</span>' : ""}`],
+      ["Case", (row) => `${row.id ? `<a href="#pipeline/${encodeURIComponent(row.id)}">Open ${esc(row.id)}</a>` : ""} ${esc(row.name)}${row.private && data.seat === "byron" ? ' <span class="pill private">Private</span>' : ""}${row.whatsapp_assigned ? ' <span class="pill live">WhatsApp</span>' : ""}${row.needs_byron ? ' <span class="pill">Byron review</span>' : ""}`],
       ["Lane / stage", (row) => `${esc(row.lane || "—")}<br><span>${esc(row.stage || "—")}</span>`],
       ["Urgency", (row) => urgentCell(row.urgent)],
       ["Assigned", (row) => esc(labelSeat(row.assigned_seat || (row.assigned_seats || []).join("+")))],
@@ -239,7 +278,7 @@
       ["Next action", (row) => `${esc(row.next_action || "—")}<br><span>${esc(row.next_action_owner || row.owner || "")}</span>`],
       ["Last message", (row) => `${esc(row.last_message_date || "—")}<br><span>${dayCount(row.days_since_last_message)}</span>`],
       ["Loan / fee", (row) => `${esc(row.loan || "—")}<br><span>${esc(row.fee || "")}</span>`],
-    ], visible)}`;
+    ], visible, (row) => row.id ? ` class="case-row" data-case-id="${esc(row.id)}" tabindex="0"` : "")}`;
   }
 
   function tasks(data) {
@@ -619,7 +658,10 @@
     if (!VIEWS[id]) id = "overview";
     state.tab = id;
     state.meetingId = id === "meetings" ? (meetingId || "") : "";
-    const hash = state.tab === "meetings" && state.meetingId ? `#meetings/${encodeURIComponent(state.meetingId)}` : `#${state.tab}`;
+    state.caseId = id === "pipeline" ? (meetingId || "") : "";
+    let hash = `#${state.tab}`;
+    if (state.tab === "meetings" && state.meetingId) hash = `#meetings/${encodeURIComponent(state.meetingId)}`;
+    else if (state.tab === "pipeline" && state.caseId) hash = `#pipeline/${encodeURIComponent(state.caseId)}`;
     if (location.hash !== hash) history.replaceState(null, "", hash);
     document.querySelectorAll(".tab").forEach((button) => {
       const on = button.dataset.tab === id;
@@ -688,9 +730,19 @@
       document.querySelectorAll('[data-tab="finance"]').forEach((button) => button.remove());
       if (state.tab === "finance") state.tab = "overview";
     }
-    selectTab(state.tab, state.meetingId);
+    const detail = state.tab === "meetings" ? state.meetingId : state.caseId;
+    selectTab(state.tab, detail);
     paint();
   }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const row = event.target.closest && event.target.closest("tr[data-case-id]");
+    if (!row || (event.target.closest && event.target.closest("a, button, input, select, textarea"))) return;
+    event.preventDefault();
+    selectTab("pipeline", row.dataset.caseId);
+    paint();
+  });
 
   document.addEventListener("click", async (event) => {
     const tab = event.target.closest && event.target.closest(".tab");
@@ -712,6 +764,17 @@
       paint();
       return;
     }
+    const caseRow = event.target.closest && event.target.closest("[data-case-id]");
+    if (caseRow && caseRow.dataset.caseId) {
+      selectTab("pipeline", caseRow.dataset.caseId);
+      paint();
+      return;
+    }
+    if (event.target.closest && event.target.closest("[data-pipeline-back]")) {
+      selectTab("pipeline", "");
+      paint();
+      return;
+    }
     const status = event.target.closest && event.target.closest("[data-status][data-item]");
     if (status && state.tab === "meetings") {
       const meeting = liveMeeting();
@@ -728,6 +791,11 @@
     const mode = event.target.closest && event.target.closest("[data-mode]");
     if (mode) {
       state.mode = mode.dataset.mode;
+      if (state.tab !== "pipeline" || state.caseId) {
+        selectTab("pipeline", "");
+        paint();
+        return;
+      }
       keepFocus(paint);
       return;
     }
