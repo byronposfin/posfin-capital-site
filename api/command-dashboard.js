@@ -16,6 +16,7 @@ import {
   writeMeetingProgress,
 } from '../lib/command-dashboard.js';
 import { meetingById, meetingsPayload, normaliseProgress, presentMeeting } from '../lib/meetings.js';
+import { loadSeatUsage } from '../lib/seat-usage.js';
 import { renderCommandLogin, renderCommandMessage, renderCommandPage } from '../lib/command-page.js';
 
 function queryOf(req) {
@@ -127,6 +128,14 @@ export async function handleCommandDashboard(req, res, deps = {}) {
     if (req.method === 'GET' && action === 'meetings') {
       const stored = await readMeetingProgress(env, deps.fetch);
       return sendJson(res, 200, meetingsPayload(stored.rows, { storage: stored.storage, id: query.id }));
+    }
+
+    if (req.method === 'GET' && action === 'seat-usage') {
+      try {
+        return sendJson(res, 200, loadSeatUsage());
+      } catch {
+        return sendJson(res, 503, { error: 'The seat usage snapshot could not be read.' });
+      }
     }
 
     if (req.method === 'GET' && action === 'thread') {

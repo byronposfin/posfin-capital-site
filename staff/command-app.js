@@ -24,6 +24,9 @@
     data: null,
     meetings: null,
     meetingsRequest: null,
+    usage: null,
+    usageError: "",
+    usageRequest: null,
     saveNote: "",
     noteTimer: 0,
     noteMeetingId: "",
@@ -637,7 +640,140 @@
     return state.meetingsRequest;
   }
 
-  const VIEWS = { overview, hub, pipeline, tasks, lenders, finance, files, meetings: meetingsView };
+  const BELOW_BAR = 1.6;
+
+  function barUnits(seat) {
+    if (seat.below) return BELOW_BAR;
+    const n = Number(seat.bar);
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    return Math.min(100, n);
+  }
+
+  function shareRows(view) {
+    return (view.seats || []).map((seat) => {
+      const units = barUnits(seat);
+      const fill = seat.heaviest ? "#00B4D8" : "#0B1F3A";
+      const rect = units > 0 ? `<rect x="0" y="0" width="${units}" height="8" fill="${fill}"></rect>` : "";
+      const flag = seat.heaviest ? `<span class="pill flag">Heaviest consumer</span>` : "";
+      const meta = [seat.role, seat.bot_name ? `Bot name: ${seat.bot_name}` : ""].filter(Boolean).map((item) => esc(item)).join(" · ");
+      return `<li class="usage-share${seat.heaviest ? " is-heaviest" : ""}"><div class="usage-share-top"><div><strong>${esc(seat.name)}</strong> ${flag}${meta ? `<p class="meta">${meta}</p>` : ""}</div><span class="usage-pct${seat.below ? " below" : ""}">${esc(seat.label)}</span></div><svg class="usage-bar" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true">${rect}</svg></li>`;
+    }).join("");
+  }
+
+  function gaugeSvg(plan) {
+    const used = Math.max(0, Math.min(100, Number(plan.used_percent) || 0));
+    const length = Math.PI * 80;
+    const dash = ((used / 100) * length).toFixed(2);
+    return `<svg class="gauge" viewBox="0 0 220 132" aria-hidden="true"><path d="M30 112 A80 80 0 0 1 190 112" fill="none" stroke="#d7eef3" stroke-width="16" stroke-linecap="round"></path><path d="M30 112 A80 80 0 0 1 190 112" fill="none" stroke="#00B4D8" stroke-width="16" stroke-linecap="round" stroke-dasharray="${dash} ${length.toFixed(2)}"></path><text x="110" y="96" text-anchor="middle" fill="#0B1F3A" font-size="32" font-weight="700">${esc(plan.used_label || "")}</text><text x="110" y="116" text-anchor="middle" fill="#5c6b7a" font-size="12">weekly limit used</text></svg>`;
+  }
+
+  function limitCard(plan) {
+    const item = plan || {};
+    return `<article class="card usage-limit"><h2>Weekly limit</h2>${gaugeSvg(item)}<p>${esc(item.shared_note || "")}</p><p><strong>Resets ${esc(item.resets_label || "")}</strong></p><p><span class="pill">${esc(item.on_demand_label || "")}</span></p></article>`;
+  }
+
+  function heaviestCard(view) {
+    const flagged = (view.seats || []).filter((seat) => seat.heaviest);
+    if (!flagged.length) return `<article class="card usage-flag"><span class="pill flag">Heaviest consumer</span><b>None on this snapshot</b><span>No seat is ahead of the others.</span></article>`;
+    const names = flagged.map((seat) => esc(seat.name)).join(", ");
+    const lead = flagged[0];
+    const detail = flagged.length === 1
+      ? `${esc(lead.label)} of Grok Bot usage on this account${lead.role ? ` · ${esc(lead.role)}` : ""}`
+      : "These seats share the highest figure on this snapshot.";
+    return `<article class="card usage-flag"><span class="pill flag">Heaviest consumer</span><b>${names}</b><span>${detail}</span></article>`;
+  }
+
+  function trendChart(chart) {
+    const days = (chart && chart.days) || [];
+    const series = (chart && chart.series) || [];
+    if (!days.length || !series.length) return `<p class="empty">No day-by-day split is in this snapshot.</p>`;
+    const axis = Number(chart.axis_max);
+    const max = Number.isFinite(axis) && axis > 0 ? axis : 50;
+    const width = 720;
+    const height = 248;
+    const left = 44;
+    const right = 12;
+    const top = 14;
+    const bottom = 36;
+    const plotW = width - left - right;
+    const plotH = height - top - bottom;
+    const group = plotW / days.length;
+    const barW = Math.min(16, (group - 8) / series.length);
+    let grid = "";
+    for (let tick = 10; tick <= max; tick += 10) {
+      const y = top + plotH - (tick / max) * plotH;
+      grid += `<line x1="${left}" y1="${y.toFixed(1)}" x2="${width - right}" y2="${y.toFixed(1)}" stroke="#e4ddd0" stroke-width="1"></line><text x="${left - 6}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="#5c6b7a" font-size="11">${tick}%</text>`;
+    }
+    const base = top + plotH;
+    grid += `<line x1="${left}" y1="${base}" x2="${width - right}" y2="${base}" stroke="#d9d0c2" stroke-width="1"></line>`;
+    let cols = "";
+    days.forEach((day, index) => {
+      const x0 = left + index * group;
+      series.forEach((item, seriesIndex) => {
+        const point = (item.points || []).find((row) => row.date === day.date) || {};
+        const below = point.below === true;
+        const value = Number(point.bar);
+        const barHeight = below ? 2 : (Number.isFinite(value) && value > 0 ? (value / max) * plotH : 0);
+        if (barHeight <= 0) return;
+        const x = x0 + (group - series.length * barW) / 2 + seriesIndex * barW;
+        const y = top + plotH - barHeight;
+        const fill = seriesIndex === 0 ? "#0B1F3A" : "#00B4D8";
+        cols += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(barW - 3, 2).toFixed(1)}" height="${barHeight.toFixed(1)}" fill="${fill}"><title>${esc(item.name)} ${esc(day.full || day.short || "")} ${esc(point.label || "")}</title></rect>`;
+      });
+      cols += `<text x="${(x0 + group / 2).toFixed(1)}" y="${height - 14}" text-anchor="middle" fill="#142033" font-size="11">${esc(day.short || "")}</text>`;
+    });
+    const legend = series.map((item, index) => `<span><i class="usage-swatch${index === 0 ? " navy" : " teal"}" aria-hidden="true"></i>${esc(item.name)}</span>`).join("");
+    return `<div class="usage-chart"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(chart.caption || "Daily share")}">${grid}${cols}</svg><div class="usage-legend">${legend}</div><p class="meta">${esc(chart.caption || "")}</p></div>`;
+  }
+
+  function dailyTable(chart) {
+    const days = (chart && chart.days) || [];
+    const series = (chart && chart.series) || [];
+    if (!days.length || !series.length) return "";
+    const head = `<th scope="col">Day</th>${series.map((item) => `<th scope="col">${esc(item.name)}</th>`).join("")}`;
+    const body = days.map((day) => {
+      const cells = series.map((item) => {
+        const point = (item.points || []).find((row) => row.date === day.date);
+        return `<td>${esc(point && point.label ? point.label : "—")}</td>`;
+      }).join("");
+      return `<tr><th scope="row">${esc(day.full || day.short || "")}</th>${cells}</tr>`;
+    }).join("");
+    return `<div class="scroll"><table class="usage-table"><caption>Daily share of all Grok Bot usage. Figures under 1% stay as ${esc("<1%")}.</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+
+  function usageHtml(view) {
+    const notes = (view.notes || []).map((item) => `<li>${esc(item)}</li>`).join("");
+    return `<header class="usage-head"><h2>Seat usage</h2><p>Snapshot as of ${esc(view.as_of_label)}. ${esc(view.measure_label)}. ${esc(view.window_label)}.</p><p class="meta">${esc(view.hand_note || "")}</p></header><div class="usage-top">${limitCard(view.plan)}${heaviestCard(view)}</div><section><h2>Share by seat</h2><ol class="usage-shares">${shareRows(view)}</ol></section><section><h2>Daily trend</h2>${trendChart(view.chart)}${dailyTable(view.chart)}</section><section><h2>Notes</h2><article class="note rule"><ul class="usage-notes">${notes}</ul></article></section>`;
+  }
+
+  function usageView() {
+    if (state.usageError) return `<article class="note">${esc(state.usageError)}</article>`;
+    if (!state.usage) return `<p>Loading seat usage…</p>`;
+    return usageHtml(state.usage);
+  }
+
+  function ensureUsage() {
+    if (state.usage || state.usageRequest) return state.usageRequest;
+    state.usageRequest = (async () => {
+      const response = await fetch(`${DATA}?action=seat-usage`, { credentials: "same-origin", headers: { Accept: "application/json" } });
+      const body = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        state.usageError = "Your sign-in has expired.";
+        state.usage = null;
+      } else if (!response.ok) {
+        state.usageError = body.error || "Seat usage could not be loaded.";
+        state.usage = null;
+      } else {
+        state.usageError = "";
+        state.usage = body;
+      }
+      state.usageRequest = null;
+      if (state.tab === "usage") paint();
+    })();
+    return state.usageRequest;
+  }
+
+  const VIEWS = { overview, hub, pipeline, tasks, lenders, finance, files, meetings: meetingsView, usage: usageView };
 
   function keepFocus(paint) {
     const active = document.activeElement;
@@ -677,6 +813,7 @@
     state.timer = 0;
     if (id === "hub") state.timer = setInterval(refreshThread, 12000);
     if (id === "meetings") ensureMeetings();
+    if (id === "usage") ensureUsage();
   }
 
   function paint() {
@@ -687,6 +824,12 @@
       panel.innerHTML = meetingsView();
       const fresh = $("#fresh");
       if (fresh) fresh.textContent = "Meetings";
+      return;
+    }
+    if (state.tab === "usage") {
+      panel.innerHTML = usageView();
+      const fresh = $("#fresh");
+      if (fresh) fresh.textContent = state.usage && state.usage.as_of_label ? `Snapshot as of ${state.usage.as_of_label}` : "Seat usage";
       return;
     }
     if (!data) return;
@@ -720,6 +863,10 @@
       const body = await response.json().catch(() => ({}));
       if (state.tab === "meetings") {
         selectTab("meetings", state.meetingId);
+        return;
+      }
+      if (state.tab === "usage") {
+        selectTab("usage", "");
         return;
       }
       $("#panel").innerHTML = `<article class="note">${esc(body.error || "The dashboard could not be loaded.")}</article>`;

@@ -1,0 +1,77 @@
+{
+  "schema": "posfin.seat-usage.v1",
+  "version": 1,
+  "edit": "This is the seat-usage snapshot for the staff Command Dashboard. Replace it by hand or by a later sync. It is loaded after sign-in and is not a public page. It lives here, beside the meetings seed, because /data/ is gitignored for live case books. Record shares of Grok Bot usage only. Do not write token counts, API keys, or secrets. A share is {\"percent\": n} when it is exact, {\"about\": n} when it is approximate, or {\"below\": 1} when it is under 1%. Never store 0 to mean under 1%.",
+  "captured_at": "2026-11-24T17:14:00+01:00",
+  "captured_timezone": "Europe/Paris",
+  "account": "Byron",
+  "product": "Grok Bot",
+  "window": {
+    "label": "Last 7 days",
+    "from": "2026-11-17",
+    "to": "2026-11-24",
+    "timezone": "UTC"
+  },
+  "notes": [
+    "Shares only; token counts not available",
+    "Other team members' private seats (Chris, Jess, Cai, Aadi, Vanessa) are on their own accounts and are not included; figures to be added when available"
+  ],
+  "plan": {
+    "weekly_limit_used_percent": 90.5,
+    "limit_shared_with_other_apps": true,
+    "limit_note": "The weekly limit is shared with the other apps on the plan.",
+    "resets_at": "2026-11-27T10:48:00+01:00",
+    "resets_label": "Fri 27 Nov 2026 10:48 Paris",
+    "on_demand": false
+  },
+  "seats": [
+    {
+      "id": "lizzy-chief-of-staff",
+      "name": "Lizzy Chief of Staff",
+      "role": "Byron's private seat",
+      "share": { "percent": 99 },
+      "daily": [
+        { "date": "2026-11-17", "percent": 0 },
+        { "date": "2026-11-18", "percent": 0 },
+        { "date": "2026-11-19", "percent": 0 },
+        { "date": "2026-11-20", "percent": 5 },
+        { "date": "2026-11-21", "percent": 5 },
+        { "date": "2026-11-22", "percent": 14 },
+        { "date": "2026-11-23", "percent": 34 },
+        { "date": "2026-11-24", "percent": 41 }
+      ]
+    },
+    {
+      "id": "april",
+      "name": "April",
+      "role": "AI & Market Intelligence Analyst",
+      "share": { "about": 1 },
+      "daily": [
+        { "date": "2026-11-17", "below": 1 },
+        { "date": "2026-11-18", "below": 1 },
+        { "date": "2026-11-19", "below": 1 },
+        { "date": "2026-11-20", "below": 1 },
+        { "date": "2026-11-21", "below": 1 },
+        { "date": "2026-11-22", "below": 1 },
+        { "date": "2026-11-23", "below": 1 },
+        { "date": "2026-11-24", "percent": 1 }
+      ]
+    },
+    {
+      "id": "team-lizzy",
+      "name": "Team Lizzy",
+      "bot_name": "Lizzy – Posfin Team",
+      "share": { "below": 1 }
+    },
+    {
+      "id": "social-thought-leadership",
+      "name": "Social Thought Leadership",
+      "share": { "below": 1 }
+    },
+    {
+      "id": "deleted-and-other",
+      "name": "Deleted bots, group chats and other people's bots",
+      "share": { "below": 1 }
+    }
+  ]
+}
