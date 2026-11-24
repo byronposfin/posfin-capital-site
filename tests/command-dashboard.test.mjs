@@ -5,6 +5,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import { handleCommandDashboard } from '../api/command-dashboard.js';
+import { handleStaffCases } from '../api/case-staff.js';
 import { renderBoard } from '../lib/cockpit-html.js';
 import {
   pipelineSeatMatch,
@@ -687,6 +688,8 @@ test('a pipeline row click opens the case detail and urgency counts filter the l
   await click((sel) => (sel === '[data-pipeline-back]' ? { dataset: {} } : null));
   assert.equal(hash, '#pipeline');
   assert.match(panel.innerHTML, /data-case-id="TEST-SHARED-001"/);
+  assert.match(panel.innerHTML, /href="#pipeline\/TEST-SHARED-001"/);
+  assert.match(panel.innerHTML, /tabindex="0"/);
   assert.match(panel.innerHTML, /data-case-id="short"/);
 
   await click((sel) => (sel === '[data-case-id]' ? { dataset: { caseId: 'short' } } : null));
@@ -698,4 +701,34 @@ test('a pipeline row click opens the case detail and urgency counts filter the l
   assert.match(panel.innerHTML, /data-case-id="TEST-EMERG-001"/);
   assert.equal(panel.innerHTML.includes('TEST-SHARED-001'), false);
   assert.match(panel.innerHTML, /aria-pressed="true"/);
+});
+
+test('a dashboard session does not get a 404 when it opens a staff case link', async () => {
+  const email = seatByCode('cai').email;
+  const fetchImpl = async (url) => {
+    const target = String(url);
+    if (target.includes('/auth/v1/user')) return { ok: true, status: 200, text: async () => JSON.stringify({ email }) };
+    if (target.includes('/rpc/staff_caller')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify([{ email, seat_code: 'cai', role: 'case_owner' }]) };
+    }
+    return { ok: false, status: 404, text: async () => '' };
+  };
+  const res = response();
+  await handleStaffCases({
+    method: 'GET',
+    url: '/staff/cases/TEST-SHARED-001',
+    query: { caseId: 'TEST-SHARED-001' },
+    headers: { cookie: `pf_staff=${encodeURIComponent('sb1.staff-access-token')}` },
+  }, res, {
+    env: {
+      STAFF_AUTH_MODE: 'supabase',
+      STAFF_SUPABASE_URL: 'https://example.test',
+      STAFF_SUPABASE_ANON_KEY: 'anon-key',
+    },
+    fetch: fetchImpl,
+  });
+  assert.equal(res.status, 200);
+  assert.match(res.body, /Open it on the cockpit/);
+  assert.match(res.body, /href="\/staff\/cockpit#card-TEST-SHARED-001"/);
+  assert.equal(res.body.includes('Not on this folder'), false);
 });

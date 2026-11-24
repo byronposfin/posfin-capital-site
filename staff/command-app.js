@@ -270,7 +270,7 @@
       ? `<p class="meta">${esc(labelSeat(state.mode))}'s live WhatsApp deals, including deals shared with the other processing seat. Choose All open to see the whole register.</p>`
       : "";
     return `${ruleNote}<div class="row" role="group" aria-label="Pipeline view">${pills}</div>${seatNote}<div class="filters"><label for="case-search">Search cases</label><input id="case-search" type="search" value="${esc(state.q)}" placeholder="Case, owner, product or next action"><div class="row"><div><label for="stage">Stage</label><select id="stage">${stageOptions}</select></div><div><label for="lender">Lender</label><select id="lender">${lenderOptions}</select></div></div></div><p class="meta">${visible.length} shown</p>${table([
-      ["Case", (row) => `<b>${esc(row.id)}</b> ${esc(row.name)}${row.private && data.seat === "byron" ? ' <span class="pill private">Private</span>' : ""}${row.whatsapp_assigned ? ' <span class="pill live">WhatsApp</span>' : ""}${row.needs_byron ? ' <span class="pill">Byron review</span>' : ""}`],
+      ["Case", (row) => `${row.id ? `<a href="#pipeline/${encodeURIComponent(row.id)}">Open ${esc(row.id)}</a>` : ""} ${esc(row.name)}${row.private && data.seat === "byron" ? ' <span class="pill private">Private</span>' : ""}${row.whatsapp_assigned ? ' <span class="pill live">WhatsApp</span>' : ""}${row.needs_byron ? ' <span class="pill">Byron review</span>' : ""}`],
       ["Lane / stage", (row) => `${esc(row.lane || "—")}<br><span>${esc(row.stage || "—")}</span>`],
       ["Urgency", (row) => urgentCell(row.urgent)],
       ["Assigned", (row) => esc(labelSeat(row.assigned_seat || (row.assigned_seats || []).join("+")))],
@@ -278,7 +278,7 @@
       ["Next action", (row) => `${esc(row.next_action || "—")}<br><span>${esc(row.next_action_owner || row.owner || "")}</span>`],
       ["Last message", (row) => `${esc(row.last_message_date || "—")}<br><span>${dayCount(row.days_since_last_message)}</span>`],
       ["Loan / fee", (row) => `${esc(row.loan || "—")}<br><span>${esc(row.fee || "")}</span>`],
-    ], visible, (row) => row.id ? ` class="case-row" data-case-id="${esc(row.id)}"` : "")}`;
+    ], visible, (row) => row.id ? ` class="case-row" data-case-id="${esc(row.id)}" tabindex="0"` : "")}`;
   }
 
   function tasks(data) {
@@ -734,6 +734,15 @@
     selectTab(state.tab, detail);
     paint();
   }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const row = event.target.closest && event.target.closest("tr[data-case-id]");
+    if (!row || (event.target.closest && event.target.closest("a, button, input, select, textarea"))) return;
+    event.preventDefault();
+    selectTab("pipeline", row.dataset.caseId);
+    paint();
+  });
 
   document.addEventListener("click", async (event) => {
     const tab = event.target.closest && event.target.closest(".tab");

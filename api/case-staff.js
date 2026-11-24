@@ -1,6 +1,6 @@
 import { setPrivate, sendHtml, redirect, readCookie, writeStaffCookie, readFields } from '../lib/case-http.js';
 import { buildModel, cardLtvs, openCountFromAnswered, presentFacts, resolveStage, STAGE_LABEL } from '../lib/case-portal.js';
-import { renderStaffLogin, renderStaffList, renderStaffCase, renderMessage } from '../lib/case-portal-html.js';
+import { renderStaffLogin, renderStaffList, renderStaffCase, renderStaffCaseHandoff, renderMessage } from '../lib/case-portal-html.js';
 import { staffLogin, staffLogout, staffList, staffCase, staffStage, staffKyc } from '../lib/case-store.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
 import { staffAuthMode, supabaseAccessToken } from '../lib/staff-auth.js';
@@ -9,8 +9,9 @@ function caseIdOk(id) {
   return /^[A-Za-z0-9-]{6,48}$/.test(id);
 }
 
-export default async function handler(req, res) {
+export async function handleStaffCases(req, res, deps = {}) {
   setPrivate(res);
+  const env = deps.env || process.env;
   const caseId = String(req.query?.caseId || '');
   try {
     if (req.method === 'POST') {
@@ -36,8 +37,8 @@ export default async function handler(req, res) {
         if (updated.ok === false) return sendHtml(res, 400, renderMessage('Not updated', 'That stage was not saved.'));
         return redirect(res, `/staff/cases/${encodeURIComponent(caseId)}`);
       }
-      const login = staffAuthMode(process.env) === 'supabase'
-        ? await establishSession({ email: fields.email, password: fields.password }, { env: process.env })
+      const login = staffAuthMode(env) === 'supabase'
+        ? await establishSession({ email: fields.email, password: fields.password }, { ...deps, env })
         : await staffLogin(String(fields.password || ''));
       if (!login || login.ok !== true || !login.session) return sendHtml(res, 401, renderStaffLogin('That staff password was not recognised.'));
       writeStaffCookie(res, req, login.session);
@@ -47,9 +48,10 @@ export default async function handler(req, res) {
     const session = readCookie(req, 'pf_staff');
     if (!session) return sendHtml(res, 401, renderStaffLogin(''));
     if (supabaseAccessToken(session)) {
-      if (!await sessionAllows(session, { env: process.env })) return sendHtml(res, 401, renderStaffLogin('Please sign in again.'));
+      if (!await sessionAllows(session, { env, fetch: deps.fetch })) return sendHtml(res, 401, renderStaffLogin('Please sign in again.'));
       if (!caseId) return sendHtml(res, 200, renderMessage('Signed in', 'This seat is signed in. The live book is on the cockpit. The SmartLink folder still uses its own project session.'));
-      return sendHtml(res, 404, renderMessage('Not on this folder', 'That SmartLink case is not opened with this seat session. The live book is on the cockpit.'));
+      if (!caseIdOk(caseId)) return sendHtml(res, 404, renderMessage('Not available', 'That case is not on this desk.'));
+      return sendHtml(res, 200, renderStaffCaseHandoff(caseId));
     }
     if (caseId) {
       if (!caseIdOk(caseId)) return sendHtml(res, 404, renderMessage('Not available', 'That case is not on this desk.'));
@@ -83,4 +85,8 @@ export default async function handler(req, res) {
     console.error('[case-portal]', error.code || 'staff_failed', error.status || '');
     return sendHtml(res, 503, renderMessage('Please try again', 'The staff view is temporarily unavailable.'));
   }
+}
+
+export default function handler(req, res) {
+  return handleStaffCases(req, res, {});
 }
