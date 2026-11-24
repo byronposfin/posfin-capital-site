@@ -24,8 +24,9 @@
     meetings: null,
     meetingsRequest: null,
     saveNote: "",
-    saveSeq: 0,
     noteTimer: 0,
+    noteMeetingId: "",
+    saveTail: Promise.resolve(),
     mode: document.body.dataset.seat === "cai" ? "cai" : document.body.dataset.seat === "jess" ? "jess" : "all",
     stage: "",
     lender: "",
@@ -383,9 +384,13 @@
     localStorage.setItem(LOCAL_KEY, JSON.stringify(all));
   }
 
-  function liveMeeting() {
+  function meetingRecord(id) {
     const rows = (state.meetings && state.meetings.meetings) || [];
-    return rows.find((item) => item.id === state.meetingId) || null;
+    return rows.find((item) => item.id === id) || null;
+  }
+
+  function liveMeeting() {
+    return meetingRecord(state.meetingId);
   }
 
   function progressFrom(meeting) {
@@ -482,40 +487,72 @@
     return meetingsList();
   }
 
-  async function saveMeeting(meeting, repaint) {
-    const progress = progressFrom(meeting);
-    if (state.meetings && state.meetings.storage === "browser") writeLocal(meeting.id, progress);
-    const seq = ++state.saveSeq;
-    setSave("Saving…");
-    const response = await fetch(`${DATA}?action=meetings`, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ id: meeting.id, progress }),
-    });
-    if (seq !== state.saveSeq) return;
-    const body = await response.json().catch(() => ({}));
-    const stillHere = () => state.tab === "meetings" && state.meetingId === meeting.id;
-    if (response.status === 401) {
-      if (stillHere()) setSave("Your sign-in has expired.");
+  function enqueueSave(meeting) {
+    if (!meeting || !meeting.id) return;
+    const id = meeting.id;
+    state.saveTail = state.saveTail.then(() => persistMeeting(id)).catch(() => {});
+  }
+
+  async function persistMeeting(id) {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const meeting = meetingRecord(id);
+      if (!meeting || !state.meetings) return;
+      const progress = progressFrom(meeting);
+      const sent = JSON.stringify(progress);
+      if (state.meetings.storage === "browser") writeLocal(id, progress);
+      const viewing = () => state.tab === "meetings" && state.meetingId === id;
+      if (viewing()) setSave("Saving…");
+      let response;
+      let body = {};
+      try {
+        response = await fetch(`${DATA}?action=meetings`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ id, progress }),
+        });
+        body = await response.json().catch(() => ({}));
+      } catch {
+        if (viewing()) setSave("That change was not saved.");
+        return;
+      }
+      const latest = meetingRecord(id);
+      const newer = !latest || JSON.stringify(progressFrom(latest)) !== sent;
+      if (response.status === 401) {
+        if (viewing()) setSave("Your sign-in has expired.");
+        return;
+      }
+      if (!response.ok || !body.meeting) {
+        if (!newer) {
+          if (viewing()) setSave(body.error || "That change was not saved.");
+          return;
+        }
+        continue;
+      }
+      if (newer) continue;
+      replaceMeeting(body.meeting);
+      if (body.persisted) {
+        clearLocal(id);
+        state.meetings.storage = "supabase";
+        if (viewing()) setSave("Saved for the team.");
+      } else {
+        writeLocal(id, progress);
+        state.meetings.storage = body.storage || "browser";
+        if (body.note) state.meetings.note = body.note;
+        if (viewing()) setSave("Saved in this browser only.");
+      }
       return;
     }
-    if (!response.ok || !body.meeting) {
-      if (stillHere()) setSave(body.error || "That change was not saved.");
-      return;
-    }
-    replaceMeeting(body.meeting);
-    if (body.persisted) {
-      clearLocal(meeting.id);
-      state.meetings.storage = "supabase";
-      if (stillHere()) setSave("Saved for the team.");
-    } else {
-      writeLocal(meeting.id, progress);
-      state.meetings.storage = body.storage || "browser";
-      if (body.note) state.meetings.note = body.note;
-      if (stillHere()) setSave("Saved in this browser only.");
-    }
-    if (repaint && stillHere()) paint();
+  }
+
+  function flushNoteSave() {
+    if (!state.noteTimer) return;
+    clearTimeout(state.noteTimer);
+    state.noteTimer = 0;
+    const id = state.noteMeetingId;
+    state.noteMeetingId = "";
+    const meeting = meetingRecord(id);
+    if (meeting) enqueueSave(meeting);
   }
 
   async function restoreLocal() {
@@ -576,6 +613,8 @@
   }
 
   function selectTab(id, meetingId) {
+    const nextMeeting = id === "meetings" ? (meetingId || "") : "";
+    if (state.noteTimer && (id !== "meetings" || nextMeeting !== state.meetingId)) flushNoteSave();
     if (id === "finance" && document.body.dataset.finance !== "1") id = "overview";
     if (!VIEWS[id]) id = "overview";
     state.tab = id;
@@ -683,7 +722,7 @@
         }
       }
       keepFocus(() => paint());
-      saveMeeting(liveMeeting() || meeting, false);
+      enqueueSave(meeting);
       return;
     }
     const mode = event.target.closest && event.target.closest("[data-mode]");
@@ -736,7 +775,7 @@
       meeting.actions = (meeting.actions || []).concat([{ id, text, owner, done: false, extra: true }]);
       state.saveNote = "";
       paint();
-      saveMeeting(liveMeeting() || meeting, false);
+      enqueueSave(meeting);
       return;
     }
     if (!form || form.id !== "composer") return;
@@ -771,7 +810,14 @@
         }
       }
       if (state.noteTimer) clearTimeout(state.noteTimer);
-      state.noteTimer = setTimeout(() => saveMeeting(liveMeeting() || meeting, false), 400);
+      state.noteMeetingId = meeting.id;
+      state.noteTimer = setTimeout(() => {
+        state.noteTimer = 0;
+        const id = state.noteMeetingId;
+        state.noteMeetingId = "";
+        const current = meetingRecord(id);
+        if (current) enqueueSave(current);
+      }, 400);
       return;
     }
     const id = event.target.id;
@@ -800,7 +846,7 @@
         }
       }
       keepFocus(() => paint());
-      saveMeeting(liveMeeting() || meeting, false);
+      enqueueSave(meeting);
       return;
     }
     const id = event.target.id;

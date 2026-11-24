@@ -300,6 +300,11 @@ test('the signed-in shell has a Meetings tab and the migration stays private', (
   assert.match(client, /posfin-meeting-progress-v1/);
   assert.match(client, /Saved for the team/);
   assert.match(client, /Saved in this browser only/);
+  assert.match(client, /state\.saveTail = state\.saveTail\.then\(\(\) => persistMeeting\(id\)\)/);
+  assert.match(client, /if \(newer\) continue/);
+  assert.equal(client.includes('saveMeeting(liveMeeting()'), false);
+  assert.match(client, /enqueueSave\(current\)/);
+  assert.match(client, /flushNoteSave\(\)/);
   assert.equal(/quickbooks|corporation_tax|\bcva\b/i.test(client), false);
 
   const sql = readFileSync(new URL('../supabase/migrations/20261124_command_meetings.sql', import.meta.url), 'utf8');
