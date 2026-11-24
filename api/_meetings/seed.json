@@ -1,0 +1,425 @@
+{
+  "schema": "posfin.staff.meetings.v1",
+  "edit": "This is the only file Lizzy needs to edit to add a meeting or change an agenda. It is loaded by the staff API after sign-in. It is not a public page. Live ticks, notes and extra actions are stored separately and are not written back into this file. Copy an existing meeting, keep ids unique, and leave status out of the seed: every item starts open.",
+  "fields": {
+    "meetings": "Array of meetings. List order is not the screen order. The screen puts upcoming meetings first, then confirmed meetings with no clock time, then tentative meetings.",
+    "id": "Unique slug, lower-case letters, numbers and hyphens. Used to save live ticks. Do not rename an id once a meeting has been used, or saved ticks will no longer match.",
+    "title": "Name shown on the list and the agenda.",
+    "party": "The key party, shown under the title.",
+    "attendees": "Array of names.",
+    "purpose": "One or two sentences. Leave blank when purpose_tbc is true.",
+    "purpose_tbc": "true shows a Purpose TBC badge and hides a blank purpose.",
+    "tentative": "true shows a Tentative badge and sorts the meeting after confirmed ones.",
+    "when.label": "Short schedule line, such as Weekdays or Time TBC.",
+    "when.recurrence": "weekdays, once, or tbc.",
+    "when.duration_minutes": "Planned length. Null if it is not set.",
+    "when.allow_minutes": "Longer length the chair will allow. Null if it is not set.",
+    "when.starts_at": "ISO 8601 start, or null when the clock time is not set.",
+    "when.timezone": "Europe/London unless the meeting is elsewhere.",
+    "when.note": "One line under the schedule. Use it for arrangements such as WhatsApp, without adding a phone number.",
+    "sections": "Time-boxed blocks, in the order they should be taken.",
+    "sections.minutes": "Integer minutes for that block, or null when the time box is not set.",
+    "sections.items": "Agenda lines. id is unique inside the meeting. owner is a name. detail is one or two sentences. Do not put live status or notes here.",
+    "actions": "Actions arising that belong to the agenda. id is unique inside the meeting. text and owner are required. Done ticks are stored with the live progress, not here."
+  },
+  "meetings": [
+    {
+      "id": "daily-marketing",
+      "title": "Daily Marketing Meeting",
+      "party": "Byron Hill and the Posfin team",
+      "attendees": ["Byron Hill", "Posfin team"],
+      "purpose": "Agenda, events and actions.",
+      "purpose_tbc": false,
+      "tentative": false,
+      "when": {
+        "label": "Weekdays",
+        "recurrence": "weekdays",
+        "duration_minutes": 10,
+        "allow_minutes": 15,
+        "starts_at": null,
+        "timezone": "Europe/London",
+        "note": ""
+      },
+      "sections": [
+        {
+          "id": "pipeline",
+          "title": "Pipeline pulse: live deals and blockers",
+          "minutes": 3,
+          "items": [
+            {
+              "id": "newey",
+              "title": "Newey",
+              "detail": "Waiting on SOMO and Charles Rose compliance.",
+              "owner": "Byron"
+            },
+            {
+              "id": "jason-lawal",
+              "title": "Jason Lawal",
+              "detail": "LARK deed of priority confirmation from the existing charge holder.",
+              "owner": "Byron"
+            },
+            {
+              "id": "yarde-charlene",
+              "title": "Yarde / Charlene",
+              "detail": "Flex redemption figure, Experian reports, and the insurance interested party.",
+              "owner": "Byron"
+            },
+            {
+              "id": "bouchon",
+              "title": "Bouchon",
+              "detail": "Live deal. Note any blocker.",
+              "owner": "Byron"
+            },
+            {
+              "id": "adam-vers",
+              "title": "Adam Vers",
+              "detail": "Live deal. Note any blocker.",
+              "owner": "Byron"
+            },
+            {
+              "id": "connie-stilwell",
+              "title": "Connie Stilwell",
+              "detail": "Live deal. Note any blocker.",
+              "owner": "Byron"
+            }
+          ]
+        },
+        {
+          "id": "leads",
+          "title": "New leads and fact-finds",
+          "minutes": 1,
+          "items": [
+            {
+              "id": "new-leads",
+              "title": "New leads",
+              "detail": "What came in, and who owns the first reply.",
+              "owner": "Byron"
+            },
+            {
+              "id": "fact-finds",
+              "title": "Fact-finds",
+              "detail": "Fact-finds in progress, and anything blocked.",
+              "owner": "Posfin team"
+            }
+          ]
+        },
+        {
+          "id": "relationships",
+          "title": "Lender and solicitor relationships",
+          "minutes": 1,
+          "items": [
+            {
+              "id": "somo",
+              "title": "SOMO",
+              "detail": "Relationship and anything waiting.",
+              "owner": "Byron"
+            },
+            {
+              "id": "lark",
+              "title": "LARK",
+              "detail": "Relationship and anything waiting.",
+              "owner": "Byron"
+            },
+            {
+              "id": "ackroyds",
+              "title": "Ackroyds",
+              "detail": "Relationship and anything waiting.",
+              "owner": "Byron"
+            },
+            {
+              "id": "credicus",
+              "title": "Credicus",
+              "detail": "Relationship and anything waiting.",
+              "owner": "Byron"
+            }
+          ]
+        },
+        {
+          "id": "marketing",
+          "title": "Marketing",
+          "minutes": 2,
+          "items": [
+            {
+              "id": "linkedin",
+              "title": "LinkedIn",
+              "detail": "Posts and replies.",
+              "owner": "Byron"
+            },
+            {
+              "id": "social",
+              "title": "Social posts",
+              "detail": "What is queued, and what went out.",
+              "owner": "Byron"
+            },
+            {
+              "id": "banner",
+              "title": "NACFB / FCA banner standard",
+              "detail": "Banner standard for NACFB and FCA use.",
+              "owner": "Byron"
+            },
+            {
+              "id": "events",
+              "title": "Events calendar",
+              "detail": "NACFB commercial lender event is noted. Posfin is not attending.",
+              "owner": "Byron"
+            }
+          ]
+        },
+        {
+          "id": "products",
+          "title": "Product builds",
+          "minutes": 1,
+          "items": [
+            {
+              "id": "placed",
+              "title": "Placed",
+              "detail": "Build status.",
+              "owner": "Byron"
+            },
+            {
+              "id": "seat-bridge",
+              "title": "Team Lizzy seat bridge",
+              "detail": "Build status.",
+              "owner": "Byron"
+            },
+            {
+              "id": "dashboard-ask",
+              "title": "Dashboard and Ask Lizzy",
+              "detail": "Build status.",
+              "owner": "Byron"
+            }
+          ]
+        },
+        {
+          "id": "team",
+          "title": "Team: today's priorities",
+          "minutes": 1,
+          "items": [
+            {
+              "id": "aadi",
+              "title": "Aadi",
+              "detail": "Today's priorities.",
+              "owner": "Aadi"
+            },
+            {
+              "id": "jess",
+              "title": "Jess",
+              "detail": "Today's priorities.",
+              "owner": "Jess"
+            },
+            {
+              "id": "cai",
+              "title": "Cai",
+              "detail": "Today's priorities.",
+              "owner": "Cai"
+            },
+            {
+              "id": "chris",
+              "title": "Chris",
+              "detail": "Today's priorities.",
+              "owner": "Chris"
+            },
+            {
+              "id": "vanessa",
+              "title": "Vanessa",
+              "detail": "Today's priorities.",
+              "owner": "Vanessa"
+            }
+          ]
+        },
+        {
+          "id": "close",
+          "title": "Actions arising and owners",
+          "minutes": 1,
+          "items": [
+            {
+              "id": "name-owners",
+              "title": "Name the owner on every open action",
+              "detail": "Close with a named owner for each action.",
+              "owner": "Byron"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "newey-compliance",
+          "text": "Newey: SOMO and Charles Rose compliance.",
+          "owner": "Byron"
+        },
+        {
+          "id": "jason-deed",
+          "text": "Jason Lawal: deed of priority confirmation from the existing charge holder.",
+          "owner": "Byron"
+        },
+        {
+          "id": "yarde-pack",
+          "text": "Yarde / Charlene: Flex redemption figure, Experian reports, and the insurance interested party.",
+          "owner": "Byron"
+        }
+      ]
+    },
+    {
+      "id": "joanne-isherwood-lark",
+      "title": "Joanne Isherwood — L.A.R.K Solicitors",
+      "party": "Joanne Isherwood, L.A.R.K Solicitors",
+      "attendees": ["Byron Hill", "Joanne Isherwood"],
+      "purpose": "Deed of priority, the Newey matter, turnaround and tracking, and pricing for future cases.",
+      "purpose_tbc": false,
+      "tentative": false,
+      "when": {
+        "label": "Time to be set",
+        "recurrence": "once",
+        "duration_minutes": null,
+        "allow_minutes": null,
+        "starts_at": null,
+        "timezone": "Europe/London",
+        "note": "Clock time is not on the seed yet. Section minutes are a working draft."
+      },
+      "sections": [
+        {
+          "id": "deed",
+          "title": "Jason Lawal deed of priority",
+          "minutes": 8,
+          "items": [
+            {
+              "id": "deed-status",
+              "title": "Deed of priority status",
+              "detail": "Where the deed stands, and the existing charge holder's confirmation.",
+              "owner": "Joanne Isherwood"
+            }
+          ]
+        },
+        {
+          "id": "newey",
+          "title": "Newey matter",
+          "minutes": 5,
+          "items": [
+            {
+              "id": "newey-matter",
+              "title": "Newey",
+              "detail": "What L.A.R.K needs, and what Posfin will send.",
+              "owner": "Joanne Isherwood"
+            }
+          ]
+        },
+        {
+          "id": "turnaround",
+          "title": "Turnaround and tracking",
+          "minutes": 5,
+          "items": [
+            {
+              "id": "updates",
+              "title": "Updates Posfin should expect",
+              "detail": "Turnaround, and how tracking and updates will work.",
+              "owner": "Joanne Isherwood"
+            }
+          ]
+        },
+        {
+          "id": "pricing",
+          "title": "Pricing for future cases",
+          "minutes": 4,
+          "items": [
+            {
+              "id": "future-pricing",
+              "title": "Pricing",
+              "detail": "Pricing for future cases.",
+              "owner": "Joanne Isherwood"
+            }
+          ]
+        },
+        {
+          "id": "actions",
+          "title": "Actions",
+          "minutes": 3,
+          "items": [
+            {
+              "id": "agree-actions",
+              "title": "Agree the actions and owners",
+              "detail": "Record each action in the list below before the call ends.",
+              "owner": "Byron"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "charge-holder",
+          "text": "Confirm the existing charge holder's deed of priority position on Jason Lawal.",
+          "owner": "Joanne Isherwood"
+        },
+        {
+          "id": "update-rhythm",
+          "text": "Agree turnaround and how updates will be tracked.",
+          "owner": "Byron"
+        },
+        {
+          "id": "future-fees",
+          "text": "Confirm pricing for future cases.",
+          "owner": "Byron"
+        }
+      ]
+    },
+    {
+      "id": "sally-jones",
+      "title": "Sally Jones",
+      "party": "Sally Jones",
+      "attendees": ["Byron Hill", "Sally Jones"],
+      "purpose": "",
+      "purpose_tbc": true,
+      "tentative": true,
+      "when": {
+        "label": "Time TBC",
+        "recurrence": "tbc",
+        "duration_minutes": null,
+        "allow_minutes": null,
+        "starts_at": null,
+        "timezone": "Europe/London",
+        "note": "Being arranged by WhatsApp. Section minutes are placeholders."
+      },
+      "sections": [
+        {
+          "id": "introductions",
+          "title": "Introductions",
+          "minutes": 5,
+          "items": [
+            {
+              "id": "introductions",
+              "title": "Introductions",
+              "detail": "Who is on the call, and how Sally would like to be addressed.",
+              "owner": "Byron"
+            }
+          ]
+        },
+        {
+          "id": "purpose",
+          "title": "Purpose",
+          "minutes": 10,
+          "items": [
+            {
+              "id": "purpose",
+              "title": "Purpose",
+              "detail": "Purpose TBC. Write it in the notes once Sally confirms it.",
+              "owner": "Byron"
+            }
+          ]
+        },
+        {
+          "id": "next-steps",
+          "title": "Next steps",
+          "minutes": 5,
+          "items": [
+            {
+              "id": "next-steps",
+              "title": "Next steps",
+              "detail": "What happens after the call, and who owns it.",
+              "owner": "Byron"
+            }
+          ]
+        }
+      ],
+      "actions": []
+    }
+  ]
+}

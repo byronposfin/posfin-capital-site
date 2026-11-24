@@ -4,9 +4,28 @@
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   const seatName = { byron: "Byron", chris: "Chris", jess: "Jess", aadi: "Aadi", cai: "Cai", vanessa: "Vanessa", lizzy: "Lizzy", all: "Everyone", april: "April", social: "Social" };
 
+  function readHash() {
+    let raw = "overview";
+    try {
+      raw = decodeURIComponent((location.hash || "#overview").replace(/^#/, "")) || "overview";
+    } catch {
+      raw = "overview";
+    }
+    const slash = raw.indexOf("/");
+    if (slash === -1) return { tab: raw, id: "" };
+    return { tab: raw.slice(0, slash), id: raw.slice(slash + 1) };
+  }
+
+  const opening = readHash();
   const state = {
-    tab: (location.hash || "#overview").slice(1) || "overview",
+    tab: opening.tab,
+    meetingId: opening.id,
     data: null,
+    meetings: null,
+    meetingsRequest: null,
+    saveNote: "",
+    saveSeq: 0,
+    noteTimer: 0,
     mode: document.body.dataset.seat === "cai" ? "cai" : document.body.dataset.seat === "jess" ? "jess" : "all",
     stage: "",
     lender: "",
@@ -340,7 +359,209 @@
     ], block.recent_outputs || [])}`;
   }
 
-  const VIEWS = { overview, hub, pipeline, tasks, lenders, finance, files };
+  const LOCAL_KEY = "posfin-meeting-progress-v1";
+  const STATUS_LABEL = { open: "Open", discussed: "Discussed", actioned: "Actioned", parked: "Parked" };
+
+  function readLocal() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(LOCAL_KEY) || "{}");
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writeLocal(id, progress) {
+    const all = readLocal();
+    all[id] = progress;
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(all));
+  }
+
+  function clearLocal(id) {
+    const all = readLocal();
+    delete all[id];
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(all));
+  }
+
+  function liveMeeting() {
+    const rows = (state.meetings && state.meetings.meetings) || [];
+    return rows.find((item) => item.id === state.meetingId) || null;
+  }
+
+  function progressFrom(meeting) {
+    const items = {};
+    for (const section of meeting.sections || []) {
+      for (const item of section.items || []) items[item.id] = { status: item.status || "open", notes: item.notes || "" };
+    }
+    const actions = {};
+    const extra = [];
+    for (const action of meeting.actions || []) {
+      if (action.extra) extra.push({ id: action.id, text: action.text, owner: action.owner, done: action.done === true });
+      else actions[action.id] = { done: action.done === true };
+    }
+    return { items, actions, extra_actions: extra };
+  }
+
+  function replaceMeeting(meeting) {
+    if (!state.meetings || !meeting) return;
+    state.meetings.meetings = (state.meetings.meetings || []).map((item) => item.id === meeting.id ? meeting : item);
+  }
+
+  function setSave(text) {
+    state.saveNote = text;
+    const el = $("#meet-save");
+    if (el) el.textContent = text;
+  }
+
+  function badges(meeting) {
+    const bits = [];
+    if (meeting.tentative) bits.push('<span class="pill tentative">Tentative</span>');
+    if (meeting.purpose_tbc) bits.push('<span class="pill tbc">Purpose TBC</span>');
+    return bits.length ? `<span class="badges">${bits.join("")}</span>` : "";
+  }
+
+  function scheduleLine(meeting) {
+    const bits = [meeting.when_label];
+    if (meeting.next_label && meeting.next_label !== meeting.when_label) bits.push(meeting.next_label);
+    if (meeting.duration_label) bits.push(meeting.duration_label);
+    return bits.filter(Boolean).join(" · ");
+  }
+
+  function tally(meeting) {
+    let itemCount = 0;
+    let actioned = 0;
+    for (const section of meeting.sections || []) {
+      for (const item of section.items || []) {
+        itemCount += 1;
+        if (item.status === "actioned") actioned += 1;
+      }
+    }
+    const openActions = (meeting.actions || []).filter((action) => action.done !== true).length;
+    return { itemCount, actioned, openActions };
+  }
+
+  function purposeLine(meeting) {
+    if (meeting.purpose_tbc) return "Purpose TBC.";
+    return meeting.purpose || "";
+  }
+
+  function meetingsList() {
+    const pack = state.meetings;
+    if (!pack) return `<p>Loading meetings…</p>`;
+    if (state.meetingsError) return `<article class="note">${esc(state.meetingsError)}</article>`;
+    const rows = pack.meetings || [];
+    const cards = rows.map((meeting) => {
+      const counts = tally(meeting);
+      return `<button type="button" class="card meet-card" data-open-meeting="${esc(meeting.id)}"><span class="meet-top"><span><span class="meet-title">${esc(meeting.title)}</span><span class="meta line">${esc(meeting.party)}</span></span>${badges(meeting)}</span><span class="line">${esc(scheduleLine(meeting))}</span><span class="line">${esc(purposeLine(meeting))}</span>${meeting.when_note ? `<span class="meta line">${esc(meeting.when_note)}</span>` : ""}<span class="meta line">${counts.actioned} of ${counts.itemCount} items actioned · ${counts.openActions} open ${counts.openActions === 1 ? "action" : "actions"}</span></button>`;
+    }).join("");
+    const missing = state.meetingId && !rows.some((item) => item.id === state.meetingId) ? `<article class="note">That meeting is not on the agenda.</article>` : "";
+    const tone = pack.storage === "browser" ? "note" : "note rule";
+    return `<h2>Meetings</h2><p class="meta">Upcoming first. Add a meeting or edit an agenda in the meetings seed. Checking an item off does not change that file.</p><article class="${tone}">${esc(pack.note || "")}</article>${missing}<div class="meet-list">${cards || `<p class="empty">No meetings in the seed yet.</p>`}</div>`;
+  }
+
+  function statusButtons(item) {
+    return ["open", "discussed", "actioned", "parked"].map((status) => `<button type="button" class="status${item.status === status ? " on" : ""}" data-item="${esc(item.id)}" data-status="${status}" aria-pressed="${item.status === status ? "true" : "false"}">${STATUS_LABEL[status]}</button>`).join("");
+  }
+
+  function meetingDetail(meeting) {
+    const sections = (meeting.sections || []).map((section, index) => {
+      const items = (section.items || []).map((item) => `<li class="item s-${esc(item.status)}"><div class="item-top"><label class="tick"><input id="check-${esc(item.id)}" type="checkbox" data-item-check="${esc(item.id)}"${item.status === "actioned" ? " checked" : ""} aria-label="Mark ${esc(item.title)} actioned"></label><div class="item-copy"><strong>${esc(item.title)}</strong><br><span class="meta">Owner · ${esc(item.owner)}</span>${item.detail ? `<p>${esc(item.detail)}</p>` : ""}</div></div><div class="statuses" role="group" aria-label="Status for ${esc(item.title)}">${statusButtons(item)}</div><label for="notes-${esc(item.id)}">Notes</label><textarea id="notes-${esc(item.id)}" data-item-notes="${esc(item.id)}" maxlength="500" rows="2">${esc(item.notes || "")}</textarea></li>`).join("");
+      const box = section.minutes ? `${section.minutes} min` : "Time box not set";
+      return `<li class="card"><div class="section-head"><h3>${index + 1}. ${esc(section.title)}</h3><span class="timebox">${esc(box)}</span></div><ul>${items}</ul></li>`;
+    }).join("");
+    const actions = (meeting.actions || []).map((action) => `<li class="action-line${action.done ? " done" : ""}"><label class="tick"><input type="checkbox" data-action-check="${esc(action.id)}"${action.done ? " checked" : ""} aria-label="Mark action done: ${esc(action.text)}"></label><div><strong>${esc(action.text)}</strong><br><span class="meta">Owner · ${esc(action.owner)}</span></div></li>`).join("");
+    const who = document.body.dataset.name || "";
+    const tone = state.meetings && state.meetings.storage === "browser" ? "note" : "note rule";
+    const counts = tally(meeting);
+    return `<p><button type="button" class="back" data-meetings-back>All meetings</button></p><header class="meet-head"><div class="meet-top"><h2>${esc(meeting.title)}</h2>${badges(meeting)}</div><p>${esc(meeting.party)}</p><p class="meta">${esc(scheduleLine(meeting))}</p>${meeting.when_note ? `<p class="meta">${esc(meeting.when_note)}</p>` : ""}<p>${esc(purposeLine(meeting))}</p>${(meeting.attendees || []).length ? `<p class="meta">${esc(meeting.attendees.join(" · "))}</p>` : ""}<p class="meta" data-actioned-count>${counts.actioned} of ${counts.itemCount} items actioned</p><p id="meet-save" role="status">${esc(state.saveNote)}</p></header><article class="${tone}">${esc((state.meetings && state.meetings.note) || "")}</article><ol class="agenda">${sections}</ol><section class="card"><h3>Actions arising</h3>${actions ? `<ul class="actions">${actions}</ul>` : `<p class="empty">No actions yet. Add one as it comes up.</p>`}<form id="add-action" class="action-add"><div><label for="action-text">Action</label><input id="action-text" maxlength="240" required></div><div><label for="action-owner">Owner</label><input id="action-owner" maxlength="80" value="${esc(who)}" required></div><button class="send" type="submit">Add action</button></form></section>`;
+  }
+
+  function meetingsView() {
+    const meeting = liveMeeting();
+    if (state.meetingId && meeting) return meetingDetail(meeting);
+    return meetingsList();
+  }
+
+  async function saveMeeting(meeting, repaint) {
+    const progress = progressFrom(meeting);
+    if (state.meetings && state.meetings.storage === "browser") writeLocal(meeting.id, progress);
+    const seq = ++state.saveSeq;
+    setSave("Saving…");
+    const response = await fetch(`${DATA}?action=meetings`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ id: meeting.id, progress }),
+    });
+    if (seq !== state.saveSeq) return;
+    const body = await response.json().catch(() => ({}));
+    const stillHere = () => state.tab === "meetings" && state.meetingId === meeting.id;
+    if (response.status === 401) {
+      if (stillHere()) setSave("Your sign-in has expired.");
+      return;
+    }
+    if (!response.ok || !body.meeting) {
+      if (stillHere()) setSave(body.error || "That change was not saved.");
+      return;
+    }
+    replaceMeeting(body.meeting);
+    if (body.persisted) {
+      clearLocal(meeting.id);
+      state.meetings.storage = "supabase";
+      if (stillHere()) setSave("Saved for the team.");
+    } else {
+      writeLocal(meeting.id, progress);
+      state.meetings.storage = body.storage || "browser";
+      if (body.note) state.meetings.note = body.note;
+      if (stillHere()) setSave("Saved in this browser only.");
+    }
+    if (repaint && stillHere()) paint();
+  }
+
+  async function restoreLocal() {
+    if (!state.meetings || state.meetings.storage !== "browser") return;
+    const saved = readLocal();
+    const ids = Object.keys(saved).filter((id) => (state.meetings.meetings || []).some((item) => item.id === id));
+    for (const id of ids) {
+      const response = await fetch(`${DATA}?action=meetings`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ id, progress: saved[id] }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (response.ok && body.meeting) replaceMeeting(body.meeting);
+    }
+  }
+
+  function ensureMeetings() {
+    if (state.meetingsRequest) return state.meetingsRequest;
+    state.meetingsRequest = (async () => {
+      const response = await fetch(`${DATA}?action=meetings`, { credentials: "same-origin", headers: { Accept: "application/json" } });
+      if (response.status === 401) {
+        state.meetingsError = "Your sign-in has expired.";
+        state.meetings = { meetings: [], note: "" };
+        state.meetingsRequest = null;
+        if (state.tab === "meetings") paint();
+        return;
+      }
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        state.meetingsError = body.error || "Meetings could not be loaded.";
+        state.meetings = { meetings: [], note: "" };
+        state.meetingsRequest = null;
+        if (state.tab === "meetings") paint();
+        return;
+      }
+      state.meetingsError = "";
+      state.meetings = body;
+      await restoreLocal();
+      if (state.tab === "meetings") paint();
+    })();
+    return state.meetingsRequest;
+  }
+
+  const VIEWS = { overview, hub, pipeline, tasks, lenders, finance, files, meetings: meetingsView };
 
   function keepFocus(paint) {
     const active = document.activeElement;
@@ -354,11 +575,13 @@
     if (pos != null && next.setSelectionRange) next.setSelectionRange(pos, pos);
   }
 
-  function selectTab(id) {
+  function selectTab(id, meetingId) {
     if (id === "finance" && document.body.dataset.finance !== "1") id = "overview";
     if (!VIEWS[id]) id = "overview";
     state.tab = id;
-    if (location.hash !== `#${id}`) history.replaceState(null, "", `#${id}`);
+    state.meetingId = id === "meetings" ? (meetingId || "") : "";
+    const hash = state.tab === "meetings" && state.meetingId ? `#meetings/${encodeURIComponent(state.meetingId)}` : `#${state.tab}`;
+    if (location.hash !== hash) history.replaceState(null, "", hash);
     document.querySelectorAll(".tab").forEach((button) => {
       const on = button.dataset.tab === id;
       button.classList.toggle("on", on);
@@ -372,12 +595,20 @@
     if (state.timer) clearInterval(state.timer);
     state.timer = 0;
     if (id === "hub") state.timer = setInterval(refreshThread, 12000);
+    if (id === "meetings") ensureMeetings();
   }
 
   function paint() {
     const data = state.data;
     const panel = $("#panel");
-    if (!data || !panel) return;
+    if (!panel) return;
+    if (state.tab === "meetings") {
+      panel.innerHTML = meetingsView();
+      const fresh = $("#fresh");
+      if (fresh) fresh.textContent = "Meetings";
+      return;
+    }
+    if (!data) return;
     const view = VIEWS[state.tab] || overview;
     panel.innerHTML = view(data);
     const fresh = $("#fresh");
@@ -406,6 +637,10 @@
     }
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
+      if (state.tab === "meetings") {
+        selectTab("meetings", state.meetingId);
+        return;
+      }
       $("#panel").innerHTML = `<article class="note">${esc(body.error || "The dashboard could not be loaded.")}</article>`;
       return;
     }
@@ -414,15 +649,41 @@
       document.querySelectorAll('[data-tab="finance"]').forEach((button) => button.remove());
       if (state.tab === "finance") state.tab = "overview";
     }
-    selectTab(state.tab);
+    selectTab(state.tab, state.meetingId);
     paint();
   }
 
   document.addEventListener("click", async (event) => {
     const tab = event.target.closest && event.target.closest(".tab");
     if (tab && tab.dataset.tab) {
-      selectTab(tab.dataset.tab);
+      selectTab(tab.dataset.tab, "");
       paint();
+      return;
+    }
+    const openMeeting = event.target.closest && event.target.closest("[data-open-meeting]");
+    if (openMeeting) {
+      state.saveNote = "";
+      selectTab("meetings", openMeeting.dataset.openMeeting);
+      paint();
+      return;
+    }
+    if (event.target.closest && event.target.closest("[data-meetings-back]")) {
+      state.saveNote = "";
+      selectTab("meetings", "");
+      paint();
+      return;
+    }
+    const status = event.target.closest && event.target.closest("[data-status][data-item]");
+    if (status && state.tab === "meetings") {
+      const meeting = liveMeeting();
+      if (!meeting) return;
+      for (const section of meeting.sections || []) {
+        for (const item of section.items || []) {
+          if (item.id === status.dataset.item) item.status = status.dataset.status;
+        }
+      }
+      keepFocus(() => paint());
+      saveMeeting(liveMeeting() || meeting, false);
       return;
     }
     const mode = event.target.closest && event.target.closest("[data-mode]");
@@ -457,6 +718,27 @@
 
   document.addEventListener("submit", async (event) => {
     const form = event.target;
+    if (form && form.id === "add-action") {
+      event.preventDefault();
+      const meeting = liveMeeting();
+      if (!meeting) return;
+      const text = ($("#action-text") && $("#action-text").value || "").trim();
+      const owner = ($("#action-owner") && $("#action-owner").value || "").trim();
+      if (!text) {
+        setSave("Write the action before adding it.");
+        return;
+      }
+      if (!owner) {
+        setSave("Name an owner for the action.");
+        return;
+      }
+      const id = `extra-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+      meeting.actions = (meeting.actions || []).concat([{ id, text, owner, done: false, extra: true }]);
+      state.saveNote = "";
+      paint();
+      saveMeeting(liveMeeting() || meeting, false);
+      return;
+    }
     if (!form || form.id !== "composer") return;
     event.preventDefault();
     const status = $("#post-status");
@@ -479,6 +761,19 @@
   });
 
   document.addEventListener("input", (event) => {
+    const notes = event.target.closest && event.target.closest("[data-item-notes]");
+    if (notes && state.tab === "meetings") {
+      const meeting = liveMeeting();
+      if (!meeting) return;
+      for (const section of meeting.sections || []) {
+        for (const item of section.items || []) {
+          if (item.id === notes.dataset.itemNotes) item.notes = notes.value;
+        }
+      }
+      if (state.noteTimer) clearTimeout(state.noteTimer);
+      state.noteTimer = setTimeout(() => saveMeeting(liveMeeting() || meeting, false), 400);
+      return;
+    }
     const id = event.target.id;
     if (id === "case-search") state.q = event.target.value;
     else if (id === "task-search") state.taskQ = event.target.value;
@@ -487,6 +782,27 @@
   });
 
   document.addEventListener("change", (event) => {
+    const itemCheck = event.target.closest && event.target.closest("[data-item-check]");
+    const actionCheck = event.target.closest && event.target.closest("[data-action-check]");
+    if ((itemCheck || actionCheck) && state.tab === "meetings") {
+      const meeting = liveMeeting();
+      if (!meeting) return;
+      if (itemCheck) {
+        for (const section of meeting.sections || []) {
+          for (const item of section.items || []) {
+            if (item.id === itemCheck.dataset.itemCheck) item.status = itemCheck.checked ? "actioned" : "open";
+          }
+        }
+      }
+      if (actionCheck) {
+        for (const action of meeting.actions || []) {
+          if (action.id === actionCheck.dataset.actionCheck) action.done = actionCheck.checked;
+        }
+      }
+      keepFocus(() => paint());
+      saveMeeting(liveMeeting() || meeting, false);
+      return;
+    }
     const id = event.target.id;
     if (id === "stage") state.stage = event.target.value;
     else if (id === "lender") state.lender = event.target.value;
@@ -497,8 +813,9 @@
   });
 
   window.addEventListener("hashchange", () => {
-    selectTab((location.hash || "#overview").slice(1));
-    if (state.data) paint();
+    const hash = readHash();
+    selectTab(hash.tab, hash.id);
+    paint();
   });
 
   load();

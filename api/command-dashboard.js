@@ -9,10 +9,13 @@ import {
   loadCommandRows,
   presentDashboard,
   presentFinance,
+  readMeetingProgress,
   resolveCommandActor,
   sectionGuard,
   validateThreadPost,
+  writeMeetingProgress,
 } from '../lib/command-dashboard.js';
+import { meetingById, meetingsPayload, normaliseProgress, presentMeeting } from '../lib/meetings.js';
 import { renderCommandLogin, renderCommandMessage, renderCommandPage } from '../lib/command-page.js';
 
 function queryOf(req) {
@@ -121,6 +124,11 @@ export async function handleCommandDashboard(req, res, deps = {}) {
     const actor = await resolveCommandActor(req, { ...deps, env });
     if (!actor.ok) return sendJson(res, 401, { error: 'Sign in is required.' });
 
+    if (req.method === 'GET' && action === 'meetings') {
+      const stored = await readMeetingProgress(env, deps.fetch);
+      return sendJson(res, 200, meetingsPayload(stored.rows, { storage: stored.storage, id: query.id }));
+    }
+
     if (req.method === 'GET' && action === 'thread') {
       const loaded = await loadCommandRows(env, deps.fetch, actor.seat, 'thread');
       const view = presentDashboard({
@@ -149,6 +157,29 @@ export async function handleCommandDashboard(req, res, deps = {}) {
     }
 
     const body = await readBody(req);
+    if (action === 'meetings') {
+      const meeting = meetingById(body.id || body.meeting_id);
+      if (!meeting) return sendJson(res, 404, { error: 'That meeting is not on the agenda.' });
+      const progress = normaliseProgress(meeting, body.progress);
+      if (!progress.ok) return sendJson(res, 400, { error: progress.error });
+      const written = await writeMeetingProgress(env, deps.fetch, {
+        meeting_id: meeting.id,
+        payload: progress.progress,
+        updated_at: new Date().toISOString(),
+        updated_by: actor.seat,
+      });
+      const view = meetingsPayload([], { storage: written.storage });
+      return sendJson(res, 200, {
+        ok: true,
+        storage: written.storage,
+        persisted: written.persisted,
+        note: view.note,
+        meeting: presentMeeting(meeting, progress.progress, {
+          updated_at: written.persisted ? new Date().toISOString() : '',
+          updated_by: written.persisted ? actor.seat : '',
+        }),
+      });
+    }
     if (action === 'thread') {
       const post = validateThreadPost(body);
       if (!post.ok) return sendJson(res, 400, { error: post.error });
