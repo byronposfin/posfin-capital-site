@@ -12,6 +12,7 @@ import {
 import { newLeadsHtml } from '../lib/new-leads-lane.js';
 import { elLorEnabled } from '../lib/el-lor-flag.js';
 import { enabledSeatLinks } from '../lib/seat-flag.js';
+import { handleRunSheet } from './staff-run-sheet.js';
 
 function queryOf(req) {
   if (req.query && (req.query.filter || req.query.view || req.query.caseId || req.query.spine || req.query.waiting)) return req.query;
@@ -248,6 +249,7 @@ export async function handleCockpit(req, res, deps = {}) {
     }
     const session = readCookie(req, 'pf_staff');
     const query = queryOf(req);
+    if (query.view === 'run') return handleRunSheet(req, res, deps);
     if (!session || !await sessionAllows(session, depsEnv)) {
       if (query.spine && spineRefStatus(query.spine) === 'pilot') {
         return sendHtml(res, 401, renderSpineLogin('', `/staff/cockpit/spine/${PILOT_REF}`));
