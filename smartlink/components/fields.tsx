@@ -1,5 +1,5 @@
 "use client";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { formatMoneyInput, gbp, parseMoney } from "@/lib/engine/money";
 import type { Answers, Field } from "@/lib/engine/types";
 
@@ -30,6 +30,31 @@ export function FieldShell({ field, error, warn, children, htmlFor }: { field: F
       {!error && warn && <p className="mt-1.5 rounded-lg bg-[#FFF6E0] px-3 py-2 text-[13px] text-[#8A5A00]">{warn}</p>}
     </div>
   );
+}
+
+function DobInput({ id, value, onChange, invalid }: { id: string; value: unknown; onChange: (v: string) => void; invalid?: boolean }) {
+  const iso = String(value ?? "");
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const [parts, setParts] = useState({ d: match ? String(Number(match[3])) : "", m: match ? String(Number(match[2])) : "", y: match ? match[1] : "" });
+  useEffect(() => {
+    const next = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (next) setParts({ y: next[1], m: String(Number(next[2])), d: String(Number(next[3])) });
+    else if (!iso) setParts({ d: "", m: "", y: "" });
+  }, [iso]);
+  function update(next: { d: string; m: string; y: string }) {
+    setParts(next);
+    onChange(next.d && next.m && next.y.length === 4 ? `${next.y}-${next.m.padStart(2, "0")}-${next.d.padStart(2, "0")}` : "");
+  }
+  const box = `${inputBase} ${h} text-center tabular ${invalid ? "border-[#B42318]" : ""}`;
+  const field = (part: "d" | "m" | "y", label: string, max: number, auto: string) => (
+    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+      {label}
+      <input id={part === "d" ? id : undefined} inputMode="numeric" autoComplete={auto} maxLength={max} placeholder={label === "Year" ? "YYYY" : label === "Month" ? "MM" : "DD"} aria-label={label}
+        className={`${box} mt-1`} value={parts[part]}
+        onChange={(e) => update({ ...parts, [part]: e.target.value.replace(/\D/g, "").slice(0, max) })} />
+    </label>
+  );
+  return <div className="grid grid-cols-3 gap-2">{field("d", "Day", 2, "bday-day")}{field("m", "Month", 2, "bday-month")}{field("y", "Year", 4, "bday-year")}</div>;
 }
 
 function MoneyInput({ id, value, onChange, invalid }: { id: string; value: unknown; onChange: (v: string) => void; invalid?: boolean }) {
@@ -153,8 +178,12 @@ export function FieldInput({ field, value, onChange, answers, error, inputId }: 
       );
       break;
     case "date":
+      control = field.dob
+        ? <DobInput id={id} value={value} onChange={(v) => onChange(v)} invalid={invalid} />
+        : <input id={id} type="date" className={`${textCls} appearance-none`} value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />;
+      break;
     case "month":
-      control = <input id={id} type={t} className={`${textCls} appearance-none`} value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />;
+      control = <input id={id} type="month" className={`${textCls} appearance-none`} value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />;
       break;
     case "yes_no":
     case "yes_no_unsure":

@@ -1,3 +1,4 @@
+import { dobError, ukMobileError } from "./contact";
 import { evalCond } from "./conditions";
 import { MONEY_MAX, parseMoney } from "./money";
 import type { Answers, Ctx, Field, FormSchema, Issue, Item, Step } from "./types";
@@ -33,7 +34,11 @@ export function validateField(f: Field, value: unknown): string | null {
     case "email":
       return EMAIL.test(String(s)) ? null : "That email doesn’t look quite right.";
     case "tel":
+      if (f.ukMobile) return ukMobileError(String(s));
       return PHONE.test(String(s)) ? null : "Please enter a valid phone number.";
+    case "date":
+      if (!f.dob) return null;
+      return dobError(String(s), f.minAge ?? 18);
     case "postcode":
       return UK_POSTCODE.test(String(s)) ? null : "Please enter a full UK postcode, e.g. SW1A 1AA.";
     case "sort_code":

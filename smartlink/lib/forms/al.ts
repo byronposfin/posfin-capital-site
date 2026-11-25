@@ -36,9 +36,11 @@ export const alSchema: FormSchema = {
       nodes: [
         { id: "applicant_name", label: "Your full name", type: "text", required: true, placeholder: "As it appears on your ID" },
         { id: "email", label: "Email", type: "email", required: true },
-        { id: "mobile", label: "Mobile", type: "tel", placeholder: "07…" },
+        { id: "mobile", label: "Mobile", type: "tel", ukMobile: true, placeholder: "07700 900000", help: "Optional here, because the case file may already have it. Use a UK mobile, starting 07 or +44." },
+        { id: "date_of_birth", label: "Date of birth", type: "date", required: true, dob: true, help: "Day, month and year. You need to be 18 or over." },
         { id: "company_name", label: "Company name", type: "text", help: "Only if you own property through a company or SPV." },
         { id: "joint_applicant_name", label: "Anyone else on this?", type: "text", help: "A joint applicant’s full name, if there is one." },
+        { id: "joint_applicant_dob", label: "Date of birth", type: "date", required: true, dob: true, when: { field: "joint_applicant_name", notEmpty: true }, help: "Joint applicant. They need to be 18 or over." },
       ],
     },
     {

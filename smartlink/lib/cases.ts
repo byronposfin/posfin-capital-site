@@ -27,6 +27,7 @@ const DEMO: CaseInfo = {
     "crm.borrower.legal_forenames": "Jordan Alex",
     "crm.borrower.legal_surname": "Example",
     "crm.borrower.mobile": "07700 900123",
+    "crm.borrower.date_of_birth": "1984-03-14",
     "crm.borrower.email": "jordan.example@example.com",
     "crm.property.address / title": "14 Sample Terrace\nDemo Town",
     "crm.property.postcode / title": "ZZ1 1ZZ",

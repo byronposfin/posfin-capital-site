@@ -19,6 +19,8 @@ export const worksSchema: FormSchema = {
       description: "A high-level view of what’s being done — lenders and valuers use this to understand the scheme.",
       nodes: [
         { id: "borrower_name", label: "Borrower", type: "text", required: true, help: "Person or company taking the loan." },
+        { id: "borrower_mobile", label: "Mobile", type: "tel", required: true, ukMobile: true, placeholder: "07700 900000", help: "UK mobile for the person completing this form." },
+        { id: "borrower_date_of_birth", label: "Date of birth", type: "date", required: true, dob: true, help: "Day, month and year for the person completing this form. They need to be 18 or over. If the borrower is a company, use the director who is filling this in." },
         { id: "property_address", label: "Property address", type: "textarea", required: true },
         { id: "property_postcode", label: "Postcode", type: "postcode", required: true, half: true },
         { id: "property_type", label: "Property type", type: "choice", half: true, options: ["Residential", "BTL", "HMO", "Multi-unit", "Commercial", "Semi-commercial", "Other"] },

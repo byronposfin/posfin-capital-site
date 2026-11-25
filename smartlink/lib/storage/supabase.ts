@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { StorageAdapter } from "./types";
 import type { Draft } from "@/lib/engine/types";
 import type { FormId } from "@/lib/brands";
+import { contactColumns } from "@/lib/contact-columns";
 import { supabaseConfig } from "./env";
 
 /**
@@ -99,6 +100,7 @@ export const supabaseAdapter: StorageAdapter = {
       payload: d.answers,
       derived: d.derived ?? null,
       crm_export: d.export ?? null,
+      ...contactColumns(form, d.answers),
       updated_at: now,
       submitted_at: d.status === "submitted" ? now : prev?.submitted_at ?? null,
     };
