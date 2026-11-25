@@ -127,8 +127,11 @@ function answerPayload(fields, cleaned) {
 
 function cockpitKind(item) {
   if (!item) return '';
-  if (item.kind === 'task' || item.source === 'task' || String(item.ref || '').startsWith('task-')) return 'task';
-  if (item.kind === 'case' || item.kind === 'private' || item.source === 'case' || String(item.ref || '').startsWith('case-')) return 'case';
+  const ref = String(item.ref || '');
+  const id = String(item.caseId || '');
+  if (!id) return '';
+  if (ref === `task-${id}`) return 'task';
+  if (ref === `case-${id}`) return 'case';
   return '';
 }
 

@@ -524,4 +524,14 @@ test('a cockpit task stays a task, and a meeting note does not change its tick',
   const agendaNote = patchMeetingProgress(agenda, 'note', 'Asked today');
   assert.equal(agendaNote.items.newey.status, 'open');
   assert.equal(agendaNote.items.newey.notes, 'Asked today');
+  const morning = await post({ op: 'done', ref: 'B20261125-03' }, {
+    rows: [item('B20261125-03', { case: 'Morning card', kind: 'task', source: 'task', urg: 'Normal', assignees: ['byron'] })],
+    cards: [],
+  });
+  assert.equal(morning.res.statusCode, 200);
+  assert.equal(morning.json.ok, true);
+  assert.equal(morning.cockpit.length, 0);
+  const added = await post({ op: 'owner', ref: 'add-task9', owner: 'Jess' }, { cards: [] });
+  assert.equal(added.res.statusCode, 200);
+  assert.equal(added.cockpit.length, 0);
 });
