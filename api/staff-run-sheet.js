@@ -125,12 +125,20 @@ function answerPayload(fields, cleaned) {
   };
 }
 
+function cockpitKind(item) {
+  if (!item) return '';
+  if (item.kind === 'task' || item.source === 'task' || String(item.ref || '').startsWith('task-')) return 'task';
+  if (item.kind === 'case' || item.kind === 'private' || item.source === 'case' || String(item.ref || '').startsWith('case-')) return 'case';
+  return '';
+}
+
 async function saveCase(deps, session, item, op, fields, actor) {
-  if (!item || (item.kind !== 'case' && item.source !== 'case')) return { skipped: true };
+  const kind = cockpitKind(item);
+  if (!kind) return { skipped: true };
   if (isSampleCard(item) || isSampleRef(item.ref) || isSampleRef(item.caseId)) return { skipped: true };
   if (use(deps, 'cockpitMode', cockpitMode)(deps.env) !== 'supabase') return { skipped: true };
   if (!OWNERS.includes(actor)) return { skipped: true };
-  const id = String(item.caseId || String(item.ref || '').replace(/^case-/, ''));
+  const id = String(item.caseId || String(item.ref || '').replace(/^(case|task)-/, ''));
   if (!id || isSampleRef(id)) return { skipped: true };
   const patch = {};
   if (op === 'done') patch.done = true;
@@ -144,7 +152,7 @@ async function saveCase(deps, session, item, op, fields, actor) {
   else if (op === 'draft' && String(fields.channel || 'borrower') === 'borrower') patch.draftMessage = fields.edit_text || '';
   else return { skipped: true };
   const save = use(deps, 'saveSupabase', saveSupabase);
-  return save(session, item.kind === 'task' ? 'task' : 'case', id, patch, actor, deps);
+  return save(session, kind, id, patch, actor, deps);
 }
 
 async function commandPost(req, deps, action, body) {
@@ -256,11 +264,12 @@ export async function handleRunSheet(req, res, deps = {}) {
         const seat = actor.seat && actor.seat.code || '';
         const model = await popupBoard(session, access, depsEnv, sheetDate, seat, seat);
         const found = model.open.concat(model.done).find((row) => row.ref === cleaned.ref);
+        const fromRef = cleaned.ref.startsWith('task-') ? 'task' : cleaned.ref.startsWith('case-') ? 'case' : '';
         const item = found || {
           ref: cleaned.ref,
-          kind: fields.kind || (cleaned.ref.startsWith('case-') ? 'case' : ''),
-          source: cleaned.ref.startsWith('case-') ? 'case' : '',
-          caseId: fields.caseId || cleaned.ref.replace(/^case-/, ''),
+          kind: fields.kind || fromRef,
+          source: fromRef,
+          caseId: fields.caseId || cleaned.ref.replace(/^(case|task)-/, ''),
         };
         const actorName = ACTOR[seat] || '';
         if (['done', 'reopen', 'owner', 'due', 'note', 'draft'].includes(cleaned.op)) {

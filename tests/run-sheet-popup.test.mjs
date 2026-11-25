@@ -6,7 +6,7 @@ import { handleRunSheetApi } from '../api/run-sheet.js';
 import { renderBoard } from '../lib/cockpit-html.js';
 import { renderCommandPage } from '../lib/command-page.js';
 import {
-  buildPopupModel, byronOnlyCard, carryOpen, cleanAnswer, isSampleCard, meetingItems, popupEnabled, redactText,
+  buildPopupModel, byronOnlyCard, carryOpen, cleanAnswer, isSampleCard, itemFromCase, meetingItems, patchMeetingProgress, popupEnabled, redactText,
 } from '../lib/run-sheet.js';
 import { transcribe } from '../lib/run-sheet-store.js';
 
@@ -503,4 +503,25 @@ test('the popup poll leaves a field alone while it is focused', async () => {
   const view = await get('view=popup&date=2026-11-25', { cards: [realCase] });
   assert.match(view.res.body, /TEXTAREA\|INPUT\|SELECT/);
   assert.match(view.res.body, /function kept/);
+  assert.match(view.res.body, /mode==='tick'/);
+  assert.doesNotMatch(view.res.body, /done!==false/);
+});
+
+test('a cockpit task stays a task, and a meeting note does not change its tick', async () => {
+  const task = itemFromCase({ id: 'sys-board', kind: 'task', title: 'Morning board', section: 'today', status: 'REVIEW TOMORROW', owner: 'Byron', nextAction: 'File it', done: false });
+  assert.equal(task.kind, 'task');
+  assert.equal(task.ref, 'task-sys-board');
+  const saved = await post({ op: 'done', ref: 'task-sys-board' }, { cards: [{ id: 'sys-board', kind: 'task', title: 'Morning board', section: 'today', status: 'REVIEW TOMORROW', owner: 'Byron', nextAction: 'File it', done: false }] });
+  assert.equal(saved.res.statusCode, 200);
+  assert.equal(saved.cockpit[0].kind, 'task');
+  assert.equal(saved.cockpit[0].id, 'sys-board');
+  const action = { meetingKind: 'action', meetingKey: 'newey-compliance', closed: true, meetingProgress: { items: {}, actions: { 'newey-compliance': { done: true } }, extra_actions: [] } };
+  const noted = patchMeetingProgress(action, 'note', 'Still waiting');
+  assert.equal(noted.actions['newey-compliance'].done, true);
+  const ticked = patchMeetingProgress({ ...action, closed: true }, 'tick', '');
+  assert.equal(ticked.actions['newey-compliance'].done, false);
+  const agenda = { meetingKind: 'item', meetingKey: 'newey', closed: false, meetingProgress: { items: { newey: { status: 'open', notes: '' } }, actions: {}, extra_actions: [] } };
+  const agendaNote = patchMeetingProgress(agenda, 'note', 'Asked today');
+  assert.equal(agendaNote.items.newey.status, 'open');
+  assert.equal(agendaNote.items.newey.notes, 'Asked today');
 });
