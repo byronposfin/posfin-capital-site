@@ -88,10 +88,10 @@ function world(over = {}) {
       saved.push(row);
       return { ok: true, id: `id-${saved.length}`, at: '2026-11-25T09:41:00Z' };
     },
-    saveSupabase: async (_session, kind, id, patch) => {
+    saveSupabase: over.saveSupabase || (async (_session, kind, id, patch) => {
       cockpit.push({ kind, id, patch });
       return { ok: true };
-    },
+    }),
     commandPost: async (action, body) => {
       commands.push({ action, body });
       return { status: 201, json: { ok: true, message: { id: 1 } } };
@@ -435,4 +435,72 @@ test('the machine API accepts an idempotent daily batch and still writes a one-o
   });
   assert.deepEqual(today.open.map((row) => row.ref).sort(), ['B20261125-01', 'B20261125-02']);
   assert.equal(meetingItems([], 'byron', new Date('2026-11-25T08:00:00Z')).some((row) => row.owner === 'Byron'), true);
+  const retired = response();
+  await handleRunSheetApi({
+    method: 'POST',
+    url: '/api/run-sheet',
+    headers: { authorization: `Bearer ${secret}`, 'content-type': 'application/json' },
+    body: { date: '2026-11-25', items: [{ ref: 'B20261125-01', retire: true }] },
+  }, retired, { env, fetch });
+  const retiredBody = JSON.parse(retired.body);
+  assert.equal(retiredBody.written, 1);
+  assert.equal(retiredBody.skipped, 0);
+  assert.equal(stored.some((row) => row.item_ref === 'B20261125-01' && row.entry_kind === 'retire'), true);
+});
+
+test('the existing run sheet op answer still saves when the popup flag is off', async () => {
+  const legacy = await post({ op: 'answer', decision: 'yes', ref: 'T-LEGACY' }, { env: { RUN_SHEET_POPUP: '' } });
+  assert.equal(legacy.res.statusCode, 200);
+  assert.equal(legacy.json.ok, true);
+  assert.equal(legacy.saved[0].payload.decision, 'yes');
+  assert.equal(cleanAnswer({ op: 'answer', decision: 'no', ref: 'T-1' }).ok, true);
+  assert.equal(cleanAnswer({ op: 'done', ref: 'T-1' }).error, 'bad_decision');
+});
+
+test('today\'s answers apply to carried, decision, meeting and done case cards', () => {
+  const earlier = [item('OLD-1', { case: 'Carry me', urg: 'Urgent', assignees: ['byron'] })];
+  const meeting = meetingItems([], 'byron', new Date('2026-11-25T08:00:00Z'))[0];
+  const answer = (ref, payload, at) => ({ item_ref: ref, entry_kind: 'answer', payload, actor_email: 'byron.hill@posfincapital.com', created_at: at });
+  const model = buildPopupModel({
+    seat: 'byron',
+    viewer: 'byron',
+    date: '2026-11-25',
+    todayRows: [
+      answer('OLD-1', { decision: 'yes' }, '2026-11-25T09:00:00Z'),
+      answer('decision-Signthepack', { op: 'yes', decision: 'yes' }, '2026-11-25T09:05:00Z'),
+      answer(meeting.ref, { op: 'done' }, '2026-11-25T09:06:00Z'),
+      answer('case-POSFIN-WEB-EYCTQ6', { op: 'done' }, '2026-11-25T09:07:00Z'),
+      answer('case-POSFIN-WEB-EYCTQ6', { op: 'reopen' }, '2026-11-25T09:08:00Z'),
+    ],
+    earlierRows: earlier,
+    cases: [{ ...realCase, done: true }],
+    decisions: [{ title: 'Sign the pack', detail: 'Yes or no today' }],
+    moves: [],
+    privateCases: [],
+    meetingRows: [meeting],
+    canSave: true,
+    storeOk: true,
+  });
+  const done = model.done.map((row) => row.ref);
+  const open = model.open.map((row) => row.ref);
+  assert.ok(done.includes('OLD-1'));
+  assert.ok(done.includes('decision-Signthepack'));
+  assert.ok(done.includes(meeting.ref));
+  assert.equal(open.includes('case-POSFIN-WEB-EYCTQ6'), true);
+  assert.equal(done.includes('case-POSFIN-WEB-EYCTQ6'), false);
+});
+
+test('a failed cockpit save is not reported as saved', async () => {
+  const failed = await post({ op: 'done', ref: 'case-POSFIN-WEB-EYCTQ6' }, {
+    saveSupabase: async () => ({ ok: false, error: 'schema_pending' }),
+  });
+  assert.equal(failed.res.statusCode, 502);
+  assert.equal(failed.json.ok, false);
+  assert.equal(failed.saved.length, 1);
+});
+
+test('the popup poll leaves a field alone while it is focused', async () => {
+  const view = await get('view=popup&date=2026-11-25', { cards: [realCase] });
+  assert.match(view.res.body, /TEXTAREA\|INPUT\|SELECT/);
+  assert.match(view.res.body, /function kept/);
 });

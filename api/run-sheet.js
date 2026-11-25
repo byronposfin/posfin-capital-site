@@ -66,7 +66,7 @@ export async function handleRunSheetApi(req, res, deps = {}) {
           entry_kind: c.retire ? 'retire' : 'item',
           payload: c.payload,
           actor_email: String(body.actor || 'lizzy').slice(0, 80),
-          client_id: stable || `api-${randomBytes(8).toString('hex')}`,
+          client_id: c.retire && stable ? `${stable}-retire` : (stable || `api-${randomBytes(8).toString('hex')}`),
         });
       }
       let skipped = 0;
@@ -76,6 +76,7 @@ export async function handleRunSheetApi(req, res, deps = {}) {
         if (existing.ok) {
           const have = new Set((await existing.json()).map((row) => row.item_ref));
           writing = rows.filter((row) => {
+            if (row.entry_kind === 'retire') return true;
             if (isDailyRef(row.item_ref) && have.has(row.item_ref)) { skipped += 1; return false; }
             return true;
           });

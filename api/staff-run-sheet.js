@@ -11,7 +11,7 @@ import { presentDashboard } from '../lib/command-dashboard.js';
 import { handleCommandDashboard } from './command-dashboard.js';
 import { staffActorFromToken, supabaseAccessToken } from '../lib/staff-auth.js';
 import {
-  autoNext, buildPopupModel, cleanAnswer, foldEntries, forSeat, isSampleCard, isSampleRef, itemFromCase, meetingItems, onPopupCase, parisDate, popupEnabled,
+  autoNext, buildPopupModel, cleanAnswer, foldEntries, forSeat, isSampleCard, isSampleRef, itemFromCase, meetingItems, parisDate, popupEnabled,
 } from '../lib/run-sheet.js';
 import { insertEntry, loadEarlierEntries, loadEntries, loadStaffTable, runSheetConfigured, transcribe } from '../lib/run-sheet-store.js';
 import { renderPopup, renderRunSheet, renderRunSheetLogin, renderRunSheetMessage } from '../lib/run-sheet-html.js';
@@ -88,7 +88,6 @@ async function popupBoard(session, access, deps, date, seat, viewer) {
     }
   }
   const extra = await popupSources(access, deps, seat);
-  cases = cases.filter(onPopupCase);
   return buildPopupModel({
     seat,
     viewer,
@@ -256,10 +255,19 @@ export async function handleRunSheet(req, res, deps = {}) {
       if (popupPost) {
         const seat = actor.seat && actor.seat.code || '';
         const model = await popupBoard(session, access, depsEnv, sheetDate, seat, seat);
-        const item = model.open.concat(model.done).find((row) => row.ref === cleaned.ref) || { ref: cleaned.ref, kind: fields.kind || '', caseId: fields.caseId || '' };
+        const found = model.open.concat(model.done).find((row) => row.ref === cleaned.ref);
+        const item = found || {
+          ref: cleaned.ref,
+          kind: fields.kind || (cleaned.ref.startsWith('case-') ? 'case' : ''),
+          source: cleaned.ref.startsWith('case-') ? 'case' : '',
+          caseId: fields.caseId || cleaned.ref.replace(/^case-/, ''),
+        };
         const actorName = ACTOR[seat] || '';
         if (['done', 'reopen', 'owner', 'due', 'note', 'draft'].includes(cleaned.op)) {
           cockpit = await saveCase(depsEnv, session, item, cleaned.op, fields, actorName);
+          if (cockpit && !cockpit.skipped && cockpit.ok !== true) {
+            return sendJson(res, cockpit.denied ? 401 : 502, { ok: false, error: cockpit.error || 'cockpit', saved: true });
+          }
         }
         if (cleaned.op === 'ask' || cleaned.op === 'thread') {
           const to = cleaned.op === 'ask' ? 'lizzy' : 'all';
