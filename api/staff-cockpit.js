@@ -13,6 +13,7 @@ import { newLeadsHtml } from '../lib/new-leads-lane.js';
 import { elLorEnabled } from '../lib/el-lor-flag.js';
 import { enabledSeatLinks } from '../lib/seat-flag.js';
 import { handleRunSheet } from './staff-run-sheet.js';
+import { popupEnabled } from '../lib/run-sheet.js';
 
 function queryOf(req) {
   if (req.query && (req.query.filter || req.query.view || req.query.caseId || req.query.spine || req.query.waiting)) return req.query;
@@ -271,6 +272,7 @@ export async function handleCockpit(req, res, deps = {}) {
         newLeadsHtml: await newLeadsHtml(mode, env, deps.fetch),
         liveCases: elLorEnabled(env),
         seatLinks: enabledSeatLinks(env),
+        popup: popupEnabled(env),
       };
       const html = query.view === 'lizzy' ? renderLizzy(model) : renderBoard(model);
       return sendHtml(res, 200, html);
@@ -287,6 +289,7 @@ export async function handleCockpit(req, res, deps = {}) {
       newLeadsHtml: await newLeadsHtml('preview', env, deps.fetch),
       liveCases: elLorEnabled(env),
       seatLinks: enabledSeatLinks(env),
+      popup: popupEnabled(env),
     };
     const html = query.view === 'lizzy' ? renderLizzy(model) : renderBoard(model);
     return sendHtml(res, 200, html);
