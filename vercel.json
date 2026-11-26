@@ -174,29 +174,30 @@
     { "source": "/staff/cases/:caseId/export", "destination": "/api/case-export?caseId=:caseId" },
     { "source": "/staff/cases/:caseId", "destination": "/api/case-staff?caseId=:caseId" },
     { "source": "/staff/cases", "destination": "/api/case-staff" },
+    { "source": "/apply", "destination": "/fact-find" },
     {
       "source": "/apply/bh",
-      "destination": "/apply?b=bh"
+      "destination": "/fact-find?b=bh"
     },
     {
       "source": "/apply/byron",
-      "destination": "/apply?b=bh"
+      "destination": "/fact-find?b=bh"
     },
     {
       "source": "/apply/chris",
-      "destination": "/apply?b=chris"
+      "destination": "/fact-find?b=chris"
     },
     {
       "source": "/a/bh",
-      "destination": "/apply?b=bh"
+      "destination": "/fact-find?b=bh"
     },
     {
       "source": "/a/chris",
-      "destination": "/apply?b=chris"
+      "destination": "/fact-find?b=chris"
     },
     {
       "source": "/apply1",
-      "destination": "/apply?b=chris"
+      "destination": "/fact-find?b=chris"
     },
     { "source": "/api/forms/:form/:token/:action", "destination": "/api/smartlink-forms?form=:form&token=:token&action=:action" },
     { "source": "/api/forms/:form/:token", "destination": "/api/smartlink-forms?form=:form&token=:token" },

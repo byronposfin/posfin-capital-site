@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<!-- Application pages are excluded from search indexing. -->
+<!-- Fact find pages are excluded from search indexing. -->
 <title>Fact find · Posfin Capital</title>
 <style>
 :root{--navy-950:#071427;--navy-900:#0B1F3A;--navy-800:#122B4E;--teal-500:#0FB8C9;--cyan-400:#2FD6EE;--brand-teal:#138A9E;--ink:#0B1F3A;--muted:#4F5F78;--paper:#FEFDF8;--cream:#FBF7EE;--line:#E3DCCB;--err:#B42318;--ok:#1F7A4D;
@@ -67,6 +67,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
 .fallback b{display:block;margin-bottom:4px}.fallback .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
 .risk{font-size:13px;color:var(--muted);margin-top:22px}
 .hide{display:none!important}
+.direct-contact{border:1px solid #cce4e2;border-left:4px solid #008f8a;border-radius:12px;background:#f4fbfa;padding:16px;margin:0 0 20px}.direct-contact p{font-size:14px;line-height:1.5;margin:8px 0}.direct-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}.direct-contact .direct-note{color:var(--muted);font-size:13px}@media(max-width:480px){.direct-actions .btn{flex:1;text-align:center}}
 @media(max-width:640px){.grid{grid-template-columns:1fr}.card{padding:18px}.rail div{font-size:9.5px;letter-spacing:.02em}h1{font-size:28px}.actions .btn{flex:1}.resrow{flex-direction:column}}
 .fund-card{margin:24px 0;background:#fff;border:1px solid #cce4e2;border-top:4px solid #008f8a;padding:22px;border-radius:10px}.eyebrow{font-size:11px;letter-spacing:.15em;font-weight:800;color:#008f8a}.cash-highlight{background:#eef8f6;padding:18px;margin:16px 0;border-radius:8px}.cash-highlight strong{display:block;font-size:36px;color:#008f8a}.fund-row{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid #e8e7e2}.fund-row strong{white-space:nowrap}.fund-emphasis{font-weight:700;color:#80601b}.fund-total{background:#1c184f;color:#fff;padding:16px;margin:12px -8px}.fund-note{font-size:13px;line-height:1.6;color:#626071}.fund-support,.fund-pending{padding:16px;background:#fff5dc;border-radius:8px;font-size:14px}.fund-pending ul{padding-left:20px}@media(max-width:480px){.fund-card{padding:14px}.fund-row{font-size:14px}.cash-highlight strong{font-size:30px}}
 </style>
@@ -76,7 +77,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
 <header><div class="in"><a class="brand" href="/"><img src="/assets/logo-mark.png" alt="Posfin Capital"><span>POSFIN<small>CAPITAL</small></span></a><div class="fca">FCA authorised · FRN 913022<br>Credit broker, not a lender</div></div></header>
 <main>
   <h1>Your fact find <span id="mode" class="mode">Checking…</span></h1>
-  <p class="intro">Apply now — takes about 5 minutes. Rounded figures and best estimates are fine. You can save and come back later.</p>
+  <p class="intro">This fact find takes about 5 minutes. Rounded figures and best estimates are fine. You can save and come back later.</p>
+  <section class="direct-contact" aria-label="Speak to Posfin">
+    <strong>Prefer to talk first?</strong>
+    <p>You do not need to complete this form to speak to us. WhatsApp or call 07365 587773; we can work through your enquiry together.</p>
+    <div class="direct-actions"><a class="btn btn-primary" href="https://wa.me/447365587773?text=Hello%20Posfin%2C%20I%27d%20like%20to%20discuss%20property%20finance." target="_blank" rel="noopener noreferrer">WhatsApp</a><a class="btn btn-ghost" href="tel:+447365587773">Call 07365 587773</a></div>
+    <p class="direct-note">Or continue below at your own pace. If you message us, a property postcode and the amount needed are a useful start — estimates are fine.</p>
+  </section>
   <p class="notice test-only hide" id="previewNotice" role="alert"></p>
   <div class="fallback hide" id="fallback" role="alert"><b>Our secure online save is temporarily unavailable.</b>You can keep going: your answers are saved on this device only and have <u>not</u> been sent to us yet. To reach us now, call <a href="tel:+447365587773">07365 587773</a> or book a 15-minute call.
     <div class="row"><a class="btn btn-primary" href="https://calendly.com/byron-hill/posfin-bridging-finance-consultation-30-min-byron" target="_blank" rel="noopener" data-calendly>Book a 15-minute call</a><a class="btn btn-ghost" href="tel:+447365587773">Call 07365 587773</a><button class="btn btn-ghost" type="button" id="retryBtn">Try again</button></div></div>
@@ -105,5 +112,5 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal-500
   </form>
   <p class="risk">Your home may be repossessed if you do not keep up repayments on a mortgage or any other debt secured on it. Posfin Capital Limited is an authorised credit broker and not a lender. An enquiry is not an application or an offer of finance.</p>
 </main>
-<script type="module" src="/fact-find.js?v=20261121-dob"></script>
+<script type="module" src="/fact-find.js?v=20261126-factfind"></script>
 </body></html>
