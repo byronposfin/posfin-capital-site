@@ -1,4 +1,4 @@
-import { allowedKycMime, KYC_MAX_BYTES, safeFilename } from "@/lib/kyc-file";
+import { allowedKycMime, KYC_MAX_BYTES, kycAcceptsSubmission, safeFilename } from "@/lib/kyc-file";
 import { kycFlagsFrom, saveKycItem, uploadKycFile, type KycFlags } from "@/lib/portal-data";
 import { selectPanelSolicitor, submitOwnSolicitor, type SolicitorSelection } from "@/lib/solicitors";
 import { isDemoToken, isPortalToken } from "@/lib/token";
@@ -16,6 +16,9 @@ export async function POST(request: Request, context: { params: Promise<{ token:
   const contentType = request.headers.get("content-type") ?? "";
   const parsed = contentType.includes("multipart/form-data") ? await fromForm(request) : await fromJson(request);
   if (!parsed) return Response.json({ error: "invalid" }, { status: 400, headers: NO_STORE });
+  if (!kycAcceptsSubmission(isDemoToken(token), parsed.file != null)) {
+    return Response.json({ error: "file_required" }, { status: 400, headers: NO_STORE });
+  }
 
   if (parsed.file && !isDemoToken(token)) {
     const result = await uploadKycFile({

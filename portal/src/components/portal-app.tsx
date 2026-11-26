@@ -128,7 +128,7 @@ export function PortalApp({
       });
       const json = (await response.json()) as { portal?: BorrowerPortal };
       if (!response.ok || !json.portal) {
-        setError("We couldn't take that file. Use a photo or PDF under 8MB, or WhatsApp it to your broker.");
+        setError("We couldn't take that file. Use a photo or PDF under 4MB, or WhatsApp it to your broker.");
         return;
       }
       setPortal(json.portal);

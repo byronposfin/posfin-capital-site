@@ -93,7 +93,63 @@ grant execute on function public.borrower_portal_set_updated_at() to service_rol
 grant execute on function public.borrower_portal_broadcast() to service_role;
 
 insert into storage.buckets (id, name, public, file_size_limit)
-values ('borrower-portal', 'borrower-portal', false, 8388608)
+values ('borrower-portal', 'borrower-portal', false, 4194304)
 on conflict (id) do update
   set public = false,
       file_size_limit = excluded.file_size_limit;
+
+-- Patches one borrower_state path inside a single UPDATE, so concurrent KYC and
+-- solicitor saves do not replace each other's keys.
+create or replace function public.borrower_portal_patch(
+  p_id uuid,
+  p_token_hash text,
+  p_path text[],
+  p_value jsonb
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  updated jsonb;
+begin
+  if p_path is distinct from array['solicitor']::text[]
+     and p_path is distinct from array['kyc', 'photo_id']::text[]
+     and p_path is distinct from array['kyc', 'proof_of_address']::text[] then
+    return null;
+  end if;
+  update public.borrower_portal_links
+     set borrower_state = case
+       when p_path = array['solicitor']::text[] then
+         pg_catalog.jsonb_set(
+           case when pg_catalog.jsonb_typeof(borrower_state) = 'object' then borrower_state else '{}'::jsonb end,
+           array['solicitor']::text[],
+           coalesce(p_value, 'null'::jsonb),
+           true
+         )
+       else
+         pg_catalog.jsonb_set(
+           case when pg_catalog.jsonb_typeof(borrower_state) = 'object' then borrower_state else '{}'::jsonb end,
+           array['kyc']::text[],
+           case
+             when pg_catalog.jsonb_typeof(
+               case when pg_catalog.jsonb_typeof(borrower_state) = 'object' then borrower_state else '{}'::jsonb end -> 'kyc'
+             ) = 'object'
+             then case when pg_catalog.jsonb_typeof(borrower_state) = 'object' then borrower_state else '{}'::jsonb end -> 'kyc'
+             else '{}'::jsonb
+           end || pg_catalog.jsonb_build_object(p_path[2], coalesce(p_value, 'null'::jsonb)),
+           true
+         )
+     end
+   where id = p_id
+     and token_hash = p_token_hash
+     and revoked_at is null
+     and (expires_at is null or expires_at > pg_catalog.now())
+  returning borrower_state into updated;
+  return updated;
+end;
+$$;
+
+revoke all on function public.borrower_portal_patch(uuid, text, text[], jsonb) from public, anon, authenticated;
+grant execute on function public.borrower_portal_patch(uuid, text, text[], jsonb) to service_role;

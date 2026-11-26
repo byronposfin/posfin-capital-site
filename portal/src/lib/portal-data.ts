@@ -276,14 +276,7 @@ export async function saveSolicitorChoice(args: {
       portal: buildBorrowerPortal(envelope, { vertical: args.vertical, mode: "demo", example: true }),
     };
   }
-  return mutateLink(args.vertical, args.token, (state) => {
-    const existing = solicitorOf(state);
-    const keep =
-      existing?.route === "panel" &&
-      args.selection.route === "panel" &&
-      existing.firmId === args.selection.firmId;
-    return { ...state, solicitor: keep ? existing : args.selection };
-  });
+  return patchLink(args.vertical, args.token, ["solicitor"], args.selection);
 }
 
 export async function saveKycItem(args: {
@@ -312,10 +305,10 @@ export async function saveKycItem(args: {
       portal: buildBorrowerPortal(envelope, { vertical: args.vertical, mode: "demo", example: true }),
     };
   }
-  return mutateLink(args.vertical, args.token, (state) => {
-    const kyc = asRecord(state.kyc) ?? {};
-    kyc[args.kind] = { done: true, filename, at: new Date().toISOString() };
-    return { ...state, kyc };
+  return patchLink(args.vertical, args.token, ["kyc", args.kind], {
+    done: true,
+    filename,
+    at: new Date().toISOString(),
   });
 }
 
@@ -361,10 +354,10 @@ export async function uploadKycFile(args: {
       console.error("borrower_portal_upload_failed");
       return { ok: false, reason: "unavailable" };
     }
-    return mutateLink(args.vertical, args.token, (state) => {
-      const kyc = asRecord(state.kyc) ?? {};
-      kyc[args.kind] = { done: true, filename: text(args.filename, 80) || "document", at: new Date().toISOString() };
-      return { ...state, kyc };
+    return patchLink(args.vertical, args.token, ["kyc", args.kind], {
+      done: true,
+      filename: text(args.filename, 80) || "document",
+      at: new Date().toISOString(),
     });
   } catch (error) {
     console.error(error instanceof UnsafeBorrowerPayload ? error.message : "borrower_portal_upload_failed");
@@ -409,33 +402,45 @@ async function readLink(vertical: string, token: string): Promise<PortalResult> 
   return { ok: true, portal };
 }
 
-async function mutateLink(
-  vertical: string,
-  token: string,
-  change: (state: Record<string, unknown>) => Record<string, unknown>,
-): Promise<PortalResult> {
+type PatchPath = ["solicitor"] | ["kyc", "photo_id"] | ["kyc", "proof_of_address"];
+
+/**
+ * One jsonb key is written in a single UPDATE. A KYC save cannot replace a solicitor
+ * choice that landed between the read and the write, or the other way round.
+ */
+async function patchLink(vertical: string, token: string, path: PatchPath, value: unknown): Promise<PortalResult> {
   if (!supabaseConfigured()) return { ok: false, reason: "unavailable" };
   try {
     const client = adminClient();
     const row = await fetchLink(client, vertical, token);
     if (!row.ok) return row;
-    const next = change(asRecord(row.link.borrower_state) ?? {});
-    const updated = await client
-      .from("borrower_portal_links")
-      .update({ borrower_state: next })
-      .eq("id", row.link.id)
-      .eq("token_hash", hashToken(token))
-      .select("id, vertical, case_ref, borrower_name, source, borrower_state, deck_ready, expires_at, revoked_at, updated_at")
-      .maybeSingle();
-    if (updated.error || !updated.data) {
+    let nextValue = value;
+    if (path[0] === "solicitor") {
+      const existing = solicitorOf(asRecord(row.link.borrower_state) ?? {});
+      const selection = value as SolicitorSelection;
+      const keep =
+        existing?.route === "panel" &&
+        selection.route === "panel" &&
+        existing.firmId === selection.firmId;
+      nextValue = keep ? existing : selection;
+    }
+    const patched = await client.rpc("borrower_portal_patch", {
+      p_id: row.link.id,
+      p_token_hash: hashToken(token),
+      p_path: path,
+      p_value: nextValue,
+    });
+    if (patched.error || patched.data == null) {
       console.error("borrower_portal_save_failed");
       return { ok: false, reason: "unavailable" };
     }
-    const register = updated.data.case_ref ? await fetchRegister(client, updated.data.case_ref) : null;
+    const refreshed = await fetchLink(client, vertical, token);
+    if (!refreshed.ok) return refreshed;
+    const register = refreshed.link.case_ref ? await fetchRegister(client, refreshed.link.case_ref) : null;
     return {
       ok: true,
       portal: buildBorrowerPortal(
-        { ...updated.data, register },
+        { ...refreshed.link, register },
         { vertical, mode: "live", example: false },
       ),
     };
@@ -601,9 +606,15 @@ function text(value: unknown, max: number): string {
   return BANNED_TEXT.some((pattern) => pattern.test(clean)) ? "" : clean;
 }
 
+const FEE_TAINT =
+  /\bBROKA\b|\b(?:1st|2nd|3rd|first|second|third)\s+charges?\b|\b1st\s*\/\s*2nd\s+charges?\b|\bbroker[\s_-]*fees?\b|\bproc(?:uration)?(?:[\s_-]*fees?)?\b|\bcommissions?\b|\bsuccess[\s_-]*fees?\b|\bintroducers?\b/i;
+const TAINTED_MONEY = /£\s?\d[\d,]*(?:\.\d+)?\s*[kKmM]?|\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*percent\b/gi;
+
 function scrub(value: string): string {
+  const tainted = FEE_TAINT.test(value);
   let next = value;
   for (const [pattern, replacement] of SCRUBBERS) next = next.replace(pattern, replacement);
+  if (tainted) next = next.replace(TAINTED_MONEY, "").replace(/\(\s*\)/g, "");
   return next.replace(/\s{2,}/g, " ").replace(/\s+([,.;])/g, "$1").trim();
 }
 
