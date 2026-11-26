@@ -608,7 +608,8 @@ function text(value: unknown, max: number): string {
 
 const FEE_TAINT =
   /\bBROKA\b|\b(?:1st|2nd|3rd|first|second|third)\s+charges?\b|\b1st\s*\/\s*2nd\s+charges?\b|\bbroker[\s_-]*fees?\b|\bproc(?:uration)?(?:[\s_-]*fees?)?\b|\bcommissions?\b|\bsuccess[\s_-]*fees?\b|\bintroducers?\b/i;
-const TAINTED_MONEY = /£\s?\d[\d,]*(?:\.\d+)?\s*[kKmM]?|\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*percent\b/gi;
+const TAINTED_MONEY =
+  /£\s?\d[\d,]*(?:\.\d+)?\s*[kKmM]?|\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*percent\b|\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b|\b\d+(?:\.\d+)?\s*[kKmM]\b|\b\d{3,}\b/gi;
 
 function scrub(value: string): string {
   const tainted = FEE_TAINT.test(value);

@@ -96,14 +96,16 @@ describe("server-side fee stripping", () => {
           property: { address: "2 Example Street", summary: "Estimated at £123,456." },
           loan: { amount: 100000, purpose: "Purchase", term_months: 12, regulated: false },
           valuation: { avm: 200000, works: "none" },
-          lenders: [{ name: "Example Lender", headline: "From 0.9% per month", term: "12 months", note: "Proc fee 1 percent and £4,200." }],
+          lenders: [{ name: "Example Lender", headline: "From 0.9% per month", term: "12 months", note: "Proc fee 1 percent, 15000, 15,000 and 15k." }],
         },
       },
       options,
     );
     expect(json).toContain("£123,456");
     expect(json).toContain("0.9%");
-    expect(json).not.toContain("4,200");
+    expect(json).not.toContain("15000");
+    expect(json).not.toContain("15,000");
+    expect(json).not.toContain("15k");
     expect(json).not.toContain("1 percent");
     expect(json).not.toMatch(/\bproc/i);
   });
