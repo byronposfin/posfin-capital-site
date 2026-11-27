@@ -15,13 +15,20 @@ import { renderPage, COPY } from '../lib/wirral-response-html.js';
 import { handle } from '../api/wirral-waters-response.js';
 
 const NOW = '2026-11-27T12:00:00.000Z';
+const BORROWER_KEY = 'borrower-test-key-0123456789';
+const REVIEW_KEY = 'review-test-key-0123456789ab';
 
 function words(text = 'Paid and closed.') {
   return Object.fromEntries(POINT_IDS.map((id) => [id, { verbatim: `${text} ${id}`, documents: id === 'p1' ? 'HMRC letter' : '' }]));
 }
 
 function deps(extra = {}) {
-  return { env: {}, memory: new Map(), now: () => NOW, ...extra };
+  const env = {
+    WIRRAL_RESPONSE_KEY: BORROWER_KEY,
+    WIRRAL_REVIEW_KEY: REVIEW_KEY,
+    ...(extra.env || {}),
+  };
+  return { memory: new Map(), now: () => NOW, ...extra, env };
 }
 
 function resOf() {
@@ -117,6 +124,8 @@ test('the page is a vertical card stack with a microphone and no invented answer
   assert.match(html, /MediaRecorder/);
   assert.match(html, /Firefox/);
   assert.match(html, /Submit my inputs to Byron/);
+  assert.match(html, /draftFlight/);
+  assert.match(html, /function flushDraft/);
   assert.match(html, /High priority/);
   for (const point of POINTS) {
     assert.ok(html.includes(point.title.replaceAll('&', '&amp;')), point.id);
@@ -212,10 +221,61 @@ test('supabase stores verbatim and proposed wording on one document', async () =
   assert.equal(clash.error, 'conflict');
 });
 
-test('the route renders and the staff wording action stays on the review query', async () => {
+test('a correction drops lender wording only for the point Roy changed', () => {
+  let state = applyAction(freshState(NOW), { type: 'submit_inputs', revision: 0, inputs: words('Original') }, NOW).state;
+  state = applyAction(state, {
+    type: 'save_proposed',
+    revision: state.revision,
+    actor: 'Byron',
+    proposed: { p1: 'Old lender line for p1', p2: 'Keep this p2 line' },
+  }, NOW).state;
+  assert.equal(phaseOf(state), 'awaiting_draft');
+  const corrected = applyAction(state, {
+    type: 'submit_inputs',
+    revision: state.revision,
+    inputs: { p1: { verbatim: 'Corrected p1 fact' } },
+  }, NOW);
+  assert.equal(corrected.ok, true);
+  assert.equal(corrected.state.rounds[0].proposed.p1.wording, '');
+  assert.equal(corrected.state.rounds[0].proposed.p2.wording, 'Keep this p2 line');
+  assert.match(corrected.state.rounds[0].inputs.p1.verbatim, /Corrected p1/);
+  const docs = applyAction(corrected.state, {
+    type: 'submit_inputs',
+    revision: corrected.state.revision,
+    inputs: { p2: { documents: 'Companies House printout' } },
+  }, NOW);
+  assert.equal(docs.ok, true);
+  assert.equal(docs.state.rounds[0].proposed.p2.wording, 'Keep this p2 line');
+  assert.equal(docs.state.rounds[0].inputs.p2.documents, 'Companies House printout');
+});
+
+test('the public URL stays shut without the private keys', async () => {
+  const local = deps();
+  const closed = resOf();
+  await handle({ method: 'GET', headers: {}, query: {} }, closed, local);
+  assert.equal(closed.statusCode, 404);
+  assert.doesNotMatch(closed.body, /Inspired 2 Care|M3BP95NV|Liver Bird|06454085|Roy Kenny|CrowdProperty/);
+  assert.equal(closed.body.includes(BORROWER_KEY), false);
+
+  const borrower = resOf();
+  await handle({ method: 'GET', headers: {}, query: { k: BORROWER_KEY, mode: 'review' } }, borrower, local);
+  assert.equal(borrower.statusCode, 200);
+  assert.match(borrower.body, /Wirral Waters/);
+  assert.doesNotMatch(borrower.body, /Send this wording back to Roy|Internal view for Byron/);
+  assert.equal(borrower.body.includes(BORROWER_KEY), false);
+  assert.match(String(borrower.headers['Set-Cookie']), /pf_wirral=/);
+
+  const staff = resOf();
+  await handle({ method: 'GET', headers: {}, query: { rk: REVIEW_KEY, mode: 'review' } }, staff, local);
+  assert.match(staff.body, /Internal view for Byron and Lizzy/);
+  assert.doesNotMatch(staff.body, /Submit my inputs to Byron/);
+  assert.equal(staff.body.includes(REVIEW_KEY), false);
+});
+
+test('the route renders and the staff wording action stays on the review link', async () => {
   const local = deps();
   const page = resOf();
-  await handle({ method: 'GET', headers: {}, query: {} }, page, local);
+  await handle({ method: 'GET', headers: {}, query: { k: BORROWER_KEY } }, page, local);
   assert.equal(page.statusCode, 200);
   assert.match(page.headers['Cache-Control'], /no-store/);
   assert.match(page.body, /CrowdProperty Compliance Points/);
@@ -225,7 +285,7 @@ test('the route renders and the staff wording action stays on the review query',
   await handle({
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    query: {},
+    query: { k: BORROWER_KEY },
     body: { action: 'submit_inputs', revision: 0, inputs: words() },
   }, denied, local);
   assert.equal(denied.statusCode, 403);
@@ -234,7 +294,7 @@ test('the route renders and the staff wording action stays on the review query',
   await handle({
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-posfin-page': 'wirral' },
-    query: {},
+    query: { k: BORROWER_KEY },
     body: { action: 'submit_inputs', revision: 0, inputs: words('From the page') },
   }, posted, local);
   assert.equal(posted.statusCode, 200);
@@ -247,7 +307,7 @@ test('the route renders and the staff wording action stays on the review query',
   await handle({
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-posfin-page': 'wirral' },
-    query: {},
+    query: { k: BORROWER_KEY, mode: 'review' },
     body: {
       action: 'save_proposed',
       revision: payload.revision,
@@ -261,7 +321,7 @@ test('the route renders and the staff wording action stays on the review query',
   await handle({
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-posfin-page': 'wirral' },
-    query: { mode: 'review' },
+    query: { mode: 'review', rk: REVIEW_KEY },
     body: {
       action: 'save_proposed',
       revision: payload.revision,
@@ -276,7 +336,7 @@ test('the route renders and the staff wording action stays on the review query',
   assert.match(staff.html, /data-mode="review"/);
 
   const seen = resOf();
-  await handle({ method: 'GET', headers: {}, query: {} }, seen, local);
+  await handle({ method: 'GET', headers: {}, query: { k: BORROWER_KEY } }, seen, local);
   assert.match(seen.body, /Your exact input/);
   assert.match(seen.body, /Note p5/);
   assert.ok(seen.body.includes(COPY.PROPOSED_LABEL));
@@ -296,7 +356,7 @@ test('transcription returns text only from the transcription service', async () 
   await handle({
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-posfin-page': 'wirral' },
-    query: {},
+    query: { k: BORROWER_KEY },
     body: { action: 'transcribe', audio: Buffer.from('hello-audio-bytes'.repeat(80)).toString('base64'), mime: 'audio/webm' },
   }, quiet, local);
   const body = JSON.parse(quiet.body);
@@ -318,7 +378,7 @@ test('transcription returns text only from the transcription service', async () 
   await handle({
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-posfin-page': 'wirral' },
-    query: {},
+    query: { k: BORROWER_KEY },
     body: { action: 'transcribe', audio: Buffer.from('hello-audio-bytes'.repeat(80)).toString('base64'), mime: 'audio/webm' },
   }, spoken, live);
   const heard = JSON.parse(spoken.body);

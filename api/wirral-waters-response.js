@@ -1,7 +1,8 @@
 import { setPrivate, sendHtml, sendJson, readRaw } from '../lib/case-http.js';
 import { phaseOf } from '../lib/wirral-response.js';
 import { loadCase, commit } from '../lib/wirral-response-store.js';
-import { renderPage, responseParts } from '../lib/wirral-response-html.js';
+import { renderPage, renderLocked, responseParts } from '../lib/wirral-response-html.js';
+import { pageAccess, accessCookies } from '../lib/wirral-response-access.js';
 import { transcribe } from '../lib/run-sheet-store.js';
 
 const PAGE = 'wirral';
@@ -86,9 +87,23 @@ export default async function handler(req, res) {
   return handle(req, res, {});
 }
 
+function refuse(res, req) {
+  if (req.method === 'HEAD') {
+    res.statusCode = 404;
+    return res.end();
+  }
+  if (req.method === 'GET') return sendHtml(res, 404, renderLocked());
+  return sendJson(res, 404, { ok: false, message: 'Open the private link Posfin sent you.' });
+}
+
 export async function handle(req, res, deps = {}) {
   setPrivate(res);
-  const mode = modeOf(req);
+  const env = deps.env || process.env;
+  const gate = pageAccess(req, env);
+  const mode = gate.review && modeOf(req) === 'review' ? 'review' : 'borrower';
+  if (!gate.ok) return refuse(res, req);
+  const cookies = accessCookies(req, env);
+  if (cookies.length) res.setHeader('Set-Cookie', cookies.length === 1 ? cookies[0] : cookies);
   if (req.method === 'HEAD') {
     res.statusCode = 200;
     return res.end();
@@ -118,8 +133,8 @@ export async function handle(req, res, deps = {}) {
   }
   const action = actionFrom(body);
   if (!action) return sendJson(res, 400, { ok: false, message: 'That action is not available.' });
-  if (action.type === 'save_proposed' && mode !== 'review') {
-    return sendJson(res, 403, { ok: false, message: 'Lender-facing wording is saved from the staff review page.' });
+  if (action.type === 'save_proposed' && !gate.review) {
+    return sendJson(res, 403, { ok: false, message: 'Lender-facing wording is saved from the staff review link.' });
   }
   const saved = await commit(action, deps);
   if (!saved.ok) {
