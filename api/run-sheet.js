@@ -5,7 +5,7 @@
 // Uses the service role key held in the deployment env; never returns or logs it. Sends nothing to anyone.
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFields, sendJson, setPrivate } from '../lib/case-http.js';
-import { cleanItem, parisDate } from '../lib/run-sheet.js';
+import { batchClientId, cleanItem, isDailyRef, parisDate } from '../lib/run-sheet.js';
 
 const MAIN = 'https://vgflcrfaudrvrdmxjdtl.supabase.co';
 
@@ -51,17 +51,44 @@ export async function handleRunSheetApi(req, res, deps = {}) {
       const body = await readFields(req);
       const items = Array.isArray(body.items) ? body.items : [];
       const d = /^\d{4}-\d{2}-\d{2}$/.test(String(body.date || '')) ? body.date : date;
-      const rows = []; const errors = [];
+      const rows = []; const errors = []; const seen = new Set();
+      let daily = false;
       for (const raw of items.slice(0, 300)) {
         const c = cleanItem(raw);
         if (!c.ok) { errors.push({ ref: raw && raw.ref, error: c.error }); continue; }
-        rows.push({ sheet_date: d, item_ref: c.ref, entry_kind: c.retire ? 'retire' : 'item', payload: c.payload, actor_email: String(body.actor || 'lizzy').slice(0, 80), client_id: `api-${randomBytes(8).toString('hex')}` });
+        if (seen.has(c.ref)) { errors.push({ ref: c.ref, error: 'duplicate' }); continue; }
+        seen.add(c.ref);
+        if (isDailyRef(c.ref)) daily = true;
+        const stable = batchClientId(d, c.ref);
+        rows.push({
+          sheet_date: d,
+          item_ref: c.ref,
+          entry_kind: c.retire ? 'retire' : 'item',
+          payload: c.payload,
+          actor_email: String(body.actor || 'lizzy').slice(0, 80),
+          client_id: c.retire && stable ? `${stable}-retire` : (stable || `api-${randomBytes(8).toString('hex')}`),
+        });
       }
-      if (rows.length) {
-        const r = await fetcher(`${s.url}/rest/v1/run_sheet_entries`, { method: 'POST', headers: { ...s.headers, Prefer: 'return=minimal' }, body: JSON.stringify(rows) });
+      let skipped = 0;
+      let writing = rows;
+      if (daily) {
+        const existing = await fetcher(`${s.url}/rest/v1/run_sheet_entries?select=item_ref&sheet_date=eq.${d}&entry_kind=eq.item&item_ref=like.B*&limit=500`, { headers: s.headers });
+        if (existing.ok) {
+          const have = new Set((await existing.json()).map((row) => row.item_ref));
+          writing = rows.filter((row) => {
+            if (row.entry_kind === 'retire') return true;
+            if (isDailyRef(row.item_ref) && have.has(row.item_ref)) { skipped += 1; return false; }
+            return true;
+          });
+        }
+      }
+      if (writing.length) {
+        const url = daily ? `${s.url}/rest/v1/run_sheet_entries?on_conflict=client_id` : `${s.url}/rest/v1/run_sheet_entries`;
+        const prefer = daily ? 'return=minimal,resolution=ignore-duplicates' : 'return=minimal';
+        const r = await fetcher(url, { method: 'POST', headers: { ...s.headers, Prefer: prefer }, body: JSON.stringify(writing) });
         if (!r.ok) return sendJson(res, 502, { ok: false, error: 'store', status: r.status });
       }
-      return sendJson(res, 200, { ok: true, date: d, written: rows.length, errors });
+      return sendJson(res, 200, { ok: true, date: d, written: writing.length, skipped, idempotent: daily, errors });
     }
     if (req.method === 'DELETE' && q.test === '1') {
       const r = await fetcher(`${s.url}/rest/v1/run_sheet_entries?item_ref=like.TEST*`, { method: 'DELETE', headers: { ...s.headers, Prefer: 'return=representation' } });

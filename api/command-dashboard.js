@@ -18,6 +18,7 @@ import {
 import { meetingById, meetingsPayload, normaliseProgress, presentMeeting } from '../lib/meetings.js';
 import { loadSeatUsage } from '../lib/seat-usage.js';
 import { renderCommandLogin, renderCommandMessage, renderCommandPage } from '../lib/command-page.js';
+import { popupEnabled } from '../lib/run-sheet.js';
 
 function queryOf(req) {
   let fromUrl = {};
@@ -117,7 +118,7 @@ export async function handleCommandDashboard(req, res, deps = {}) {
     if (req.method === 'GET' && page) {
       const actor = await resolveCommandActor(req, { ...deps, env });
       if (!actor.ok) return sendHtml(res, 401, renderCommandLogin(''));
-      return sendHtml(res, 200, renderCommandPage(actor));
+      return sendHtml(res, 200, renderCommandPage(actor, { popup: popupEnabled(env) }));
     }
     if (req.method !== 'GET' && req.method !== 'POST') {
       return sendJson(res, 405, { error: 'That action is not available.' });

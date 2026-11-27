@@ -182,6 +182,7 @@
     { "source": "/staff/cockpit", "destination": "/api/staff-cockpit" },
     { "source": "/staff/run", "destination": "/api/staff-run-sheet" },
     { "source": "/staff/run-sheet", "destination": "/api/staff-run-sheet" },
+    { "source": "/staff/tasks", "destination": "/api/staff-run-sheet?view=popup" },
     { "source": "/staff/france/:caseId", "destination": "/api/fr-staff?caseId=:caseId" },
     { "source": "/staff/france", "destination": "/api/fr-staff" },
     { "source": "/staff/cases/:caseId/file/:submission", "destination": "/api/case-file?caseId=:caseId&submission=:submission&staff=1" },
