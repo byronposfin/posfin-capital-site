@@ -59,6 +59,7 @@
     n.loaded = true;
     n.version = "2.0";
     n.queue = [];
+    n.disablePushState = true;
     var script = document.createElement("script");
     script.async = true;
     script.src = "https://connect.facebook.net/en_US/fbevents.js";
@@ -93,11 +94,13 @@
   }
 
   function leadContext() {
+    var allowed = marketingAllowed();
     return {
       event_id: createEventId(),
       event_source_url: location.origin + location.pathname,
-      fbp: readCookie("_fbp"),
-      fbc: readCookie("_fbc"),
+      fbp: allowed ? readCookie("_fbp") : "",
+      fbc: allowed ? readCookie("_fbc") : "",
+      marketing: allowed,
     };
   }
 

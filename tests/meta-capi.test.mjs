@@ -106,7 +106,16 @@ test('Conversions API is skipped without a token, capped on timeout, and never l
     fetchImpl: () => { calls += 1; },
   });
   assert.equal(calls, 0);
-  assert.equal(verify.skipped, 'verify');
+  assert.equal(verify.skipped, 'not_live');
+  const refused = await safeMetaLeadFromRequest({
+    env: { META_CAPI_ACCESS_TOKEN: 'token' },
+    metaLead: { marketing: false, fbp: 'fb.1.1700000000000.1234567890' },
+    answers: { email: 'mary@example.com', phone: '07700900000', full_name: 'Mary Neil' },
+    req: { headers: { cookie: '_fbp=fb.1.1700000000000.1234567890', 'x-forwarded-for': '203.0.113.8', 'user-agent': 'Agent/1' } },
+    fetchImpl: () => { calls += 1; },
+  });
+  assert.equal(calls, 0);
+  assert.equal(refused.skipped, 'consent');
 
   const logs = [];
   const original = console.error;
@@ -239,6 +248,7 @@ test('a successful fact-find submit sends one deduped Lead and still succeeds wh
     'x-forwarded-for': '198.51.100.4',
     'user-agent': 'FactFindTest',
   };
+  const liveBody = { ...body, answers: { ...answers, full_name: 'Sarah Jones' }, meta_lead: { ...body.meta_lead, marketing: true } };
   const ok = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token', META_CAPI_TEST_EVENT_CODE: 'TEST999' }, { headers, body });
   assert.equal(ok.payload.ok, true);
   assert.equal(ok.payload.reference, 'POSFIN-WEB-LN2345');
@@ -256,12 +266,12 @@ test('a successful fact-find submit sends one deduped Lead and still succeeds wh
   assert.equal(capi[0].body.data[0].user_data.client_ip_address, '198.51.100.4');
   assert.doesNotMatch(JSON.stringify(capi[0].body), /land@example\.invalid|07700900000|SECRET/);
 
-  const down = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token', graph: 'throw' }, { headers, body });
+  const down = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token', graph: 'throw' }, { headers, body: liveBody });
   assert.equal(down.payload.ok, true);
   assert.match(down.logs.join('\n'), /"error":"network"/);
   assert.doesNotMatch(down.logs.join('\n'), /test-token|land@example/);
 
-  const http = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token', graph: '500' }, { headers, body });
+  const http = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token', graph: '500' }, { headers, body: liveBody });
   assert.equal(http.payload.ok, true);
   assert.match(http.logs.join('\n'), /"status":500/);
 
@@ -276,6 +286,29 @@ test('a successful fact-find submit sends one deduped Lead and still succeeds wh
   );
   assert.equal(synthetic.payload.ok, true);
   assert.equal(synthetic.calls.some((call) => call.url.includes('graph.facebook.com')), false);
+
+  const live = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token' }, { headers, body: liveBody });
+  assert.equal(live.payload.ok, true);
+  assert.equal(live.calls.filter((call) => call.url.includes('graph.facebook.com')).length, 1);
+
+  const declared = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token' }, { headers, body: { ...body, answers: landAnswers() } });
+  assert.equal(declared.payload.ok, true);
+  assert.equal(declared.calls.some((call) => call.url.includes('graph.facebook.com')), false);
+
+  const preview = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token', FF_BACKEND: 'preview' }, { headers, body: { ...liveBody, answers: { ...liveBody.answers, test_mode_ack: true } } });
+  assert.equal(preview.payload.ok, true);
+  assert.equal(preview.calls.some((call) => call.url.includes('graph.facebook.com')), false);
+
+  const testRun = await submitFactFind({ META_CAPI_ACCESS_TOKEN: 'test-token', FF_TEST_RUN: 'true' }, { headers, body: liveBody });
+  assert.equal(testRun.payload.ok, true);
+  assert.equal(testRun.calls.some((call) => call.url.includes('graph.facebook.com')), false);
+
+  const refusedLead = await submitFactFind(
+    { META_CAPI_ACCESS_TOKEN: 'test-token' },
+    { headers, body: { ...liveBody, meta_lead: { ...liveBody.meta_lead, marketing: false } } },
+  );
+  assert.equal(refusedLead.payload.ok, true);
+  assert.equal(refusedLead.calls.some((call) => call.url.includes('graph.facebook.com')), false);
 });
 
 test('the pixel loads site-wide, ViewContent is the fact find, and Lead waits for a saved submit', () => {
@@ -300,6 +333,11 @@ test('the pixel loads site-wide, ViewContent is the fact find, and Lead waits fo
   assert.match(read('fact-find.html'), /07365 587773/);
   assert.match(read('fact-find.html'), /tel:\+447365587773/);
   assert.match(read('fact-find.html'), /data-posfin-page="fact-find"/);
+  const page = read('fact-find.html');
+  assert.ok(page.indexOf('searchParams.delete("resume")') < page.indexOf('src="/meta-pixel.js"'));
+  assert.match(form, /posfin_ff_resume/);
+  assert.doesNotMatch(form, /history\.replaceState\(null,"","\/fact-find\?resume=/);
+  assert.match(form, /metaLead\.marketing!==false/);
   assert.match(read('api/factfind.js'), /safeMetaLeadFromRequest/);
 
   const skip = /^(staff|admin|engine|smartlink|components)(\/|$)/;
@@ -371,6 +409,7 @@ test('the browser pixel queues PageView, ViewContent on the fact find, and Lead 
   assert.equal(context.event_id, EVENT);
   assert.equal(context.fbp, 'fb.1.1700000000000.1234567890');
   assert.equal(context.event_source_url, 'https://posfincapital.com/apply');
+  assert.equal(context.marketing, true);
   factFind.window.PosfinMeta.trackLead(context.event_id);
   const lead = factFind.calls().find((call) => call[1] === 'Lead');
   assert.equal(lead[0], 'track');
@@ -380,7 +419,9 @@ test('the browser pixel queues PageView, ViewContent on the fact find, and Lead 
   const direct = runPixel({ path: '/fact-find' });
   assert.equal(direct.calls().some((call) => call[1] === 'ViewContent'), true);
 
-  const blocked = runPixel({ consent: false, page: 'fact-find' });
+  const blocked = runPixel({ consent: false, page: 'fact-find', cookie: '_fbp=fb.1.1700000000000.1234567890' });
+  assert.equal(blocked.window.PosfinMeta.leadContext().marketing, false);
+  assert.equal(blocked.window.PosfinMeta.leadContext().fbp, '');
   assert.equal(blocked.window.fbq, undefined);
   assert.deepEqual(blocked.inserted, []);
   blocked.window.PosfinMeta.trackLead(EVENT);
