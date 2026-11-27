@@ -7,7 +7,7 @@ import { bindMoneyInput, bindPostcode } from "/lib/ff-inputs.js?v=20261104-live"
 import { FINDER_MARKUP, bindSecurityAddressPicker } from "/lib/ff-address-picker.js?v=20261120-address";
 import { money, renderScorecard } from "/lib/ff-finance.js?v=20261121-factfind";
 import { looksLikeTestLead } from "/lib/ff-test-lead.js?v=20261121-factfind";
-import { createSingleFlight } from "/lib/ff-save-queue.js?v=20261121-factfind";
+import { createSingleFlight, resumeTokenForLoad } from "/lib/ff-save-queue.js?v=20261127-meta";
 import * as S from "/lib/ff-schema.js?v=20261126-factfind";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
@@ -317,8 +317,12 @@ $("#linkOut").addEventListener("focus",e=>e.target.select());
 // init
 show(0); await checkHealth(); $("#ff").inert=false;
 const q=new URLSearchParams(location.search);
-let resumeToken="";
-try{ resumeToken=q.get("resume")||sessionStorage.getItem("posfin_ff_resume")||""; }catch(e){ resumeToken=q.get("resume")||""; }
+let storedResume="", navigation="navigate";
+try{ storedResume=sessionStorage.getItem("posfin_ff_resume")||""; }catch(e){}
+try{ const nav=performance.getEntriesByType("navigation")[0]; if(nav&&nav.type) navigation=nav.type; }catch(e){}
+const resumeDecision=resumeTokenForLoad({ query:q.get("resume")||"", handedOff:window.__posfinResumeCode||"", stored:storedResume, navigation });
+const resumeToken=resumeDecision.token;
+if(resumeDecision.clearStored){ try{ sessionStorage.removeItem("posfin_ff_resume"); }catch(e){} }
 const p=S.normalisePurpose(q.get("purpose") ?? q.get("loanPurpose") ?? q.get("loan_purpose")); if(p && O.purpose.includes(p)) document.getElementById("purpose").value=p;
 const pt=q.get("asset"); if(pt && O.asset_type.includes(pt)) document.getElementById("asset_type").value=pt;
 syncBranches();
