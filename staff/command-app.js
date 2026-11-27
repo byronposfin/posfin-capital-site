@@ -908,20 +908,29 @@
     paint();
   }
 
+  function raceStillCurrent(seq, wanted) {
+    return Boolean(state.race)
+      && seq === state.raceSeq
+      && state.race.caseId === wanted.caseId
+      && state.race.audience === wanted.audience
+      && state.race.tab === wanted.tab;
+  }
+
   async function refreshRace(silent) {
     const race = state.race;
     if (!race || document.hidden) return;
     const seq = ++state.raceSeq;
+    const wanted = { caseId: race.caseId, audience: race.audience, tab: race.tab };
     const params = new URLSearchParams({
       action: "race-card",
-      case: race.caseId,
+      case: wanted.caseId,
       format: "fragment",
-      audience: race.audience,
-      tab: race.tab,
+      audience: wanted.audience,
+      tab: wanted.tab,
     });
     const response = await fetch(`${DATA}?${params}`, { credentials: "same-origin", headers: { Accept: "text/html" } });
-    if (!state.race || state.race.caseId !== race.caseId || seq !== state.raceSeq) return;
     const html = await response.text();
+    if (!raceStillCurrent(seq, wanted)) return;
     if (response.status === 401) {
       state.race.error = "Your sign-in has expired.";
       state.race.loading = false;

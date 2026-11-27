@@ -8,6 +8,7 @@ import { handleCommandDashboard } from '../api/command-dashboard.js';
 import pipeline from '../api/staff-pipeline.js';
 import { establishSession } from '../lib/cockpit-store.js';
 import { renderPipeline } from '../lib/pipeline-html.js';
+import { byronOnlyCaseKeys } from '../lib/command-dashboard.js';
 import {
   bdmName,
   headlineLine,
@@ -200,7 +201,10 @@ test('the command route calls the race card RPC with the service role and leaves
   assert.equal(rpc.headers['Accept-Profile'], undefined);
   assert.deepEqual(JSON.parse(rpc.body), { p_case_ref: 'UNASSIGNED-HIMANSHU' });
   assert.equal(calls.some((item) => item.url.includes('v_eligibility_matched_lenders?case_ref=eq.UNASSIGNED-HIMANSHU')), true);
-  assert.equal(calls.some((item) => item.url.includes('command_dashboard_snapshots')), false);
+  const snaps = calls.filter((item) => item.url.includes('command_dashboard_snapshots'));
+  assert.equal(snaps.length, 1);
+  assert.match(snaps[0].url, /pipeline_private_byron/);
+  assert.equal(snaps[0].url.includes('finance_byron_only'), false);
 
   const page = response();
   await handleCommandDashboard({
@@ -262,6 +266,152 @@ test('deal flow keeps its board and adds a separate race card page', async () =>
   assert.equal(card.body.includes('westoneloans.co.uk'), false);
   assert.equal(card.body.includes('1.5% to Posfin'), false);
   assert.equal(calls.some((item) => item.url.includes('/rpc/current_race_card')), true);
+});
+
+test('a private case stays with Byron on the race card routes', async () => {
+  assert.equal(byronOnlyCaseKeys([
+    { section: 'pipeline', payload: { cases: [{ id: 'PUBLIC-1', private: false }, { id: 'HIDE-1', private: 'Y', case_ref: 'hide-1' }] } },
+    { section: 'pipeline_private_byron', payload: { cases: [{ id: 'TEST-PRIVATE-001', case_ref: 'UNASSIGNED-SECRET' }] } },
+  ]).has('TEST-PRIVATE-001'), true);
+  const keys = byronOnlyCaseKeys([
+    { section: 'pipeline_private_byron', payload: { cases: [{ id: 'TEST-PRIVATE-001', case_ref: 'UNASSIGNED-SECRET' }] } },
+    { section: 'pipeline', payload: { cases: [{ id: 'PUBLIC-1' }, { id: 'HIDE-1', byron_only: true }] } },
+  ]);
+  assert.equal(keys.has('UNASSIGNED-SECRET'), true);
+  assert.equal(keys.has('HIDE-1'), true);
+  assert.equal(keys.has('PUBLIC-1'), false);
+
+  const env = {
+    STAFF_AUTH_MODE: 'supabase',
+    VERCEL_ENV: 'production',
+    STAFF_SUPABASE_URL: 'https://example.test',
+    SUPABASE_URL: 'https://example.test',
+    STAFF_SUPABASE_ANON_KEY: 'anon-key',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role-test',
+  };
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    const target = String(url);
+    calls.push(target);
+    if (target.includes('/auth/v1/user')) {
+      const token = String(options.headers?.Authorization || '');
+      const email = token.includes('byron-token') ? 'byron.hill@posfincapital.com' : 'cai@posfincapital.com';
+      return json(200, { email });
+    }
+    if (target.includes('/rpc/staff_caller')) {
+      const token = String(options.headers?.Authorization || '');
+      const byron = token.includes('byron-token');
+      return json(200, [{ email: byron ? 'byron.hill@posfincapital.com' : 'cai@posfincapital.com', seat_code: byron ? 'byron' : 'cai', role: byron ? 'principal' : 'case_owner' }]);
+    }
+    if (target.includes('command_dashboard_snapshots')) {
+      return json(200, [{ section: 'pipeline_private_byron', payload: { cases: [{ id: 'TEST-PRIVATE-001' }] } }]);
+    }
+    if (target.includes('/rpc/current_race_card')) return json(200, CARD);
+    if (target.includes('/v_eligibility_matched_lenders')) return json(200, matches(1));
+    return json(404, {});
+  };
+  const cai = response();
+  await handleCommandDashboard({
+    method: 'GET',
+    url: '/api/command-dashboard?action=race-card&case=TEST-PRIVATE-001',
+    query: { action: 'race-card', case: 'TEST-PRIVATE-001' },
+    headers: { cookie: 'pf_staff=sb1.cai-token' },
+  }, cai, { env, fetch: fetchImpl });
+  assert.equal(cai.status, 403);
+  assert.match(cai.body, /limited to Byron/);
+  assert.equal(calls.some((url) => url.includes('/rpc/current_race_card')), false);
+
+  const byron = response();
+  await handleCommandDashboard({
+    method: 'GET',
+    url: '/api/command-dashboard?action=race-card&case=TEST-PRIVATE-001',
+    query: { action: 'race-card', case: 'TEST-PRIVATE-001' },
+    headers: { cookie: 'pf_staff=sb1.byron-token' },
+  }, byron, { env, fetch: fetchImpl });
+  assert.equal(byron.status, 200);
+  assert.equal(JSON.parse(byron.body).case_ref, 'TEST-PRIVATE-001');
+  assert.equal(calls.some((url) => url.includes('/rpc/current_race_card')), true);
+});
+
+test('a late staff refresh does not replace the borrower view', async () => {
+  execFileSync(process.execPath, ['--check', fileURLToPath(new URL('../staff/command-app.js', import.meta.url))]);
+  const listeners = {};
+  let intervalFn = null;
+  const panel = { innerHTML: '' };
+  const slot = { innerHTML: '' };
+  const document = {
+    hidden: false,
+    activeElement: null,
+    body: { dataset: { seat: 'chris', finance: '0', name: 'Chris Shipton' } },
+    querySelector(sel) {
+      if (sel === '#panel') return panel;
+      if (sel === '#fresh' || sel === '#seat-badge') return { textContent: '' };
+      return null;
+    },
+    querySelectorAll() { return []; },
+    getElementById(id) { return id === 'race-body' ? slot : null; },
+    addEventListener(type, fn) { (listeners[type] ||= []).push(fn); },
+  };
+  const dashboard = {
+    ok: true,
+    seat: 'chris',
+    displayName: 'Chris Shipton',
+    canViewFinance: false,
+    pipeline: { cases: [{ id: 'UNASSIGNED-HIMANSHU', name: 'Himanshu', stage: 'Live' }] },
+    overview: { kpis: {}, standing_rules: [], highlights: [] },
+    roster: { agents: [] },
+    tasks: { cards: [] },
+    lenders: { active_case_lenders: [] },
+    files: {},
+    thread: [],
+  };
+  let staffLoads = 0;
+  let releaseStaff = () => {};
+  const context = {
+    document,
+    location: { hash: '#pipeline' },
+    history: { replaceState() {} },
+    console,
+    fetch: async (url) => {
+      const target = String(url);
+      if (target.includes('action=race-card') && target.includes('audience=borrower')) {
+        return { ok: true, status: 200, text: async () => '<article class="race-sheet">Borrower-facing view</article>', json: async () => ({}) };
+      }
+      if (target.includes('action=race-card')) {
+        staffLoads += 1;
+        if (staffLoads > 1) await new Promise((resolve) => { releaseStaff = resolve; });
+        return { ok: true, status: 200, text: async () => '<article class="race-sheet">1.5% to Posfin</article>', json: async () => ({}) };
+      }
+      return { ok: true, status: 200, json: async () => dashboard, text: async () => '' };
+    },
+    setInterval(fn) { intervalFn = fn; return 1; },
+    clearInterval() {},
+    setTimeout,
+    clearTimeout,
+    Map,
+    Intl,
+    URL,
+    URLSearchParams,
+    Promise,
+  };
+  context.window = { document, location: context.location, addEventListener(type, fn) { (listeners[type] ||= []).push(fn); } };
+  vm.createContext(context);
+  vm.runInContext(readFileSync(new URL('../staff/command-app.js', import.meta.url), 'utf8'), context);
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  const click = (closest) => listeners.click[0]({ target: { closest, dataset: {}, id: '', getAttribute: () => '' } });
+  await click((sel) => (sel === '[data-race-card]' ? { dataset: { raceCard: 'UNASSIGNED-HIMANSHU' }, getAttribute: () => 'UNASSIGNED-HIMANSHU' } : null));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.match(panel.innerHTML, /1\.5% to Posfin/);
+  const slow = intervalFn();
+  await click((sel) => (sel === '[data-race-audience]' ? { dataset: { raceAudience: 'borrower' } } : null));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.match(panel.innerHTML, /Borrower-facing view/);
+  releaseStaff();
+  await slow;
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.match(panel.innerHTML, /Borrower-facing view/);
+  assert.equal(panel.innerHTML.includes('1.5% to Posfin'), false);
+  assert.equal(slot.innerHTML.includes('1.5% to Posfin'), false);
 });
 
 test('the command client opens the race card without leaving the case list', async () => {

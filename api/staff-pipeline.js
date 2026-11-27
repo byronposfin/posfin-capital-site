@@ -1,5 +1,6 @@
 import { readCookie, readFields, redirect, sendHtml, sendJson, setPrivate, writeStaffCookie } from '../lib/case-http.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
+import { caseIsByronOnly, resolveCommandActor } from '../lib/command-dashboard.js';
 import { applyDeskMoves, filterOwner, groupColumns, loadCrmBoard, selectLeads, summariseLeads, windowDays } from '../lib/pipeline.js';
 import { renderConfirm, renderPipeline, renderPipelineLogin } from '../lib/pipeline-html.js';
 import { BROKA, confirmCopy, feeDraft, lenderChoices, nextLor, queueExternal, scrub } from '../lib/pipeline-actions.js';
@@ -139,7 +140,7 @@ function queryOf(req) {
   return { ...fromUrl, ...(req.query || {}) };
 }
 
-async function serveRace(res, env, deps, query) {
+async function serveRace(req, res, env, deps, query) {
   const caseRef = normaliseCaseRef(query.race);
   const audience = audienceOf(query.audience);
   const tab = tabOf(query.tab);
@@ -149,6 +150,25 @@ async function serveRace(res, env, deps, query) {
     return format === 'json'
       ? sendJson(res, 400, { error: message })
       : sendHtml(res, 400, renderRaceCardDocument({ ok: false, error: message, audience, tab }, { surface: 'pipeline' }));
+  }
+  const actor = await resolveCommandActor(req, { env, fetch: deps.fetch });
+  if (!actor.ok || actor.seat !== 'byron') {
+    try {
+      if (await caseIsByronOnly(env, deps.fetch, caseRef)) {
+        const message = 'That case is limited to Byron.';
+        return format === 'json'
+          ? sendJson(res, 403, { error: message })
+          : sendHtml(res, 403, renderRaceCardDocument({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'pipeline' }));
+      }
+    } catch (error) {
+      if (error?.code !== 'schema_pending') {
+        const status = error?.code === 'not_configured' ? 503 : 502;
+        const message = error?.publicMessage || 'The current race card could not be read.';
+        return format === 'json'
+          ? sendJson(res, status, { error: message })
+          : sendHtml(res, status, renderRaceCardDocument({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'pipeline' }));
+      }
+    }
   }
   try {
     const model = await loadRaceBundle(env, deps.fetch || fetch, caseRef, { audience, tab });
@@ -183,7 +203,7 @@ export default async function handler(req, res, deps = {}) {
     const session = readCookie(req, 'pf_staff');
     if (!session || !await sessionAllows(session, { env, fetch: deps.fetch })) return sendHtml(res, 401, renderPipelineLogin());
     const query = queryOf(req);
-    if (query.race) return serveRace(res, env, deps, query);
+    if (query.race) return serveRace(req, res, env, deps, query);
     const now = Date.now();
     const cfg = pipelineConfig(env);
     const loaded = await fetchLeads(cfg, fetch, now);

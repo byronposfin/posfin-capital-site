@@ -6,6 +6,7 @@ import { endSession, establishSession } from '../lib/cockpit-store.js';
 import {
   askLizzy,
   insertThreadMessage,
+  caseIsByronOnly,
   loadCommandRows,
   presentDashboard,
   presentFinance,
@@ -161,6 +162,26 @@ export async function handleCommandDashboard(req, res, deps = {}) {
             ? renderRaceCardDocument({ ok: false, error: message, audience, tab }, { surface: 'command' })
             : renderRaceCardFragment({ ok: false, error: message, audience, tab }, { surface: 'command', interactive: 'drawer' }))
           : sendJson(res, 400, { error: message });
+      }
+      if (actor.seat !== 'byron') {
+        try {
+          if (await caseIsByronOnly(env, deps.fetch, caseRef)) {
+            const message = 'That case is limited to Byron.';
+            return format === 'html' || format === 'fragment'
+              ? sendHtml(res, 403, format === 'html'
+                ? renderRaceCardDocument({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'command' })
+                : renderRaceCardFragment({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'command', interactive: 'drawer' }))
+              : sendJson(res, 403, { error: message });
+          }
+        } catch (error) {
+          const mapped = dataError(error);
+          const message = error.publicMessage || mapped.error;
+          return format === 'html' || format === 'fragment'
+            ? sendHtml(res, mapped.status, format === 'html'
+              ? renderRaceCardDocument({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'command' })
+              : renderRaceCardFragment({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'command', interactive: 'drawer' }))
+            : sendJson(res, mapped.status, { error: message });
+        }
       }
       try {
         const model = await loadRaceBundle(env, deps.fetch || fetch, caseRef, { audience, tab });
