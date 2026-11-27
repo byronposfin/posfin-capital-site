@@ -84,13 +84,31 @@ function emptyIntake() {
   };
 }
 
+function deskRef(card) {
+  const ref = String(card && card.caseRef || '').trim();
+  if (ref) return ref;
+  return String(card && card.id || '').trim();
+}
+
+function withDeskRef(card) {
+  const ref = deskRef(card);
+  if (!ref || ref === card.caseRef) return card;
+  return { ...card, caseRef: ref };
+}
+
+function deskLabel(card) {
+  return String(card.caseRef || '').trim() || card.name || card.id || '';
+}
+
 function stamp(board) {
   const state = globalThis.__posfinPipelineActions || { lors: [], els: [], queue: [] };
   const cards = board.columns.flatMap((column) => column.cards).concat(board.parked, board.completed);
   for (const card of cards) {
-    const versions = state.lors.filter((item) => item.caseRef === card.caseRef).map((item) => item.version);
+    const ref = deskRef(card);
+    if (!ref) continue;
+    const versions = state.lors.filter((item) => item.caseRef === ref).map((item) => item.version);
     if (versions.length) card.history.push({ source: 'desk', stage: card.stage, note: `LOR versions kept: ${versions.join(', ')}` });
-    const waiting = state.queue.filter((item) => item.caseRef === card.caseRef && item.status === 'awaiting Byron approval');
+    const waiting = state.queue.filter((item) => item.caseRef === ref && item.status === 'awaiting Byron approval');
     for (const item of waiting) card.history.push({ source: 'desk', stage: card.stage, note: `${item.kind} awaiting Byron approval` });
   }
   return board;
@@ -180,24 +198,26 @@ async function handleAction(fields, res, env, owner, demo) {
   if (!card) return sendHtml(res, 404, renderPipeline(current.board, viewOptions(current.board, current.loaded, current.cfg, owner, demo, 'That card is not on this board. Nothing was sent.')));
   const now = new Date().toISOString();
   const actor = 'Byron';
+  const subject = withDeskRef(card);
+  const who = deskLabel(card);
   const lenders = lenderChoices([].concat(fields.lenders || []));
   if (fields.action === 'lor') {
-    const made = nextLor(bag().lors, card, actor, now);
+    const made = nextLor(bag().lors, subject, actor, now);
     bag().lors.push(made.doc);
     card.history.push({ source: 'desk', stage: card.stage, note: `LOR v${made.doc.version} drafted. Prior versions kept: ${made.kept}. Not sent.` });
-    return sendHtml(res, 200, renderPipeline(current.board, viewOptions(current.board, current.loaded, current.cfg, owner, demo, `LOR v${made.doc.version} saved for ${card.caseRef}. It has not been sent. PLACED was not called.`)));
+    return sendHtml(res, 200, renderPipeline(current.board, viewOptions(current.board, current.loaded, current.cfg, owner, demo, `LOR v${made.doc.version} saved for ${who}. It has not been sent. PLACED was not called.`)));
   }
   if (fields.action === 'el') {
     const fees = feeDraft(card.loan, fields.proc, fields.broker);
-    bag().els.push({ caseRef: card.caseRef, at: now, ...fees, status: 'draft' });
+    bag().els.push({ caseRef: subject.caseRef, at: now, ...fees, status: 'draft' });
     const amounts = fees.loan == null ? 'Loan not confirmed, so the fee amounts are blank.' : `Proc ${fees.procPct}% and broker ${fees.brokerPct}%.`;
-    return sendHtml(res, 200, renderPipeline(current.board, viewOptions(current.board, current.loaded, current.cfg, owner, demo, `EL draft saved for ${card.caseRef}. ${amounts} Not sent for signature.`)));
+    return sendHtml(res, 200, renderPipeline(current.board, viewOptions(current.board, current.loaded, current.cfg, owner, demo, `EL draft saved for ${who}. ${amounts} Not sent for signature.`)));
   }
   const external = fields.action === 'title' || fields.action === 'send-lor';
   if (external && fields.confirm !== 'yes') {
     const preview = queueExternal({
       kind: fields.action,
-      caseRef: card.caseRef,
+      caseRef: subject.caseRef,
       lenders,
       chosen: [].concat(fields.lenders || [BROKA]),
       cost: fields.action === 'title' ? 'HMLR official copies are a paid order. The price is not confirmed here.' : 'No send fee is charged from this page.',
@@ -208,7 +228,7 @@ async function handleAction(fields, res, env, owner, demo) {
   }
   const queued = queueExternal({
     kind: fields.action,
-    caseRef: card.caseRef,
+    caseRef: subject.caseRef,
     lenders,
     chosen: [].concat(fields.lenders || [BROKA]),
     cost: fields.action === 'title' ? 'HMLR official copies are a paid order. The price is not confirmed here.' : 'No send fee is charged from this page.',
@@ -217,7 +237,7 @@ async function handleAction(fields, res, env, owner, demo) {
   });
   bag().queue.push(queued);
   card.history.push({ source: 'desk', stage: card.stage, note: `${queued.kind} queued as ${queued.status}. PLACED not called.` });
-  return sendHtml(res, 200, renderPipeline(current.board, viewOptions(current.board, current.loaded, current.cfg, owner, demo, `${queued.caseRef} is awaiting Byron approval. Recipients: ${queued.recipients.join(', ')}. Nothing was sent or charged.`)));
+  return sendHtml(res, 200, renderPipeline(current.board, viewOptions(current.board, current.loaded, current.cfg, owner, demo, `${who} is awaiting Byron approval. Recipients: ${queued.recipients.join(', ')}. Nothing was sent or charged.`)));
 }
 
 export default async function handler(req, res) {
@@ -236,7 +256,7 @@ export default async function handler(req, res) {
       if (fields.action === 'lor' || fields.action === 'el' || fields.action === 'title' || fields.action === 'send-lor' || fields.action === 'move' || fields.action === 'route-chris') {
         const session = readCookie(req, 'pf_staff');
         if (!session || !await sessionAllows(session, { env })) return sendHtml(res, 401, renderPipelineLogin({ demo }));
-        return handleAction(fields, res, env, 'all', demo);
+        return await handleAction(fields, res, env, 'all', demo);
       }
     }
     const { demo, owner } = pipelineMode(req);

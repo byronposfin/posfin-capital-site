@@ -262,6 +262,35 @@ test('the desk serves live Supabase rows and a separate synthetic demo', async (
     const contacting = demoMoved.body.split('data-stage="contacting"')[1].split('data-stage=')[0];
     assert.match(contacting, /Example Pipeline One/);
 
+    globalThis.fetch = async (url, options = {}) => {
+      calls.push({ url: String(url), method: options.method || 'GET', headers: options.headers || {}, body: options.body || '' });
+      return {
+        ok: true,
+        status: 200,
+        json: async () => [
+          liveRow(),
+          { ...liveRow(), id: 'real-2', full_name: 'Second Borrower Live', email: 'second.borrower@example.invalid' },
+        ],
+      };
+    };
+    const drafted = response();
+    await handler({
+      method: 'POST',
+      url: '/staff/cockpit/pipeline',
+      headers: { cookie, 'content-type': 'application/x-www-form-urlencoded' },
+      body: { action: 'lor', case: 'lead:real-1' },
+    }, drafted);
+    assert.equal(drafted.status, 200);
+    assert.match(drafted.body, /LOR v1 saved for Real Borrower Live/);
+    const afterLor = response();
+    await handler({ method: 'GET', url: '/staff/cockpit/pipeline', headers: { cookie } }, afterLor);
+    const articles = afterLor.body.split('<article class="card"').slice(1);
+    const first = articles.find((article) => article.includes('Real Borrower Live'));
+    const second = articles.find((article) => article.includes('Second Borrower Live'));
+    assert.match(first, /LOR versions kept: 1/);
+    assert.equal(second.includes('LOR versions kept'), false);
+    assert.equal(second.includes('Real Borrower Live'), false);
+
     const blocked = response();
     process.env.PIPELINE_SUPABASE_URL = 'https://example.supabase.co';
     const callsAtBlocked = calls.length;
@@ -279,6 +308,16 @@ test('the desk serves live Supabase rows and a separate synthetic demo', async (
     assert.match(failed.body, /Synthetic placeholder cards are not shown/);
     for (const name of PLACEHOLDERS) assert.equal(failed.body.includes(name), false, name);
     assert.equal(failed.body.includes('Real Borrower Live'), false);
+    const failedPost = response();
+    await handler({
+      method: 'POST',
+      url: '/staff/cockpit/pipeline',
+      headers: { cookie, 'content-type': 'application/x-www-form-urlencoded' },
+      body: { action: 'move', case: 'lead:real-1', to: 'parked', moved_by: 'Byron' },
+    }, failedPost);
+    assert.equal(failedPost.status, 503);
+    assert.match(failedPost.body, /Synthetic placeholder cards are not shown/);
+    assert.equal(failedPost.body.includes('Example Pipeline One'), false);
   } finally {
     globalThis.fetch = previousFetch;
     globalThis.__posfinPipelineActions = previousBag;
