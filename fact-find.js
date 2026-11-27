@@ -259,15 +259,26 @@ async function resume(c){
     }
   }catch(e){ if(mode==="server"){ setMode("local"); return resume(c);} rs.textContent="Could not open that draft."; rs.className="status bad"; }
 }
+function metaLeadContext(){
+  try{ if(window.PosfinMeta&&typeof window.PosfinMeta.leadContext==="function") return window.PosfinMeta.leadContext(); }catch(e){}
+  let event_id="";
+  try{ event_id=crypto.randomUUID(); }catch(e){}
+  return {event_id, event_source_url:location.origin+location.pathname};
+}
+function trackMetaLead(eventId){
+  try{ if(eventId&&window.PosfinMeta&&typeof window.PosfinMeta.trackLead==="function") window.PosfinMeta.trackLead(eventId); }catch(e){}
+}
 async function submit(){
   const all=S.validate(collect(),true,testMode).errors; if(Object.keys(all).length){ const k=showErr(all); const si=["total_properties_owned","additional_properties"].includes(k)?1:STEPS.findIndex(s=>s.f.some(x=>x[0]===k)); if(si>=0) show(si); setStatus("Please check the highlighted answers.","bad"); return; }
   if(!code && !(await save(true))) return;
   $("#next").disabled=true; setStatus("Submitting…");
   try{
     if(mode==="server"){
-      const {status,j}=await api({action:"submit",code,answers:collect()});
+      const metaLead=metaLeadContext();
+      const {status,j}=await api({action:"submit",code,answers:collect(),meta_lead:metaLead});
       if(down(status)){ setMode("local", j.error); $("#next").disabled=false; return submit(); }
       if(!j.ok){ if(j.fieldErrors) showErr(j.fieldErrors); setStatus(j.message||"Could not submit. Please check your answers.","bad"); return; }
+      trackMetaLead(metaLead.event_id);
       if(j.testMode||looksLikeTestLead(collect())) namedTest=true;
       const summary=routeCard(collect())+renderScorecard(collect())+renderProperties(collect());
       $("#ff").innerHTML='<h2>Your fact find is saved</h2><p id="submittedReference"></p><p>Thank you. We will review your declared figures and confirm the outstanding details together.</p>'+summary+'<p><a href="/">Back to the home page</a></p>';
