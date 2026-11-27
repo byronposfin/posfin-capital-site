@@ -1,8 +1,10 @@
-import { readCookie, readFields, redirect, sendHtml, setPrivate, writeStaffCookie } from '../lib/case-http.js';
+import { readCookie, readFields, redirect, sendHtml, sendJson, setPrivate, writeStaffCookie } from '../lib/case-http.js';
 import { establishSession, sessionAllows } from '../lib/cockpit-store.js';
+import { caseIsByronOnly, resolveCommandActor } from '../lib/command-dashboard.js';
 import { applyDeskMoves, filterOwner, groupColumns, loadCrmBoard, selectLeads, summariseLeads, windowDays } from '../lib/pipeline.js';
 import { renderConfirm, renderPipeline, renderPipelineLogin } from '../lib/pipeline-html.js';
 import { BROKA, confirmCopy, feeDraft, lenderChoices, nextLor, queueExternal, scrub } from '../lib/pipeline-actions.js';
+import { audienceOf, loadRaceBundle, normaliseCaseRef, renderRaceCardDocument, tabOf } from '../lib/race-card.js';
 
 const MAIN = 'https://vgflcrfaudrvrdmxjdtl.supabase.co';
 
@@ -128,9 +130,61 @@ function handleAction(fields, res, env, owner) {
   return sendHtml(res, 200, renderPipeline(board, { owner, banner: `${queued.caseRef} is awaiting Byron approval. Recipients: ${queued.recipients.join(', ')}. Nothing was sent or charged.` }));
 }
 
-export default async function handler(req, res) {
+function queryOf(req) {
+  let fromUrl = {};
+  try {
+    fromUrl = Object.fromEntries(new URL(req.url || '/', 'http://localhost').searchParams);
+  } catch {
+    fromUrl = {};
+  }
+  return { ...fromUrl, ...(req.query || {}) };
+}
+
+async function serveRace(req, res, env, deps, query) {
+  const caseRef = normaliseCaseRef(query.race);
+  const audience = audienceOf(query.audience);
+  const tab = tabOf(query.tab);
+  const format = String(query.format || '').trim().toLowerCase();
+  if (!caseRef) {
+    const message = 'A valid case reference is required.';
+    return format === 'json'
+      ? sendJson(res, 400, { error: message })
+      : sendHtml(res, 400, renderRaceCardDocument({ ok: false, error: message, audience, tab }, { surface: 'pipeline' }));
+  }
+  const actor = await resolveCommandActor(req, { env, fetch: deps.fetch });
+  if (!actor.ok || actor.seat !== 'byron') {
+    try {
+      if (await caseIsByronOnly(env, deps.fetch, caseRef)) {
+        const message = 'That case is limited to Byron.';
+        return format === 'json'
+          ? sendJson(res, 403, { error: message })
+          : sendHtml(res, 403, renderRaceCardDocument({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'pipeline' }));
+      }
+    } catch (error) {
+      if (error?.code !== 'schema_pending') {
+        const status = error?.code === 'not_configured' ? 503 : 502;
+        const message = error?.publicMessage || 'The current race card could not be read.';
+        return format === 'json'
+          ? sendJson(res, status, { error: message })
+          : sendHtml(res, status, renderRaceCardDocument({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'pipeline' }));
+      }
+    }
+  }
+  try {
+    const model = await loadRaceBundle(env, deps.fetch || fetch, caseRef, { audience, tab });
+    if (format === 'json') return sendJson(res, 200, model);
+    return sendHtml(res, 200, renderRaceCardDocument(model, { surface: 'pipeline' }));
+  } catch (error) {
+    const status = error?.code === 'not_configured' || error?.code === 'schema_pending' ? 503 : 502;
+    const message = error?.publicMessage || 'The current race card could not be read.';
+    if (format === 'json') return sendJson(res, status, { error: message });
+    return sendHtml(res, status, renderRaceCardDocument({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'pipeline' }));
+  }
+}
+
+export default async function handler(req, res, deps = {}) {
   setPrivate(res);
-  const env = process.env;
+  const env = deps.env || process.env;
   try {
     if (req.method === 'POST') {
       const fields = await readFields(req);
@@ -147,7 +201,9 @@ export default async function handler(req, res) {
       }
     }
     const session = readCookie(req, 'pf_staff');
-    if (!session || !await sessionAllows(session, { env })) return sendHtml(res, 401, renderPipelineLogin());
+    if (!session || !await sessionAllows(session, { env, fetch: deps.fetch })) return sendHtml(res, 401, renderPipelineLogin());
+    const query = queryOf(req);
+    if (query.race) return serveRace(req, res, env, deps, query);
     const now = Date.now();
     const cfg = pipelineConfig(env);
     const loaded = await fetchLeads(cfg, fetch, now);
