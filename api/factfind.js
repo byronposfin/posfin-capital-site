@@ -14,6 +14,8 @@ import {isLand,belowMinimum} from '../lib/ff-land.js';
 //   FF_ALLOW_TEST_IN_PRODUCTION  optional "true"; without it the preview/test backend refuses to run on a production deployment
 //   FF_TEST_RUN      optional "true" (leads backend only): rows get reference TEST-WEB-xxxxxx and is_test=true.
 //                    Refused on a production deployment (VERCEL_ENV=production).
+//   META_CAPI_ACCESS_TOKEN       optional. Conversions API Lead after a real submit. Unset skips it.
+//   META_CAPI_TEST_EVENT_CODE    optional Meta test_event_code for that Lead.
 // Leads backend also sends p_meta: salted SHA-256 of IP and user agent (never raw), utm_*, broker tag (?b=bh|chris),
 // landing path, referrer host, consent text version and form version.
 import crypto from "node:crypto";
@@ -25,6 +27,7 @@ import { validate } from "../lib/ff-schema.js";
 import { POSFIN_PHONE_DISPLAY } from "../lib/contact.js";
 import { looksLikeTestLead, referencePrefix, responseTestMode } from "../lib/ff-test-lead.js";
 import { buildBrokaSpine } from "../lib/broka-spine.js";
+import { safeMetaLeadFromRequest } from "../lib/meta-capi.js";
 
 export const VERSION = "uk-v005-land-v12";
 export const CONSENT_VERSION = "uk-consent-v2-2026-11-21"; // bump whenever the consent wording on /fact-find changes
@@ -247,6 +250,16 @@ export default async function handler(req, res) {
     } else alert = await previewSubmitAlert(cfg, r.reference);
     const emailAlert = await safeLeadEmail();
     const sheetAlert = await safeSheet();
+    // Same event_id the browser sends to fbq after this response. A miss must not fail the saved fact find.
+    // Declared TEST rows, FF_TEST_RUN, the preview backend, and the overnight synthetic check stay off the live pixel.
+    // A test_event_code still allows those rows into Meta's test view.
+    const testSubmission = verified || !!cfg.testRun || !!(cfg.backend && cfg.backend.test) || looksLikeTestLead(clean);
+    const testCode = String(process.env.META_CAPI_TEST_EVENT_CODE || "").trim();
+    await safeMetaLeadFromRequest({
+      env: process.env, fetchImpl: fetch, req, answers: clean,
+      metaLead: body && typeof body.meta_lead === "object" ? body.meta_lead : null,
+      skip: testSubmission && !/^[A-Za-z0-9_-]{1,64}$/.test(testCode),
+    });
     return send(res, 200, { ok: true, reference: r.reference, submittedAt: r.submitted_at, testMode, alert, emailAlert, sheetAlert, ...(isLand(clean)?{answers:publicLandAnswers(clean),scorecard:clean.land_scorecard}:{}) });
   } catch (e) {
     const code = e instanceof BackendError ? e.code : "server_error";

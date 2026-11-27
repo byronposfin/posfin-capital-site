@@ -7,7 +7,7 @@ import { bindMoneyInput, bindPostcode } from "/lib/ff-inputs.js?v=20261104-live"
 import { FINDER_MARKUP, bindSecurityAddressPicker } from "/lib/ff-address-picker.js?v=20261120-address";
 import { money, renderScorecard } from "/lib/ff-finance.js?v=20261121-factfind";
 import { looksLikeTestLead } from "/lib/ff-test-lead.js?v=20261121-factfind";
-import { createSingleFlight } from "/lib/ff-save-queue.js?v=20261121-factfind";
+import { createSingleFlight, resumeTokenForLoad } from "/lib/ff-save-queue.js?v=20261127-meta";
 import * as S from "/lib/ff-schema.js?v=20261126-factfind";
 /* Attribution (first touch, this browser tab only): utm_* and ?b=bh|chris. Sent with the fact find; no cookies. */
 (function(){/* also capture when /fact-find is the landing page */try{var K="posfin_attr_v1",q=new URLSearchParams(location.search),a=JSON.parse(sessionStorage.getItem(K)||"null");
@@ -211,7 +211,7 @@ async function checkHealth(){
     setMode("local", h.reason||h.db||"not_ready"); return false;
   }catch(e){ setTestMode(testMode); setMode("local","health_unreachable"); return false; }
 }
-function showCode(c){ code=c; $("#codeOut").textContent=c; $("#linkOut").value=location.origin+"/fact-find?resume="+encodeURIComponent(c); $("#resume").classList.add("show"); try{history.replaceState(null,"","/fact-find?resume="+encodeURIComponent(c));}catch(e){} }
+function showCode(c){ code=c; $("#codeOut").textContent=c; $("#linkOut").value=location.origin+"/fact-find?resume="+encodeURIComponent(c); $("#resume").classList.add("show"); try{sessionStorage.setItem("posfin_ff_resume", c);}catch(e){} try{var u=new URL(location.href);u.searchParams.delete("resume");history.replaceState(null,"",u.pathname+u.search+u.hash);}catch(e){} }
 
 function attribution(){ try{ return JSON.parse(sessionStorage.getItem("posfin_attr_v1")||"{}")||{}; }catch(e){ return {}; } }
 async function api(body){ body={...body,attribution:attribution()}; let r; try{ r=await fetch("/api/factfind",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); }catch(e){ return {status:0,j:{error:"network"}}; } let j={}; try{j=await r.json();}catch(e){} return {status:r.status,j}; }
@@ -259,16 +259,29 @@ async function resume(c){
     }
   }catch(e){ if(mode==="server"){ setMode("local"); return resume(c);} rs.textContent="Could not open that draft."; rs.className="status bad"; }
 }
+function metaLeadContext(){
+  try{ if(window.PosfinMeta&&typeof window.PosfinMeta.leadContext==="function") return window.PosfinMeta.leadContext(); }catch(e){}
+  let event_id="";
+  try{ event_id=crypto.randomUUID(); }catch(e){}
+  let marketing=true;
+  try{ if(window.PosfinMeta&&typeof window.PosfinMeta.marketingAllowed==="function") marketing=window.PosfinMeta.marketingAllowed()!==false; }catch(e){}
+  return {event_id, event_source_url:location.origin+location.pathname, marketing};
+}
+function trackMetaLead(eventId){
+  try{ if(eventId&&window.PosfinMeta&&typeof window.PosfinMeta.trackLead==="function") window.PosfinMeta.trackLead(eventId); }catch(e){}
+}
 async function submit(){
   const all=S.validate(collect(),true,testMode).errors; if(Object.keys(all).length){ const k=showErr(all); const si=["total_properties_owned","additional_properties"].includes(k)?1:STEPS.findIndex(s=>s.f.some(x=>x[0]===k)); if(si>=0) show(si); setStatus("Please check the highlighted answers.","bad"); return; }
   if(!code && !(await save(true))) return;
   $("#next").disabled=true; setStatus("Submitting…");
   try{
     if(mode==="server"){
-      const {status,j}=await api({action:"submit",code,answers:collect()});
+      const metaLead=metaLeadContext();
+      const {status,j}=await api({action:"submit",code,answers:collect(),meta_lead:metaLead});
       if(down(status)){ setMode("local", j.error); $("#next").disabled=false; return submit(); }
       if(!j.ok){ if(j.fieldErrors) showErr(j.fieldErrors); setStatus(j.message||"Could not submit. Please check your answers.","bad"); return; }
       if(j.testMode||looksLikeTestLead(collect())) namedTest=true;
+      if(!(testMode||namedTest)&&metaLead.marketing!==false) trackMetaLead(metaLead.event_id);
       const summary=routeCard(collect())+renderScorecard(collect())+renderProperties(collect());
       $("#ff").innerHTML='<h2>Your fact find is saved</h2><p id="submittedReference"></p><p>Thank you. We will review your declared figures and confirm the outstanding details together.</p>'+summary+'<p><a href="/">Back to the home page</a></p>';
       $("#submittedReference").textContent="Reference: "+j.reference+((testMode||namedTest)?" — test, excluded from live lead counts and alerts":"");
@@ -304,11 +317,17 @@ $("#linkOut").addEventListener("focus",e=>e.target.select());
 // init
 show(0); await checkHealth(); $("#ff").inert=false;
 const q=new URLSearchParams(location.search);
+let storedResume="", navigation="navigate";
+try{ storedResume=sessionStorage.getItem("posfin_ff_resume")||""; }catch(e){}
+try{ const nav=performance.getEntriesByType("navigation")[0]; if(nav&&nav.type) navigation=nav.type; }catch(e){}
+const resumeDecision=resumeTokenForLoad({ query:q.get("resume")||"", handedOff:window.__posfinResumeCode||"", stored:storedResume, navigation });
+const resumeToken=resumeDecision.token;
+if(resumeDecision.clearStored){ try{ sessionStorage.removeItem("posfin_ff_resume"); }catch(e){} }
 const p=S.normalisePurpose(q.get("purpose") ?? q.get("loanPurpose") ?? q.get("loan_purpose")); if(p && O.purpose.includes(p)) document.getElementById("purpose").value=p;
 const pt=q.get("asset"); if(pt && O.asset_type.includes(pt)) document.getElementById("asset_type").value=pt;
 syncBranches();
-if(!q.get("resume")&&(isLand({asset_type:pt})||q.get("lane")==="land"))startLand({...collect(),asset_type:pt||"Land"});
-if(q.get("resume")){ $("#resbox").open=true; $("#resumeCode").value=q.get("resume"); resume(q.get("resume")); }
+if(!resumeToken&&(isLand({asset_type:pt})||q.get("lane")==="land"))startLand({...collect(),asset_type:pt||"Land"});
+if(resumeToken){ $("#resbox").open=true; $("#resumeCode").value=resumeToken; resume(resumeToken); }
 $("#retryBtn").addEventListener("click",async()=>{ setStatus("Checking…"); const ok=await checkHealth(); setStatus(ok?"Connected. You can save and submit as normal.":"Still unavailable. Please call us or book a 15-minute call.", ok?"ok":"bad"); });
 
 /* Clear a field's error as soon as the user edits it */

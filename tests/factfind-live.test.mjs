@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { looksLikeTestLead, referencePrefix, responseTestMode } from '../lib/ff-test-lead.js';
-import { createSingleFlight } from '../lib/ff-save-queue.js';
+import { createSingleFlight, resumeTokenForLoad } from '../lib/ff-save-queue.js';
 import { displayAddress, renderProperties } from '../lib/ff-properties.js';
 import { parseServiceAccount, resolveServiceAccount } from '../lib/lead-email.js';
 import { deliveryDecision } from '../lib/lead-notify.js';
@@ -70,6 +70,13 @@ test('confirmation address does not repeat the postcode, and zero arrears omit t
   const html = renderProperties({ security_address: '1 Test Road, Bexhill, TN39 3DH', security_postcode: 'TN39 3DH', arrears: 'No', first_charge_arrears_amount: 0, arrears_included_in_balance: 'Not sure' });
   assert.equal(html.split('TN39 3DH').length - 1, 1);
   assert.doesNotMatch(html, /Treatment not confirmed|Arrears treatment/);
+});
+
+test('a saved resume code opens that draft, and a later Land link in the same tab starts fresh', () => {
+  assert.deepEqual(resumeTokenForLoad({ query: 'ABCD-EFGH-JKLM', stored: 'OLD', navigation: 'navigate' }), { token: 'ABCD-EFGH-JKLM', clearStored: false });
+  assert.deepEqual(resumeTokenForLoad({ handedOff: 'ABCD-EFGH-JKLM', stored: 'ABCD-EFGH-JKLM', navigation: 'navigate' }), { token: 'ABCD-EFGH-JKLM', clearStored: false });
+  assert.deepEqual(resumeTokenForLoad({ stored: 'ABCD-EFGH-JKLM', navigation: 'reload' }), { token: 'ABCD-EFGH-JKLM', clearStored: false });
+  assert.deepEqual(resumeTokenForLoad({ stored: 'ABCD-EFGH-JKLM', navigation: 'navigate' }), { token: '', clearStored: true });
 });
 
 test('Gmail credentials accept a private key stored with escaped newlines and fall back to the other env var', () => {
