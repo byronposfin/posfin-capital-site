@@ -39,6 +39,9 @@
     taskUrgency: "",
     taskQ: "",
     timer: 0,
+    race: null,
+    raceTimer: 0,
+    raceSeq: 0,
   };
 
   function money(value) {
@@ -233,12 +236,18 @@
     return CASE_FILE.test(caseId) ? `/staff/cases/${encodeURIComponent(caseId)}` : "";
   }
 
+  function raceButton(id) {
+    const caseId = String(id || "");
+    if (!caseId) return "";
+    return `<button type="button" class="race-open" data-race-card="${esc(caseId)}">Current Race Card</button>`;
+  }
+
   function pipelineDetail(item) {
     const href = caseFileHref(item.id);
     const file = href
       ? `<p><a href="${esc(href)}">Open the case file</a></p>`
       : `<p class="meta">No staff case file for this row.</p>`;
-    return `<p><button type="button" class="back" data-pipeline-back>All cases</button></p><article class="card" data-case-detail="${esc(item.id)}"><h2>${esc(item.id)} ${esc(item.name || "")}</h2><ul class="lines"><li><strong>Stage</strong> ${esc(item.stage || "—")}${item.lane ? ` · ${esc(item.lane)}` : ""}</li><li><strong>Urgency</strong> ${urgentCell(item.urgent)}</li><li><strong>Seat</strong> ${esc(labelSeat(item.assigned_seat || (item.assigned_seats || []).join("+")))}</li><li><strong>Next action</strong> ${esc(item.next_action || "—")}</li><li><strong>Owner</strong> ${esc(item.owner || item.next_action_owner || "—")}</li><li><strong>Last message</strong> ${esc(item.last_message_date || "—")} ${dayCount(item.days_since_last_message)}</li><li><strong>Loan</strong> ${esc(item.loan || "—")}</li><li><strong>Fee</strong> ${esc(item.fee || "—")}</li></ul>${file}</article>`;
+    return `<p><button type="button" class="back" data-pipeline-back>All cases</button></p><article class="card" data-case-detail="${esc(item.id)}"><h2>${esc(item.id)} ${esc(item.name || "")}</h2>${raceButton(item.id)}<ul class="lines"><li><strong>Stage</strong> ${esc(item.stage || "—")}${item.lane ? ` · ${esc(item.lane)}` : ""}</li><li><strong>Urgency</strong> ${urgentCell(item.urgent)}</li><li><strong>Seat</strong> ${esc(labelSeat(item.assigned_seat || (item.assigned_seats || []).join("+")))}</li><li><strong>Next action</strong> ${esc(item.next_action || "—")}</li><li><strong>Owner</strong> ${esc(item.owner || item.next_action_owner || "—")}</li><li><strong>Last message</strong> ${esc(item.last_message_date || "—")} ${dayCount(item.days_since_last_message)}</li><li><strong>Loan</strong> ${esc(item.loan || "—")}</li><li><strong>Fee</strong> ${esc(item.fee || "—")}</li></ul>${file}</article>`;
   }
 
   function pipeline(data) {
@@ -273,7 +282,7 @@
       ? `<p class="meta">${esc(labelSeat(state.mode))}'s live WhatsApp deals, including deals shared with the other processing seat. Choose All open to see the whole register.</p>`
       : "";
     return `${ruleNote}<div class="row" role="group" aria-label="Pipeline view">${pills}</div>${seatNote}<div class="filters"><label for="case-search">Search cases</label><input id="case-search" type="search" value="${esc(state.q)}" placeholder="Case, owner, product or next action"><div class="row"><div><label for="stage">Stage</label><select id="stage">${stageOptions}</select></div><div><label for="lender">Lender</label><select id="lender">${lenderOptions}</select></div></div></div><p class="meta">${visible.length} shown</p>${table([
-      ["Case", (row) => `${row.id ? `<a href="#pipeline/${encodeURIComponent(row.id)}">Open ${esc(row.id)}</a>` : ""} ${esc(row.name)}${row.private && data.seat === "byron" ? ' <span class="pill private">Private</span>' : ""}${row.whatsapp_assigned ? ' <span class="pill live">WhatsApp</span>' : ""}${row.needs_byron ? ' <span class="pill">Byron review</span>' : ""}`],
+      ["Case", (row) => `${row.id ? `<a href="#pipeline/${encodeURIComponent(row.id)}">Open ${esc(row.id)}</a>` : ""} ${esc(row.name)}${row.private && data.seat === "byron" ? ' <span class="pill private">Private</span>' : ""}${row.whatsapp_assigned ? ' <span class="pill live">WhatsApp</span>' : ""}${row.needs_byron ? ' <span class="pill">Byron review</span>' : ""}<br>${raceButton(row.id)}`],
       ["Lane / stage", (row) => `${esc(row.lane || "—")}<br><span>${esc(row.stage || "—")}</span>`],
       ["Urgency", (row) => urgentCell(row.urgent)],
       ["Assigned", (row) => esc(labelSeat(row.assigned_seat || (row.assigned_seats || []).join("+")))],
@@ -792,6 +801,7 @@
     if (state.noteTimer && (id !== "meetings" || nextMeeting !== state.meetingId)) flushNoteSave();
     if (id === "finance" && document.body.dataset.finance !== "1") id = "overview";
     if (!VIEWS[id]) id = "overview";
+    if (id !== "pipeline") closeRace();
     state.tab = id;
     state.meetingId = id === "meetings" ? (meetingId || "") : "";
     state.caseId = id === "pipeline" ? (meetingId || "") : "";
@@ -816,25 +826,41 @@
     if (id === "usage") ensureUsage();
   }
 
+  function closeRace() {
+    state.race = null;
+    state.raceSeq += 1;
+    if (state.raceTimer) clearInterval(state.raceTimer);
+    state.raceTimer = 0;
+  }
+
+  function raceDrawer() {
+    if (!state.race) return "";
+    const race = state.race;
+    const body = race.loading
+      ? `<p class="meta">Loading the current race card…</p>`
+      : (race.error ? `<article class="note">${esc(race.error)}</article>` : race.html);
+    return `<div class="race-backdrop" data-race-close></div><section class="race-drawer" role="dialog" aria-modal="true" aria-label="Current Race Card"><div class="race-drawer-top"><p class="race-kicker">Actual offers only</p><button type="button" class="race-close" data-race-close>Close</button></div><div id="race-body">${body}</div></section>`;
+  }
+
   function paint() {
     const data = state.data;
     const panel = $("#panel");
     if (!panel) return;
     if (state.tab === "meetings") {
-      panel.innerHTML = meetingsView();
+      panel.innerHTML = meetingsView() + raceDrawer();
       const fresh = $("#fresh");
       if (fresh) fresh.textContent = "Meetings";
       return;
     }
     if (state.tab === "usage") {
-      panel.innerHTML = usageView();
+      panel.innerHTML = usageView() + raceDrawer();
       const fresh = $("#fresh");
       if (fresh) fresh.textContent = state.usage && state.usage.as_of_label ? `Snapshot as of ${state.usage.as_of_label}` : "Seat usage";
       return;
     }
     if (!data) return;
     const view = VIEWS[state.tab] || overview;
-    panel.innerHTML = view(data);
+    panel.innerHTML = view(data) + raceDrawer();
     const fresh = $("#fresh");
     if (fresh) fresh.textContent = `Snapshot ${when(data.overview && data.overview.generated_at || data.freshness && data.freshness.overview)} · ${data.displayName}`;
     const badge = $("#seat-badge");
@@ -882,7 +908,69 @@
     paint();
   }
 
+  async function refreshRace(silent) {
+    const race = state.race;
+    if (!race || document.hidden) return;
+    const seq = ++state.raceSeq;
+    const params = new URLSearchParams({
+      action: "race-card",
+      case: race.caseId,
+      format: "fragment",
+      audience: race.audience,
+      tab: race.tab,
+    });
+    const response = await fetch(`${DATA}?${params}`, { credentials: "same-origin", headers: { Accept: "text/html" } });
+    if (!state.race || state.race.caseId !== race.caseId || seq !== state.raceSeq) return;
+    const html = await response.text();
+    if (response.status === 401) {
+      state.race.error = "Your sign-in has expired.";
+      state.race.loading = false;
+      paint();
+      return;
+    }
+    if (!response.ok) {
+      let message = "The current race card could not be loaded.";
+      try { message = JSON.parse(html).error || message; } catch { /* HTML error page */ }
+      state.race.error = message;
+      state.race.loading = false;
+      state.race.html = "";
+      paint();
+      return;
+    }
+    state.race.html = html;
+    state.race.error = "";
+    state.race.loading = false;
+    const slot = document.getElementById && document.getElementById("race-body");
+    if (silent && slot) {
+      slot.innerHTML = html;
+      return;
+    }
+    paint();
+  }
+
+  function openRace(caseId, tab, audience) {
+    const id = String(caseId || "");
+    if (!id) return;
+    state.race = {
+      caseId: id,
+      tab: tab === "eligibility" ? "eligibility" : "card",
+      audience: audience === "borrower" ? "borrower" : "staff",
+      html: "",
+      error: "",
+      loading: true,
+    };
+    if (state.raceTimer) clearInterval(state.raceTimer);
+    state.raceTimer = setInterval(() => refreshRace(true), 20000);
+    paint();
+    refreshRace(false);
+  }
+
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.race) {
+      closeRace();
+      paint();
+      return;
+    }
     if (event.key !== "Enter" && event.key !== " ") return;
     const row = event.target.closest && event.target.closest("tr[data-case-id]");
     if (!row || (event.target.closest && event.target.closest("a, button, input, select, textarea"))) return;
@@ -908,6 +996,32 @@
     if (event.target.closest && event.target.closest("[data-meetings-back]")) {
       state.saveNote = "";
       selectTab("meetings", "");
+      paint();
+      return;
+    }
+    const raceOpen = event.target.closest && event.target.closest("[data-race-card]");
+    if (raceOpen) {
+      openRace(raceOpen.dataset.raceCard || raceOpen.getAttribute("data-race-card"));
+      return;
+    }
+    const raceTab = event.target.closest && event.target.closest("[data-race-tab]");
+    if (raceTab && state.race) {
+      state.race.tab = raceTab.dataset.raceTab === "eligibility" ? "eligibility" : "card";
+      state.race.loading = true;
+      paint();
+      refreshRace(false);
+      return;
+    }
+    const raceAudience = event.target.closest && event.target.closest("[data-race-audience]");
+    if (raceAudience && state.race) {
+      state.race.audience = raceAudience.dataset.raceAudience === "borrower" ? "borrower" : "staff";
+      state.race.loading = true;
+      paint();
+      refreshRace(false);
+      return;
+    }
+    if (event.target.closest && event.target.closest("[data-race-close]")) {
+      closeRace();
       paint();
       return;
     }

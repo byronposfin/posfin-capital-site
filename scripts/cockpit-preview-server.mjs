@@ -44,8 +44,9 @@ const server = http.createServer(async (req, res) => {
   const seatPath = url.pathname.match(/^\/staff\/cockpit\/seat\/([^/]+)$/);
   const livePath = url.pathname === '/staff/cockpit/live';
   const pipelinePath = url.pathname === '/staff/cockpit/pipeline';
+  const pipelineRace = url.pathname.match(/^\/staff\/cockpit\/pipeline\/(?:race|eligibility)\/([^/]+)$/);
   const brokaJob = url.pathname === '/api/broka/jobs' || url.pathname === '/staff/cockpit/broka-jobs';
-  if (url.pathname !== '/staff/cockpit' && !spinePath && !pipelinePath && !brokaPath && !brokaJob && !livePath && !elPath && !seatPath) {
+  if (url.pathname !== '/staff/cockpit' && !spinePath && !pipelinePath && !pipelineRace && !brokaPath && !brokaJob && !livePath && !elPath && !seatPath) {
     res.statusCode = 404;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.end('This preview server only serves /staff/cockpit.');
@@ -62,12 +63,16 @@ const server = http.createServer(async (req, res) => {
   if (brokaPath) req.query.case = decodeURIComponent(brokaPath[1]);
   if (elPath) req.query.case = decodeURIComponent(elPath[1]);
   if (seatPath) req.query.seat = decodeURIComponent(seatPath[1]);
+  if (pipelineRace) {
+    req.query.race = decodeURIComponent(pipelineRace[1]);
+    if (url.pathname.includes('/eligibility/')) req.query.tab = req.query.tab || 'eligibility';
+  }
   req.url = url.pathname + url.search;
   try {
     if (brokaJob) await brokaJobs(req, res);
     else if (seatPath) await seatDesk(req, res);
     else if (livePath || elPath) await elLorDesk(req, res);
-    else if (pipelinePath) await pipeline(req, res);
+    else if (pipelinePath || pipelineRace) await pipeline(req, res);
     else if (brokaPath) await brokaDesk(req, res);
     else await handleCockpit(req, res, { env: process.env });
   } catch (error) {

@@ -18,6 +18,7 @@ import {
 import { meetingById, meetingsPayload, normaliseProgress, presentMeeting } from '../lib/meetings.js';
 import { loadSeatUsage } from '../lib/seat-usage.js';
 import { renderCommandLogin, renderCommandMessage, renderCommandPage } from '../lib/command-page.js';
+import { audienceOf, loadRaceBundle, normaliseCaseRef, renderRaceCardDocument, renderRaceCardFragment, tabOf } from '../lib/race-card.js';
 
 function queryOf(req) {
   let fromUrl = {};
@@ -123,7 +124,13 @@ export async function handleCommandDashboard(req, res, deps = {}) {
       return sendJson(res, 405, { error: 'That action is not available.' });
     }
     const actor = await resolveCommandActor(req, { ...deps, env });
-    if (!actor.ok) return sendJson(res, 401, { error: 'Sign in is required.' });
+    if (!actor.ok) {
+      const format = String(query.format || '').trim().toLowerCase();
+      if (req.method === 'GET' && format === 'html' && (action === 'race-card' || action === 'eligibility')) {
+        return sendHtml(res, 401, renderCommandLogin(''));
+      }
+      return sendJson(res, 401, { error: 'Sign in is required.' });
+    }
 
     if (req.method === 'GET' && action === 'meetings') {
       const stored = await readMeetingProgress(env, deps.fetch);
@@ -135,6 +142,37 @@ export async function handleCommandDashboard(req, res, deps = {}) {
         return sendJson(res, 200, loadSeatUsage());
       } catch {
         return sendJson(res, 503, { error: 'The seat usage snapshot could not be read.' });
+      }
+    }
+
+    if ((action === 'race-card' || action === 'eligibility') && req.method !== 'GET') {
+      return sendJson(res, 405, { error: 'That action is not available.' });
+    }
+
+    if (req.method === 'GET' && (action === 'race-card' || action === 'eligibility')) {
+      const format = String(query.format || '').trim().toLowerCase();
+      const caseRef = normaliseCaseRef(query.case || query.case_ref || query.race);
+      const audience = audienceOf(query.audience);
+      const tab = tabOf(query.tab || (action === 'eligibility' ? 'eligibility' : 'card'));
+      if (!caseRef) {
+        const message = 'A valid case reference is required.';
+        return format === 'html' || format === 'fragment'
+          ? sendHtml(res, 400, format === 'html'
+            ? renderRaceCardDocument({ ok: false, error: message, audience, tab }, { surface: 'command' })
+            : renderRaceCardFragment({ ok: false, error: message, audience, tab }, { surface: 'command', interactive: 'drawer' }))
+          : sendJson(res, 400, { error: message });
+      }
+      try {
+        const model = await loadRaceBundle(env, deps.fetch || fetch, caseRef, { audience, tab });
+        if (format === 'html') return sendHtml(res, 200, renderRaceCardDocument(model, { surface: 'command' }));
+        if (format === 'fragment') return sendHtml(res, 200, renderRaceCardFragment(model, { surface: 'command', interactive: 'drawer' }));
+        return sendJson(res, 200, model);
+      } catch (error) {
+        const mapped = dataError(error);
+        const message = error.publicMessage || mapped.error;
+        if (format === 'html') return sendHtml(res, mapped.status, renderRaceCardDocument({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'command' }));
+        if (format === 'fragment') return sendHtml(res, mapped.status, renderRaceCardFragment({ ok: false, error: message, case_ref: caseRef, audience, tab }, { surface: 'command', interactive: 'drawer' }));
+        return sendJson(res, mapped.status, { error: message });
       }
     }
 
