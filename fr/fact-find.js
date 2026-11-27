@@ -1,4 +1,4 @@
-import { CONSENT, COPY, formAnswers, formatMoney, formatNumber, langStorageKey, langSwitchState, questionsFor, resolveLang, toggleLang } from "/lib/fr-factfind.js?v=20261119-fr3";
+import { CONSENT, COPY, formAnswers, formatMoney, formatNumber, langStorageKey, langSwitchState, questionsFor, resolveLang, toggleLang } from "/lib/fr-factfind.js?v=20261127-fr4";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -25,6 +25,7 @@ function paintLang() {
   document.title = lang === "en" ? "Financing request · Posfin France" : "Demande de financement · Posfin France";
   $("title").textContent = t().title;
   $("intro").textContent = t().intro;
+  $("leadLabel").textContent = t().lead;
 }
 
 function rememberLang() {
