@@ -86,6 +86,13 @@ test('an answer closes that gap and fills the case summary', () => {
   assert.doesNotMatch(slot, /Still needed/);
 });
 
+test('borrower portal footer uses the public contact number', () => {
+  const html = renderDocument(buildModel(record()), TOKEN);
+  assert.match(html, /<a href="tel:\+447365587773">07365 587773<\/a>/);
+  assert.doesNotMatch(html, /7446 950 389/);
+  assert.doesNotMatch(html, /447446950389/);
+});
+
 test('client page is private, mobile-ready, and does not name a lender', () => {
   const html = renderDocument(buildModel(record()), TOKEN);
   assert.match(html, /noindex, nofollow/);
