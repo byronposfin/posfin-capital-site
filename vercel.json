@@ -176,6 +176,7 @@
     { "source": "/staff/cockpit/broka/scorecard", "destination": "/api/broka-desk?view=scorecard" },
     { "source": "/staff/cockpit/broka-jobs", "destination": "/api/broka/jobs" },
     { "source": "/staff/cockpit/broka/:caseRef", "destination": "/api/broka-desk?case=:caseRef" },
+    { "source": "/staff/cockpit/pipeline/demo", "destination": "/api/staff-pipeline?demo=1" },
     { "source": "/staff/cockpit/pipeline", "destination": "/api/staff-pipeline" },
     { "source": "/staff/cockpit/spine/:caseRef", "destination": "/api/staff-cockpit?spine=:caseRef" },
     { "source": "/staff/cockpit/seat/:seat", "destination": "/api/staff-seat?seat=:seat" },

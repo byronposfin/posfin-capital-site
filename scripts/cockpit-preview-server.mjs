@@ -43,7 +43,7 @@ const server = http.createServer(async (req, res) => {
   const elPath = url.pathname.match(/^\/staff\/cockpit\/el\/([^/]+)$/);
   const seatPath = url.pathname.match(/^\/staff\/cockpit\/seat\/([^/]+)$/);
   const livePath = url.pathname === '/staff/cockpit/live';
-  const pipelinePath = url.pathname === '/staff/cockpit/pipeline';
+  const pipelinePath = url.pathname === '/staff/cockpit/pipeline' || url.pathname === '/staff/cockpit/pipeline/demo';
   const brokaJob = url.pathname === '/api/broka/jobs' || url.pathname === '/staff/cockpit/broka-jobs';
   if (url.pathname !== '/staff/cockpit' && !spinePath && !pipelinePath && !brokaPath && !brokaJob && !livePath && !elPath && !seatPath) {
     res.statusCode = 404;
@@ -62,6 +62,7 @@ const server = http.createServer(async (req, res) => {
   if (brokaPath) req.query.case = decodeURIComponent(brokaPath[1]);
   if (elPath) req.query.case = decodeURIComponent(elPath[1]);
   if (seatPath) req.query.seat = decodeURIComponent(seatPath[1]);
+  if (url.pathname === '/staff/cockpit/pipeline/demo') req.query.demo = req.query.demo || '1';
   req.url = url.pathname + url.search;
   try {
     if (brokaJob) await brokaJobs(req, res);
