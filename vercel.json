@@ -51,6 +51,11 @@
       "source": "/go/senior",
       "destination": "/senior-desk",
       "permanent": false
+    },
+    {
+      "source": "/roy-kenny",
+      "destination": "/wirral-waters-response",
+      "permanent": false
     }
   ],
   "headers": [
@@ -127,6 +132,14 @@
       ]
     },
     {
+      "source": "/wirral-waters-response",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Cache-Control", "value": "private, no-store" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    },
+    {
       "source": "/staff/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
@@ -149,6 +162,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/wirral-waters-response", "destination": "/api/wirral-waters-response" },
     { "source": "/case/:token/file/:submission", "destination": "/api/case-file?token=:token&submission=:submission" },
     { "source": "/case/:token/submit", "destination": "/api/case-submit?token=:token" },
     { "source": "/case/:token/kyc", "destination": "/api/case-kyc?token=:token" },
